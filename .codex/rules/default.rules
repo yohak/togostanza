@@ -1,0 +1,4 @@
+prefix_rule(pattern=["git", "clone", "https://github.com/togostanza/togostanza.git", "references/togostanza"], decision="allow")
+prefix_rule(pattern=["git", "clone", "https://github.com/togostanza/metastanza.git", "references/metastanza"], decision="allow")
+prefix_rule(pattern=["git", "clone", "https://github.com/dbcls/togomedium-web.git", "references/togomedium-web"], decision="allow")
+prefix_rule(pattern=["mise", "trust"], decision="allow")
