@@ -49,6 +49,26 @@ git clone https://github.com/dbcls/togomedium-web.git references/togomedium-web
 node = "18.20.4"
 ```
 
+### TogoMedium Stanzaのセットアップ
+
+TogoMedium Stanzaは、`references/togomedium-web` に含まれる `mise.toml` と `pnpm-lock.yaml` を使ってセットアップする。
+
+```sh
+mise trust references/togomedium-web/mise.toml
+cd references/togomedium-web
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install --frozen-lockfile
+```
+
+Stanza側のCLI確認には次を使う。
+
+```sh
+mise exec -- pnpm --filter @packages/stanza exec togostanza --version
+mise exec -- pnpm --filter @packages/stanza exec togostanza --help
+mise exec -- pnpm --filter @packages/stanza stanza:build
+```
+
 ここに置くリポジトリは、この3つに限定しない。追加のリファレンスリポジトリが必要になった場合は、用途が分かる名前で `references/` 配下に追加し、この文書に取得元と用途を追記する。
 
 ## リポジトリの役割
