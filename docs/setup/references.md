@@ -2,6 +2,17 @@
 
 `references/` は、調査・比較に使うリファレンスリポジトリを複数置くGit管理外領域。
 
+## 読む順番
+
+1. `references/` の役割と想定レイアウトを確認する。
+2. 初回セットアップで3つのリポジトリを取得する。
+3. 調査対象に応じて、次の順に必要なセットアップを行う。
+    - 現行版リポジトリまたは **metastanza** を調べる場合は、Node設定を行う。
+    - 現行版リポジトリを調べる場合は、現行版リポジトリのセットアップとCLI確認を行う。
+    - **metastanza** を調べる場合は、metastanzaのセットアップとCLI確認を行う。
+    - **TogoMedium Stanza** を調べる場合は、TogoMedium StanzaのセットアップとCLI確認を行う。
+4. 調査結果はリファレンスリポジトリ側ではなく、`docs/investigation/` に記録する。
+
 ## 想定レイアウト
 
 ```text
@@ -13,11 +24,11 @@ references/
 
 ## 初期セットアップで取得するリポジトリ
 
-| 配置先 | 取得元 | 用途 |
-| ------ | ------ | ---- |
-| `references/togostanza` | `https://github.com/togostanza/togostanza.git` | 現行版リポジトリの実装、ドキュメント、テストの調査 |
-| `references/metastanza` | `https://github.com/togostanza/metastanza.git` | **metastanza** の確認 |
-| `references/togomedium-web` | `https://github.com/dbcls/togomedium-web.git` | **TogoMedium Stanza** の確認 |
+| 配置先 | 取得元 | 確認する文脈 |
+| ------ | ------ | ------------ |
+| `references/togostanza` | `https://github.com/togostanza/togostanza.git` | 現行版リポジトリの実装、ドキュメント、テスト |
+| `references/metastanza` | `https://github.com/togostanza/metastanza.git` | **metastanza** の挙動とStanza側CLI |
+| `references/togomedium-web` | `https://github.com/dbcls/togomedium-web.git` | **TogoMedium Stanza** のセットアップとStanza側CLI |
 
 ## 初回セットアップ手順
 
@@ -34,19 +45,63 @@ git clone https://github.com/dbcls/togomedium-web.git references/togomedium-web
 
 `references/` はGit管理外領域なので、cloneした中身はこのリポジトリにはコミットしない。
 
-### 現行版のNode設定
+### Node設定
 
-現行版リポジトリの実行確認ではNode 18系を使う。現行版の `engines.node` は `>=14` だが、依存パッケージの中にはNode 18以上を要求するものがあるため、調査用にはNode 18系を選ぶ。
+現行版リポジトリとmetastanzaの実行確認ではNode 18系を使う。どちらも `engines.node` は `>=14` だが、依存パッケージの中にはNode 18以上を要求するものがあるため、調査用にはNode 18系を選ぶ。
 
-ルートには `mise.toml` を置かず、`references/togostanza/mise.toml` をローカル調査用に置く。
+ルートには `mise.toml` を置かず、対象リファレンスリポジトリの直下にローカル調査用の `mise.toml` を置く。
 
-`references/togostanza/mise.toml` は現行版リポジトリ側のローカル補助ファイルとして扱い、リメイク版リポジトリにも現行版リポジトリにもコミットしない。`mise` 自体はグローバルに利用できる前提とする。
+| 対象 | ローカル調査用ファイル |
+| ---- | ---------------------- |
+| 現行版リポジトリ | `references/togostanza/mise.toml` |
+| **metastanza** | `references/metastanza/mise.toml` |
 
-`references/togostanza/mise.toml` は次の内容で作成する。
+これらの `mise.toml` は、リメイク版リポジトリにもリファレンスリポジトリにもコミットしない。`mise` 自体はグローバルに利用できる前提とする。
+
+`mise.toml` は次の内容で作成する。
 
 ```toml
 [tools]
 node = "18.20.4"
+```
+
+### 現行版リポジトリのセットアップ
+
+セットアップには次を使う。
+
+```sh
+mise trust references/togostanza/mise.toml
+cd references/togostanza
+mise exec -- node -v
+mise exec -- npm -v
+mise exec -- npm ci
+```
+
+CLI確認には次を使う。
+
+```sh
+mise exec -- node bin/togostanza.mjs --version
+mise exec -- node bin/togostanza.mjs --help
+```
+
+### metastanzaのセットアップ
+
+セットアップには次を使う。
+
+```sh
+mise trust references/metastanza/mise.toml
+cd references/metastanza
+mise exec -- node -v
+mise exec -- npm -v
+mise exec -- npm ci
+```
+
+Stanza側のCLI確認には次を使う。
+
+```sh
+mise exec -- npx togostanza --version
+mise exec -- npx togostanza --help
+mise exec -- npx togostanza build
 ```
 
 ### TogoMedium Stanzaのセットアップ
@@ -71,23 +126,9 @@ mise exec -- pnpm --filter @packages/stanza stanza:build
 
 ここに置くリポジトリは、この3つに限定しない。追加のリファレンスリポジトリが必要になった場合は、用途が分かる名前で `references/` 配下に追加し、この文書に取得元と用途を追記する。
 
-## リポジトリの役割
-
-- `references/togostanza`: 現行版リポジトリの実装、ドキュメント、テストの参照元。
-- `references/metastanza`: **metastanza** の参照元。
-- `references/togomedium-web`: **TogoMedium Stanza** の参照元。
-
 ## 方針
 
 - `references/` 配下のファイルは、このリメイク版リポジトリのソースとして扱わない。
 - リファレンスリポジトリの中身はコミットしない。
 - 観測結果はリファレンスリポジトリを編集せず、`docs/investigation/` に記録する。
 - リファレンスリポジトリを動かすために環境変更が必要になりそうな場合は、Node/npm/pnpmのバージョン、依存関係、lockfile、ソースを変更する前に人間へ相談する。
-
-## セットアップ時に記録すること
-
-- `togostanza` のローカルパス:
-- `metastanza` のローカルパス:
-- `togomedium-web` のローカルパス:
-- セットアップ日:
-- 既知の環境メモ:
