@@ -11,7 +11,7 @@
 - リメイク版の `package.json` は `package/package.json` に置く。
 - 本リポジトリ全体を Node ワークスペースとして扱わない。
 - `references/*/package.json` はリファレンスリポジトリ側のものとして扱う。
-- `workbench/current/package.json` と `workbench/remake/package.json` は検証環境側のものとして扱う。
+- `workbench/cases/<case>/current/package.json` と `workbench/cases/<case>/remake/package.json` は検証環境側のものとして扱う。
 
 この方針により、リポジトリルートは調査・計画・検証・実装をまとめる器として扱い、Node パッケージとしての関心は `package/` に閉じる。
 

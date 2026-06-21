@@ -17,7 +17,7 @@
 - `sandbox/` 内の `package.json`、lockfile、`node_modules/`、生成物はコミットしない。
 - 調査結果として残す内容は、`docs/investigation/` に記録する。
 - 再現可能な比較手順として残す内容は、`workbench/cases/` に移す。
-- 現行版/リメイク版の比較に使う構成は、必要に応じて `workbench/current/` と `workbench/remake/` に反映する。
+- 現行版/リメイク版の比較に使う構成は、必要に応じて `workbench/cases/<case>/current/` と `workbench/cases/<case>/remake/` に反映する。
 
 ## 検証領域との違い
 
