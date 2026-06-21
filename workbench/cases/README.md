@@ -61,6 +61,64 @@ workbench/cases/
 - 記録する差分
 - 未決定事項
 
+## 検証ケースの作成手順
+
+各検証ケースは、次の順で作る。
+
+1. まずケースの `README.md` に、確認したい契約、入力条件、合格条件を明記する。
+2. `current/` に現行版での最小入力を作る。
+3. 必要な場合だけ `npm install` を行う。
+4. 現行版の観測結果をケースの `README.md` に記録する。
+5. `remake/` は、リメイク版CLIが実装されるまで空の検証環境として残す。
+6. リメイク版実装後、同じ入力意図を `remake/` に作り、差分をケースの `README.md` に記録する。
+
+`current/` は、ケースの目的に必要な最小構成にする。すべてのケースで `init` から作り直す必要はない。`build`、runtime、parameter、Stanza source API など、Stanza repository が必要なケースでは、001 で作った scaffold の構成を参考にしてよい。
+
+ただし、`init` 自体の挙動を確認するケースでは、手作業で構成を作らず、現行版CLIの `init` を使う。
+
+## Node と依存の扱い
+
+現行版確認では、必要に応じて current / remake ごとに Node version を固定する。001 では `current/mise.toml` で Node 18 系を指定している。
+
+Node version の差分が確認対象ではない場合、Node engine warning は記録に留め、warning だけを理由にケースを止めない。実際に command が失敗する場合だけ、失敗内容を観測結果として扱う。
+
+`npm install` で作られる `node_modules/` は Git 管理しない。`package-lock.json` は、現行版依存の解決結果を固定したい場合はケース入力として Git 管理してよい。
+
+Node version はケース直下ではなく、原則として `current/mise.toml` と `remake/mise.toml` に分ける。ケース直下に `mise.toml` を置くと current と remake の両方へ効くため、両者で同じ Node version に固定したい場合だけ使う。
+
+## Git 管理するもの
+
+Git 管理する候補は次の通り。
+
+- ケースの `README.md`
+- `mise.toml`
+- `package.json`
+- `package-lock.json`
+- Stanza source
+- metadata
+- templates
+- stylesheet
+- 検証用HTML
+- 小さな fixture data
+
+Git 管理しないものは次の通り。
+
+- `node_modules/`
+- `dist/`
+- cache
+- 一時ログ
+- サーバ実行中に生成される一時ファイル
+
+## ケース別の初期方針
+
+- 002 build artifacts: 001 の scaffold に近い最小 Stanza repository を current に置き、`build --output-path dist` の生成物を観測する。`dist/` は Git 管理せず、tree と重要ファイルだけ README に記録する。
+- 003 runtime embedding: 002 の build 結果を前提にするか、同等の current を作る。help preview ではない最小HTMLを current に置く。
+- 004 runtime parameters: parameter 観測用 Stanza を current に置く。値と型が画面またはログで分かるようにする。
+- 005 Stanza source API: APIごとに最小 Stanza source を作る。`this.query()` など外部通信が絡むものは、観測用の最小 endpoint またはモック方針を README に書く。
+- 006 inter stanza coordination: sender / receiver / container を含む最小HTMLを current に置く。再設計候補は現行挙動の観測と移行メモを分けて書く。
+- 007 config and resolution: 設定ファイル、alias、asset import を分けて小さく確認する。旧設定ファイルは無条件実行しない方針を確認対象に含める。
+- 008 real project regression: 実プロジェクトを直接汚さず、必要な最小再現または検証用コピーだけを current / remake に置く。
+
 ## 判断の扱い
 
 `必須` は、現行版とリメイク版で同じ外部契約を満たすことを確認する。
