@@ -37,3 +37,73 @@ mkdir -p sandbox
 ```
 
 `sandbox/` はGit管理外領域なので、作成した内容はこのリポジトリにはコミットしない。
+
+## 現行版CLIのsandboxを作るときの注意
+
+現行版の Stanza群プロジェクトを確認するときは、手作業で構成を作らず、まず現行版CLIの `init` で生成する。
+
+```sh
+cd /Volumes/DATA/repositories/togostanza-remake/sandbox
+
+mise exec -- npx togostanza init \
+  --git-url "" \
+  --name current-cli-smoke \
+  --license MIT \
+  --package-manager npm \
+  --skip-install \
+  --skip-git
+```
+
+`togostanza init` は、指定した `--name` のサブディレクトリを作る。`sandbox/current-cli-smoke` の中で実行すると `sandbox/current-cli-smoke/current-cli-smoke` のように二重になるため、`sandbox/` 直下で実行する。
+
+`--skip-install` と `--skip-git` を付け、初期生成物の確認と依存installを分ける。生成直後の `package.json` は `dependencies.togostanza` が `github:togostanza/togostanza` になる。
+
+```sh
+cd /Volumes/DATA/repositories/togostanza-remake/sandbox/current-cli-smoke
+mise exec -- npm install
+```
+
+現行版は最近ほとんど動いていないため、sandbox では通常利用に近い `github:togostanza/togostanza` 参照のまま扱う。ローカルで作ったパッケージに差し替えるようなイレギュラーなセットアップは、通常経路との差分が増えるため避ける。
+
+`npm install` は GitHub と npm registry へのアクセス、および npm cache への書き込みを行う。AIが実行する場合は、必要に応じて network/cache 書き込みを許可したうえで実行する。
+
+```sh
+ls -la node_modules/togostanza
+mise exec -- npx togostanza --version
+```
+
+Stanzaを追加する場合も現行版CLIで生成する。
+
+```sh
+mise exec -- npx togostanza generate stanza hello \
+  --label Hello \
+  --definition "Smoke test stanza" \
+  --license MIT \
+  --author Codex \
+  --timestamp 2026-06-20
+```
+
+## AI実行時の注意
+
+Codex などのAIが管理された shell sandbox 内で `togostanza build` や `togostanza serve` を実行すると、Broccoli watcher が `EMFILE: too many open files, watch` で失敗する場合がある。
+
+この失敗は、少なくとも `current-cli-smoke` では現行版CLIの一般的な失敗ではない。同じ環境でも、ユーザーの通常ターミナルと Codex の unsandboxed 実行では `build` が完了した。
+
+AIが現行版CLIの `build` / `serve` を確認するときは、sandboxed exec で粘らず、許可済みの unsandboxed 実行として扱う。`.codex/rules/default.rules` には、現行版調査で使う `togostanza build` / `serve` 系コマンドを許可対象として記載する。
+
+```sh
+cd /Volumes/DATA/repositories/togostanza-remake/sandbox/current-cli-smoke
+
+mise exec -- npx togostanza build --output-path dist
+mise exec -- npx togostanza serve --port 8099
+```
+
+`serve` を起動した場合は、調査メモに次を記録する。
+
+- 起動コマンド
+- 作業ディレクトリ
+- ポート
+- 停止方法
+- ブラウザ確認に使ったURL
+
+ローカルホスト確認は外部ブラウザを起動せず、in-app browser で行う。

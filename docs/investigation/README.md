@@ -16,6 +16,8 @@
 
 調査では、観測された挙動、関連ドキュメント、テスト、ソース参照、直接依存の役割、CLI実行観測、未解決事項を扱う。
 
+調査中に出た改善案は、今回の仕様スコープに自動的には入れず、必要に応じて [Follow-ups](./follow-ups.md) に分離する。
+
 ## 調査順
 
 1. まず現行版 `togostanza` を調査する。
@@ -30,6 +32,7 @@
 - [metastanzaメモ](./repositories/metastanza.md): **metastanza** の詳細メモ。
 - [togomedium-webメモ](./repositories/togomedium-web.md): **TogoMedium Stanza** の詳細メモ。
 - [未解決事項](./open-questions.md): 未解決事項と人間判断待ち。
+- [Follow-ups](./follow-ups.md): 調査中に出た改善案と後続候補。
 
 ## 境界
 
