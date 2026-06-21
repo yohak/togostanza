@@ -65,6 +65,12 @@ build / serve の内部基盤は Vite 8 を基本にする。Broccoli、Rollup�
 - custom element 名は `metadata["@id"]` から `togostanza-{id}` として定義する。
 - help preview の実装や UI は runtime 埋め込み形式とは別物として扱う。
 
+Stanza の Web Component は、一般的な Web サイトへ直接埋め込めることを前提にする。埋め込み先 Web サイトに、Vite、React、Vue、npm install、追加 build step などを要求しない。
+
+Stanza 内部で framework を使う場合も、必要な runtime は Stanza の配布物側に含める。bundle size が多少増えても、埋め込み容易性を優先する。
+
+1つの `{id}.js` が完全な単一ファイルであることまでは要求しない。`dist/` 配下の `{id}.js` と共有 chunk 一式で自己完結し、静的ホスティング上で相対 import により動けばよい。
+
 ### Shadow DOM
 
 custom element は shadow root を使う。shadow root は現行通り `open` とする。
@@ -77,6 +83,8 @@ Stanza ごとの CSS は shadow root 内に適用する。
 
 ### Parameter
 
+`this.params` は、metadata の `stanza:parameter` と `stanza:type` に基づき、HTML attributes を Stanza source から扱う値へ変換する。
+
 boolean parameter は HTML boolean attribute として扱い、属性の有無で判定する。
 
 - 属性あり: `true`
@@ -84,6 +92,8 @@ boolean parameter は HTML boolean attribute として扱い、属性の有無�
 - `flag="false"` のような文字列値は false 扱いしない。
 
 この挙動は **利用契約**として `必須` とする。
+
+boolean 以外の `stanza:type` の詳細な変換規則は、この文書では細かく固定しない。現行版の観測結果をもとに、同等の動作を実装する。
 
 ### `this.query()`
 
@@ -107,6 +117,10 @@ method 未指定の `this.query()` は `POST` を既定 method とする。
 
 `stanza:menu-placement` metadata key と `togostanza-menu_placement` attribute は維持する。placement によって menu 表示位置を変える目的も維持する。
 
+`togostanza--menu` から辿れる `About this stanza` 相当の導線は維持する。この導線が参照する `${id}.html` の存在も維持する。
+
+`${id}.html` の UI、DOM、preview 機能、snippet 生成の詳細は再設計可能とする。
+
 `togostanza--menu` の内部 DOM 構造や見た目は `再設計` 可能とする。実プロジェクトで style が当たっているため、見た目の regression test は重点的に行う。
 
 ## Stanza Source
@@ -122,6 +136,12 @@ method 未指定の `this.query()` は `POST` を既定 method とする。
 - `this.element`
 - `this.renderTemplate`
 - `this.query`
+- `this.importWebFontCSS`
+- `this.handleAttributeChange`
+
+`this.importWebFontCSS(cssUrl)` は、既存 Stanza source 互換のため維持する。link の注入先や重複制御などの詳細は、現行版の観測と実プロジェクトの regression test をもとに実装時に判断する。
+
+`this.handleAttributeChange(name, oldValue, newValue)` は、custom element attribute 変更時の lifecycle hook として維持する。既定の再描画や debounce などの内部スケジューリング詳細は、この文書では固定しない。
 
 Handlebars template は維持する。
 
@@ -141,13 +161,16 @@ runtime 用の主要 artifact 配置は **利用契約**として維持する。
 
 - `${id}.js`
 - `${id}.css`
+- `${id}.html`
 - `${id}/metadata.json`
 - `${id}/assets/*`
 - repository root の `assets/` から `dist/assets/` へのコピー
 
 `${id}.js.map` は開発支援寄りの生成物として扱い、必須互換までは置かない。
 
-`index.html`、`${id}.html`、`-togostanza/help-app.js` などの help preview 側生成物は `再設計` 可能とする。
+`index.html`、`-togostanza/help-app.js` などの help preview 側生成物は `再設計` 可能とする。`${id}.html` は menu の About 導線から参照されるため存在は維持するが、内容は再設計可能とする。
+
+既存 Stanza source からの asset import が壊れないことも開発契約として見る。ただし、data URL inline、別ファイル emit、hash 名、size threshold などの asset 処理詳細は実装時に判断する。
 
 ## CLI
 
@@ -183,13 +206,15 @@ CLI exit code は、成功時 `0`、失敗時 non-zero を維持する。細か�
 
 現行の `togostanza-build.mjs/js` による Rollup plugin 注入は `再設計` とする。
 
-実プロジェクトでは `metastanza` の `togostanza-build.mjs` と `TogoMedium Stanza` の `togostanza-build.js` が使われているため、完全破棄ではなく Vite 8 向けの拡張点へ移行する。
+現行版の有効な拡張点は基本的に `togostanza-build.mjs` として扱う。`togostanza-build.js` のような近い名前のファイルが存在しても、現行版で有効だったとは限らない。
+
+実プロジェクトでは `metastanza` の `togostanza-build.mjs` が確認されている。`TogoMedium Stanza` の `togostanza-build.js` は存在するが、現行版で実際に有効だったかは区別して扱う。
 
 新しい設定ファイル名は `togostanza.config.ts` を第一候補とする。
 
 `defineTogoStanzaConfig()` を提供し、TogoStanza 専用設定を中心にする。必要な範囲で Vite plugin や Vite config を渡せる escape hatch を用意する。
 
-旧 `togostanza-build.mjs/js` を検出した場合は、分かりやすい warning または error を出し、migration note で移行先を案内する。
+旧 `togostanza-build.mjs/js` を無条件に実行しない。検出した場合は、現行版で有効だった可能性を踏まえて、分かりやすい warning または error を出し、migration note で移行先を案内する。
 
 ## Framework
 

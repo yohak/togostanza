@@ -47,6 +47,59 @@
   - Svelte など実プロジェクトで未確認の framework は follow-up として扱う。
 - 注意: 新規公式対応を広げることは今回の主目的ではない。
 
+## 旧設定ファイルの有効性確認
+
+- 種別: 追加調査
+- 背景: `metastanza` には `togostanza-build.mjs` があり、`TogoMedium Stanza` には `togostanza-build.js` がある。旧調査では、現行版は `.mjs` 固定で読み、`.js` は有効ではなかった可能性が指摘されている。
+- 確認案:
+  - 現行版が実際に読む設定ファイル名を、実装と実行観測で確認する。
+  - `metastanza` の `togostanza-build.mjs` が現行 build に影響しているか確認する。
+  - `TogoMedium Stanza` の `togostanza-build.js` が現行 build で有効だったか確認する。
+- 注意: リメイク版では旧設定ファイルを無条件実行しない。検出したうえで、migration note へ誘導する。
+- 今回スコープ: 詳細な変換仕様や codemod は実装時判断にする。
+
+## `stanza:include` の扱い
+
+- 種別: 追加調査
+- 背景: 現行版には、metadata の共通パラメータ定義を `stanza:include` で展開する仕組みがある。
+- 確認案:
+  - 実プロジェクトでの使用有無を確認する。
+  - 現行 docs / tests での使用例を確認する。
+  - 相対パス、package 解決、include 後の metadata 出力の現行挙動を必要に応じて観測する。
+- 注意: 現時点では `必須` / `再設計` / `破棄` を確定しない。
+- 今回スコープ: 現行機能として認識し、扱いは追加調査後に決める。
+
+## alias 互換の扱い
+
+- 種別: 実装時判断
+- 背景: 現行版には alias 的挙動があり、実プロジェクトでは tsconfig paths や独自 import prefix も観測されている。
+- 確認案:
+  - 既存 Stanza source が使っている alias を実プロジェクトごとに確認する。
+  - Vite の標準 `resolve.alias` や tsconfig paths で吸収できる範囲を確認する。
+  - 互換 layer が必要か判断する。
+- 注意: 独自 alias 全廃は現時点では採用しない。既存 Stanza source が壊れないことを優先する。
+- 今回スコープ: alias 合成順や Vite 設定の詳細は固定しない。
+
+## serve の埋め込み検証
+
+- 種別: 実装時確認
+- 背景: Stanza の Web Component は、一般的な Web サイトへ直接埋め込めることを前提にする。`serve` は help preview だけでなく、別のローカルページや別アプリから runtime script を読み込む確認にも使える必要がある。
+- 確認案:
+  - 一般 Web サイトに近い HTML から `<script type="module" src=".../{id}.js">` と `<togostanza-{id}>` で動くことを確認する。
+  - ローカルの別ページや別アプリから `serve` 中の `{id}.js` を読み込めることを確認する。
+  - TogoMedium のような Web アプリ埋め込みを regression test に含める。
+- 注意: CORS、HMR、watch、livereload、Vite dev server の使い方は今決めない。
+
+## asset 処理の詳細
+
+- 種別: 実装時判断
+- 背景: 現行版には、公開 assets のコピーと Stanza source からの asset import がある。
+- 確認案:
+  - 既存 Stanza source からの asset import が壊れないことを確認する。
+  - repository root `assets/` と stanza 個別 `assets/` の公開 path を確認する。
+  - metastanza / TogoMedium の asset 使用状況を見て実装方式を判断する。
+- 注意: data URL inline、別ファイル emit、hash 名、size threshold などの詳細は今固定しない。既存 source や HTML が参照する path を壊す場合は migration note が必要。
+
 ## help preview の改善
 
 - 種別: 機能改善
