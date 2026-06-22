@@ -159,10 +159,12 @@ mise exec -- pnpm run serve:fixture
 
 - `../../lib/fixture-label.js` の相対 import は解決し、browser 上で `case-007 relative import resolved` と表示された。
 - JavaScript からの `./assets/local-marker.svg` import は `data:image/svg+xml,...` に inline された。
-- JavaScript からの package asset import は build 成功を確認した。browser 上の `img src` と出力 path / inline 結果の確認は追加確認対象。
-- shadow root 内の `img` は同じ data URL を `src` として持った。
+- JavaScript からの package asset import は build 成功し、browser 上では `data:image/svg+xml,...` の inline URL として描画された。
+- shadow root 内の local asset `img` は `24x24`、package asset `img` は `150x150` として読み込み完了した。
 - `style.scss` 内の `url("./assets/local-marker.svg")` は `dist/config-resolution.css` に同じ相対 path のまま出力された。
 - `style.scss` 内の `@use "@/common.scss"` は build 成功し、`--case-007-accent` が `dist/config-resolution.css` に反映された。
+- browser 上でも `--case-007-accent: #2f6f73` が host に入り、`.config-resolution-fixture` の left border は `rgb(47, 111, 115)` / `4px` になった。
+- `style.scss` 内の `url("./assets/local-marker.svg")` は browser 上では `http://127.0.0.1:4177/dist/assets/local-marker.svg` として解決された。
 - stanza asset は `dist/config-resolution/assets/local-marker.svg` に出力された。
 - root asset は `dist/assets/root-public-marker.txt` に出力され、`http://127.0.0.1:4177/dist/assets/root-public-marker.txt` は `200` で `case-007 root public asset marker` を返した。
 - Stanza source が表示した root public asset path は `./assets/root-public-marker.txt`。この path は direct fixture URL `fixtures/config-resolution.html` を基準にすると `fixtures/assets/root-public-marker.txt` へ解決され、HTTP status は `404` だった。

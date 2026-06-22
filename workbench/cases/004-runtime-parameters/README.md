@@ -137,7 +137,9 @@ mise exec -- pnpm run serve:fixture
 | `flag="false"` | `flag-string-false:string` | `7.5:number` | `true:boolean` | array object `["false-string", { "nested": true }]` |
 | mutation 初期値 | `before-mutation:string` | `1:number` | `false:boolean` | object `{ "kind": "mutation", "step": "initial" }` |
 
-`single-choice`、`text` parameter と `number`、`text` style metadata は `dist/parameter-probe/metadata.json` と `dist/parameter-probe.js` に含まれることを確認した。追加 parameter / style の browser 上の値変換と mutation 反映は追加確認対象。
+`single-choice`、`text` parameter と `number`、`text` style metadata は `dist/parameter-probe/metadata.json` と `dist/parameter-probe.js` に含まれることを確認した。
+
+追加 browser 観測では、`mode` と `note` は `this.params` 上で string として見えた。`--parameter-probe-gap` と `--parameter-probe-caption` は metadata と HTML attribute には存在するが、`this.params` 上では `undefined` だった。
 
 ### attribute mutation
 
@@ -150,8 +152,11 @@ mutation target に対して操作ボタンから attribute を変更した。
 | `flag` を削除 | `4` | `flag`, old `"false"`, new `null` | `flag` は `false:boolean` |
 | `count="9.25"` を設定 | `5` | `count`, old `"1"`, new `"9.25"` | `count` は `9.25:number` |
 | `payload` を object JSON に変更 | `6` | `payload`, old initial JSON, new changed JSON | `payload` は object として更新 |
+| `mode="comfortable"` を設定 | `2` | `mode`, old `"compact"`, new `"comfortable"` | `mode` は `comfortable:string` |
+| `note="after text mutation"` を設定 | `3` | `note`, old `"before text mutation"`, new `"after text mutation"` | `note` は `after text mutation:string` |
+| style attributes を変更 | `3` | 変化なし | `--parameter-probe-*` は `this.params` では `undefined` のまま |
 
-追加 mutation として、`mode`、`note`、`--parameter-probe-gap`、`--parameter-probe-caption` の変更を観測する。
+style attributes を `--parameter-probe-gap="16"`、`--parameter-probe-caption="after style text mutation"` に変更しても render count は増えなかった。host の computed custom property は metadata default 相当の `--parameter-probe-gap: 8`、`--parameter-probe-caption: metadata caption` のままだった。
 
 ### ブラウザ観測メモ
 

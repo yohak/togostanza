@@ -124,7 +124,7 @@ mise exec -- pnpm run serve:fixture
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
 - build 時に Sass deprecation warning が多数出た。
 - `dist/` には `hello.js`、`menuless-hello.js`、それぞれの CSS / HTML / metadata、`index.html`、`-togostanza/*` が生成された。
-- `menuless-hello` の direct embed browser 観測は追加確認対象。
+- `menuless-hello` の direct embed browser 観測も実施した。
 
 ### ブラウザ観測結果
 
@@ -147,6 +147,10 @@ mise exec -- pnpm run serve:fixture
 - shadow root の直下には `div`、`style`、`link` が観測された。
 - stylesheet link は `http://127.0.0.1:4173/dist/hello.css`。
 - shadow root 内の text は `Hello, runtime!` を含む。
+- `menuless-hello` も open shadow root が作られ、shadow root 内の `main` に `Hello without menu, runtime!` と描画された。
+- `menuless-hello` の stylesheet link は `http://127.0.0.1:4173/dist/menuless-hello.css`。
+- `menuless-hello` には `togostanza--menu` 要素自体は存在したが、`display: none`、`0x0` で UI としては表示されなかった。
+- `menuless-hello` でも console の error / warning は観測されなかった。
 
 ## リメイク版で観測すること
 

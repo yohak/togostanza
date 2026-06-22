@@ -43,7 +43,12 @@ TSX / React で書かれた Stanza source が、TogoStanza runtime の Shadow DO
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
 - build には `togostanza-build.mjs` から `@rollup/plugin-typescript` を最小注入している。
 - `dist/` には `react-runtime.js`、`react-runtime.css`、`react-runtime.html`、`react-runtime/metadata.json`、`index.html`、`-togostanza/*` が生成された。
-- direct embed browser 観測は追加確認対象。
+- direct embed browser 観測では `<togostanza-react-runtime>` に open shadow root が作られ、shadow root 内の `main` に React component が描画された。
+- 初期表示では `label` が `initial-react`、`count` が `1`、`render count` が `1` と表示された。
+- `importWebFontCSS("./assets/react-runtime-font.css")` により `http://127.0.0.1:4178/dist/assets/react-runtime-font.css` の stylesheet link が shadow root に追加された。
+- mutation button 後は `label` が `after-react-mutation`、`count` が `2`、`render count` が `2` になった。
+- mutation 後に font CSS link が重複して 2 本になった。現行版の `importWebFontCSS()` は同一 URL の重複挿入を抑止しない可能性がある。
+- console の error / warning は観測されなかった。
 
 ## 合格条件
 

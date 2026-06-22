@@ -119,8 +119,9 @@ mise exec -- pnpm run serve:fixture
 - receiver は `data-url` から JSON を取得し、`items[0].label` の `from-data-source` を表示した。
 - sender の `Send from-sender` ボタンを押すと、receiver の `selected-label` attribute が `from-sender` に更新され、表示値も `from-sender` になった。
 - `togostanza--event-map` は送信元 selector を持たず、container 内の `selectedValue` event を拾った。
-- `handleEvent()` 表示用の `handled-event-type` / `handled-event-detail` は `dist/coordination-receiver.js` に含まれることを確認した。
-- `stanza:outgoingEvent` から `handleEvent()` へ到達する browser 上の伝播結果は追加確認対象。
+- sender の `Send from-sender` ボタンを押すと、receiver の `handleEvent()` が呼ばれた。
+- `handled-event-type` には `selectedValue`、`handled-event-detail` には `{"payload":{"label":"from-sender"}}` が表示された。
+- 同じ event で `togostanza--event-map` も動き、receiver の `selected-label` attribute と表示値が `from-sender` になった。
 
 ## リメイク版で観測すること
 

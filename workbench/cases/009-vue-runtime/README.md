@@ -41,7 +41,10 @@ Vue SFC を使う既存 Stanza source が、TogoStanza runtime の Shadow DOM �
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
 - build には documented な `togostanza-build.mjs` から `rollup-plugin-vue` と `@rollup/plugin-replace` を最小注入している。
 - `dist/` には `vue-runtime.js`、`vue-runtime.css`、`vue-runtime.html`、`vue-runtime/metadata.json`、`index.html`、`-togostanza/*` が生成された。
-- direct embed browser 観測は追加確認対象。
+- direct embed browser 観測では `<togostanza-vue-runtime>` に open shadow root が作られ、shadow root 内の `main` に Vue component が描画された。
+- `label="initial-vue"` は Vue props として渡り、`data-probe="label"` に `initial-vue` と表示された。
+- stylesheet link は `http://127.0.0.1:4179/dist/vue-runtime.css`。
+- console の error / warning は観測されなかった。
 
 ## 合格条件
 
