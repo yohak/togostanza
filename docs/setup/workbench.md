@@ -18,7 +18,8 @@
 ## 初期方針
 
 - `workbench/` 自体はプロジェクト構造の一部とする。
-- 各ケースの `current/` と `remake/` は、それぞれ Stanza群プロジェクトとして扱う。
+- 各ケースの `current/` と `remake/` は、それぞれ検証環境として扱う。package manager や実行条件を分ける場合は、`current-npm/`、`current-pnpm/` のような検証環境名を使ってよい。
+- `init` の挙動を確認するケースでは、検証環境の中で `init --name <name>` を実行し、その生成先 directory を Stanza repository として扱う。
 - 検証ケースは [workbench/cases/](../../workbench/cases/README.md) 配下のディレクトリとしてGit管理する想定とする。
 - `package.json`、Stanza source、検証用HTMLなどは、ケースの入力条件として必要ならGit管理する。
 - `node_modules/`、`dist/`、一時ログ、cache はGit管理から除外する。
@@ -32,9 +33,16 @@ workbench/
     README.md
     001-cli-scaffold-and-generate/
       README.md
-      current/
-        package.json
-        node_modules/
+      current-npm/
+        mise.toml
+        generated-repo/
+          package.json
+          node_modules/
+      current-pnpm/
+        mise.toml
+        generated-repo/
+          package.json
+          node_modules/
       remake/
         package.json
         node_modules/
@@ -46,7 +54,7 @@ workbench/
 
 ## 検証ケースの形
 
-検証ケースは、ケースごとの `README.md` と、同じケース内の `current/` / `remake/` によって構成する。各検証ケースでは次の関係が分かるようにする。
+検証ケースは、ケースごとの `README.md` と、同じケース内の検証環境 directory によって構成する。基本形は `current/` / `remake/` だが、必要に応じて `current-npm/`、`current-pnpm/` のように分ける。各検証ケースでは次の関係が分かるようにする。
 
 - 入力条件
 - 観測対象のコマンド、ブラウザ画面、生成物、ログ
@@ -56,7 +64,7 @@ workbench/
 
 ## 人間へ相談する条件
 
-ケース定義として、対象ケースの `current/` / `remake/` に `package.json`、最小 Stanza source、検証用HTMLを置くことは想定範囲とする。
+ケース定義として、対象ケースの検証環境、または検証環境内の生成 repository に `package.json`、最小 Stanza source、検証用HTMLを置くことは想定範囲とする。
 
 依存 install、lockfile 生成、外部通信を伴うコマンド実行、またはケース範囲を超えるソース変更が必要になりそうな場合は、変更前に停止して人間へ相談する。
 
@@ -75,6 +83,6 @@ Codex などの管理された実行環境で workbench を観測する場合は
 - ブラウザで確認した URL。
 - browser console の代表的な warning / error。
 
-`package-lock.json` は、現行版依存の解決結果を固定したい case では Git 管理する。`node_modules/`、`dist/`、cache、一時 server log は Git 管理しない。
+lockfile は、現行版依存の解決結果を固定したい case では Git 管理する。`node_modules/`、`dist/`、cache、一時 server log は Git 管理しない。
 
 ブラウザ上で attribute mutation や user interaction を観測する case では、in-app browser から操作できる button などを fixture HTML に置く。read-only な browser evaluation に依存した確認だけを正本にしない。

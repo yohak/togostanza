@@ -6,15 +6,17 @@
 
 ## 基本方針
 
-本プロジェクトは Node.js ベースで進める。検証手順、README、作業メモに書くコマンドは、原則として Node.js / npm / mise / 対象 CLI に揃える。
+本プロジェクトは Node.js ベースで進める。検証手順、README、作業メモに書くコマンドは、原則として Node.js / npm / pnpm / mise / 対象 CLI に揃える。
 
 Python 系のツールは、ローカルで手軽に使える場合でも標準手順にしない。標準手順は、README や検証ケースを読む人が同じ実行環境を再現できることを優先する。
 
 ## 実行環境は mise で揃える
 
-Node.js や npm の実行は、原則として `mise` を通す。現行版確認では `current/mise.toml`、リメイク版確認では `remake/mise.toml` のように、対象環境ごとに Node version を固定する。
+Node.js、npm、pnpm の実行は、原則として `mise` を通す。現行版確認では `current/mise.toml` や `current-npm/mise.toml`、リメイク版確認では `remake/mise.toml` のように、対象環境ごとに Node version と package manager version を固定する。
 
-case 直下に `mise.toml` を置くと `current/` と `remake/` の両方へ影響する。両者で同じ Node version に固定したい場合以外は、対象環境ごとの `mise.toml` を使う。
+case 直下に `mise.toml` を置くと、その case 内の複数の検証環境へ影響する。複数環境で同じ Node version に固定したい場合以外は、対象環境ごとの `mise.toml` を使う。
+
+`mise exec node@18 -- ...` のように command 側で tool version を指定する形は標準手順にしない。Node version や pnpm version は、検証環境の `mise.toml` に書いてから `mise exec -- ...` で実行する。
 
 コマンド例を書くときは、対象ディレクトリの `mise.toml` を前提に、次の形を基本にする。
 
@@ -127,6 +129,6 @@ python3 -m http.server 4173
 
 ## コマンド例を書くときの注意
 
-- `current/` と `remake/` で Node version が変わりうるため、Node 固定が必要なコマンドは対象ディレクトリ内で実行する。
+- 検証環境ごとに Node version が変わりうるため、Node 固定が必要なコマンドは対象ディレクトリ内で実行する。
 - `references/` は読み取り対象として扱い、試行錯誤で汚さない。
 - `node_modules/`、`dist/`、cache、一時ログは Git 管理しない。

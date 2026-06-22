@@ -8,8 +8,8 @@
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],
-  "stanza:created": "2026-06-21",
-  "stanza:updated": "2026-06-21",
+  "stanza:created": "2026-06-22",
+  "stanza:updated": "2026-06-22",
   "stanza:parameter": [
     {
       "stanza:key": "say-to",

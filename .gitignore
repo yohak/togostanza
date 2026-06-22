@@ -33,13 +33,8 @@ coverage/
 dist/
 
 # Workbench case-local generated files
-/workbench/cases/*/current/node_modules/
-/workbench/cases/*/remake/node_modules/
-/workbench/cases/*/current/dist/
-/workbench/cases/*/remake/dist/
-/workbench/cases/*/current/.cache/
-/workbench/cases/*/remake/.cache/
-/workbench/cases/*/current/tmp/
-/workbench/cases/*/remake/tmp/
-/workbench/cases/*/current/logs/
-/workbench/cases/*/remake/logs/
+/workbench/cases/**/node_modules/
+/workbench/cases/**/dist/
+/workbench/cases/**/.cache/
+/workbench/cases/**/tmp/
+/workbench/cases/**/logs/
