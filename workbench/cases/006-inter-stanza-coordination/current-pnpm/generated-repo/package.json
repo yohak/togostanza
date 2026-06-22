@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "license": "MIT",
   "repository": "",
+  "scripts": {
+    "serve:fixture": "node ../../../../scripts/static-fixture-server.mjs --port 4176 --default /fixtures/inter-stanza.html"
+  },
   "dependencies": {
     "togostanza": "github:togostanza/togostanza"
   },

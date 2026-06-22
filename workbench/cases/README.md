@@ -126,7 +126,7 @@ Git 管理しないものは次の通り。
 - 003 runtime embedding: 002 の build 結果を前提にするか、同等の Stanza repository を `current-pnpm/generated-repo/` に置く。help preview ではない最小HTMLを `generated-repo/` に置く。
 - 004 runtime parameters: parameter 観測用 Stanza を `current-pnpm/generated-repo/` に置く。値と型が画面またはログで分かるようにする。
 - 005 Stanza source API: APIごとに最小 Stanza source を `current-pnpm/generated-repo/` に作る。`this.query()` など外部通信が絡むものは、観測用の最小 endpoint またはモック方針を README に書く。
-- 006 inter stanza coordination: sender / receiver / container を含む最小HTMLを current に置く。`togostanza--container` は Stanza 間連携の入口として維持対象、`togostanza--event-map` は outgoing event を receiver attribute へ渡す概念を維持しつつ詳細挙動は再設計候補、`togostanza--data-source` は外部データを receiver attribute へ渡す目的を維持しつつAPI詳細は再設計候補、`togostanza--data-container` は旧ドキュメント内の誤記として破棄対象として扱う。再設計候補は現行挙動の観測と移行メモを分けて書く。
+- 006 inter stanza coordination: sender / receiver / container を含む最小HTMLを `current-pnpm/generated-repo/` に置く。`togostanza--container` は Stanza 間連携の入口として維持対象、`togostanza--event-map` は outgoing event を receiver attribute へ渡す概念を維持しつつ詳細挙動は再設計候補、`togostanza--data-source` は外部データを receiver attribute へ渡す目的を維持しつつAPI詳細は再設計候補、`togostanza--data-container` は旧ドキュメント内の誤記として破棄対象として扱う。再設計候補は現行挙動の観測と移行メモを分けて書く。
 - 007 config and resolution: 設定ファイル、alias、asset import を分けて小さく確認する。旧設定ファイルは無条件実行しない方針を確認対象に含める。
 - 008 real project regression: 実プロジェクトを直接汚さず、必要な最小再現または検証用コピーだけを current / remake に置く。
 

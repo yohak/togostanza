@@ -19,33 +19,48 @@ Stanza 間連携の入口を確認し、維持するものと再設計するも�
 
 ## fixture 構造
 
-`current/` には、現行版の Stanza 間連携を観測するための最小プロジェクトを置く。
+`current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
+`generated-repo/` には、現行版の Stanza 間連携を観測するための最小プロジェクトを置く。
 
 ```text
-current/
-  fixtures/
-    inter-stanza.html
-    sample-data.json
-  stanzas/
-    coordination-sender/
-    coordination-receiver/
+current-pnpm/
+  mise.toml
+  generated-repo/
+    package.json
+    pnpm-lock.yaml
+    fixtures/
+      inter-stanza.html
+      sample-data.json
+    stanzas/
+      coordination-sender/
+      coordination-receiver/
 ```
 
 - `coordination-sender` は `value` parameter を受け取り、ボタン押下時に `selectedValue` event を dispatch する。payload は `detail.payload.label` で観測する。
 - `coordination-receiver` は `selected-label` と `data-url` attributes を Stanza parameters として読み、受け取った値と `data-url` から取得した JSON の先頭 item label を表示する。
+- `coordination-receiver` は現行 runtime の event-map 経路で呼ばれる `handleEvent()` を最小実装する。
 - `fixtures/inter-stanza.html` は `togostanza--container` 内に sender / receiver / `togostanza--event-map` / `togostanza--data-source` を並べた最小HTML。`togostanza--event-map` は `selectedValue` の `payload.label` を receiver の `selected-label` に渡す。`togostanza--data-source` は `sample-data.json` を読み、receiver の `data-url` に渡す。
 - `fixtures/sample-data.json` は `togostanza--data-source` から receiver へ渡る外部データの最小サンプル。receiver はこの JSON の `items[0].label` を表示する。
 
-## 実行予定コマンド
+## 実行コマンド
 
-現行版の観測では、必要になった時点で `current/` で次を実行する予定。
+現行版の確認は `current-pnpm/generated-repo/` で行う。
 
 ```sh
-mise exec -- npm install
-mise exec -- npx togostanza build --output-path dist
+cd workbench/cases/006-inter-stanza-coordination/current-pnpm/generated-repo
+mise trust ../mise.toml
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build 後は `current/fixtures/inter-stanza.html` を browser で開き、sender のボタン押下後に receiver の `selected-label` が更新されることと、`data-url` 経由で `sample-data.json` の label が表示されることを確認する。
+build 後は fixture 用 package script で `fixtures/inter-stanza.html` を配信し、browser で開く。
+sender のボタン押下後に receiver の `selected-label` が更新されることと、`data-url` 経由で `sample-data.json` の label が表示されることを確認する。
+
+```sh
+mise exec -- pnpm run serve:fixture
+```
 
 ## 現行版で観測すること
 
@@ -58,11 +73,49 @@ build 後は `current/fixtures/inter-stanza.html` を browser で開き、sender
 
 ### 現行版観測状況
 
-- `current/` の fixture は作成済み。
-- `npm install` は未実行。
-- `mise exec -- npx togostanza build --output-path dist` は未実行。
-- browser での `fixtures/inter-stanza.html` 確認は未実行。
-- そのため、上記の現行版挙動はまだ実測ではなく、fixture が観測する予定の内容として記録している。
+確認済み。
+
+- 確認日: 2026-06-22
+- 作業ディレクトリ: `workbench/cases/006-inter-stanza-coordination/current-pnpm/generated-repo/`
+- Node.js: `v18.20.4`
+- pnpm: `9.15.9`
+- `togostanza`: `3.0.0-beta.57`
+- 確認URL: `http://127.0.0.1:4176/fixtures/inter-stanza.html`
+
+### 実行したコマンド
+
+```sh
+cd workbench/cases/006-inter-stanza-coordination/current-pnpm/generated-repo
+mise trust ../mise.toml
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza --version
+mise exec -- pnpm exec togostanza build --output-path dist
+mise exec -- pnpm run serve:fixture
+```
+
+`mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。
+
+`mise trust`、`install`、`build`、local HTTP server は、Codex sandbox の権限制約、network 制限、または watcher 制限を避けるため、承認済みの通常コマンド実行で行った。
+
+### build 結果
+
+- `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
+- `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
+- build 時に Sass deprecation warning が多数出た。
+- `dist/` には `coordination-sender.js`、`coordination-sender.css`、`coordination-receiver.js`、`coordination-receiver.css`、各 stanza の `metadata.json`、`index.html`、`-togostanza/*` が生成された。
+
+### ブラウザ観測結果
+
+- `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` は fixture DOM 上に存在した。
+- `togostanza--data-container` は fixture DOM 上に存在しない。
+- sender / receiver には open shadow root が作られた。
+- 初期状態では receiver の `selected-label` attribute は未設定で、表示値は `(none)`。
+- `togostanza--data-source` は `sample-data.json` を blob URL として receiver の `data-url` attribute に渡した。
+- receiver は `data-url` から JSON を取得し、`items[0].label` の `from-data-source` を表示した。
+- sender の `Send from-sender` ボタンを押すと、receiver の `selected-label` attribute が `from-sender` に更新され、表示値も `from-sender` になった。
+- `togostanza--event-map` は送信元 selector を持たず、container 内の `selectedValue` event を拾った。
 
 ## リメイク版で観測すること
 

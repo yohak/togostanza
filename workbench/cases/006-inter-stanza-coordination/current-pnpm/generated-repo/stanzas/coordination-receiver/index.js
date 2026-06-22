@@ -1,6 +1,8 @@
 import Stanza from 'togostanza/stanza';
 
 export default class CoordinationReceiver extends Stanza {
+  handleEvent() {}
+
   async render() {
     const selectedLabel = this.params['selected-label'] || '(none)';
     const dataUrl = this.params['data-url'];
