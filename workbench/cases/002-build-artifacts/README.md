@@ -13,10 +13,11 @@
 
 ## 入力条件
 
-- このケースの `current/` と `remake/` に同等の Stanza repository を用意する。
+- このケースの `current-pnpm/` と `remake/` に同等の Stanza repository を用意する。
 - 少なくとも1つの basic stanza と、runtime 観測用 stanza を含める。
 - repository root の `assets/` と stanza 個別 `assets/` を含める。
-- 現行版CLIは `current/mise.toml` で Node 18 系に固定する。
+- 現行版CLIは `current-pnpm/mise.toml` で Node 18 系と pnpm 9 系に固定する。
+- `generate stanza` の挙動は 001 で確認する。このケースでは、001 の生成済み stanza source を入力 fixture としてコピーし、build artifact の観測に集中する。
 
 ## 現行版で観測すること
 
@@ -56,75 +57,64 @@
 
 ## 現行版準備メモ
 
-- 確認日: 2026-06-21
-- 作業ディレクトリ: `workbench/cases/002-build-artifacts/current/`
-- 入力 fixture は 001 の現行版 scaffold を土台にして作った。
+- 確認日: 2026-06-22
+- fixture: `workbench/cases/002-build-artifacts/current-pnpm/`
+- 生成 repository: `workbench/cases/002-build-artifacts/current-pnpm/generated-repo/`
+- `current-pnpm/` で `pnpm dlx togostanza init --name generated-repo ... --skip-install` を実行し、scaffold を生成した。
+- `generated-repo/stanzas/` は、001 の `current-npm/generated-repo/stanzas/` からコピーした。
 - root asset として `assets/root-asset.txt` を追加した。
 - stanza 個別 asset として `stanzas/hello/assets/local-asset.txt` と `stanzas/hello-world/assets/local-asset.txt` を追加した。
-- Node version は `current/mise.toml` で Node 18 系に固定する。
+- Node version と pnpm version は `current-pnpm/mise.toml` で固定する。
+
+### mise 設定
+
+```toml
+[tools]
+node = "18"
+pnpm = "9"
+```
 
 ### 実行したコマンド
 
 ```sh
-cd workbench/cases/002-build-artifacts/current
+cd workbench/cases/002-build-artifacts/current-pnpm
 
-mise trust workbench/cases/002-build-artifacts/current/mise.toml
+mise trust ./mise.toml
 mise exec -- node -v
-mise exec -- npm -v
-mise exec -- npx togostanza --version
-mise exec -- npm install
-mise exec -- npx togostanza build --output-path dist
-mise exec -- npx togostanza b --output-path dist
+mise exec -- pnpm -v
+
+mise exec -- pnpm dlx togostanza init \
+  --git-url "" \
+  --name generated-repo \
+  --license MIT \
+  --package-manager npm \
+  --skip-install \
+  --skip-git
+
+cd generated-repo
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza --version
+mise exec -- pnpm exec togostanza build --output-path dist
+mise exec -- pnpm exec togostanza b --output-path dist
 ```
 
 ### バージョン
 
 - Node: `v18.20.4`
-- npm: `10.7.0`
+- pnpm: `9.15.9`
 - togostanza: `3.0.0-beta.57`
 
 ### install 結果
 
-`mise exec -- npm install` は成功した。
-
-Node 18 に対して、次の dependency engine warning が出る。
-
-- `chokidar@5.0.0`: `node >= 20.19.0`
-- `mktemp@2.0.3`: `node 20 || 22 || 24`
-- `readdirp@5.0.0`: `node >= 20.19.0`
-- `sass@1.101.0`: `node >=20.19.0`
-
-warning のみで、dependency は `up to date` だった。
+`mise exec -- pnpm install` は成功した。
+`pnpm-lock.yaml` が生成され、`togostanza 3.0.0-beta.57` が install された。
 
 ### CLI build 結果
 
-`mise exec -- npx togostanza build --output-path dist` は、この実行環境では失敗した。
-短縮形の `mise exec -- npx togostanza b --output-path dist` も同じ失敗だった。
+`mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
+短縮形の `mise exec -- pnpm exec togostanza b --output-path dist` も成功した。
 
-```text
-Error: EMFILE: too many open files, watch
-    at FSWatcher._handle.onchange (node:internal/fs/watchers:207:21)
-...
-Node.js v18.20.4
-```
-
-`build` は内部で Broccoli watcher を起動し、初回 build 成功後に watcher を止める構造になっている。
-このため、1回限りの build でも watcher 初期化は避けられない。
-この環境では `watchman` は見つからなかった。
-
-### artifact 構造の補助観測
-
-公式CLIコマンドとしての `build` は上記の watcher error で失敗した。
-ただし、artifact 構造を確認するため、現行版の内部 `composeTree()` を watcher なしで1回だけ実行したところ、`dist/` は生成できた。
-この結果は CLI 成功ではなく、生成物構造の補助観測として扱う。
-
-補助観測で使ったコマンド:
-
-```sh
-mise exec -- node --input-type=module -e "import path from 'path'; import broccoli from 'broccoli'; import TreeSync from 'tree-sync'; import { composeTree } from './node_modules/togostanza/src/commands/-build-internal.mjs'; const repositoryDir = path.resolve('.'); const builder = new broccoli.Builder(composeTree(repositoryDir, { environment: 'production' })); try { await builder.build(); new TreeSync(builder.outputPath, 'dist').sync(); } finally { await builder.cleanup(); }"
-```
-
-この補助観測では Dart Sass の deprecation warning が多数出た。
+build 時は Dart Sass の deprecation warning が多数出た。
 
 ### dist tree summary
 
@@ -144,11 +134,11 @@ dist/
   hello-world/metadata.json
   hello-world/assets/local-asset.txt
   assets/root-asset.txt
-  stanza-a433efc5.js
-  stanza-a433efc5.js.map
+  stanza-07dfec38.js
+  stanza-07dfec38.js.map
   -togostanza/
-    Layout-b22dbe15.js
-    Layout-b22dbe15.js.map
+    Layout-7c8ef6c1.js
+    Layout-7c8ef6c1.js.map
     help-app.js
     help-app.js.map
     index-app.js
@@ -161,8 +151,8 @@ dist/
 - 各 stanza に `${id}/metadata.json` が生成された。
 - repository root の `assets/root-asset.txt` は `dist/assets/root-asset.txt` にコピーされた。
 - stanza 個別の `assets/local-asset.txt` は `dist/${id}/assets/local-asset.txt` にコピーされた。
-- `${id}.js` は共有 chunk `./stanza-a433efc5.js` を相対 import する。
-- help preview 関連として `index.html` と `-togostanza/help-app.js`、`-togostanza/index-app.js`、`-togostanza/Layout-b22dbe15.js` が生成された。
+- `${id}.js` は共有 chunk `./stanza-07dfec38.js` を相対 import する。
+- help preview 関連として `index.html` と `-togostanza/help-app.js`、`-togostanza/index-app.js`、`-togostanza/Layout-7c8ef6c1.js` が生成された。
 - `dist/` は Git 管理しない。
 
 ## リメイク版観測メモ

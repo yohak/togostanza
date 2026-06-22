@@ -122,7 +122,7 @@ Git 管理しないものは次の通り。
 
 ## ケース別の初期方針
 
-- 002 build artifacts: 001 の scaffold に近い最小 Stanza repository を current に置き、`build --output-path dist` の生成物を観測する。`dist/` は Git 管理せず、tree と重要ファイルだけ README に記録する。
+- 002 build artifacts: 001 の scaffold に近い最小 Stanza repository を `current-pnpm/generated-repo/` に置き、`build --output-path dist` の生成物を観測する。`dist/` は Git 管理せず、tree と重要ファイルだけ README に記録する。
 - 003 runtime embedding: 002 の build 結果を前提にするか、同等の current を作る。help preview ではない最小HTMLを current に置く。
 - 004 runtime parameters: parameter 観測用 Stanza を current に置く。値と型が画面またはログで分かるようにする。
 - 005 Stanza source API: APIごとに最小 Stanza source を作る。`this.query()` など外部通信が絡むものは、観測用の最小 endpoint またはモック方針を README に書く。

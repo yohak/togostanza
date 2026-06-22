@@ -48,7 +48,9 @@ workbench/
         node_modules/
     002-build-artifacts/
       README.md
-      current/
+      current-pnpm/
+        mise.toml
+        generated-repo/
       remake/
 ```
 
