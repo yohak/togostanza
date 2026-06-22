@@ -18,7 +18,7 @@ Stanza Web Component が、一般的なWebサイトへ直接埋め込めるこ�
 - HTML は `<script type="module" src="./{id}.js">` と `<togostanza-{id}>` を直接書く。
 - `stanza:menu-placement` が `none` の stanza も含め、直接埋め込み時に余計な menu UI が出ないことを見る。
 
-## Fixture
+## 検証環境とケース入力
 
 `current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
 `generated-repo/` は 001 の scaffold 結果を参考にした、現行版用の最小 Stanza repository として扱う。
@@ -46,7 +46,7 @@ current-pnpm/
 
 `runtime-embed.html` は help preview とは別の確認用HTMLで、build 後の `./dist/hello.js` と `./dist/menuless-hello.js` を module script として読み込み、`<togostanza-hello say-to="runtime">` と `<togostanza-menuless-hello say-to="runtime">` を直接配置する。
 
-`menuless-hello` は `metadata.json` に `"stanza:menu-placement": "none"` を持つ。Web 側 wrapper の `URL_STANZA` 組み立ては利用側ロジックなので、この case では扱わない。
+`menuless-hello` は `metadata.json` に `"stanza:menu-placement": "none"` を持つ。Web 側 wrapper の `URL_STANZA` 組み立ては利用側ロジックなので、この検証ケースでは扱わない。
 
 `remake/` はリメイク版CLI実装後に、同じ入力意図で作る。
 
@@ -69,7 +69,7 @@ build 後は、`current-pnpm/generated-repo/runtime-embed.html` を静的配信�
 mise exec -- pnpm exec togostanza serve
 ```
 
-または、build artifact の静的配信だけを確認する場合は、fixture 用 package script を使う。
+または、build artifact の静的配信だけを確認する場合は、観測補助用 package script を使う。
 
 ```sh
 mise exec -- pnpm run serve:fixture

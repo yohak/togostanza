@@ -4,7 +4,7 @@
   },
   "@id": "coordination-sender",
   "stanza:label": "Coordination Sender",
-  "stanza:definition": "Fixture stanza that dispatches an outgoing event.",
+  "stanza:definition": "Case input stanza that dispatches an outgoing event.",
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],

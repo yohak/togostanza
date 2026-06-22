@@ -2,7 +2,7 @@
 
 このディレクトリでは、現行版とリメイク版に対して同じ確認を行うための検証ケースを管理する。
 
-各検証ケースは、ケース定義と、そのケース専用の現行版 / リメイク版検証環境を同じディレクトリに置く。
+各検証ケースは、検証ケース定義と、その検証ケース専用の現行版 / リメイク版検証環境を同じディレクトリに置く。
 
 ## 目的
 
@@ -12,20 +12,20 @@
 
 ## 実行対象
 
-検証ケースは、原則としてケースごとに次の検証環境を持つ。
+検証ケースは、原則として検証ケースごとに次の検証環境を持つ。
 
-- `current/`: 現行版CLIを確認するための、そのケース専用の検証環境。
-- `remake/`: リメイク版CLIを確認するための、そのケース専用の検証環境。
+- `current/`: 現行版CLIを確認するための、その検証ケース専用の検証環境。
+- `remake/`: リメイク版CLIを確認するための、その検証ケース専用の検証環境。
 
 package manager や実行条件を分けて観測する必要がある場合は、`current-npm/`、`current-pnpm/` のように目的が分かる検証環境名を使ってよい。
 
-`README.md` はケース定義の正本として扱う。各検証環境には、必要になった時点で `package.json`、Stanza source、検証用HTMLなどを置く。
+`README.md` は検証ケース定義の正本として扱う。各検証環境には、必要になった時点で `package.json`、Stanza source、検証用HTMLなどを置く。
 
-`init` 自体の挙動を確認するケースでは、検証環境の中で `init --name <name>` を実行し、その生成先 directory を Stanza repository として扱う。検証環境直下に `mise.toml` を置き、`generated-repo/` のような生成先 directory に `package.json` や Stanza source を置く形を標準とする。
+`init` 自体の挙動を確認する検証ケースでは、検証環境の中で `init --name <name>` を実行し、その生成先 directory を Stanza repository として扱う。検証環境直下に `mise.toml` を置き、`generated-repo/` のような生成先 directory に `package.json` や Stanza source を置く形を標準とする。
 
 `node_modules/`、`dist/`、一時ログ、cache は Git 管理外とする。
 
-## ケース構造
+## 検証ケース構造
 
 ```text
 workbench/cases/
@@ -46,9 +46,9 @@ workbench/cases/
       node_modules/
 ```
 
-## ケース一覧
+## 検証ケース一覧
 
-| Case | 主な対象 | 契約 | 目的 |
+| 検証ケース | 主な対象 | 契約 | 目的 |
 | ---- | -------- | ---- | ---- |
 | [001-cli-scaffold-and-generate](./001-cli-scaffold-and-generate/) | `init` / `generate stanza` | 開発契約 | Stanza repository と Stanza source の入口を確認する。 |
 | [002-build-artifacts](./002-build-artifacts/) | `build` / `dist` | 利用契約 / 開発契約 | runtime artifact と生成物配置を確認する。 |
@@ -60,9 +60,9 @@ workbench/cases/
 | [008-react-runtime](./008-react-runtime/) | TSX / React runtime | 開発契約 | React Stanza source の mount と再描画を確認する。 |
 | [009-vue-runtime](./009-vue-runtime/) | Vue SFC runtime | 開発契約 | Vue Stanza source の mount と runtime chunk を確認する。 |
 
-## ケースの書き方
+## 検証ケースの書き方
 
-各ケースは次の項目を持つ。
+各検証ケースは次の項目を持つ。
 
 - 目的
 - 対応する方針
@@ -77,32 +77,32 @@ workbench/cases/
 
 各検証ケースは、次の順で作る。
 
-1. まずケースの `README.md` に、確認したい契約、入力条件、合格条件を明記する。
+1. まず検証ケースの `README.md` に、確認したい契約、入力条件、合格条件を明記する。
 2. `current/` などの検証環境に現行版での最小入力を作る。
 3. 必要な場合だけ、その検証環境で採用した package manager の install を行う。
-4. 現行版の観測結果をケースの `README.md` に記録する。
+4. 現行版の観測結果を検証ケースの `README.md` に記録する。
 5. `remake/` は、リメイク版CLIが実装されるまで空の検証環境として残す。
-6. リメイク版実装後、同じ入力意図を `remake/` に作り、差分をケースの `README.md` に記録する。
+6. リメイク版実装後、同じ入力意図を `remake/` に作り、差分を検証ケースの `README.md` に記録する。
 
-現行版の検証環境は、ケースの目的に必要な最小構成にする。すべてのケースで `init` から作り直す必要はない。`build`、runtime、parameter、Stanza source API など、Stanza repository が必要なケースでは、001 で作った scaffold の構成を参考にしてよい。
+現行版の検証環境は、検証ケースの目的に必要な最小構成にする。すべての検証ケースで `init` から作り直す必要はない。`build`、runtime、parameter、Stanza source API など、Stanza repository が必要な検証ケースでは、001 で作った scaffold の構成を参考にしてよい。
 
-ただし、`init` 自体の挙動を確認するケースでは、手作業で構成を作らず、検証環境内で現行版CLIの `init` を実行して生成 repository を作る。
+ただし、`init` 自体の挙動を確認する検証ケースでは、手作業で構成を作らず、検証環境内で現行版CLIの `init` を実行して生成 repository を作る。
 
 ## Node と依存の扱い
 
 現行版確認では、必要に応じて検証環境ごとに Node version を固定する。001 では `current-npm/mise.toml` と `current-pnpm/mise.toml` で Node 18 系を指定している。
 
-Node version の差分が確認対象ではない場合、Node engine warning は記録に留め、warning だけを理由にケースを止めない。実際に command が失敗する場合だけ、失敗内容を観測結果として扱う。
+Node version の差分が確認対象ではない場合、Node engine warning は記録に留め、warning だけを理由に検証ケースを止めない。実際に command が失敗する場合だけ、失敗内容を観測結果として扱う。
 
 package manager の install で作られる `node_modules/` は Git 管理しない。lockfile は、現行版依存の解決結果を固定したい場合はケース入力として Git 管理してよい。
 
-Node version はケース直下ではなく、原則として `current/mise.toml`、`current-npm/mise.toml`、`remake/mise.toml` のように検証環境ごとに分ける。ケース直下に `mise.toml` を置くと複数の検証環境へ効くため、複数環境で同じ Node version に固定したい場合だけ使う。
+Node version は検証ケース直下ではなく、原則として `current/mise.toml`、`current-npm/mise.toml`、`remake/mise.toml` のように検証環境ごとに分ける。検証ケース直下に `mise.toml` を置くと複数の検証環境へ効くため、複数環境で同じ Node version に固定したい場合だけ使う。
 
 ## Git 管理するもの
 
 Git 管理する候補は次の通り。
 
-- ケースの `README.md`
+- 検証ケースの `README.md`
 - `mise.toml`
 - `package.json`
 - `package-lock.json`
@@ -111,7 +111,7 @@ Git 管理する候補は次の通り。
 - templates
 - stylesheet
 - 検証用HTML
-- 小さな fixture data
+- 小さな観測補助データ
 
 Git 管理しないものは次の通り。
 
@@ -121,7 +121,7 @@ Git 管理しないものは次の通り。
 - 一時ログ
 - サーバ実行中に生成される一時ファイル
 
-## ケース別の初期方針
+## 検証ケース別の初期方針
 
 - 002 build artifacts: 001 の scaffold に近い最小 Stanza repository を `current-pnpm/generated-repo/` に置き、`build --output-path dist` の生成物を観測する。`dist/` は Git 管理せず、tree と重要ファイルだけ README に記録する。
 - 003 runtime embedding: 002 の build 結果を前提にするか、同等の Stanza repository を `current-pnpm/generated-repo/` に置く。help preview ではない最小HTMLを `generated-repo/` に置く。
@@ -144,6 +144,6 @@ Git 管理しないものは次の通り。
 
 現行版の `build` / `serve` は、Codex managed exec の sandboxed 実行で `EMFILE` になる場合がある。AI が確認するときは、許可済みの unsandboxed 実行として扱う。
 
-`serve` を起動した場合は、使用ポート、作業ディレクトリ、停止方法、ブラウザで確認したURLをケースの `README.md` に記録する。
+`serve` を起動した場合は、使用ポート、作業ディレクトリ、停止方法、ブラウザで確認したURLを検証ケースの `README.md` に記録する。
 
-`references/` は汚さない。試行錯誤は `sandbox/` で行い、再現可能になった確認だけを対象ケースの `current/` / `remake/` と `README.md` へ移す。
+`references/` は汚さない。試行錯誤は `sandbox/` で行い、再現可能になった確認だけを対象の検証ケースの `current/` / `remake/` と `README.md` へ移す。

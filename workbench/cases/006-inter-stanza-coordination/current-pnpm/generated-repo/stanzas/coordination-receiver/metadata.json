@@ -4,7 +4,7 @@
   },
   "@id": "coordination-receiver",
   "stanza:label": "Coordination Receiver",
-  "stanza:definition": "Fixture stanza that receives values through attributes.",
+  "stanza:definition": "Case input stanza that receives values through attributes.",
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],
@@ -31,7 +31,7 @@
   "stanza:incomingEvent": [
     {
       "stanza:key": "selectedValue",
-      "stanza:description": "Incoming event used by the fixture to document event-map compatibility."
+      "stanza:description": "Incoming event used by the observation helper to document event-map compatibility."
     }
   ],
   "stanza:outgoingEvent": []

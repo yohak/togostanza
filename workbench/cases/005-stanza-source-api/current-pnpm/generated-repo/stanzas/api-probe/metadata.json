@@ -4,7 +4,7 @@
   },
   "@id": "api-probe",
   "stanza:label": "API Probe",
-  "stanza:definition": "Fixture stanza for observing Stanza source APIs.",
+  "stanza:definition": "Case input stanza for observing Stanza source APIs.",
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],
@@ -35,7 +35,7 @@
     {
       "stanza:key": "payload",
       "stanza:type": "json",
-      "stanza:example": "{\"kind\":\"fixture\"}",
+      "stanza:example": "{\"kind\":\"observation\"}",
       "stanza:description": "JSON parameter used to observe parsed parameter values.",
       "stanza:required": false
     },
@@ -53,7 +53,7 @@
       "stanza:key": "--api-probe-accent",
       "stanza:type": "color",
       "stanza:default": "#2266aa",
-      "stanza:description": "Accent color for the fixture output."
+      "stanza:description": "Accent color for the observation output."
     }
   ],
   "stanza:incomingEvent": [],

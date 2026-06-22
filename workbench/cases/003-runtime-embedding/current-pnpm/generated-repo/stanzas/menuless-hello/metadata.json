@@ -4,7 +4,7 @@
   },
   "@id": "menuless-hello",
   "stanza:label": "Menuless Hello",
-  "stanza:definition": "Runtime embedding fixture for menu-placement none.",
+  "stanza:definition": "Case input for observing runtime embedding with menu-placement none.",
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],

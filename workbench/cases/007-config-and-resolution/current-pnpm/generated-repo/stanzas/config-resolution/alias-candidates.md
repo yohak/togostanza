@@ -4,7 +4,7 @@ These imports are intentionally not active. They document shapes to consider whe
 checking migration notes and alias compatibility.
 
 ```js
-import { fixtureLabel } from '%core/fixture-label.js';
+import { observationLabel } from '%core/observation-label.js';
 import ConfigResolution from '%stanza/config-resolution/index.js';
 ```
 

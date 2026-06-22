@@ -4,7 +4,7 @@
   },
   "@id": "parameter-probe",
   "stanza:label": "Parameter Probe",
-  "stanza:definition": "Fixture stanza for observing runtime parameter conversion.",
+  "stanza:definition": "Case input stanza for observing runtime parameter conversion.",
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],
@@ -35,7 +35,7 @@
     {
       "stanza:key": "payload",
       "stanza:type": "json",
-      "stanza:example": "{\"kind\":\"fixture\",\"values\":[1,2]}",
+      "stanza:example": "{\"kind\":\"observation\",\"values\":[1,2]}",
       "stanza:description": "JSON parameter used to observe parsed object or array values.",
       "stanza:required": false
     },
@@ -64,7 +64,7 @@
       "stanza:key": "--parameter-probe-accent",
       "stanza:type": "color",
       "stanza:default": "#245c73",
-      "stanza:description": "Accent color for the fixture output."
+      "stanza:description": "Accent color for the observation output."
     },
     {
       "stanza:key": "--parameter-probe-gap",

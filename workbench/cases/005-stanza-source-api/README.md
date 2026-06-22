@@ -53,7 +53,7 @@
 - `importWebFontCSS()` の link 注入先と重複制御。
 - `handleAttributeChange()` の既定再描画や debounce の詳細。
 
-## 現行版 fixture
+## ケース入力と観測補助
 
 `current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
 `generated-repo/` に現行版 `togostanza` 用の最小 stanza repository を置く。
@@ -87,9 +87,9 @@ current-pnpm/
 `current-pnpm/generated-repo/package.json` は `togostanza` を `github:togostanza/togostanza` として参照し、`current-pnpm/mise.toml` は Node 18 と pnpm 9 を指定する。
 
 `current-pnpm/generated-repo/fixtures/source-api.html` は build 後の `../dist/api-probe.js` を直接読み込み、help preview ではなく通常の HTML 埋め込みとして Stanza source API を確認する。
-この fixture は query endpoint あり / なしの2つの `<togostanza-api-probe>` と、attribute mutation 用の操作ボタンを持つ。
+この観測補助HTMLは query endpoint あり / なしの2つの `<togostanza-api-probe>` と、attribute mutation 用の操作ボタンを持つ。
 
-## API coverage
+## API 観測範囲
 
 - `this.params`: `label`、`limit`、`enabled`、`payload`、`query-endpoint` を `metadata.json` に定義し、`index.js` から template parameter に渡して `templates/stanza.html.hbs` に出力する。
 - `this.root`: render 前後で `this.root?.querySelector("main")` を確認し、render 後の `main.dataset.apiProbeRoot` を更新する。
@@ -149,7 +149,7 @@ mise exec -- pnpm run serve:fixture
 - build 時に Sass deprecation warning が多数出た。
 - `dist/` には `api-probe.js`、`api-probe.js.map`、`api-probe.css`、`api-probe.html`、`api-probe/metadata.json`、`index.html`、`-togostanza/*` が生成された。
 
-Local browser fixture server:
+ローカルブラウザ観測サーバ:
 
 ```sh
 mise exec -- pnpm run serve:fixture
@@ -157,61 +157,61 @@ mise exec -- pnpm run serve:fixture
 
 URL: `http://127.0.0.1:4175/fixtures/source-api.html`.
 
-The local server also handled `/sparql` and logged request method, content type, and body for `this.query()` observation.
+ローカルサーバは `/sparql` も処理し、`this.query()` 観測用に request method、content type、body を記録した。
 
-## Observations
+## 観測結果
 
-- `mise trust`、Node 18 selection、pnpm 9 selection work for the fixture.
-- The fixture source covers the target Stanza source APIs without changing the import shape: `import Stanza from 'togostanza/stanza'` and `export default class ApiProbe extends Stanza`.
-- Dependency installation and build were confirmed with the repository's normal command in the approved execution environment.
-- Browser confirmation is complete for the current fixture.
+- `mise trust`、Node 18 選択、pnpm 9 選択は検証環境で動作した。
+- ケース入力の source は、import 形状を変えずに対象 Stanza source API を扱う。import 形状は `import Stanza from 'togostanza/stanza'` と `export default class ApiProbe extends Stanza`。
+- 依存 install と build は、承認済みの実行環境で repository の通常コマンドとして確認した。
+- 現行版検証環境のブラウザ確認は完了している。
 
-### Browser observations
+### ブラウザ観測
 
-Initial fixture state:
+初期観測状態:
 
-- The no-query stanza rendered with `query` status `not-run`.
-- The query stanza rendered with `query` status `ok`.
-- Both stanzas had open shadow roots.
-- `this.element` rendered as `togostanza-api-probe`.
-- `this.root` rendered as `true`.
-- `this.root.querySelector("main")` rendered as `true`.
-- After render, `main.dataset.apiProbeRoot` was `available`.
-- After render, `main.dataset.apiProbeElement` was `TOGOSTANZA-API-PROBE`.
-- `this.renderTemplate({ template, parameters })` rendered the expected `data-probe` values.
-- `this.params` values were observed as:
+- query なし stanza は `query` status `not-run` として描画された。
+- query あり stanza は `query` status `ok` として描画された。
+- どちらの stanza も open shadow root を持っていた。
+- `this.element` は `togostanza-api-probe` として描画された。
+- `this.root` は `true` として描画された。
+- `this.root.querySelector("main")` は `true` として描画された。
+- render 後、`main.dataset.apiProbeRoot` は `available` だった。
+- render 後、`main.dataset.apiProbeElement` は `TOGOSTANZA-API-PROBE` だった。
+- `this.renderTemplate({ template, parameters })` は期待した `data-probe` 値を描画した。
+- `this.params` の値は次のように観測された。
   - `label`: string.
-  - `limit`: number-like rendered value from `number` parameter.
-  - `enabled`: `true` when the boolean attribute was present.
-  - `payload`: parsed JSON rendered back with `JSON.stringify`.
-- `this.importWebFontCSS('./assets/api-probe-font.css')` injected `dist/assets/api-probe-font.css` into the shadow root.
-- The normal stylesheet link was also present as `dist/api-probe.css`.
-- Browser console error / warning was not observed.
+  - `limit`: `number` parameter 由来の number 相当の描画値。
+  - `enabled`: boolean attribute が存在するとき `true`。
+  - `payload`: parse 済み JSON を `JSON.stringify` で再描画した値。
+- `this.importWebFontCSS('./assets/api-probe-font.css')` は shadow root に `dist/assets/api-probe-font.css` を注入した。
+- 通常 stylesheet link として `dist/api-probe.css` も存在した。
+- browser console の error / warning は観測されなかった。
 
-`this.query()` observation:
+`this.query()` の観測:
 
-- `this.query()` sent `POST` when method was omitted.
-- Request content type was `application/x-www-form-urlencoded`.
-- Request body contained the template-rendered SPARQL query as `query=...`.
-- Initial query body included `LIMIT 3`.
-- After changing `limit` to `5`, subsequent query bodies included `LIMIT 5`.
+- method 未指定時、`this.query()` は `POST` を送信した。
+- request content type は `application/x-www-form-urlencoded` だった。
+- request body には、template から描画された SPARQL query が `query=...` として含まれた。
+- 初期 query body には `LIMIT 3` が含まれた。
+- `limit` を `5` に変更した後の query body には `LIMIT 5` が含まれた。
 
-Attribute mutation observations:
+attribute mutation 観測:
 
-| Operation | Render count | Last attribute | Observed value |
+| 操作 | render count | 最後の attribute | 観測値 |
 | --------- | ------------ | -------------- | -------------- |
-| Set `label="after-mutation"` | `2` | `label`, old `before-mutation`, new `after-mutation` | `stringParam` became `after-mutation` |
-| Set `limit="5"` | `3` | `limit`, old `3`, new `5` | `numberParam` became `5` |
-| Remove `enabled` | `4` | `enabled` | `booleanParam` became `false` |
-| Set changed `payload` JSON | `5` | `payload`, old initial JSON, new changed JSON | `jsonParam` became changed JSON |
+| `label="after-mutation"` を設定 | `2` | `label`, old `before-mutation`, new `after-mutation` | `stringParam` は `after-mutation` になった |
+| `limit="5"` を設定 | `3` | `limit`, old `3`, new `5` | `numberParam` は `5` になった |
+| `enabled` を削除 | `4` | `enabled` | `booleanParam` は `false` になった |
+| 変更後の `payload` JSON を設定 | `5` | `payload`, old initial JSON, new changed JSON | `jsonParam` は変更後 JSON になった |
 
-`importWebFontCSS()` duplicate behavior:
+`importWebFontCSS()` の重複挿入挙動:
 
-- The initial render produced one `dist/assets/api-probe-font.css` link in the target shadow root.
-- Each later render added another identical `dist/assets/api-probe-font.css` link.
-- No duplicate suppression was observed in this fixture.
+- 初回 render では、対象 shadow root に `dist/assets/api-probe-font.css` link が1つ作られた。
+- その後の各 render で、同じ `dist/assets/api-probe-font.css` link が追加された。
+- この検証ケースでは重複抑止は観測されなかった。
 
-## Pending checks
+## 未確認事項
 
-- Decide whether `importWebFontCSS()` duplicate link insertion is a required compatibility detail or just current implementation behavior.
-- If exact `handleAttributeChange()` `oldValue` / `newValue` for removed boolean attributes matters, add a fixture that renders `null` distinctly from empty string. The current template uses `|| ''`, so removal is visible through `booleanParam: false` but not through a distinct rendered `newValue`.
+- `importWebFontCSS()` の link 重複挿入を互換必須の詳細とするか、現行実装の詳細に留めるか。
+- boolean attribute 削除時の `handleAttributeChange()` `oldValue` / `newValue` を厳密に見る必要がある場合は、`null` と空文字を区別して描画するケース入力を追加する。現在の template は `|| ''` を使うため、削除は `booleanParam: false` では見えるが、`newValue` の distinct な描画値としては見えない。

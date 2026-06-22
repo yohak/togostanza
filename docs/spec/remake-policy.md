@@ -145,6 +145,21 @@ method 未指定の `this.query()` は `POST` を既定 method とする。
 
 `this.handleAttributeChange(name, oldValue, newValue)` は、custom element attribute 変更時の lifecycle hook として維持する。既定の再描画や debounce などの内部スケジューリング詳細は、この文書では固定しない。
 
+### `togostanza-utils`
+
+`references/metastanza` が直接利用している `togostanza-utils` API / import path は、少なくとも drop-in 互換対象として扱う。
+
+理想形は、`togostanza-utils` package 自体に手を入れず、既存 package がそのまま動くことである。そのために必要な runtime compatibility は、実プロジェクト調査と追加 workbench 検証ケースで観測する。
+
+`root.host.stanzaInstance.element` のような現行 runtime 内部構造への依存は、通常は公開 API として望ましくない。ただし、`togostanza-utils` の drop-in 互換のために必要な範囲では、remake runtime 側の compat property として受け入れる。
+
+対象範囲の初期候補は次の通り。
+
+- `togostanza-utils`
+- `togostanza-utils/load-data`
+- `togostanza-utils/apply-filter`
+- `togostanza-utils/spinner.png`
+
 Handlebars template は維持する。
 
 - `templates/*.hbs` は build 入力として扱う。

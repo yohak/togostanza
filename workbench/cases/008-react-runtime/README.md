@@ -11,7 +11,7 @@ TSX / React で書かれた Stanza source が、TogoStanza runtime の Shadow DO
 - `this.params` を React component props へ渡せることを確認する。
 - attribute 変更時に React 側を再描画できることを確認する。
 - `this.importWebFontCSS()` が React runtime stanza でも使えることを確認する。
-- MUI / Emotion / TanStack Query / Jotai / Redux provider stack はこの case に持ち込まない。
+- MUI / Emotion / TanStack Query / Jotai / Redux provider stack はこの検証ケースに持ち込まない。
 
 ## 入力条件
 
@@ -67,5 +67,5 @@ TSX / React で書かれた Stanza source が、TogoStanza runtime の Shadow DO
 
 ## 未決定事項
 
-- MUI / Emotion などの provider stack を別 case にするかどうか。
+- MUI / Emotion などの provider stack を別の検証ケースにするかどうか。
 - React version 差分を互換対象に含めるかどうか。

@@ -62,5 +62,5 @@ Vue SFC を使う既存 Stanza source が、TogoStanza runtime の Shadow DOM �
 
 ## 未決定事項
 
-- Vue 以外の framework runtime を追加 case にするかどうか。
+- Vue 以外の framework runtime を追加の検証ケースにするかどうか。
 - Vue version 差分を互換対象に含めるかどうか。

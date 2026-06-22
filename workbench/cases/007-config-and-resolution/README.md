@@ -21,7 +21,7 @@ build 設定、import 解決、asset 参照の扱いを確認し、既存 Stanza
 - Sass alias `@use "@/common.scss"` を含む。
 - 依存 package 内 asset import を含む。これは `togostanza-utils` 関数 API 互換とは分離し、asset resolution だけを見る。
 
-## fixture 構造
+## ケース入力と観測補助
 
 ```text
 current-pnpm/
@@ -38,7 +38,7 @@ current-pnpm/
     fixtures/
       config-resolution.html
     lib/
-      fixture-label.js
+      observation-label.js
     vendor/
       case-007-asset-package/
         package.json
@@ -56,13 +56,13 @@ current-pnpm/
           stanza.html.hbs
 ```
 
-`current-pnpm/mise.toml` は Node 18 系と pnpm 9 系を指定する。case 直下には置かない。
+`current-pnpm/mise.toml` は Node 18 系と pnpm 9 系を指定する。検証ケース直下には置かない。
 
 `togostanza-build.mjs` と `togostanza-build.js` は、どちらも無害な marker plugin を返すだけにしている。現行 build が読み込んだ場合は、`case-007: ... was executed` という warning で検出できる。ファイル作成、削除、外部通信などの副作用は持たせない。
 
 `stanzas/config-resolution/index.js` は、次の解決を active import / active reference として含む。
 
-- `../../lib/fixture-label.js` への相対 import
+- `../../lib/observation-label.js` への相対 import
 - `./assets/local-marker.svg` への JavaScript asset import
 - `case-007-asset-package/package-marker.svg` への JavaScript package asset import
 - `style.scss` 内の `url("./assets/local-marker.svg")`
@@ -96,13 +96,13 @@ mise exec -- pnpm install
 mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build 後は fixture 用 package script で `fixtures/config-resolution.html` を配信し、browser で開く。
+build 後は観測補助用 package script で `fixtures/config-resolution.html` を配信し、browser で開く。
 
 ```sh
 mise exec -- pnpm run serve:fixture
 ```
 
-設定ファイルの片方だけを一時的に退避して `.mjs` と `.js` の読み込み差分も観測する。その場合も、退避はこの case の `current-pnpm/generated-repo/` 内だけで行い、観測後に fixture を元へ戻す。
+設定ファイルの片方だけを一時的に退避して `.mjs` と `.js` の読み込み差分も観測する。その場合も、退避はこの検証ケースの `current-pnpm/generated-repo/` 内だけで行い、観測後にケース入力を元へ戻す。
 
 ### 現行版の観測状況
 
@@ -137,7 +137,7 @@ mise exec -- pnpm run serve:fixture
 - `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
 - `tsconfig.json` が存在すると現行 build は TypeScript support を有効化する。
 - `allowJs` なしの初回 build は `TS18003: No inputs were found in config file ... tsconfig.json` で失敗した。
-- JS source の fixture として `tsconfig.json` に `allowJs: true` を追加した後、`mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
+- JS source のケース入力として `tsconfig.json` に `allowJs: true` を追加した後、`mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
 - build 時に Sass deprecation warning が多数出た。
 - `dist/` には `config-resolution.js`、`config-resolution.css`、`config-resolution.html`、`config-resolution/metadata.json`、`config-resolution/assets/local-marker.svg`、`assets/root-public-marker.txt`、`index.html`、`-togostanza/*` が生成された。
 - Sass alias `@use "@/common.scss"` を含めた build は成功し、`dist/config-resolution.css` に `--case-007-accent: #2f6f73` が出力された。
@@ -153,21 +153,21 @@ mise exec -- pnpm run serve:fixture
 | `.mjs` のみ | 成功 | 出なかった |
 | `.js` のみ | 成功 | 出なかった |
 
-この fixture では、現行 build が `togostanza-build.mjs` / `togostanza-build.js` を Rollup plugin として読み込む挙動は観測されなかった。
+この検証ケースでは、現行 build が `togostanza-build.mjs` / `togostanza-build.js` を Rollup plugin として読み込む挙動は観測されなかった。
 
 ### asset 解決結果
 
-- `../../lib/fixture-label.js` の相対 import は解決し、browser 上で `case-007 relative import resolved` と表示された。
+- `../../lib/observation-label.js` の相対 import は解決し、browser 上で `case-007 relative import resolved` と表示された。
 - JavaScript からの `./assets/local-marker.svg` import は `data:image/svg+xml,...` に inline された。
 - JavaScript からの package asset import は build 成功し、browser 上では `data:image/svg+xml,...` の inline URL として描画された。
 - shadow root 内の local asset `img` は `24x24`、package asset `img` は `150x150` として読み込み完了した。
 - `style.scss` 内の `url("./assets/local-marker.svg")` は `dist/config-resolution.css` に同じ相対 path のまま出力された。
 - `style.scss` 内の `@use "@/common.scss"` は build 成功し、`--case-007-accent` が `dist/config-resolution.css` に反映された。
-- browser 上でも `--case-007-accent: #2f6f73` が host に入り、`.config-resolution-fixture` の left border は `rgb(47, 111, 115)` / `4px` になった。
+- browser 上でも `--case-007-accent: #2f6f73` が host に入り、`.config-resolution-observation` の left border は `rgb(47, 111, 115)` / `4px` になった。
 - `style.scss` 内の `url("./assets/local-marker.svg")` は browser 上では `http://127.0.0.1:4177/dist/assets/local-marker.svg` として解決された。
 - stanza asset は `dist/config-resolution/assets/local-marker.svg` に出力された。
 - root asset は `dist/assets/root-public-marker.txt` に出力され、`http://127.0.0.1:4177/dist/assets/root-public-marker.txt` は `200` で `case-007 root public asset marker` を返した。
-- Stanza source が表示した root public asset path は `./assets/root-public-marker.txt`。この path は direct fixture URL `fixtures/config-resolution.html` を基準にすると `fixtures/assets/root-public-marker.txt` へ解決され、HTTP status は `404` だった。
+- Stanza source が表示した root public asset path は `./assets/root-public-marker.txt`。この path は direct embed URL `fixtures/config-resolution.html` を基準にすると `fixtures/assets/root-public-marker.txt` へ解決され、HTTP status は `404` だった。
 - browser console の error / warning は観測されなかった。
 
 ## リメイク版で観測すること

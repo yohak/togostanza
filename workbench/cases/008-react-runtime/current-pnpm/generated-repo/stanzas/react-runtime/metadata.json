@@ -4,7 +4,7 @@
   },
   "@id": "react-runtime",
   "stanza:label": "React Runtime",
-  "stanza:definition": "Fixture for observing React TSX runtime mounting in a Stanza.",
+  "stanza:definition": "Case input for observing React TSX runtime mounting in a Stanza.",
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],
@@ -31,4 +31,3 @@
   "stanza:incomingEvent": [],
   "stanza:outgoingEvent": []
 }
-

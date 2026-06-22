@@ -18,7 +18,7 @@ Stanza 間連携の入口を確認し、維持するものと再設計するも�
 - outgoing event と receiver `handleEvent()` 呼び出しを観測できるようにする。
 - data source から receiver へデータが渡るケースを用意する。
 
-## fixture 構造
+## ケース入力と観測補助
 
 `current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
 `generated-repo/` には、現行版の Stanza 間連携を観測するための最小プロジェクトを置く。
@@ -56,7 +56,7 @@ mise exec -- pnpm install
 mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build 後は fixture 用 package script で `fixtures/inter-stanza.html` を配信し、browser で開く。
+build 後は観測補助用 package script で `fixtures/inter-stanza.html` を配信し、browser で開く。
 sender のボタン押下後に receiver の `selected-label` が更新されることと、`data-url` 経由で `sample-data.json` の label が表示されることを確認する。
 
 ```sh
@@ -111,8 +111,8 @@ mise exec -- pnpm run serve:fixture
 
 ### ブラウザ観測結果
 
-- `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` は fixture DOM 上に存在した。
-- `togostanza--data-container` は fixture DOM 上に存在しない。
+- `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` は観測補助HTMLの DOM 上に存在した。
+- `togostanza--data-container` は観測補助HTMLの DOM 上に存在しない。
 - sender / receiver には open shadow root が作られた。
 - 初期状態では receiver の `selected-label` attribute は未設定で、表示値は `(none)`。
 - `togostanza--data-source` は `sample-data.json` を blob URL として receiver の `data-url` attribute に渡した。

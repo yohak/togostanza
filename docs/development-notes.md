@@ -62,7 +62,7 @@ Error: EMFILE: too many open files, watch
 
 ### `npm install` の失敗
 
-`npm install` が npm の cache、store、設定ディレクトリ、権限、network sandbox などの理由で失敗した場合は、現行版CLIや fixture の失敗と混同しない。
+`npm install` が npm の cache、store、設定ディレクトリ、権限、network sandbox などの理由で失敗した場合は、現行版CLIや観測補助の失敗と混同しない。
 
 ```text
 Your cache folder contains root-owned files
@@ -108,10 +108,10 @@ in-app browser の `evaluate` は DOM 読み取りには使えるが、任意の
 
 - `document.querySelector(...).setAttribute(...)` を `evaluate` 内で直接呼ぶ。
 - `window.__lastActionName = ...` のように page global を追加する。
-- `window.parameterProbeFixture` のような page 側 global helper を `evaluate` から呼ぶ。
+- `window.parameterProbeObserver` のような page 側 global helper を `evaluate` から呼ぶ。
 - `javascript:` URL で mutation を起こす。
 
-attribute mutation をブラウザで観測したい場合は、fixture HTML に操作ボタンを置き、実ページ上の user interaction として mutation を発火できるようにする。
+attribute mutation をブラウザで観測したい場合は、観測補助HTMLに操作ボタンを置き、実ページ上の user interaction として mutation を発火できるようにする。
 
 ## Python 系ツールを標準手順にしない
 

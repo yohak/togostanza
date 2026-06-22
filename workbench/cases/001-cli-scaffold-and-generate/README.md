@@ -16,8 +16,8 @@
 - 空の作業ディレクトリから開始する。
 - 現行版では package manager 経由で `togostanza init` を起動し、手作業で Stanza repository 構成を作らない。
 - `references/` は変更しない。
-- このケースでは、現行版CLIを Node 18 系で確認する。Node version は各 fixture の `mise.toml` で固定する。
-- `current-npm/` と `current-pnpm/` は実行環境の fixture とし、それぞれの中で `init --name generated-repo` を実行する。
+- この検証ケースでは、現行版CLIを Node 18 系で確認する。Node version は各検証環境の `mise.toml` で固定する。
+- `current-npm/` と `current-pnpm/` は検証環境とし、それぞれの中で `init --name generated-repo` を実行する。
 - `generated-repo/` は `init` が生成した Stanza repository として扱う。
 - `current-npm/` は npm で `init`、`install`、`generate stanza` を確認する。
 - `current-pnpm/` は pnpm 9 系で CLI 起動、依存取得、local CLI 実行を確認する。ただし現行版 `init --package-manager` は pnpm を選べないため、`init` は `--skip-install` で実行する。
@@ -65,7 +65,7 @@
 ## npm 観測メモ (`current-npm/generated-repo/`)
 
 - 確認日: 2026-06-22
-- fixture: `workbench/cases/001-cli-scaffold-and-generate/current-npm/`
+- 検証環境: `workbench/cases/001-cli-scaffold-and-generate/current-npm/`
 - 生成 repository: `workbench/cases/001-cli-scaffold-and-generate/current-npm/generated-repo/`
 - Node.js: `v18.20.4`
 - npm: `10.7.0`
@@ -118,7 +118,7 @@ mise exec -- npx togostanza upgrade --help
 
 ### 観測結果
 
-- `current-npm/mise.toml` は、Node 18 固定のために観測用 fixture として追加した。
+- `current-npm/mise.toml` は、Node 18 固定のために観測用の検証環境設定として追加した。
 - `current-npm/` 内で `init --name generated-repo` を実行すると、`generated-repo/` directory が作成された。既存の directory がある場合は、空でも `destination path already exists` で失敗する。
 - `init` は `package.json`、`README.md`、`.gitignore`、`common.scss`、`assets/.keep`、`lib/.keep`、`.github/workflows/publish.yml` を生成した。
 - 生成直後の `package.json` は `dependencies.togostanza` に `github:togostanza/togostanza` を持つ。
@@ -164,12 +164,12 @@ current-npm/
 - `npm install` では、`sass@1.101.0`、`chokidar@5.0.0`、`readdirp@5.0.0` などが Node `>=20.19.0` を要求する `EBADENGINE` warning を出した。
 - `npm install` は deprecated package warning と audit warning を多数出した。
 - `build` は Sass の legacy JS API、`@import`、global builtin、color function などの deprecation warning を多数出した。
-- このケースでは scaffold / generate の確認を目的にするため、これらの warning は記録に留める。
+- この検証ケースでは scaffold / generate の確認を目的にするため、これらの warning は記録に留める。
 
 ## pnpm 観測メモ (`current-pnpm/generated-repo/`)
 
 - 確認日: 2026-06-22
-- fixture: `workbench/cases/001-cli-scaffold-and-generate/current-pnpm/`
+- 検証環境: `workbench/cases/001-cli-scaffold-and-generate/current-pnpm/`
 - 生成 repository: `workbench/cases/001-cli-scaffold-and-generate/current-pnpm/generated-repo/`
 - Node.js: `v18.20.4`
 - pnpm: `9.15.9`

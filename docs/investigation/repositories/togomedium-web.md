@@ -92,39 +92,39 @@ dist/
 
 ### TogoStanza 契約依存
 
-| 観点 | 観測 | 分類 | 影響範囲 | fixture 化の切り出し方 |
+| 観点 | 観測 | 判断材料 | 影響範囲 | ケース入力への抽出案 |
 | ---- | ---- | ---- | ---- | ---- |
-| `this.params` | 13 React stanza と 2 prototype stanza で利用。React stanza は型付き params を `makeApp()` で App props へ渡す。 | 互換必須 | TS/TSX source、metadata parameter、React props 境界。 | 005 に TSX entry + typed params の最小 source を追加候補。 |
-| `this.root` | `TogoMediumReactStanza` が `this.root.querySelector("main")!` を class field で取得。各 React stanza は `stanzaElement={this.root}` として App に渡す。 | 互換必須 / fixture 対象 | Shadow DOM 初期 DOM、React mount target、React component 側の shadow root 操作。 | 新規小粒 case 候補: TSX React provider + `this.root.querySelector("main")` mount。 |
-| `this.root.querySelector("main")` | `components/providers/StanzaReactProvider.tsx` で React root 作成に必須。 | 互換必須 | React runtime stanza 全体。`main` が存在しないと mount 不能。 | 005 の root/main 契約に React mount を追加候補。 |
-| `renderTemplate()` | `gmdb-gms-by-tid` と `gmdb-roundtree` の prototype で利用。 | 互換必須だが実プロジェクト内では旧寄り | prototype stanza の維持。 | 既存 005 で十分。prototype 由来の追加 fixture は優先度低。 |
-| `importWebFontCSS()` | `TogoMediumReactStanza.render()` が Google Fonts を注入。`utils/stanza.ts` にも同等 helper。 | 互換必須 / fixture 対象 | React/MUI 表示の font 読み込み、Shadow DOM link 注入。 | 005 に既存。React fixture では provider 経由で再確認候補。 |
-| `handleAttributeChange()` | `TogoMediumReactStanza` が override し、attribute change ごとに `_render()`。 | 互換必須 | Web wrapper から属性が変わる場合の React 再描画。 | 005 の attribute mutation を React fixture にも適用候補。 |
-| `this.query()` | 対象 source では未検出。 | 既存 005 で維持、実プロジェクト由来では追加根拠なし | なし | 追加 fixture 不要。 |
-| `stanza:type` / `stanza:parameter` | 15 metadata すべてに `stanza:parameter`。TogoMedium 側は `string`、`color`、空 parameter が多い。 | 互換必須 | metadata 公開 interface、Web wrapper の属性名。 | 004 に `string` type と snake_case attribute を追加候補。 |
-| `stanza:menu-placement` | 全 stanza が `none`。Web wrapper も `togostanza-menu-placement="none"` を共通指定。 | fixture / regression 対象 | help/menu 抑制、Web 埋め込み時の余計な UI 非表示。 | 003 または新小粒 case で direct embed artifact + menu none を確認候補。 |
-| TSX / React runtime | 13 stanza が `TogoMediumReactStanza`、React 19、MUI、Emotion、TanStack Query、Jotai、Redux provider を含む。 | fixture / regression 対象 | TSX build、React runtime chunk、provider、Shadow DOM style injection。 | 新規小粒 case 候補: React + Emotion/MUI までは重いので、React mount + provider style だけに絞る。 |
-| alias / tsconfig paths | `%stanza/*`, `%api/*`, `%core/*`, `%storybook/*` を tsconfig と `togostanza-build.js` の alias で解決。Web 側は `@/*` alias も利用。 | migration note 候補 / fixture 対象 | workspace import、cross-package import、build config migration。 | 007 に `%stanza/*` + `%core/*` の最小 alias source を追加候補。 |
-| `togostanza-build.js` | `rollup-plugin-dotenv` と alias を返す旧設定。 | migration note 候補 / fixture 対象 | 旧設定ファイル、Rollup plugin escape hatch、dotenv。 | 007 に「旧設定検出 + 新設定への誘導」を migration note 候補として追加。 |
+| `this.params` | 13 React stanza と 2 prototype stanza で利用。React stanza は型付き params を `makeApp()` で App props へ渡す。 | 既存 source 互換の強い根拠 | TS/TSX source、metadata parameter、React props 境界。 | 005 に TSX entry + typed params の最小 source を追加候補。 |
+| `this.root` | `TogoMediumReactStanza` が `this.root.querySelector("main")!` を class field で取得。各 React stanza は `stanzaElement={this.root}` として App に渡す。 | 既存 source 互換の強い根拠 / 検証ケース候補 | Shadow DOM 初期 DOM、React mount target、React component 側の shadow root 操作。 | 新規小粒な検証ケース候補: TSX React provider + `this.root.querySelector("main")` mount。 |
+| `this.root.querySelector("main")` | `components/providers/StanzaReactProvider.tsx` で React root 作成に必須。 | 既存 source 互換の強い根拠 | React runtime stanza 全体。`main` が存在しないと mount 不能。 | 005 の root/main 契約に React mount を追加候補。 |
+| `renderTemplate()` | `gmdb-gms-by-tid` と `gmdb-roundtree` の prototype で利用。 | 既存 source 互換の根拠だが実プロジェクト内では旧寄り | prototype stanza の維持。 | 既存 005 で十分。prototype 由来の追加ケース入力は優先度低。 |
+| `importWebFontCSS()` | `TogoMediumReactStanza.render()` が Google Fonts を注入。`utils/stanza.ts` にも同等 helper。 | 既存 source 互換の強い根拠 / 検証ケース候補 | React/MUI 表示の font 読み込み、Shadow DOM link 注入。 | 005 に既存。React 検証ケースでは provider 経由で再確認候補。 |
+| `handleAttributeChange()` | `TogoMediumReactStanza` が override し、attribute change ごとに `_render()`。 | 既存 source 互換の強い根拠 | Web wrapper から属性が変わる場合の React 再描画。 | 005 の attribute mutation を React 検証ケースにも適用候補。 |
+| `this.query()` | 対象 source では未検出。 | 既存 005 で維持、実プロジェクト由来では追加根拠なし | なし | 追加の検証ケース不要。 |
+| `stanza:type` / `stanza:parameter` | 15 metadata すべてに `stanza:parameter`。TogoMedium 側は `string`、`color`、空 parameter が多い。 | 既存 metadata 互換の強い根拠 | metadata 公開 interface、Web wrapper の属性名。 | 004 に `string` type と snake_case attribute を追加候補。 |
+| `stanza:menu-placement` | 全 stanza が `none`。Web wrapper も `togostanza-menu-placement="none"` を共通指定。 | regression 観測候補 | help/menu 抑制、Web 埋め込み時の余計な UI 非表示。 | 003 または新小粒な検証ケースで direct embed artifact + menu none を確認候補。 |
+| TSX / React runtime | 13 stanza が `TogoMediumReactStanza`、React 19、MUI、Emotion、TanStack Query、Jotai、Redux provider を含む。 | regression 観測候補 | TSX build、React runtime chunk、provider、Shadow DOM style injection。 | 新規小粒な検証ケース候補: React + Emotion/MUI までは重いので、React mount + provider style だけに絞る。 |
+| alias / tsconfig paths | `%stanza/*`, `%api/*`, `%core/*`, `%storybook/*` を tsconfig と `togostanza-build.js` の alias で解決。Web 側は `@/*` alias も利用。 | migration note 判断材料 / 検証ケース候補 | workspace import、cross-package import、build config migration。 | 007 に `%stanza/*` + `%core/*` の最小 alias source を追加候補。 |
+| `togostanza-build.js` | `rollup-plugin-dotenv` と alias を返す旧設定。 | migration note 判断材料 / 検証ケース候補 | 旧設定ファイル、Rollup plugin escape hatch、dotenv。 | 007 に「旧設定検出 + 新設定への誘導」を migration note 候補として追加。 |
 | Web 側から生成物を読む経路 | `URL_STANZA/{stanzaName}.js` を module script で読み、`togostanza-{id}` を React wrapper で出す。 | 調査ログのみ | 利用側 Web app の URL 組み立てと wrapper 実装。 | TogoStanza remake の workbench 検証対象には含めない。direct embed artifact 自体は 003 で扱う。 |
 | outgoing event | Stanza source が `STANZA_RUN_ACTION` を `CustomEvent` として dispatch し、Web wrapper が document で受ける。 | 別調査後に 006 | Stanza source から外へ event を出す契約、`stanza:outgoingEvent`、container 伝播条件。 | 006 に Sending Events の観測要件を追加する。Web wrapper の遷移処理は検証対象外。 |
 
 ### Inventory
 
-| source path | generated artifact path | 依存している TogoStanza 契約 | 分類 | 影響範囲 | 最小 fixture 化する場合の切り出し方 | 通常 build / dev / preview 手順 |
+| source path | generated artifact path | 依存している TogoStanza 契約 | 判断材料 | 影響範囲 | ケース入力への抽出案 | 通常 build / dev / preview 手順 |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
-| `references/togomedium-web/@packages/stanza/components/providers/StanzaReactProvider.tsx` | `references/togomedium-web/@packages/stanza/dist/StanzaReactProvider-2118b75a.js` | `this.root.querySelector("main")`, `importWebFontCSS()`, `handleAttributeChange()`, React `createRoot()` | 互換必須 / fixture 候補 | 13 React stanza の共通 runtime | React App 1 個 + class field で `main` mount + attribute change rerender | `mise exec -- pnpm --filter @packages/stanza stanza:build`; dev は `stanza:server` |
-| `references/togomedium-web/@packages/stanza/stanzas/gmdb-component-detail/index.tsx` | `references/togomedium-web/@packages/stanza/dist/gmdb-component-detail.js` | `TogoMediumReactStanza`, `this.params.gmo_id`, `this.root` | 互換必須 / fixture 候補 | React Stanza の標準形 | 005/新 case に typed params + React App props を抽出 | 同上 |
-| `references/togomedium-web/@packages/stanza/stanzas/gmdb-medium-detail/index.tsx` | `references/togomedium-web/@packages/stanza/dist/gmdb-medium-detail.js` | `TogoMediumReactStanza`, `this.params.gm_id`, `this.root`, `%stanza/*` imports | 互換必須 / fixture 候補 | React runtime と workspace alias | React mount fixture と 007 alias fixture に分割 | 同上 |
-| `references/togomedium-web/@packages/stanza/stanzas/gmdb-media-alignment-table-by-components/index.tsx` | `references/togomedium-web/@packages/stanza/dist/gmdb-media-alignment-table-by-components.js` | string params (`gm_ids`, `prioritized_tax_ids`), `this.root` | 互換必須 / fixture 候補 | Web wrapper から comma-separated string attribute | 004 に `string` + snake_case attribute を追加候補 | 同上 |
-| `references/togomedium-web/@packages/stanza/stanzas/gmdb-medium-builder/index.tsx` | `references/togomedium-web/@packages/stanza/dist/gmdb-medium-builder.js` | React runtime, Redux store injection, `this.params.source_gm_id` | fixture / regression 対象 | Provider stack、Redux store、重い interactive stanza | Redux までは持ち込まず、provider option を最小化して別 fixture 候補 | 同上 |
-| `references/togomedium-web/@packages/stanza/stanzas/gmdb-gms-by-tid/index.ts` | `references/togomedium-web/@packages/stanza/dist/gmdb-gms-by-tid.js` | `togostanza/stanza`, `this.params`, `renderTemplate()`, `this.root.querySelector("#table_area")` | 互換必須だが prototype 寄り | 旧 TS source、template + DOM mount | 005 で既存 template/root 契約を維持。追加優先度低 | 同上 |
-| `references/togomedium-web/@packages/stanza/stanzas/gmdb-roundtree/index.ts` | `references/togomedium-web/@packages/stanza/dist/gmdb-roundtree.js` | `togostanza/stanza`, `this.params`, `renderTemplate()` | 互換必須だが prototype 寄り | 旧 TS source、template output | 005 に還元。追加優先度低 | 同上 |
-| `references/togomedium-web/@packages/stanza/togostanza-build.js` | build 設定のため artifact なし | Rollup plugin injection, alias, dotenv | migration note 候補 / fixture 候補 | 旧設定ファイル、workspace import 解決 | 007 に旧設定検出と `%stanza/%core/%api` alias を分けて切り出す | 同上 |
+| `references/togomedium-web/@packages/stanza/components/providers/StanzaReactProvider.tsx` | `references/togomedium-web/@packages/stanza/dist/StanzaReactProvider-2118b75a.js` | `this.root.querySelector("main")`, `importWebFontCSS()`, `handleAttributeChange()`, React `createRoot()` | 既存 source 互換の強い根拠 / 検証ケース候補 | 13 React stanza の共通 runtime | React App 1 個 + class field で `main` mount + attribute change rerender | `mise exec -- pnpm --filter @packages/stanza stanza:build`; dev は `stanza:server` |
+| `references/togomedium-web/@packages/stanza/stanzas/gmdb-component-detail/index.tsx` | `references/togomedium-web/@packages/stanza/dist/gmdb-component-detail.js` | `TogoMediumReactStanza`, `this.params.gmo_id`, `this.root` | 既存 source 互換の強い根拠 / 検証ケース候補 | React Stanza の標準形 | 005/新しい検証ケースに typed params + React App props を抽出 | 同上 |
+| `references/togomedium-web/@packages/stanza/stanzas/gmdb-medium-detail/index.tsx` | `references/togomedium-web/@packages/stanza/dist/gmdb-medium-detail.js` | `TogoMediumReactStanza`, `this.params.gm_id`, `this.root`, `%stanza/*` imports | 既存 source 互換の強い根拠 / 検証ケース候補 | React runtime と workspace alias | React mount 検証ケースと 007 alias 検証ケースに分割 | 同上 |
+| `references/togomedium-web/@packages/stanza/stanzas/gmdb-media-alignment-table-by-components/index.tsx` | `references/togomedium-web/@packages/stanza/dist/gmdb-media-alignment-table-by-components.js` | string params (`gm_ids`, `prioritized_tax_ids`), `this.root` | 既存 source 互換の強い根拠 / 検証ケース候補 | Web wrapper から comma-separated string attribute | 004 に `string` + snake_case attribute を追加候補 | 同上 |
+| `references/togomedium-web/@packages/stanza/stanzas/gmdb-medium-builder/index.tsx` | `references/togomedium-web/@packages/stanza/dist/gmdb-medium-builder.js` | React runtime, Redux store injection, `this.params.source_gm_id` | regression 観測候補 | Provider stack、Redux store、重い interactive stanza | Redux までは持ち込まず、provider option を最小化して別の検証ケース候補 | 同上 |
+| `references/togomedium-web/@packages/stanza/stanzas/gmdb-gms-by-tid/index.ts` | `references/togomedium-web/@packages/stanza/dist/gmdb-gms-by-tid.js` | `togostanza/stanza`, `this.params`, `renderTemplate()`, `this.root.querySelector("#table_area")` | 既存 source 互換の根拠だが prototype 寄り | 旧 TS source、template + DOM mount | 005 で既存 template/root 契約を維持。追加優先度低 | 同上 |
+| `references/togomedium-web/@packages/stanza/stanzas/gmdb-roundtree/index.ts` | `references/togomedium-web/@packages/stanza/dist/gmdb-roundtree.js` | `togostanza/stanza`, `this.params`, `renderTemplate()` | 既存 source 互換の根拠だが prototype 寄り | 旧 TS source、template output | 005 に還元。追加優先度低 | 同上 |
+| `references/togomedium-web/@packages/stanza/togostanza-build.js` | build 設定のため artifact なし | Rollup plugin injection, alias, dotenv | migration note 判断材料 / 検証ケース候補 | 旧設定ファイル、workspace import 解決 | 007 に旧設定検出と `%stanza/%core/%api` alias を分けて切り出す | 同上 |
 | `references/togomedium-web/tsconfig.json` / `@packages/stanza/tsconfig.json` | build 設定のため artifact なし | TSX, `jsxImportSource`, `paths` | migration note 候補 | TypeScript / TSX toolchain、workspace imports | 007 に tsconfig paths の最小例 | 同上 |
 | `references/togomedium-web/@packages/web/src/components/stanzas/*.tsx` | Web app artifact は未確認 | `URL_STANZA/{id}.js`, custom element, `togostanza-menu-placement="none"` | 調査ログのみ | Web 側から Stanza 生成物を読む利用側経路 | workbench 検証対象には含めない。`togostanza-menu-placement="none"` の direct embed 挙動は 003 で扱う | Web build は `mise exec -- pnpm --filter @packages/web build`; dev/preview は `start` |
-| `references/togomedium-web/@packages/web/src/types/stanza.d.ts` | Web app artifact は未確認 | custom element tag names and attributes | migration note 候補 / fixture 対象 | React JSX 型、attribute spelling | fixture では不要。migration note に「Web 側型定義更新」を記録 | 同上 |
-| `references/togomedium-web/@packages/web/src/consts/api.ts` | Web app artifact は未確認 | `URL_STANZA` / `VITE_URL_STANZA` で生成物 URL を決める | 互換必須 / migration note 候補 | deployment path, CDN/static hosting | 003 に configurable base URL の direct embed path を追加候補 | 同上 |
+| `references/togomedium-web/@packages/web/src/types/stanza.d.ts` | Web app artifact は未確認 | custom element tag names and attributes | migration note 判断材料 | React JSX 型、attribute spelling | workbench 検証ケース入力では不要。migration note に「Web 側型定義更新」を記録 | 同上 |
+| `references/togomedium-web/@packages/web/src/consts/api.ts` | Web app artifact は未確認 | `URL_STANZA` / `VITE_URL_STANZA` で生成物 URL を決める | 調査ログのみ | deployment path, CDN/static hosting | 利用側ロジックなので workbench 検証対象には含めない | 同上 |
 
 ## metadata 概要
 
@@ -143,7 +143,7 @@ TogoMedium 側では `metastanza` より metadata の style/parameter 数は少�
 
 ## このリポジトリの未解決事項
 
-- `TogoMediumReactStanza` 相当の React/TSX runtime fixture を既存 005 に拡張するか、新しい小粒 case に分けるか。
-- `%stanza/*` / `%api/*` / `%core/*` alias を remake でどこまで吸収するか。互換必須ではなく migration note 候補として扱うのが現時点の推奨。
+- `TogoMediumReactStanza` 相当の React/TSX runtime を既存 005 に拡張するか、新しい小粒な検証ケースに分けるか。
+- `%stanza/*` / `%api/*` / `%core/*` alias を remake でどこまで吸収するか。調査上は migration note 判断材料として記録する。
 - `togostanza-build.js` の dotenv / alias plugin を remake 側で自動実行せず、検出と移行案内に留める方針を 007 にどう反映するか。
 - Web wrapper からの `URL_STANZA/{id}.js` 読み込みは利用側ロジックとして workbench 検証対象外にする。実利用事実としてこの調査ログに残す。

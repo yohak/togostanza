@@ -17,7 +17,7 @@ HTML attributes が `metadata.json` の `stanza:parameter` と `stanza:type` に
 - 必要に応じて `date`、`datetime`、URL系 parameter も追加する。
 - Stanza source は `this.params` の値と型を画面またはログに出す。
 
-## Fixture
+## ケース入力と観測補助
 
 `current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
 `generated-repo/` に現行版 `togostanza` 用の最小 Stanza repository を置く。
@@ -40,7 +40,7 @@ current-pnpm/
           stanza.html.hbs
 ```
 
-- `current-pnpm/mise.toml` で Node 18 系と pnpm 9 系を指定する。case 直下には `mise.toml` を置かない。
+- `current-pnpm/mise.toml` で Node 18 系と pnpm 9 系を指定する。検証ケース直下には `mise.toml` を置かない。
 - `current-pnpm/generated-repo/package.json` は `togostanza` を `github:togostanza/togostanza` として参照する。tgz 化はしない。
 - `parameter-probe` は `metadata.json` に `string`、`number`、`boolean`、`json`、`single-choice`、`text` の parameter を持つ。
 - `parameter-probe` は `metadata.json` に `color`、`number`、`text` の style を持つ。style metadata 由来の値も `this.params` で観測する。
@@ -54,9 +54,9 @@ current-pnpm/
   - single-choice: `mode="compact"`、`mode="comfortable"`
   - text: `note="..."`
   - style metadata: `--parameter-probe-gap="..."`、`--parameter-probe-caption="..."`
-  - attribute mutation: `window.parameterProbeFixture` から `flag`、`count`、`payload` を変更する
+  - attribute mutation: `window.parameterProbeObserver` から `flag`、`count`、`payload` を変更する
 - in-app browser から mutation を再現できるように、`fixtures/runtime-parameters.html` には mutation 用の操作ボタンも置く。
-- `date`、`datetime`、`url` は追加候補として残す。現時点の fixture には入れず、主要4種の現行観測を優先する。
+- `date`、`datetime`、`url` は追加候補として残す。現時点の観測補助HTMLには入れず、主要4種の現行観測を優先する。
 
 ## 実行コマンド
 

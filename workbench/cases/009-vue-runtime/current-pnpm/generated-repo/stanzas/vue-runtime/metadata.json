@@ -4,7 +4,7 @@
   },
   "@id": "vue-runtime",
   "stanza:label": "Vue Runtime",
-  "stanza:definition": "Fixture for observing Vue SFC runtime mounting in a Stanza.",
+  "stanza:definition": "Case input for observing Vue SFC runtime mounting in a Stanza.",
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],
@@ -24,4 +24,3 @@
   "stanza:incomingEvent": [],
   "stanza:outgoingEvent": []
 }
-

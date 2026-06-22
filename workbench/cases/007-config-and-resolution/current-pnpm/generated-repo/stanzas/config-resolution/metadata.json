@@ -4,7 +4,7 @@
   },
   "@id": "config-resolution",
   "stanza:label": "Config Resolution",
-  "stanza:definition": "Fixture for config, import resolution, and asset reference checks.",
+  "stanza:definition": "Case input for config, import resolution, and asset reference checks.",
   "stanza:license": "MIT",
   "stanza:author": "Codex",
   "stanza:contributor": [],

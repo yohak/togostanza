@@ -2,7 +2,7 @@
 
 確認日: 2026-06-22
 
-`togostanza-utils` の関数 API を、TogoStanza remake の互換対象として扱うための別調査ログ。
+`togostanza-utils` の関数 API を、TogoStanza remake の互換性判断材料として扱うための別調査ログ。
 
 ## 調査の位置づけ
 
@@ -11,9 +11,9 @@
   - `references/metastanza/node_modules/togostanza-utils`
 - 追加参照元:
   - `references/togostanza-utils` commit `daaf62cfa254abcecdae3b4a41cbe6121c47db22`
-- 目的: 実プロジェクトで使われている `togostanza-utils` API を inventory 化し、drop-in 互換に必要な runtime contract と fixture 候補を切り分ける。
-- 判断: `references/metastanza` が直接利用している `togostanza-utils` API / import path は、少なくとも drop-in 互換必須として扱う。
-- 方針: `togostanza-utils` には手を入れず、既存 package がそのまま動くように remake runtime 側で旧構造互換を提供する。
+- 目的: 実プロジェクトで使われている `togostanza-utils` API を inventory 化し、既存 package をそのまま利用する場合に必要になる runtime dependency と、ケース入力 / 観測補助候補を切り分ける。
+- この調査ログでは採用判断を確定しない。`togostanza-utils` を drop-in 互換対象に含めるかどうかの判断は、[リメイク方針](../../spec/remake-policy.md) に記録する。
+- 調査上の前提: `togostanza-utils` には手を入れず、既存 package がそのまま動くかどうかを先に確認する。
 - この調査は `007-config-and-resolution` の package asset import とは別に扱う。
   - `import spinner from "togostanza-utils/spinner.png"` は asset resolution の問題として 007 の観測要件に含める。
   - `loadData` や `appendCustomCss` などの関数挙動は、この別調査で扱う。
@@ -22,15 +22,15 @@
 
 `references/metastanza` で利用を確認した。`references/togomedium-web` では直接利用は確認していない。
 
-| API / import | 利用箇所 | 調査観点 | 分類 |
+| API / import | 利用箇所 | 調査観点 | 判断材料 |
 | ---- | ---- | ---- | ---- |
-| `loadData` from `togostanza-utils/load-data` | `barchart`, `linechart`, `piechart`, `scorecard`, `scatterplot`, `tree`, `pagination-table`, `scroll-table`, `hash-table` | fetch type、loading UI、cache、timeout、SPARQL/CSV/TSV/JSON 変換、`__togostanza_id__` 付与 | drop-in 互換必須 |
-| `appendCustomCss` from `togostanza-utils` | `text`, `scorecard`, `scroll-table` など | Shadow root 内の custom stylesheet link 差し替え | drop-in 互換必須 |
-| download menu helpers from `togostanza-utils` | chart 系 stanza | SVG/PNG/JSON/CSV/TSV download menu item と `stanza.root` / CSS 参照 | drop-in 互換必須 |
-| `applyFilter` from `togostanza-utils/apply-filter` | `scatterplot` | filter DSL と data processing | drop-in 互換必須 |
-| `spinner.png` | `text` | package asset import | drop-in 互換必須 / 007 の asset resolution 観測対象 |
+| `loadData` from `togostanza-utils/load-data` | `barchart`, `linechart`, `piechart`, `scorecard`, `scatterplot`, `tree`, `pagination-table`, `scroll-table`, `hash-table` | fetch type、loading UI、cache、timeout、SPARQL/CSV/TSV/JSON 変換、`__togostanza_id__` 付与 | metastanza 直接利用 |
+| `appendCustomCss` from `togostanza-utils` | `text`, `scorecard`, `scroll-table` など | Shadow root 内の custom stylesheet link 差し替え | metastanza 直接利用 |
+| download menu helpers from `togostanza-utils` | chart 系 stanza | SVG/PNG/JSON/CSV/TSV download menu item と `stanza.root` / CSS 参照 | metastanza 直接利用 |
+| `applyFilter` from `togostanza-utils/apply-filter` | `scatterplot` | filter DSL と data processing | metastanza 直接利用 |
+| `spinner.png` | `text` | package asset import | metastanza 直接利用 / 007 の asset resolution 観測対象 |
 
-`Data` class / `togostanza-utils/data`、`asTree`、`asGraph`、`asD3Hierarchy` は `references/metastanza` の source では直接利用を確認していない。直接利用はないが、package として提供されている API なので、互換範囲に含めるかは別途判断する。
+`Data` class / `togostanza-utils/data`、`asTree`、`asGraph`、`asD3Hierarchy` は `references/metastanza` の source では直接利用を確認していない。直接利用はないが、package として提供されている API なので、採用判断範囲に含めるかは別途判断する。
 
 ## 現行版構造への依存
 
@@ -43,16 +43,16 @@
 - `menu()` が返す `{ type, label, handler }` item を runtime menu UI が扱う前提を持つ。
 - `appendCustomCss()` は shadow root 内の `link[data-togostanza-custom-css]` を差し替える。
 
-## drop-in 互換で維持する import path
+## 観測された import path
 
 - `togostanza-utils`
 - `togostanza-utils/load-data`
 - `togostanza-utils/apply-filter`
 - `togostanza-utils/spinner.png`
 
-## remake 側で維持する compat contract
+## remake 方針に渡す runtime dependency
 
-`togostanza-utils` を無変更で使うため、remake runtime では以下を compat contract として維持する。
+`togostanza-utils` を無変更で使う案を検討する場合、remake runtime には以下の runtime dependency が発生する。
 
 - `stanza.root` は shadow root として DOM API を提供する。
 - shadow root 内に `main` があり、loading / error / custom DOM の挿入先として使える。
@@ -61,18 +61,18 @@
 - `stanza.root.host.stanzaInstance.element` は host custom element を指す。
 - `menu()` が返す `{ type, label, handler }` と `{ type: "divider" }` を runtime menu が扱える。
 
-`root.host.stanzaInstance.element` は内部構造依存だが、`togostanza-utils` の drop-in 互換を優先し、remake 側の compat property として受け入れる。
+`root.host.stanzaInstance.element` は内部構造依存である。これを remake 側で受け入れるかどうかは、`togostanza-utils` の drop-in 互換を採用する場合の判断事項として扱う。
 
 ## 次の調査手順
 
-1. `loadData` の最小 fixture 候補を作る。対象は JSON / CSV / TSV / SPARQL results JSON、loading UI、error UI、`__togostanza_id__`。
-2. `appendCustomCss` の最小 fixture 候補を作る。対象は既存 custom CSS link の削除と新規 link 追加。
-3. download menu helpers の最小 fixture 候補を作る。対象は `menu()` item contract、SVG / PNG / JSON / CSV / TSV handler。
-4. `applyFilter` は pure utility として小さい unit fixture で足りるか判断する。
+1. `loadData` の最小ケース入力と観測補助を作る。対象は JSON / CSV / TSV / SPARQL results JSON、loading UI、error UI、`__togostanza_id__`。
+2. `appendCustomCss` の最小ケース入力と観測補助を作る。対象は既存 custom CSS link の削除と新規 link 追加。
+3. download menu helpers の最小ケース入力と観測補助を作る。対象は `menu()` item contract、SVG / PNG / JSON / CSV / TSV handler。
+4. `applyFilter` は pure utility として小さい unit 観測で足りるか判断する。
 5. `spinner.png` は 007 の package asset import 観測に含め、関数 API とは分離する。
 
 ## 未解決事項
 
 - `togostanza-utils` を remake monorepo 内の別 package として維持するか、shim として提供するか。
 - download menu helpers の SVG / PNG 出力が現行 runtime menu とどこまで一致すべきか。
-- `Data` class / graph / tree helper を、metastanza 直接利用がなくても drop-in 互換範囲に含めるか。
+- `Data` class / graph / tree helper を、metastanza 直接利用がなくても採用判断範囲に含めるか。

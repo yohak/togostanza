@@ -12,7 +12,7 @@
     <script type="module">
       const target = document.querySelector('#react-runtime-target');
 
-      window.reactRuntimeFixture = {
+      window.reactRuntimeObserver = {
         target,
         mutate() {
           target.setAttribute('label', 'after-react-mutation');
@@ -21,8 +21,7 @@
       };
 
       document.querySelector('[data-action="mutate"]')
-        .addEventListener('click', () => window.reactRuntimeFixture.mutate());
+        .addEventListener('click', () => window.reactRuntimeObserver.mutate());
     </script>
   </body>
 </html>
-

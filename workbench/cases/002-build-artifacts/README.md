@@ -13,11 +13,11 @@
 
 ## 入力条件
 
-- このケースの `current-pnpm/` と `remake/` に同等の Stanza repository を用意する。
+- この検証ケースの `current-pnpm/` と `remake/` に同等の Stanza repository を用意する。
 - 少なくとも1つの basic stanza と、runtime 観測用 stanza を含める。
 - repository root の `assets/` と stanza 個別 `assets/` を含める。
 - 現行版CLIは `current-pnpm/mise.toml` で Node 18 系と pnpm 9 系に固定する。
-- `generate stanza` の挙動は 001 で確認する。このケースでは、001 の生成済み stanza source を入力 fixture としてコピーし、build artifact の観測に集中する。
+- `generate stanza` の挙動は 001 で確認する。この検証ケースでは、001 の生成済み stanza source をケース入力としてコピーし、build artifact の観測に集中する。
 
 ## 現行版で観測すること
 
@@ -58,7 +58,7 @@
 ## 現行版準備メモ
 
 - 確認日: 2026-06-22
-- fixture: `workbench/cases/002-build-artifacts/current-pnpm/`
+- 検証環境: `workbench/cases/002-build-artifacts/current-pnpm/`
 - 生成 repository: `workbench/cases/002-build-artifacts/current-pnpm/generated-repo/`
 - `current-pnpm/` で `pnpm dlx togostanza init --name generated-repo ... --skip-install` を実行し、scaffold を生成した。
 - `generated-repo/stanzas/` は、001 の `current-npm/generated-repo/stanzas/` からコピーした。

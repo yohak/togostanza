@@ -1,11 +1,11 @@
 @use "@/common.scss";
 
-.config-resolution-fixture {
+.config-resolution-observation {
   border-left: 4px solid var(--case-007-accent, #2f6f73);
   padding: 8px 12px;
 }
 
-.config-resolution-fixture__marker {
+.config-resolution-observation__marker {
   background-image: url("./assets/local-marker.svg");
   background-repeat: no-repeat;
   background-size: 16px 16px;
