@@ -26,6 +26,16 @@ mise exec -- npx togostanza build --output-path dist
 
 `node`、`npm`、`npx` を直接実行する例は、Node version や環境差分が確認対象でない限り書かない。
 
+### `mise trust` の扱い
+
+対象ディレクトリの `mise.toml` は、通常の `mise trust` で信頼済みにできるべきものとして扱う。権限周りは `.codex/rules` と Codex 側の writable root 設定で解決する前提にする。
+
+`mise trust` が権限エラーで失敗する場合は、観測対象の CLI 挙動ではなく、Codex 実行環境の設定不備として切り分ける。次のような迂回は標準手順にしない。
+
+- `MISE_STATE_DIR=/private/tmp/...` で今回だけ trust store を逃がす。
+- `mise` を通さず `node` / `npm` / `npx` を直接実行する。
+- 毎回 unsandboxed または escalated 実行で `mise trust` を通す。
+
 ## Python 系ツールを標準手順にしない
 
 次のようなコマンドは標準手順として書かない。
