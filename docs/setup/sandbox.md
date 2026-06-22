@@ -65,7 +65,7 @@ mise exec -- npm install
 
 現行版は最近ほとんど動いていないため、sandbox では通常利用に近い `github:togostanza/togostanza` 参照のまま扱う。ローカルで作ったパッケージに差し替えるようなイレギュラーなセットアップは、通常経路との差分が増えるため避ける。
 
-`npm install` は GitHub と npm registry へのアクセス、および npm cache への書き込みを行う。AIが実行する場合は、必要に応じて network/cache 書き込みを許可したうえで実行する。
+`npm install` は GitHub と npm registry へのアクセスを行う。AIが実行する場合は、通常の `npm install` として必要な外部通信や権限を確認したうえで実行する。
 
 ```sh
 ls -la node_modules/togostanza

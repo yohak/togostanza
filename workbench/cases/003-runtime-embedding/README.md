@@ -79,16 +79,58 @@ http://localhost:4173/runtime-embed.html
 
 ### 現行版の観測状況
 
-未実行。fixture と確認HTMLのみ準備済み。
+確認済み。
 
-記録予定:
+- 確認日: 2026-06-22
+- 作業ディレクトリ: `workbench/cases/003-runtime-embedding/current/`
+- Node.js: `v18.20.4`
+- npm: `10.7.0`
+- `togostanza`: `3.0.0-beta.57`
+- 確認URL: `http://127.0.0.1:4173/runtime-embed.html`
+
+### 実行したコマンド
+
+```sh
+cd workbench/cases/003-runtime-embedding/current
+mise trust ./mise.toml
+mise exec -- npm ci
+mise exec -- npx togostanza --version
+mise exec -- npx togostanza build --output-path dist
+mise exec -- node -e "..."
+```
+
+依存復元は、Codex sandbox の実行環境制限を避けるため通常手順外の一時実験を含んだ。このため、依存復元そのものは通常手順での完了確認として扱わない。
+
+`mise trust`、`build`、local HTTP server は、Codex sandbox の権限制約または watcher 制限を避けるため許可済みの unsandboxed 実行で行った。
+
+### build 結果
+
+- sandboxed exec の `mise exec -- npx togostanza build --output-path dist` は、`EMFILE: too many open files, watch` で失敗した。
+- 同じ command は unsandboxed 実行では成功した。
+- build 時に Sass deprecation warning が多数出た。
+- `dist/` には `hello.js`、`hello.js.map`、`hello.css`、`hello.html`、`hello/metadata.json`、`index.html`、`-togostanza/*` が生成された。
+
+### ブラウザ観測結果
 
 - `dist/hello.js` が生成されるか。
+  - 生成された。
 - `runtime-embed.html` から `dist/hello.js` が module script として読み込まれるか。
+  - 読み込まれ、`<togostanza-hello say-to="runtime">` が描画された。
 - `customElements.get("togostanza-hello")` が定義済みになるか。
+  - in-app browser の read-only 評価では registry の確認が安定しなかったため、custom element registry そのものは未記録。
+  - ただし `<togostanza-hello>` に shadow root が作られているため、element upgrade は完了していると判断する。
 - `<togostanza-hello>` に open shadow root が作られるか。
+  - `host.shadowRoot` を取得できた。
 - `say-to="runtime"` が `this.params["say-to"]` として反映されるか。
+  - shadow root 内の `main` に `Hello, runtime!` と描画された。
 - console に致命的な module load error が出ないか。
+  - error / warning は観測されなかった。
+
+### shadow root 観測メモ
+
+- shadow root の直下には `div`、`style`、`link` が観測された。
+- stylesheet link は `http://127.0.0.1:4173/dist/hello.css`。
+- shadow root 内の text は `Hello, runtime!` を含む。
 
 ## リメイク版で観測すること
 

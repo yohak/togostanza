@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stanza source API fixture</title>
+    <script type="module" src="../dist/api-probe.js"></script>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        color: #1d2a2e;
+      }
+
+      main {
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      section {
+        border: 1px solid #c5d0d4;
+        border-radius: 6px;
+        display: grid;
+        gap: 0.75rem;
+        padding: 1rem;
+      }
+
+      h1,
+      h2 {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1rem;
+      }
+
+      .fixture-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Stanza source API fixture</h1>
+
+      <section>
+        <h2>without query</h2>
+        <togostanza-api-probe
+          label="no-query"
+          limit="2"
+          enabled
+          payload='{"kind":"no-query","items":[1,2]}'
+        ></togostanza-api-probe>
+      </section>
+
+      <section>
+        <h2>with query and mutation controls</h2>
+        <togostanza-api-probe
+          id="api-probe-mutation-target"
+          label="before-mutation"
+          limit="3"
+          enabled
+          payload='{"kind":"query","step":"initial"}'
+          query-endpoint="http://127.0.0.1:4175/sparql"
+        ></togostanza-api-probe>
+        <div class="fixture-controls" aria-label="source API mutation controls">
+          <button type="button" data-action="set-label">set label</button>
+          <button type="button" data-action="set-limit">set limit</button>
+          <button type="button" data-action="remove-enabled">remove enabled</button>
+          <button type="button" data-action="set-payload">set payload</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module">
+      const target = document.querySelector('#api-probe-mutation-target');
+
+      document.querySelector('[data-action="set-label"]')
+        .addEventListener('click', () => target.setAttribute('label', 'after-mutation'));
+      document.querySelector('[data-action="set-limit"]')
+        .addEventListener('click', () => target.setAttribute('limit', '5'));
+      document.querySelector('[data-action="remove-enabled"]')
+        .addEventListener('click', () => target.removeAttribute('enabled'));
+      document.querySelector('[data-action="set-payload"]')
+        .addEventListener('click', () => target.setAttribute('payload', JSON.stringify({
+          kind: 'query',
+          step: 'changed',
+          items: [3, 4]
+        })));
+    </script>
+  </body>
+</html>

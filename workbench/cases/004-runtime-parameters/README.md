@@ -47,6 +47,7 @@ current/
   - number: `count="42"`、`count="0"`、`count="7.5"`
   - json: object / array
   - attribute mutation: `window.parameterProbeFixture` から `flag`、`count`、`payload` を変更する
+- in-app browser から mutation を再現できるように、`fixtures/runtime-parameters.html` には mutation 用の操作ボタンも置く。
 - `date`、`datetime`、`url` は追加候補として残す。現時点の fixture には入れず、主要4種の現行観測を優先する。
 
 ## 実行予定コマンド
@@ -83,21 +84,66 @@ http://localhost:4174/fixtures/runtime-parameters.html
 
 ### 現行版の観測状況
 
-未実行。fixture と直接埋め込み確認HTMLのみ準備済み。
+確認済み。
 
-- `npm install`: 未実行。
-- `npx togostanza build --output-path dist`: 未実行。
-- ブラウザ確認: 未実行。
+- 確認日: 2026-06-22
+- 作業ディレクトリ: `workbench/cases/004-runtime-parameters/current/`
+- Node.js: `v18.20.4`
+- npm: `10.7.0`
+- `togostanza`: `3.0.0-beta.57`
+- 確認URL: `http://127.0.0.1:4174/fixtures/runtime-parameters.html`
 
-記録予定:
+### 実行したコマンド
 
-- `this.params.label` の値と `typeof`。
-- `this.params.count` の値と `typeof`。
-- `this.params.flag` の属性あり / なし / `flag="false"` の値と `typeof`。
-- `this.params.payload` の object / array 変換結果と `typeof`。
-- attribute 変更時に `handleAttributeChange()` が呼ばれるか。
-- attribute 変更後に `renderCount` と `this.params` が更新されるか。
-- console に warning / error が出るか。
+```sh
+cd workbench/cases/004-runtime-parameters/current
+mise trust ./mise.toml
+mise exec -- npm install
+mise exec -- npm install --package-lock-only
+mise exec -- npx togostanza --version
+mise exec -- npx togostanza build --output-path dist
+mise exec -- node -e "..."
+```
+
+依存取得は、Codex sandbox の実行環境制限を避けるため通常手順外の一時実験を含んだ。このため、依存取得そのものは通常手順での完了確認として扱わない。
+
+`package-lock.json` は、通常の npm command として `mise exec -- npm install --package-lock-only` で生成した。
+
+`mise trust`、`build`、local HTTP server は、Codex sandbox の権限制約または watcher 制限を避けるため許可済みの unsandboxed 実行で行った。
+
+### build 結果
+
+- sandboxed exec の `mise exec -- npx togostanza build --output-path dist` は、`EMFILE: too many open files, watch` で失敗した。
+- 同じ command は unsandboxed 実行では成功した。
+- build 時に Sass deprecation warning が多数出た。
+- `dist/` には `parameter-probe.js`、`parameter-probe.js.map`、`parameter-probe.css`、`parameter-probe.html`、`parameter-probe/metadata.json`、`index.html`、`-togostanza/*` が生成された。
+
+### 初期 parameter 変換
+
+| 入力 | `this.params.label` | `this.params.count` | `this.params.flag` | `this.params.payload` |
+| ---- | ------------------- | ------------------- | ------------------ | --------------------- |
+| `flag` attribute あり | `flag-present:string` | `42:number` | `true:boolean` | object `{ "kind": "present", "values": [1, 2] }` |
+| `flag` attribute なし | `flag-absent:string` | `0:number` | `false:boolean` | object `{ "kind": "absent", "enabled": false }` |
+| `flag="false"` | `flag-string-false:string` | `7.5:number` | `true:boolean` | array object `["false-string", { "nested": true }]` |
+| mutation 初期値 | `before-mutation:string` | `1:number` | `false:boolean` | object `{ "kind": "mutation", "step": "initial" }` |
+
+### attribute mutation
+
+mutation target に対して操作ボタンから attribute を変更した。
+
+| 操作 | `renderCount` | `lastAttributeChange` | 観測値 |
+| ---- | ------------- | --------------------- | ------ |
+| `flag=""` を設定 | `2` | `flag`, old `null`, new `""` | `flag` は `true:boolean` |
+| `flag="false"` を設定 | `3` | `flag`, old `""`, new `"false"` | `flag` は `true:boolean` |
+| `flag` を削除 | `4` | `flag`, old `"false"`, new `null` | `flag` は `false:boolean` |
+| `count="9.25"` を設定 | `5` | `count`, old `"1"`, new `"9.25"` | `count` は `9.25:number` |
+| `payload` を object JSON に変更 | `6` | `payload`, old initial JSON, new changed JSON | `payload` は object として更新 |
+
+### ブラウザ観測メモ
+
+- 各 `<togostanza-parameter-probe>` には open shadow root が作られた。
+- stylesheet link は `http://127.0.0.1:4174/dist/parameter-probe.css`。
+- browser console の error / warning は観測されなかった。
 
 ## リメイク版で観測すること
 

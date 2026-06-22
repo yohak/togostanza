@@ -59,3 +59,22 @@ workbench/
 ケース定義として、対象ケースの `current/` / `remake/` に `package.json`、最小 Stanza source、検証用HTMLを置くことは想定範囲とする。
 
 依存 install、lockfile 生成、外部通信を伴うコマンド実行、またはケース範囲を超えるソース変更が必要になりそうな場合は、変更前に停止して人間へ相談する。
+
+## 観測時の記録方針
+
+Codex などの管理された実行環境で workbench を観測する場合は、現行版CLIの挙動と実行環境差を分けて記録する。詳細な注意点は [開発用ノート](../development-notes.md) を参照する。
+
+特に次の項目は、各 case の `README.md` に残す。
+
+- 依存 install を通常手順で実行できたかどうか。
+- `package-lock.json` がある case で `npm ci` を使った場合は、lockfile からの clean install として記録する。
+- 通常手順外の一時実験を行った場合は、その実験を検証完了として扱わないこと。
+- sandboxed 実行で失敗し、unsandboxed 実行で成功した command。
+- `EMFILE: too many open files, watch` など、Codex実行環境差として扱った error。
+- local HTTP server の起動 command、URL、停止方法。
+- ブラウザで確認した URL。
+- browser console の代表的な warning / error。
+
+`package-lock.json` は、現行版依存の解決結果を固定したい case では Git 管理する。`node_modules/`、`dist/`、cache、一時 server log は Git 管理しない。
+
+ブラウザ上で attribute mutation や user interaction を観測する case では、in-app browser から操作できる button などを fixture HTML に置く。read-only な browser evaluation に依存した確認だけを正本にしない。

@@ -62,6 +62,8 @@ current/
   .gitignore
   README.md
   common.scss
+  fixtures/
+    source-api.html
   mise.toml
   package.json
   stanzas/
@@ -77,9 +79,12 @@ current/
         stanza.html.hbs
 ```
 
-`current/.gitignore` で `node_modules/`、`dist/`、`.cache/`、`.npm-cache/`、`*.log` を除外する。
+`current/.gitignore` で `node_modules/`、`dist/`、`.cache/`、`*.log` を除外する。
 
 `current/package.json` は `togostanza` を `github:togostanza/togostanza` として参照し、`current/mise.toml` は Node 18 を指定する。
+
+`current/fixtures/source-api.html` は build 後の `../dist/api-probe.js` を直接読み込み、help preview ではなく通常の HTML 埋め込みとして Stanza source API を確認する。
+この fixture は query endpoint あり / なしの2つの `<togostanza-api-probe>` と、attribute mutation 用の操作ボタンを持つ。
 
 ## API coverage
 
@@ -96,7 +101,7 @@ current/
 `current/` で依存関係を取得できる環境になったら、次の順で確認する予定。
 
 ```sh
-mise exec -- npm install --cache .npm-cache
+mise exec -- npm install
 mise exec -- npx togostanza build --output-path dist
 ```
 
@@ -126,11 +131,7 @@ mise exec -- npm install
 
 Result: failed before dependency installation because npm tried to use `/Users/satoshionoda/.npm` and hit `EPERM` under `_cacache/tmp`.
 
-```sh
-mise exec -- npm install --cache .npm-cache
-```
-
-Result: failed after switching the cache into the fixture directory because the sandbox could not resolve `github.com` for `git --no-replace-objects ls-remote ssh://git@github.com/togostanza/togostanza.git`.
+An additional one-off non-standard environment experiment also failed under sandboxed network/DNS restrictions. This experiment is not a standard procedure and is not treated as a completed install check.
 
 Observed error:
 
@@ -139,19 +140,100 @@ ssh: Could not resolve hostname github.com: -65563
 fatal: Could not read from remote repository.
 ```
 
+`current/`:
+
+```sh
+mise exec -- npm install
+```
+
+Result: dependency installation was completed through a one-off non-standard environment experiment. This is useful as a browser-observation setup step, but is not treated as normal-procedure verification.
+
+```sh
+mise exec -- npm install --package-lock-only
+```
+
+Result: succeeded. `package-lock.json` was generated with the normal npm command.
+
+```sh
+mise exec -- npx togostanza --version
+```
+
+Result: succeeded with `3.0.0-beta.57`.
+
+```sh
+mise exec -- npx togostanza build --output-path dist
+```
+
+Result: failed in sandboxed execution with `EMFILE: too many open files, watch`.
+
+The same command succeeded in unsandboxed execution. The build emitted many Sass deprecation warnings and generated `dist/api-probe.js`, `dist/api-probe.js.map`, `dist/api-probe.css`, `dist/api-probe.html`, `dist/api-probe/metadata.json`, `dist/index.html`, and `dist/-togostanza/*`.
+
+Local browser fixture server:
+
+```sh
+mise exec -- node -e "..."
+```
+
+URL: `http://127.0.0.1:4175/fixtures/source-api.html`.
+
+The local server also handled `/sparql` and logged request method, content type, and body for `this.query()` observation.
+
 ## Observations
 
 - `mise trust` and Node 18 selection work for the fixture.
 - The fixture source covers the target Stanza source APIs without changing the import shape: `import Stanza from 'togostanza/stanza'` and `export default class ApiProbe extends Stanza`.
-- `npm install` has not completed. It is currently blocked by local npm cache ownership when using the default cache, and by network/DNS sandboxing when using fixture-local cache.
-- `npx togostanza build --output-path dist` is not run because install has not completed in the normal execution environment.
-- Browser confirmation is not run because no build artifact exists yet.
+- The earlier `npm install` failures were environment issues: npm cache ownership and sandboxed network/DNS.
+- Dependency installation for the browser observation used a one-off non-standard environment experiment and should not be treated as the normal way to run this case.
+- sandboxed `build` fails with the known Broccoli watcher `EMFILE` issue. The same command succeeds in unsandboxed execution.
+- Browser confirmation is complete for the current fixture.
+
+### Browser observations
+
+Initial fixture state:
+
+- The no-query stanza rendered with `query` status `not-run`.
+- The query stanza rendered with `query` status `ok`.
+- Both stanzas had open shadow roots.
+- `this.element` rendered as `togostanza-api-probe`.
+- `this.root` rendered as `true`.
+- `this.root.querySelector("main")` rendered as `true`.
+- After render, `main.dataset.apiProbeRoot` was `available`.
+- After render, `main.dataset.apiProbeElement` was `TOGOSTANZA-API-PROBE`.
+- `this.renderTemplate({ template, parameters })` rendered the expected `data-probe` values.
+- `this.params` values were observed as:
+  - `label`: string.
+  - `limit`: number-like rendered value from `number` parameter.
+  - `enabled`: `true` when the boolean attribute was present.
+  - `payload`: parsed JSON rendered back with `JSON.stringify`.
+- `this.importWebFontCSS('./assets/api-probe-font.css')` injected `dist/assets/api-probe-font.css` into the shadow root.
+- The normal stylesheet link was also present as `dist/api-probe.css`.
+- Browser console error / warning was not observed.
+
+`this.query()` observation:
+
+- `this.query()` sent `POST` when method was omitted.
+- Request content type was `application/x-www-form-urlencoded`.
+- Request body contained the template-rendered SPARQL query as `query=...`.
+- Initial query body included `LIMIT 3`.
+- After changing `limit` to `5`, subsequent query bodies included `LIMIT 5`.
+
+Attribute mutation observations:
+
+| Operation | Render count | Last attribute | Observed value |
+| --------- | ------------ | -------------- | -------------- |
+| Set `label="after-mutation"` | `2` | `label`, old `before-mutation`, new `after-mutation` | `stringParam` became `after-mutation` |
+| Set `limit="5"` | `3` | `limit`, old `3`, new `5` | `numberParam` became `5` |
+| Remove `enabled` | `4` | `enabled` | `booleanParam` became `false` |
+| Set changed `payload` JSON | `5` | `payload`, old initial JSON, new changed JSON | `jsonParam` became changed JSON |
+
+`importWebFontCSS()` duplicate behavior:
+
+- The initial render produced one `dist/assets/api-probe-font.css` link in the target shadow root.
+- Each later render added another identical `dist/assets/api-probe-font.css` link.
+- No duplicate suppression was observed in this fixture.
 
 ## Pending checks
 
-- Run `mise exec -- npm install` successfully in an environment where `/Users/satoshionoda/.npm` is writable, or run `mise exec -- npm install --cache .npm-cache` where GitHub is reachable.
-- Run `mise exec -- npx togostanza build --output-path dist`.
-- Open the built stanza in a browser and confirm rendered values for `this.params`, `this.root`, `this.element`, and `this.renderTemplate`.
-- Confirm `importWebFontCSS()` link injection target and duplicate behavior in the browser DOM.
-- Confirm `handleAttributeChange(name, oldValue, newValue)` call order and whether default re-render/debounce behavior occurs.
-- Confirm `this.query()` sends a `POST` request when `query-endpoint` is provided and method is omitted.
+- Confirm dependency installation using the repository's normal command and environment.
+- Decide whether `importWebFontCSS()` duplicate link insertion is a required compatibility detail or just current implementation behavior.
+- If exact `handleAttributeChange()` `oldValue` / `newValue` for removed boolean attributes matters, add a fixture that renders `null` distinctly from empty string. The current template uses `|| ''`, so removal is visible through `booleanParam: false` but not through a distinct rendered `newValue`.

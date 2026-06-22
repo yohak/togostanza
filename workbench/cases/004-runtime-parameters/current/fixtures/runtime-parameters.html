@@ -32,6 +32,12 @@
         margin: 0 0 0.75rem;
         font-size: 1rem;
       }
+
+      .fixture-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
     </style>
   </head>
   <body>
@@ -75,6 +81,13 @@
           count="1"
           payload='{"kind":"mutation","step":"initial"}'
         ></togostanza-parameter-probe>
+        <div class="fixture-controls" aria-label="mutation controls">
+          <button type="button" data-action="set-present-flag">set flag</button>
+          <button type="button" data-action="set-string-false-flag">set flag false</button>
+          <button type="button" data-action="remove-flag">remove flag</button>
+          <button type="button" data-action="set-count">set count</button>
+          <button type="button" data-action="set-payload">set payload</button>
+        </div>
       </section>
     </main>
 
@@ -99,6 +112,21 @@
           target.setAttribute('payload', JSON.stringify(value));
         }
       };
+
+      document.querySelector('[data-action="set-present-flag"]')
+        .addEventListener('click', () => window.parameterProbeFixture.setPresentFlag());
+      document.querySelector('[data-action="set-string-false-flag"]')
+        .addEventListener('click', () => window.parameterProbeFixture.setStringFalseFlag());
+      document.querySelector('[data-action="remove-flag"]')
+        .addEventListener('click', () => window.parameterProbeFixture.removeFlag());
+      document.querySelector('[data-action="set-count"]')
+        .addEventListener('click', () => window.parameterProbeFixture.setCount(9.25));
+      document.querySelector('[data-action="set-payload"]')
+        .addEventListener('click', () => window.parameterProbeFixture.setPayload({
+          kind: 'mutation',
+          step: 'changed',
+          values: [3, 4]
+        }));
     </script>
   </body>
 </html>
