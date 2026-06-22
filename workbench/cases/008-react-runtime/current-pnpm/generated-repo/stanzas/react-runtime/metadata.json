@@ -1,0 +1,34 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "react-runtime",
+  "stanza:label": "React Runtime",
+  "stanza:definition": "Fixture for observing React TSX runtime mounting in a Stanza.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-22",
+  "stanza:updated": "2026-06-22",
+  "stanza:parameter": [
+    {
+      "stanza:key": "label",
+      "stanza:type": "string",
+      "stanza:example": "initial-react",
+      "stanza:description": "Label passed from this.params into React props.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "count",
+      "stanza:type": "number",
+      "stanza:example": "1",
+      "stanza:description": "Number passed from this.params into React props.",
+      "stanza:required": false
+    }
+  ],
+  "stanza:menu-placement": "none",
+  "stanza:style": [],
+  "stanza:incomingEvent": [],
+  "stanza:outgoingEvent": []
+}
+

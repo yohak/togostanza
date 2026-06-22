@@ -12,7 +12,8 @@ HTML attributes が `metadata.json` の `stanza:parameter` と `stanza:type` に
 
 ## 入力条件
 
-- `string`、`number`、`boolean`、`json` を含む runtime 観測用 stanza を用意する。
+- `string`、`number`、`boolean`、`json`、`single-choice`、`text` を含む runtime 観測用 stanza を用意する。
+- `stanza:style` には `color`、`number`、`text` を含める。
 - 必要に応じて `date`、`datetime`、URL系 parameter も追加する。
 - Stanza source は `this.params` の値と型を画面またはログに出す。
 
@@ -41,7 +42,8 @@ current-pnpm/
 
 - `current-pnpm/mise.toml` で Node 18 系と pnpm 9 系を指定する。case 直下には `mise.toml` を置かない。
 - `current-pnpm/generated-repo/package.json` は `togostanza` を `github:togostanza/togostanza` として参照する。tgz 化はしない。
-- `parameter-probe` は `metadata.json` に `string`、`number`、`boolean`、`json` の parameter を持つ。
+- `parameter-probe` は `metadata.json` に `string`、`number`、`boolean`、`json`、`single-choice`、`text` の parameter を持つ。
+- `parameter-probe` は `metadata.json` に `color`、`number`、`text` の style を持つ。style metadata 由来の値も `this.params` で観測する。
 - `index.js` は `this.params` の値と `typeof` を描画し、`handleAttributeChange()` で最後の attribute 変更を記録する。
 - `fixtures/runtime-parameters.html` は build 後の `../dist/parameter-probe.js` を直接読み込み、次の入力を並べて確認する。
   - boolean attribute あり: `flag`
@@ -49,6 +51,9 @@ current-pnpm/
   - 文字列値: `flag="false"`
   - number: `count="42"`、`count="0"`、`count="7.5"`
   - json: object / array
+  - single-choice: `mode="compact"`、`mode="comfortable"`
+  - text: `note="..."`
+  - style metadata: `--parameter-probe-gap="..."`、`--parameter-probe-caption="..."`
   - attribute mutation: `window.parameterProbeFixture` から `flag`、`count`、`payload` を変更する
 - in-app browser から mutation を再現できるように、`fixtures/runtime-parameters.html` には mutation 用の操作ボタンも置く。
 - `date`、`datetime`、`url` は追加候補として残す。現時点の fixture には入れず、主要4種の現行観測を優先する。
@@ -84,6 +89,8 @@ http://localhost:4174/fixtures/runtime-parameters.html
 - 属性なし boolean が `false` になること。
 - `flag="false"` のような文字列値が false 扱いされないこと。
 - number、json などの実際の変換結果。
+- `single-choice` と `text` parameter の実際の変換結果。
+- `number` と `text` style metadata が `this.params` でどう見えるか。
 - attribute 変更時の再評価挙動。
 
 ### 現行版の観測状況
@@ -130,6 +137,8 @@ mise exec -- pnpm run serve:fixture
 | `flag="false"` | `flag-string-false:string` | `7.5:number` | `true:boolean` | array object `["false-string", { "nested": true }]` |
 | mutation 初期値 | `before-mutation:string` | `1:number` | `false:boolean` | object `{ "kind": "mutation", "step": "initial" }` |
 
+`single-choice`、`text` parameter と `number`、`text` style metadata は `dist/parameter-probe/metadata.json` と `dist/parameter-probe.js` に含まれることを確認した。追加 parameter / style の browser 上の値変換と mutation 反映は追加確認対象。
+
 ### attribute mutation
 
 mutation target に対して操作ボタンから attribute を変更した。
@@ -141,6 +150,8 @@ mutation target に対して操作ボタンから attribute を変更した。
 | `flag` を削除 | `4` | `flag`, old `"false"`, new `null` | `flag` は `false:boolean` |
 | `count="9.25"` を設定 | `5` | `count`, old `"1"`, new `"9.25"` | `count` は `9.25:number` |
 | `payload` を object JSON に変更 | `6` | `payload`, old initial JSON, new changed JSON | `payload` は object として更新 |
+
+追加 mutation として、`mode`、`note`、`--parameter-probe-gap`、`--parameter-probe-caption` の変更を観測する。
 
 ### ブラウザ観測メモ
 
@@ -158,6 +169,7 @@ mutation target に対して操作ボタンから attribute を変更した。
 
 - boolean parameter の属性有無による判定が一致する。
 - 主要な `stanza:type` の変換結果が、現行版観測と矛盾しない。
+- 実プロジェクト由来の `single-choice` / `text` parameter と `number` / `text` style metadata の扱いが説明できる。
 - `this.params` が Stanza source から同じ形で参照できる。
 
 ## 記録する差分

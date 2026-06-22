@@ -1,0 +1,27 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "vue-runtime",
+  "stanza:label": "Vue Runtime",
+  "stanza:definition": "Fixture for observing Vue SFC runtime mounting in a Stanza.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-22",
+  "stanza:updated": "2026-06-22",
+  "stanza:parameter": [
+    {
+      "stanza:key": "label",
+      "stanza:type": "string",
+      "stanza:example": "initial-vue",
+      "stanza:description": "Label passed from this.params into Vue props.",
+      "stanza:required": false
+    }
+  ],
+  "stanza:menu-placement": "none",
+  "stanza:style": [],
+  "stanza:incomingEvent": [],
+  "stanza:outgoingEvent": []
+}
+

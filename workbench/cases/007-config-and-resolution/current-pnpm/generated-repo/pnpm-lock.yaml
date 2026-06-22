@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      case-007-asset-package:
+        specifier: file:./vendor/case-007-asset-package
+        version: file:vendor/case-007-asset-package
       togostanza:
         specifier: github:togostanza/togostanza
         version: https://codeload.github.com/togostanza/togostanza/tar.gz/2e5982d25bdebc604574908c6ebc72d0334cb000(@types/node@26.0.0)(encoding@0.1.13)
@@ -931,6 +934,9 @@ packages:
   capture-stack-trace@1.0.2:
     resolution: {integrity: sha512-X/WM2UQs6VMHUtjUDnZTRI+i1crWteJySFzr9UpGoQa4WQffXVTTXuekjl7TjZRlcF2XfjgITT0HxZ9RnxeT0w==}
     engines: {node: '>=0.10.0'}
+
+  case-007-asset-package@file:vendor/case-007-asset-package:
+    resolution: {directory: vendor/case-007-asset-package, type: directory}
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -5120,6 +5126,8 @@ snapshots:
       rsvp: 4.8.5
 
   capture-stack-trace@1.0.2: {}
+
+  case-007-asset-package@file:vendor/case-007-asset-package: {}
 
   chalk@2.4.2:
     dependencies:

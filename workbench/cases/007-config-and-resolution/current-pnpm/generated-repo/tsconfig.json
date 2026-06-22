@@ -3,11 +3,14 @@
     "allowJs": true,
     "baseUrl": ".",
     "paths": {
-      "@case007/*": [
+      "%core/*": [
         "lib/*"
       ],
-      "@stanzas/*": [
+      "%stanza/*": [
         "stanzas/*"
+      ],
+      "@/*": [
+        "*"
       ]
     }
   }

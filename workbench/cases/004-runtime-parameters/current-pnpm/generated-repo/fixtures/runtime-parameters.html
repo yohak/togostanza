@@ -51,6 +51,10 @@
           count="42"
           flag
           payload='{"kind":"present","values":[1,2]}'
+          mode="compact"
+          note="text parameter present"
+          --parameter-probe-gap="12"
+          --parameter-probe-caption="style text present"
         ></togostanza-parameter-probe>
       </section>
 
@@ -60,6 +64,10 @@
           label="flag-absent"
           count="0"
           payload='{"kind":"absent","enabled":false}'
+          mode="comfortable"
+          note="text parameter absent flag"
+          --parameter-probe-gap="0"
+          --parameter-probe-caption="style text absent flag"
         ></togostanza-parameter-probe>
       </section>
 
@@ -70,6 +78,10 @@
           count="7.5"
           flag="false"
           payload='["false-string",{"nested":true}]'
+          mode="compact"
+          note="text parameter false flag"
+          --parameter-probe-gap="7.5"
+          --parameter-probe-caption="style text false flag"
         ></togostanza-parameter-probe>
       </section>
 
@@ -80,6 +92,10 @@
           label="before-mutation"
           count="1"
           payload='{"kind":"mutation","step":"initial"}'
+          mode="compact"
+          note="before text mutation"
+          --parameter-probe-gap="4"
+          --parameter-probe-caption="before style text mutation"
         ></togostanza-parameter-probe>
         <div class="fixture-controls" aria-label="mutation controls">
           <button type="button" data-action="set-present-flag">set flag</button>
@@ -87,6 +103,9 @@
           <button type="button" data-action="remove-flag">remove flag</button>
           <button type="button" data-action="set-count">set count</button>
           <button type="button" data-action="set-payload">set payload</button>
+          <button type="button" data-action="set-mode">set mode</button>
+          <button type="button" data-action="set-note">set note</button>
+          <button type="button" data-action="set-style-values">set style values</button>
         </div>
       </section>
     </main>
@@ -110,6 +129,16 @@
         },
         setPayload(value) {
           target.setAttribute('payload', JSON.stringify(value));
+        },
+        setMode(value) {
+          target.setAttribute('mode', value);
+        },
+        setNote(value) {
+          target.setAttribute('note', value);
+        },
+        setStyleValues(gap, caption) {
+          target.setAttribute('--parameter-probe-gap', String(gap));
+          target.setAttribute('--parameter-probe-caption', caption);
         }
       };
 
@@ -127,6 +156,12 @@
           step: 'changed',
           values: [3, 4]
         }));
+      document.querySelector('[data-action="set-mode"]')
+        .addEventListener('click', () => window.parameterProbeFixture.setMode('comfortable'));
+      document.querySelector('[data-action="set-note"]')
+        .addEventListener('click', () => window.parameterProbeFixture.setNote('after text mutation'));
+      document.querySelector('[data-action="set-style-values"]')
+        .addEventListener('click', () => window.parameterProbeFixture.setStyleValues(16, 'after style text mutation'));
     </script>
   </body>
 </html>

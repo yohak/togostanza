@@ -16,6 +16,7 @@ Stanza Web Component が、一般的なWebサイトへ直接埋め込めるこ�
 - build 済みの `dist/` を静的に配信できる状態にする。
 - help preview ではない、最小のHTMLページを用意する。
 - HTML は `<script type="module" src="./{id}.js">` と `<togostanza-{id}>` を直接書く。
+- `stanza:menu-placement` が `none` の stanza も含め、直接埋め込み時に余計な menu UI が出ないことを見る。
 
 ## Fixture
 
@@ -36,9 +37,16 @@ current-pnpm/
         metadata.json
         style.scss
         templates/stanza.html.hbs
+      menuless-hello/
+        index.js
+        metadata.json
+        style.scss
+        templates/stanza.html.hbs
 ```
 
-`runtime-embed.html` は help preview とは別の確認用HTMLで、build 後の `./dist/hello.js` を module script として読み込み、`<togostanza-hello say-to="runtime">` を直接配置する。
+`runtime-embed.html` は help preview とは別の確認用HTMLで、build 後の `./dist/hello.js` と `./dist/menuless-hello.js` を module script として読み込み、`<togostanza-hello say-to="runtime">` と `<togostanza-menuless-hello say-to="runtime">` を直接配置する。
+
+`menuless-hello` は `metadata.json` に `"stanza:menu-placement": "none"` を持つ。Web 側 wrapper の `URL_STANZA` 組み立ては利用側ロジックなので、この case では扱わない。
 
 `remake/` はリメイク版CLI実装後に、同じ入力意図で作る。
 
@@ -80,6 +88,7 @@ http://localhost:4173/runtime-embed.html
 - shadow root が `open` で作られること。
 - Stanza ごとの CSS が shadow root 内に適用されること。
 - help preview と直接埋め込みで挙動を混同しないこと。
+- `stanza:menu-placement: none` の stanza を direct embed しても、runtime 埋め込み画面に余計な menu UI が出ないこと。
 
 ### 現行版の観測状況
 
@@ -114,7 +123,8 @@ mise exec -- pnpm run serve:fixture
 - `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
 - build 時に Sass deprecation warning が多数出た。
-- `dist/` には `hello.js`、`hello.js.map`、`hello.css`、`hello.html`、`hello/metadata.json`、`index.html`、`-togostanza/*` が生成された。
+- `dist/` には `hello.js`、`menuless-hello.js`、それぞれの CSS / HTML / metadata、`index.html`、`-togostanza/*` が生成された。
+- `menuless-hello` の direct embed browser 観測は追加確認対象。
 
 ### ブラウザ観測結果
 
@@ -151,6 +161,7 @@ mise exec -- pnpm run serve:fixture
 - shadow root と stylesheet が確認できる。
 - console に致命的な module load error が出ない。
 - help preview のUIに依存せず確認できる。
+- `stanza:menu-placement: none` の direct embed で menu UI が表示されない。
 
 ## 記録する差分
 

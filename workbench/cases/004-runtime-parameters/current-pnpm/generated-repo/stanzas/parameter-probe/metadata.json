@@ -38,6 +38,24 @@
       "stanza:example": "{\"kind\":\"fixture\",\"values\":[1,2]}",
       "stanza:description": "JSON parameter used to observe parsed object or array values.",
       "stanza:required": false
+    },
+    {
+      "stanza:key": "mode",
+      "stanza:type": "single-choice",
+      "stanza:choice": [
+        "compact",
+        "comfortable"
+      ],
+      "stanza:example": "compact",
+      "stanza:description": "Single-choice parameter used by real project metadata.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "note",
+      "stanza:type": "text",
+      "stanza:example": "runtime note",
+      "stanza:description": "Text parameter used by real project metadata.",
+      "stanza:required": false
     }
   ],
   "stanza:menu-placement": "bottom-right",
@@ -47,6 +65,18 @@
       "stanza:type": "color",
       "stanza:default": "#245c73",
       "stanza:description": "Accent color for the fixture output."
+    },
+    {
+      "stanza:key": "--parameter-probe-gap",
+      "stanza:type": "number",
+      "stanza:default": "8",
+      "stanza:description": "Numeric style value used to observe style metadata in this.params."
+    },
+    {
+      "stanza:key": "--parameter-probe-caption",
+      "stanza:type": "text",
+      "stanza:default": "metadata caption",
+      "stanza:description": "Text style value used to observe style metadata in this.params."
     }
   ],
   "stanza:incomingEvent": [],

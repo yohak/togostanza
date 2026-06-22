@@ -1,0 +1,23 @@
+{
+  "name": "case-008-react-runtime-current",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "",
+  "scripts": {
+    "serve:fixture": "node ../../../../scripts/static-fixture-server.mjs --port 4178 --default /fixtures/react-runtime.html"
+  },
+  "dependencies": {
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "togostanza": "github:togostanza/togostanza",
+    "tslib": "^2.6.3",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "private": true
+}

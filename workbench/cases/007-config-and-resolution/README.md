@@ -18,6 +18,8 @@ build 設定、import 解決、asset 参照の扱いを確認し、既存 Stanza
 - `togostanza-build.js` を持つケースを用意する。
 - asset import と public asset 参照を含む Stanza source を用意する。
 - 実プロジェクトで観測された alias / tsconfig paths を必要に応じて反映する。
+- Sass alias `@use "@/common.scss"` を含む。
+- 依存 package 内 asset import を含む。これは `togostanza-utils` 関数 API 互換とは分離し、asset resolution だけを見る。
 
 ## fixture 構造
 
@@ -37,6 +39,10 @@ current-pnpm/
       config-resolution.html
     lib/
       fixture-label.js
+    vendor/
+      case-007-asset-package/
+        package.json
+        package-marker.svg
     stanzas/
       config-resolution/
         README.md
@@ -58,10 +64,12 @@ current-pnpm/
 
 - `../../lib/fixture-label.js` への相対 import
 - `./assets/local-marker.svg` への JavaScript asset import
+- `case-007-asset-package/package-marker.svg` への JavaScript package asset import
 - `style.scss` 内の `url("./assets/local-marker.svg")`
+- `style.scss` 内の `@use "@/common.scss"`
 - root `assets/root-public-marker.txt` への public path 参照
 
-alias はまだ active import にしていない。候補は `tsconfig.json` と `stanzas/config-resolution/alias-candidates.md` に記録し、migration note の要否を判断するための入力として扱う。
+workspace import alias はまだ active import にしていない。候補は `%stanza/*`、`%core/*` として `tsconfig.json` と `stanzas/config-resolution/alias-candidates.md` に記録し、migration note の要否を判断するための入力として扱う。
 
 `tsconfig.json` は `paths` の候補を記録しつつ、JS source の現行 build が TypeScript support 有効化後に失敗しないよう `allowJs: true` を指定する。
 
@@ -70,7 +78,9 @@ alias はまだ active import にしていない。候補は `tsconfig.json` と
 - `.mjs` 設定が現行 build に影響するか。
 - `.js` 設定が現行 build に影響するか。
 - asset import の出力 path。
+- package asset import の出力 path。
 - root `assets/` と stanza `assets/` の公開 path。
+- Sass alias `@/common.scss` が現行 build で解決されるか。
 - 実プロジェクトで使われている alias。
 
 ### 実行コマンド
@@ -130,6 +140,8 @@ mise exec -- pnpm run serve:fixture
 - JS source の fixture として `tsconfig.json` に `allowJs: true` を追加した後、`mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
 - build 時に Sass deprecation warning が多数出た。
 - `dist/` には `config-resolution.js`、`config-resolution.css`、`config-resolution.html`、`config-resolution/metadata.json`、`config-resolution/assets/local-marker.svg`、`assets/root-public-marker.txt`、`index.html`、`-togostanza/*` が生成された。
+- Sass alias `@use "@/common.scss"` を含めた build は成功し、`dist/config-resolution.css` に `--case-007-accent: #2f6f73` が出力された。
+- package asset import を含めた build は成功し、`dist/config-resolution.js` に package marker URL の描画経路が含まれた。
 
 ### 旧設定ファイルの読み込み
 
@@ -147,8 +159,10 @@ mise exec -- pnpm run serve:fixture
 
 - `../../lib/fixture-label.js` の相対 import は解決し、browser 上で `case-007 relative import resolved` と表示された。
 - JavaScript からの `./assets/local-marker.svg` import は `data:image/svg+xml,...` に inline された。
+- JavaScript からの package asset import は build 成功を確認した。browser 上の `img src` と出力 path / inline 結果の確認は追加確認対象。
 - shadow root 内の `img` は同じ data URL を `src` として持った。
 - `style.scss` 内の `url("./assets/local-marker.svg")` は `dist/config-resolution.css` に同じ相対 path のまま出力された。
+- `style.scss` 内の `@use "@/common.scss"` は build 成功し、`--case-007-accent` が `dist/config-resolution.css` に反映された。
 - stanza asset は `dist/config-resolution/assets/local-marker.svg` に出力された。
 - root asset は `dist/assets/root-public-marker.txt` に出力され、`http://127.0.0.1:4177/dist/assets/root-public-marker.txt` は `200` で `case-007 root public asset marker` を返した。
 - Stanza source が表示した root public asset path は `./assets/root-public-marker.txt`。この path は direct fixture URL `fixtures/config-resolution.html` を基準にすると `fixtures/assets/root-public-marker.txt` へ解決され、HTTP status は `404` だった。
@@ -160,6 +174,7 @@ mise exec -- pnpm run serve:fixture
 - `togostanza.config.ts` の読み込み。
 - Vite plugin / Vite config の escape hatch。
 - asset import と public asset 参照が壊れていないこと。
+- Sass alias と package asset import が壊れていないこと、または migration note が出ること。
 - alias が必要な既存 source を吸収できること。
 
 ### リメイク版の期待観測
@@ -174,6 +189,7 @@ mise exec -- pnpm run serve:fixture
 - 旧設定ファイルを無条件に実行しない。
 - 移行先が分かる診断が出る。
 - 既存 Stanza source の asset 参照が壊れない。
+- `@/common.scss` と依存 package 内 asset import の対応可否が説明できる。
 - alias 由来の差分がある場合、migration note の要否が判断できる。
 
 ## 記録する差分
@@ -182,6 +198,8 @@ mise exec -- pnpm run serve:fixture
 - warning / error の内容。
 - import 解決結果。
 - asset 出力 path。
+- package asset import の出力 path。
+- Sass alias の解決結果。
 - alias 設定の有無。
 
 ## コマンド記録

@@ -57,6 +57,8 @@ workbench/cases/
 | [005-stanza-source-api](./005-stanza-source-api/) | Stanza base API | 開発契約 | 既存 Stanza source 互換のAPIを確認する。 |
 | [006-inter-stanza-coordination](./006-inter-stanza-coordination/) | `togostanza--container` など | 利用契約 | Stanza 間連携の維持・再設計対象を確認する。 |
 | [007-config-and-resolution](./007-config-and-resolution/) | config / alias / assets | 開発契約 | build設定、import解決、asset参照の扱いを確認する。 |
+| [008-react-runtime](./008-react-runtime/) | TSX / React runtime | 開発契約 | React Stanza source の mount と再描画を確認する。 |
+| [009-vue-runtime](./009-vue-runtime/) | Vue SFC runtime | 開発契約 | Vue Stanza source の mount と runtime chunk を確認する。 |
 
 ## ケースの書き方
 

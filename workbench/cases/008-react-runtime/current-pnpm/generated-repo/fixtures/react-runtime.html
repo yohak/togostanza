@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Case 008 React runtime</title>
+    <script type="module" src="../dist/react-runtime.js"></script>
+  </head>
+  <body>
+    <togostanza-react-runtime id="react-runtime-target" label="initial-react" count="1"></togostanza-react-runtime>
+    <button type="button" data-action="mutate">mutate react stanza</button>
+
+    <script type="module">
+      const target = document.querySelector('#react-runtime-target');
+
+      window.reactRuntimeFixture = {
+        target,
+        mutate() {
+          target.setAttribute('label', 'after-react-mutation');
+          target.setAttribute('count', '2');
+        }
+      };
+
+      document.querySelector('[data-action="mutate"]')
+        .addEventListener('click', () => window.reactRuntimeFixture.mutate());
+    </script>
+  </body>
+</html>
+

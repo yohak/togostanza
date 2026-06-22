@@ -1,11 +1,21 @@
 import Stanza from 'togostanza/stanza';
 
 export default class CoordinationReceiver extends Stanza {
-  handleEvent() {}
+  handleEvent(event) {
+    this.lastHandledEvent = {
+      type: event.type,
+      detail: event.detail
+    };
+    this.render();
+  }
 
   async render() {
     const selectedLabel = this.params['selected-label'] || '(none)';
     const dataUrl = this.params['data-url'];
+    const handledEventType = this.lastHandledEvent?.type || '(none)';
+    const handledEventDetail = this.lastHandledEvent
+      ? JSON.stringify(this.lastHandledEvent.detail)
+      : '(none)';
     let dataSourceLabel = '(none)';
 
     if (dataUrl) {
@@ -22,7 +32,9 @@ export default class CoordinationReceiver extends Stanza {
       parameters: {
         selectedLabel,
         dataUrl: dataUrl || '(none)',
-        dataSourceLabel
+        dataSourceLabel,
+        handledEventType,
+        handledEventDetail
       }
     });
   }

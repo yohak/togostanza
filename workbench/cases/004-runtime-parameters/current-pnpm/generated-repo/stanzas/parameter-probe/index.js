@@ -1,6 +1,15 @@
 import Stanza from 'togostanza/stanza';
 
-const PARAMETER_KEYS = ['label', 'count', 'flag', 'payload'];
+const PARAMETER_KEYS = [
+  'label',
+  'count',
+  'flag',
+  'payload',
+  'mode',
+  'note',
+  '--parameter-probe-gap',
+  '--parameter-probe-caption'
+];
 
 function formatValue(value) {
   if (value === undefined) {

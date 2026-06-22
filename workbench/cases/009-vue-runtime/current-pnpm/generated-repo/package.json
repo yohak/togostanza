@@ -1,0 +1,20 @@
+{
+  "name": "case-009-vue-runtime-current",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "",
+  "scripts": {
+    "serve:fixture": "node ../../../../scripts/static-fixture-server.mjs --port 4179 --default /fixtures/vue-runtime.html"
+  },
+  "dependencies": {
+    "@rollup/plugin-replace": "^5.0.7",
+    "@vue/compiler-sfc": "^3.2.11",
+    "rollup-plugin-vue": "^6.0.0",
+    "togostanza": "github:togostanza/togostanza",
+    "vue": "^3.2.11"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "private": true
+}

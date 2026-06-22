@@ -31,6 +31,7 @@
 - [togostanzaメモ](./repositories/togostanza.md): 現行版リポジトリの詳細メモ。
 - [metastanzaメモ](./repositories/metastanza.md): **metastanza** の詳細メモ。
 - [togomedium-webメモ](./repositories/togomedium-web.md): **TogoMedium Stanza** の詳細メモ。
+- [togostanza-utilsメモ](./repositories/togostanza-utils.md): 実プロジェクトで使われる utility package API の別調査メモ。
 - [未解決事項](./open-questions.md): 未解決事項と人間判断待ち。
 - [Follow-ups](./follow-ups.md): 調査中に出た改善案と後続候補。
 
