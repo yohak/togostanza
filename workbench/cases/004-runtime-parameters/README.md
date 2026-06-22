@@ -18,26 +18,29 @@ HTML attributes が `metadata.json` の `stanza:parameter` と `stanza:type` に
 
 ## Fixture
 
-`current/` に現行版 `togostanza` 用の最小 Stanza repository を置く。
+`current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
+`generated-repo/` に現行版 `togostanza` 用の最小 Stanza repository を置く。
 
 ```text
-current/
+current-pnpm/
   mise.toml
-  package.json
-  common.scss
-  fixtures/
-    runtime-parameters.html
-  stanzas/
-    parameter-probe/
-      index.js
-      metadata.json
-      style.scss
-      templates/
-        stanza.html.hbs
+  generated-repo/
+    package.json
+    pnpm-lock.yaml
+    common.scss
+    fixtures/
+      runtime-parameters.html
+    stanzas/
+      parameter-probe/
+        index.js
+        metadata.json
+        style.scss
+        templates/
+          stanza.html.hbs
 ```
 
-- `current/mise.toml` で Node 18 系を指定する。case 直下には `mise.toml` を置かない。
-- `current/package.json` は `togostanza` を `github:togostanza/togostanza` として参照する。tgz 化はしない。
+- `current-pnpm/mise.toml` で Node 18 系と pnpm 9 系を指定する。case 直下には `mise.toml` を置かない。
+- `current-pnpm/generated-repo/package.json` は `togostanza` を `github:togostanza/togostanza` として参照する。tgz 化はしない。
 - `parameter-probe` は `metadata.json` に `string`、`number`、`boolean`、`json` の parameter を持つ。
 - `index.js` は `this.params` の値と `typeof` を描画し、`handleAttributeChange()` で最後の attribute 変更を記録する。
 - `fixtures/runtime-parameters.html` は build 後の `../dist/parameter-probe.js` を直接読み込み、次の入力を並べて確認する。
@@ -50,16 +53,17 @@ current/
 - in-app browser から mutation を再現できるように、`fixtures/runtime-parameters.html` には mutation 用の操作ボタンも置く。
 - `date`、`datetime`、`url` は追加候補として残す。現時点の fixture には入れず、主要4種の現行観測を優先する。
 
-## 実行予定コマンド
+## 実行コマンド
 
-現行版の確認は `current/` で行う。
+現行版の確認は `current-pnpm/generated-repo/` で行う。
 
 ```sh
-cd workbench/cases/004-runtime-parameters/current
-mise trust ./mise.toml
+cd workbench/cases/004-runtime-parameters/current-pnpm/generated-repo
+mise trust ../mise.toml
 mise exec -- node -v
-mise exec -- npm install
-mise exec -- npx togostanza build --output-path dist
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
 build 後は `fixtures/runtime-parameters.html` を静的配信してブラウザで確認する。help preview ではなく直接埋め込みHTMLを確認対象にする。
@@ -87,34 +91,33 @@ http://localhost:4174/fixtures/runtime-parameters.html
 確認済み。
 
 - 確認日: 2026-06-22
-- 作業ディレクトリ: `workbench/cases/004-runtime-parameters/current/`
+- 作業ディレクトリ: `workbench/cases/004-runtime-parameters/current-pnpm/generated-repo/`
 - Node.js: `v18.20.4`
-- npm: `10.7.0`
+- pnpm: `9.15.9`
 - `togostanza`: `3.0.0-beta.57`
 - 確認URL: `http://127.0.0.1:4174/fixtures/runtime-parameters.html`
 
 ### 実行したコマンド
 
 ```sh
-cd workbench/cases/004-runtime-parameters/current
-mise trust ./mise.toml
-mise exec -- npm install
-mise exec -- npm install --package-lock-only
-mise exec -- npx togostanza --version
-mise exec -- npx togostanza build --output-path dist
+cd workbench/cases/004-runtime-parameters/current-pnpm/generated-repo
+mise trust ../mise.toml
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza --version
+mise exec -- pnpm exec togostanza build --output-path dist
 mise exec -- node -e "..."
 ```
 
-依存取得は、Codex sandbox の実行環境制限を避けるため通常手順外の一時実験を含んだ。このため、依存取得そのものは通常手順での完了確認として扱わない。
+`mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。
 
-`package-lock.json` は、通常の npm command として `mise exec -- npm install --package-lock-only` で生成した。
-
-`mise trust`、`build`、local HTTP server は、Codex sandbox の権限制約または watcher 制限を避けるため許可済みの unsandboxed 実行で行った。
+`mise trust`、`install`、`build`、local HTTP server は、Codex sandbox の権限制約、network 制限、または watcher 制限を避けるため、承認済みの通常コマンド実行で行った。
 
 ### build 結果
 
-- sandboxed exec の `mise exec -- npx togostanza build --output-path dist` は、`EMFILE: too many open files, watch` で失敗した。
-- 同じ command は unsandboxed 実行では成功した。
+- `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
+- `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
 - build 時に Sass deprecation warning が多数出た。
 - `dist/` には `parameter-probe.js`、`parameter-probe.js.map`、`parameter-probe.css`、`parameter-probe.html`、`parameter-probe/metadata.json`、`index.html`、`-togostanza/*` が生成された。
 

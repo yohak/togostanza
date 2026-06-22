@@ -19,21 +19,23 @@ Stanza Web Component が、一般的なWebサイトへ直接埋め込めるこ�
 
 ## Fixture
 
-`current/` は 001 の scaffold 結果を参考にした、現行版用の最小 Stanza repository として用意する。
+`current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
+`generated-repo/` は 001 の scaffold 結果を参考にした、現行版用の最小 Stanza repository として扱う。
 
 ```text
-current/
+current-pnpm/
   mise.toml
-  package.json
-  package-lock.json
-  common.scss
-  runtime-embed.html
-  stanzas/
-    hello/
-      index.js
-      metadata.json
-      style.scss
-      templates/stanza.html.hbs
+  generated-repo/
+    package.json
+    pnpm-lock.yaml
+    common.scss
+    runtime-embed.html
+    stanzas/
+      hello/
+        index.js
+        metadata.json
+        style.scss
+        templates/stanza.html.hbs
 ```
 
 `runtime-embed.html` は help preview とは別の確認用HTMLで、build 後の `./dist/hello.js` を module script として読み込み、`<togostanza-hello say-to="runtime">` を直接配置する。
@@ -42,19 +44,21 @@ current/
 
 ## 実行コマンド
 
-現行版の確認は `current/` で行う。
+現行版の確認は `current-pnpm/generated-repo/` で行う。
 
 ```sh
-mise trust ./mise.toml
+cd workbench/cases/003-runtime-embedding/current-pnpm/generated-repo
+mise trust ../mise.toml
 mise exec -- node -v
-mise exec -- npm install
-mise exec -- npx togostanza build --output-path dist
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build 後は、`current/runtime-embed.html` を静的配信してブラウザで確認する。確認方法は `serve` または簡易HTTPサーバのどちらでもよいが、help preview ではなく `runtime-embed.html` を開く。
+build 後は、`current-pnpm/generated-repo/runtime-embed.html` を静的配信してブラウザで確認する。確認方法は `serve` または簡易HTTPサーバのどちらでもよいが、help preview ではなく `runtime-embed.html` を開く。
 
 ```sh
-mise exec -- npx togostanza serve
+mise exec -- pnpm exec togostanza serve
 ```
 
 または、build artifact の静的配信だけを確認する場合は、Node.js の簡易サーバを使う。
@@ -82,31 +86,33 @@ http://localhost:4173/runtime-embed.html
 確認済み。
 
 - 確認日: 2026-06-22
-- 作業ディレクトリ: `workbench/cases/003-runtime-embedding/current/`
+- 作業ディレクトリ: `workbench/cases/003-runtime-embedding/current-pnpm/generated-repo/`
 - Node.js: `v18.20.4`
-- npm: `10.7.0`
+- pnpm: `9.15.9`
 - `togostanza`: `3.0.0-beta.57`
 - 確認URL: `http://127.0.0.1:4173/runtime-embed.html`
 
 ### 実行したコマンド
 
 ```sh
-cd workbench/cases/003-runtime-embedding/current
-mise trust ./mise.toml
-mise exec -- npm ci
-mise exec -- npx togostanza --version
-mise exec -- npx togostanza build --output-path dist
+cd workbench/cases/003-runtime-embedding/current-pnpm/generated-repo
+mise trust ../mise.toml
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza --version
+mise exec -- pnpm exec togostanza build --output-path dist
 mise exec -- node -e "..."
 ```
 
-依存復元は、Codex sandbox の実行環境制限を避けるため通常手順外の一時実験を含んだ。このため、依存復元そのものは通常手順での完了確認として扱わない。
+`mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。
 
-`mise trust`、`build`、local HTTP server は、Codex sandbox の権限制約または watcher 制限を避けるため許可済みの unsandboxed 実行で行った。
+`mise trust`、`install`、`build`、local HTTP server は、Codex sandbox の権限制約、network 制限、または watcher 制限を避けるため、承認済みの通常コマンド実行で行った。
 
 ### build 結果
 
-- sandboxed exec の `mise exec -- npx togostanza build --output-path dist` は、`EMFILE: too many open files, watch` で失敗した。
-- 同じ command は unsandboxed 実行では成功した。
+- `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
+- `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
 - build 時に Sass deprecation warning が多数出た。
 - `dist/` には `hello.js`、`hello.js.map`、`hello.css`、`hello.html`、`hello/metadata.json`、`index.html`、`-togostanza/*` が生成された。
 
