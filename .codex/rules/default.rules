@@ -52,3 +52,4 @@ prefix_rule(pattern=["mise", "exec", "--", "node", "bin/togostanza.mjs", "build"
 prefix_rule(pattern=["mise", "exec", "--", "npx", "togostanza", "serve"], decision="allow")
 prefix_rule(pattern=["mise", "exec", "--", "npx", "togostanza", "s"], decision="allow")
 prefix_rule(pattern=["mise", "exec", "--", "node", "bin/togostanza.mjs", "serve"], decision="allow")
+prefix_rule(pattern=["rm", "-rf", "sandbox/current-cli-smoke"], decision="allow")
