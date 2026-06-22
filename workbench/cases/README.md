@@ -57,7 +57,6 @@ workbench/cases/
 | [005-stanza-source-api](./005-stanza-source-api/) | Stanza base API | 開発契約 | 既存 Stanza source 互換のAPIを確認する。 |
 | [006-inter-stanza-coordination](./006-inter-stanza-coordination/) | `togostanza--container` など | 利用契約 | Stanza 間連携の維持・再設計対象を確認する。 |
 | [007-config-and-resolution](./007-config-and-resolution/) | config / alias / assets | 開発契約 | build設定、import解決、asset参照の扱いを確認する。 |
-| [008-real-project-regression](./008-real-project-regression/) | 実プロジェクト群 | 利用契約 / 開発契約 | `metastanza` と `TogoMedium Stanza` で回帰を確認する。 |
 
 ## ケースの書き方
 
@@ -128,7 +127,6 @@ Git 管理しないものは次の通り。
 - 005 Stanza source API: APIごとに最小 Stanza source を `current-pnpm/generated-repo/` に作る。`this.query()` など外部通信が絡むものは、観測用の最小 endpoint またはモック方針を README に書く。
 - 006 inter stanza coordination: sender / receiver / container を含む最小HTMLを `current-pnpm/generated-repo/` に置く。`togostanza--container` は Stanza 間連携の入口として維持対象、`togostanza--event-map` は outgoing event を receiver attribute へ渡す概念を維持しつつ詳細挙動は再設計候補、`togostanza--data-source` は外部データを receiver attribute へ渡す目的を維持しつつAPI詳細は再設計候補、`togostanza--data-container` は旧ドキュメント内の誤記として破棄対象として扱う。再設計候補は現行挙動の観測と移行メモを分けて書く。
 - 007 config and resolution: 設定ファイル、alias、asset import を分けて小さく `current-pnpm/generated-repo/` で確認する。旧設定ファイルは無条件実行しない方針を確認対象に含める。
-- 008 real project regression: 実プロジェクトを直接汚さず、必要な最小再現または検証用コピーだけを current / remake に置く。
 
 ## 判断の扱い
 
