@@ -22,31 +22,35 @@ build 設定、import 解決、asset 参照の扱いを確認し、既存 Stanza
 ## fixture 構造
 
 ```text
-current/
+current-pnpm/
   mise.toml
-  package.json
-  common.scss
-  togostanza-build.mjs
-  togostanza-build.js
-  tsconfig.json
-  assets/
-    root-public-marker.txt
-  lib/
-    fixture-label.js
-  stanzas/
-    config-resolution/
-      README.md
-      alias-candidates.md
-      index.js
-      metadata.json
-      style.scss
-      assets/
-        local-marker.svg
-      templates/
-        stanza.html.hbs
+  generated-repo/
+    package.json
+    pnpm-lock.yaml
+    common.scss
+    togostanza-build.mjs
+    togostanza-build.js
+    tsconfig.json
+    assets/
+      root-public-marker.txt
+    fixtures/
+      config-resolution.html
+    lib/
+      fixture-label.js
+    stanzas/
+      config-resolution/
+        README.md
+        alias-candidates.md
+        index.js
+        metadata.json
+        style.scss
+        assets/
+          local-marker.svg
+        templates/
+          stanza.html.hbs
 ```
 
-`current/mise.toml` は Node 18 系を指定する。case 直下には置かない。
+`current-pnpm/mise.toml` は Node 18 系と pnpm 9 系を指定する。case 直下には置かない。
 
 `togostanza-build.mjs` と `togostanza-build.js` は、どちらも無害な marker plugin を返すだけにしている。現行 build が読み込んだ場合は、`case-007: ... was executed` という warning で検出できる。ファイル作成、削除、外部通信などの副作用は持たせない。
 
@@ -59,6 +63,8 @@ current/
 
 alias はまだ active import にしていない。候補は `tsconfig.json` と `stanzas/config-resolution/alias-candidates.md` に記録し、migration note の要否を判断するための入力として扱う。
 
+`tsconfig.json` は `paths` の候補を記録しつつ、JS source の現行 build が TypeScript support 有効化後に失敗しないよう `allowJs: true` を指定する。
+
 ## 現行版で観測すること
 
 - `.mjs` 設定が現行 build に影響するか。
@@ -69,23 +75,84 @@ alias はまだ active import にしていない。候補は `tsconfig.json` と
 
 ### 実行コマンド
 
-未実行。現行版を観測するときは `current/` で次を実行する。
+現行版の確認は `current-pnpm/generated-repo/` で行う。
 
 ```sh
-mise trust
-mise exec -- npm install
-mise exec -- npx togostanza build --output-path dist
+cd workbench/cases/007-config-and-resolution/current-pnpm/generated-repo
+mise trust ../mise.toml
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-必要に応じて、設定ファイルの片方だけを一時的に退避して `.mjs` と `.js` の読み込み差分を分けて観測する。その場合も、退避はこの case の `current/` 内だけで行い、観測後に fixture を元へ戻す。
+build 後は fixture 用 package script で `fixtures/config-resolution.html` を配信し、browser で開く。
 
-### 現行版の期待観測
+```sh
+mise exec -- pnpm run serve:fixture
+```
 
-- `.mjs` が読み込まれる場合は `case-007: togostanza-build.mjs was executed` が出る。
-- `.js` が読み込まれる場合は `case-007: togostanza-build.js was executed` が出る。
-- どちらも出ない場合は、旧設定ファイルが現行 build に影響していない可能性として記録する。
-- JavaScript asset import、SCSS `url()`、root public asset 参照が成功するか、失敗する場合は error と対象 path を記録する。
-- `tsconfig.json` の paths は active import で使っていないため、この fixture の初回 build 成否とは切り分ける。
+設定ファイルの片方だけを一時的に退避して `.mjs` と `.js` の読み込み差分も観測する。その場合も、退避はこの case の `current-pnpm/generated-repo/` 内だけで行い、観測後に fixture を元へ戻す。
+
+### 現行版の観測状況
+
+確認済み。
+
+- 確認日: 2026-06-22
+- 作業ディレクトリ: `workbench/cases/007-config-and-resolution/current-pnpm/generated-repo/`
+- Node.js: `v18.20.4`
+- pnpm: `9.15.9`
+- `togostanza`: `3.0.0-beta.57`
+- 確認URL: `http://127.0.0.1:4177/fixtures/config-resolution.html`
+
+### 実行したコマンド
+
+```sh
+cd workbench/cases/007-config-and-resolution/current-pnpm/generated-repo
+mise trust ../mise.toml
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza --version
+mise exec -- pnpm exec togostanza build --output-path dist
+mise exec -- pnpm run serve:fixture
+```
+
+`mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。
+
+`mise trust`、`install`、`build`、local HTTP server は、Codex sandbox の権限制約、network 制限、または watcher 制限を避けるため、承認済みの通常コマンド実行で行った。
+
+### build 結果
+
+- `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
+- `tsconfig.json` が存在すると現行 build は TypeScript support を有効化する。
+- `allowJs` なしの初回 build は `TS18003: No inputs were found in config file ... tsconfig.json` で失敗した。
+- JS source の fixture として `tsconfig.json` に `allowJs: true` を追加した後、`mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
+- build 時に Sass deprecation warning が多数出た。
+- `dist/` には `config-resolution.js`、`config-resolution.css`、`config-resolution.html`、`config-resolution/metadata.json`、`config-resolution/assets/local-marker.svg`、`assets/root-public-marker.txt`、`index.html`、`-togostanza/*` が生成された。
+
+### 旧設定ファイルの読み込み
+
+`togostanza-build.mjs` と `togostanza-build.js` は、読み込まれた場合に `case-007: ... was executed` warning を出す marker plugin を返す。
+
+| 条件 | build 結果 | marker warning |
+| ---- | ---------- | -------------- |
+| `.mjs` と `.js` の両方あり | 成功 | 出なかった |
+| `.mjs` のみ | 成功 | 出なかった |
+| `.js` のみ | 成功 | 出なかった |
+
+この fixture では、現行 build が `togostanza-build.mjs` / `togostanza-build.js` を Rollup plugin として読み込む挙動は観測されなかった。
+
+### asset 解決結果
+
+- `../../lib/fixture-label.js` の相対 import は解決し、browser 上で `case-007 relative import resolved` と表示された。
+- JavaScript からの `./assets/local-marker.svg` import は `data:image/svg+xml,...` に inline された。
+- shadow root 内の `img` は同じ data URL を `src` として持った。
+- `style.scss` 内の `url("./assets/local-marker.svg")` は `dist/config-resolution.css` に同じ相対 path のまま出力された。
+- stanza asset は `dist/config-resolution/assets/local-marker.svg` に出力された。
+- root asset は `dist/assets/root-public-marker.txt` に出力され、`http://127.0.0.1:4177/dist/assets/root-public-marker.txt` は `200` で `case-007 root public asset marker` を返した。
+- Stanza source が表示した root public asset path は `./assets/root-public-marker.txt`。この path は direct fixture URL `fixtures/config-resolution.html` を基準にすると `fixtures/assets/root-public-marker.txt` へ解決され、HTTP status は `404` だった。
+- browser console の error / warning は観測されなかった。
 
 ## リメイク版で観測すること
 
@@ -119,22 +186,21 @@ mise exec -- npx togostanza build --output-path dist
 
 ## コマンド記録
 
-この fixture 作成時点では、install / build は実行していない。
-
 実行済み:
 
-- `git diff --check -- workbench/cases/007-config-and-resolution`
-- `rg -n "[ \t]+$" workbench/cases/007-config-and-resolution`
-
-未実行:
-
-- `mise trust`
-- `mise exec -- npm install`
-- `mise exec -- npx togostanza build --output-path dist`
+- `mise trust ../mise.toml`
+- `mise exec -- pnpm install`
+- `mise exec -- pnpm exec togostanza --version`
+- `mise exec -- pnpm exec togostanza build --output-path dist`
 - `.mjs` / `.js` を片方ずつにした読み込み差分確認
+- `mise exec -- pnpm run serve:fixture`
+- browser observation
+- `git diff --check`
+- inline command implementation pattern search
 
 ## 未決定事項
 
 - `defineTogoStanzaConfig()` の schema。
 - alias 合成順。
 - asset の inline / emit / hash / threshold。
+- direct embed で root public asset path をどう表現するか。
