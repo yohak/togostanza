@@ -57,10 +57,10 @@ build 後は、`current/runtime-embed.html` を静的配信してブラウザで
 mise exec -- npx togostanza serve
 ```
 
-または、build artifact の静的配信だけを確認する場合は、次のような簡易サーバを使う。
+または、build artifact の静的配信だけを確認する場合は、Node.js の簡易サーバを使う。
 
 ```sh
-python3 -m http.server 4173
+mise exec -- node -e "const http=require('node:http');const fs=require('node:fs');const path=require('node:path');const port=4173;const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8'};http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost');const pathname=url.pathname==='/'?'/runtime-embed.html':url.pathname;const file=path.join(process.cwd(),decodeURIComponent(pathname));fs.readFile(file,(err,body)=>{if(err){res.writeHead(404).end('not found');return;}res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream'});res.end(body);});}).listen(port,()=>console.log('http://localhost:'+port+'/runtime-embed.html'));"
 ```
 
 その場合の確認URL例:
