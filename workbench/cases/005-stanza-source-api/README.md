@@ -135,7 +135,7 @@ mise exec -- pnpm -v
 mise exec -- pnpm install
 mise exec -- pnpm exec togostanza --version
 mise exec -- pnpm exec togostanza build --output-path dist
-mise exec -- node -e "..."
+mise exec -- pnpm run serve:fixture
 ```
 
 `mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。
@@ -152,7 +152,7 @@ mise exec -- node -e "..."
 Local browser fixture server:
 
 ```sh
-mise exec -- node -e "..."
+mise exec -- pnpm run serve:fixture
 ```
 
 URL: `http://127.0.0.1:4175/fixtures/source-api.html`.

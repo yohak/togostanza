@@ -69,7 +69,7 @@ mise exec -- pnpm exec togostanza build --output-path dist
 build 後は `fixtures/runtime-parameters.html` を静的配信してブラウザで確認する。help preview ではなく直接埋め込みHTMLを確認対象にする。
 
 ```sh
-mise exec -- node -e "const http=require('node:http');const fs=require('node:fs');const path=require('node:path');const port=4174;const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8'};http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost');const pathname=url.pathname==='/'?'/fixtures/runtime-parameters.html':url.pathname;const file=path.join(process.cwd(),decodeURIComponent(pathname));fs.readFile(file,(err,body)=>{if(err){res.writeHead(404).end('not found');return;}res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream'});res.end(body);});}).listen(port,()=>console.log('http://localhost:'+port+'/fixtures/runtime-parameters.html'));"
+mise exec -- pnpm run serve:fixture
 ```
 
 確認URL例:
@@ -107,7 +107,7 @@ mise exec -- pnpm -v
 mise exec -- pnpm install
 mise exec -- pnpm exec togostanza --version
 mise exec -- pnpm exec togostanza build --output-path dist
-mise exec -- node -e "..."
+mise exec -- pnpm run serve:fixture
 ```
 
 `mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。

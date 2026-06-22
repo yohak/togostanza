@@ -61,10 +61,10 @@ build 後は、`current-pnpm/generated-repo/runtime-embed.html` を静的配信�
 mise exec -- pnpm exec togostanza serve
 ```
 
-または、build artifact の静的配信だけを確認する場合は、Node.js の簡易サーバを使う。
+または、build artifact の静的配信だけを確認する場合は、fixture 用 package script を使う。
 
 ```sh
-mise exec -- node -e "const http=require('node:http');const fs=require('node:fs');const path=require('node:path');const port=4173;const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8'};http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost');const pathname=url.pathname==='/'?'/runtime-embed.html':url.pathname;const file=path.join(process.cwd(),decodeURIComponent(pathname));fs.readFile(file,(err,body)=>{if(err){res.writeHead(404).end('not found');return;}res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream'});res.end(body);});}).listen(port,()=>console.log('http://localhost:'+port+'/runtime-embed.html'));"
+mise exec -- pnpm run serve:fixture
 ```
 
 その場合の確認URL例:
@@ -102,7 +102,7 @@ mise exec -- pnpm -v
 mise exec -- pnpm install
 mise exec -- pnpm exec togostanza --version
 mise exec -- pnpm exec togostanza build --output-path dist
-mise exec -- node -e "..."
+mise exec -- pnpm run serve:fixture
 ```
 
 `mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。

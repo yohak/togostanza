@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "license": "MIT",
   "repository": "",
+  "scripts": {
+    "serve:fixture": "node ../../../../scripts/static-fixture-server.mjs --port 4175 --default /fixtures/source-api.html --sparql /sparql"
+  },
   "dependencies": {
     "togostanza": "github:togostanza/togostanza"
   },
