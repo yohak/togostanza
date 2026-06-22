@@ -17,6 +17,58 @@ Stanza Web Component が、一般的なWebサイトへ直接埋め込めるこ�
 - help preview ではない、最小のHTMLページを用意する。
 - HTML は `<script type="module" src="./{id}.js">` と `<togostanza-{id}>` を直接書く。
 
+## Fixture
+
+`current/` は 001 の scaffold 結果を参考にした、現行版用の最小 Stanza repository として用意する。
+
+```text
+current/
+  mise.toml
+  package.json
+  package-lock.json
+  common.scss
+  runtime-embed.html
+  stanzas/
+    hello/
+      index.js
+      metadata.json
+      style.scss
+      templates/stanza.html.hbs
+```
+
+`runtime-embed.html` は help preview とは別の確認用HTMLで、build 後の `./dist/hello.js` を module script として読み込み、`<togostanza-hello say-to="runtime">` を直接配置する。
+
+`remake/` はリメイク版CLI実装後に、同じ入力意図で作る。
+
+## 実行コマンド
+
+現行版の確認は `current/` で行う。
+
+```sh
+mise trust ./mise.toml
+mise exec -- node -v
+mise exec -- npm install
+mise exec -- npx togostanza build --output-path dist
+```
+
+build 後は、`current/runtime-embed.html` を静的配信してブラウザで確認する。確認方法は `serve` または簡易HTTPサーバのどちらでもよいが、help preview ではなく `runtime-embed.html` を開く。
+
+```sh
+mise exec -- npx togostanza serve
+```
+
+または、build artifact の静的配信だけを確認する場合は、次のような簡易サーバを使う。
+
+```sh
+python3 -m http.server 4173
+```
+
+その場合の確認URL例:
+
+```text
+http://localhost:4173/runtime-embed.html
+```
+
 ## 現行版で観測すること
 
 - module script が読み込まれること。
@@ -24,6 +76,19 @@ Stanza Web Component が、一般的なWebサイトへ直接埋め込めるこ�
 - shadow root が `open` で作られること。
 - Stanza ごとの CSS が shadow root 内に適用されること。
 - help preview と直接埋め込みで挙動を混同しないこと。
+
+### 現行版の観測状況
+
+未実行。fixture と確認HTMLのみ準備済み。
+
+記録予定:
+
+- `dist/hello.js` が生成されるか。
+- `runtime-embed.html` から `dist/hello.js` が module script として読み込まれるか。
+- `customElements.get("togostanza-hello")` が定義済みになるか。
+- `<togostanza-hello>` に open shadow root が作られるか。
+- `say-to="runtime"` が `this.params["say-to"]` として反映されるか。
+- console に致命的な module load error が出ないか。
 
 ## リメイク版で観測すること
 

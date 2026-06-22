@@ -1,0 +1,13 @@
+{
+  "name": "case-007-config-and-resolution-current",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "",
+  "dependencies": {
+    "togostanza": "github:togostanza/togostanza"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "private": true
+}

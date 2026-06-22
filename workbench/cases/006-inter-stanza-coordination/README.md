@@ -17,6 +17,36 @@ Stanza 間連携の入口を確認し、維持するものと再設計するも�
 - outgoing event と receiver attribute 更新を観測できるようにする。
 - data source から receiver へデータが渡るケースを用意する。
 
+## fixture 構造
+
+`current/` には、現行版の Stanza 間連携を観測するための最小プロジェクトを置く。
+
+```text
+current/
+  fixtures/
+    inter-stanza.html
+    sample-data.json
+  stanzas/
+    coordination-sender/
+    coordination-receiver/
+```
+
+- `coordination-sender` は `value` parameter を受け取り、ボタン押下時に `selectedValue` event を dispatch する。payload は `detail.payload.label` で観測する。
+- `coordination-receiver` は `selected-label` と `data-url` attributes を Stanza parameters として読み、受け取った値と `data-url` から取得した JSON の先頭 item label を表示する。
+- `fixtures/inter-stanza.html` は `togostanza--container` 内に sender / receiver / `togostanza--event-map` / `togostanza--data-source` を並べた最小HTML。`togostanza--event-map` は `selectedValue` の `payload.label` を receiver の `selected-label` に渡す。`togostanza--data-source` は `sample-data.json` を読み、receiver の `data-url` に渡す。
+- `fixtures/sample-data.json` は `togostanza--data-source` から receiver へ渡る外部データの最小サンプル。receiver はこの JSON の `items[0].label` を表示する。
+
+## 実行予定コマンド
+
+現行版の観測では、必要になった時点で `current/` で次を実行する予定。
+
+```sh
+mise exec -- npm install
+mise exec -- npx togostanza build --output-path dist
+```
+
+build 後は `current/fixtures/inter-stanza.html` を browser で開き、sender のボタン押下後に receiver の `selected-label` が更新されることと、`data-url` 経由で `sample-data.json` の label が表示されることを確認する。
+
 ## 現行版で観測すること
 
 - `togostanza--container` が関連携の入口として動くこと。
@@ -25,6 +55,14 @@ Stanza 間連携の入口を確認し、維持するものと再設計するも�
 - `togostanza--data-source` が `url` / `receiver` / `target-attribute` を使うこと。
 - blob URL 経由の data handoff。
 - `togostanza--data-container` が custom element として実装されていないこと。
+
+### 現行版観測状況
+
+- `current/` の fixture は作成済み。
+- `npm install` は未実行。
+- `mise exec -- npx togostanza build --output-path dist` は未実行。
+- browser での `fixtures/inter-stanza.html` 確認は未実行。
+- そのため、上記の現行版挙動はまだ実測ではなく、fixture が観測する予定の内容として記録している。
 
 ## リメイク版で観測すること
 

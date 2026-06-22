@@ -1,0 +1,45 @@
+.parameter-probe {
+  display: block;
+  font-family: system-ui, sans-serif;
+  color: #1d2a2e;
+}
+
+.parameter-probe h1 {
+  margin: 0 0 0.75rem;
+  color: var(--parameter-probe-accent, #245c73);
+  font-size: 1.25rem;
+}
+
+.probe-summary {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.probe-summary dt,
+.parameter-probe th {
+  font-weight: 700;
+}
+
+.probe-summary dd {
+  margin: 0;
+}
+
+.parameter-probe table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.parameter-probe th,
+.parameter-probe td {
+  border: 1px solid #c5d0d4;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.parameter-probe td {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow-wrap: anywhere;
+}

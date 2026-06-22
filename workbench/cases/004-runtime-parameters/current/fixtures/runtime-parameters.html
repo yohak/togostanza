@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Runtime parameters fixture</title>
+    <script type="module" src="../dist/parameter-probe.js"></script>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 2rem;
+        color: #1d2a2e;
+      }
+
+      main {
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      section {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .fixture-card {
+        border: 1px solid #c5d0d4;
+        border-radius: 6px;
+        padding: 1rem;
+      }
+
+      .fixture-card h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Runtime parameters fixture</h1>
+
+      <section class="fixture-card">
+        <h2>boolean attribute present</h2>
+        <togostanza-parameter-probe
+          label="flag-present"
+          count="42"
+          flag
+          payload='{"kind":"present","values":[1,2]}'
+        ></togostanza-parameter-probe>
+      </section>
+
+      <section class="fixture-card">
+        <h2>boolean attribute absent</h2>
+        <togostanza-parameter-probe
+          label="flag-absent"
+          count="0"
+          payload='{"kind":"absent","enabled":false}'
+        ></togostanza-parameter-probe>
+      </section>
+
+      <section class="fixture-card">
+        <h2>flag="false"</h2>
+        <togostanza-parameter-probe
+          label="flag-string-false"
+          count="7.5"
+          flag="false"
+          payload='["false-string",{"nested":true}]'
+        ></togostanza-parameter-probe>
+      </section>
+
+      <section class="fixture-card">
+        <h2>attribute mutation target</h2>
+        <togostanza-parameter-probe
+          id="mutation-target"
+          label="before-mutation"
+          count="1"
+          payload='{"kind":"mutation","step":"initial"}'
+        ></togostanza-parameter-probe>
+      </section>
+    </main>
+
+    <script type="module">
+      const target = document.querySelector('#mutation-target');
+
+      window.parameterProbeFixture = {
+        target,
+        setPresentFlag() {
+          target.setAttribute('flag', '');
+        },
+        setStringFalseFlag() {
+          target.setAttribute('flag', 'false');
+        },
+        removeFlag() {
+          target.removeAttribute('flag');
+        },
+        setCount(value) {
+          target.setAttribute('count', String(value));
+        },
+        setPayload(value) {
+          target.setAttribute('payload', JSON.stringify(value));
+        }
+      };
+    </script>
+  </body>
+</html>

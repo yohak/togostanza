@@ -1,0 +1,9 @@
+{
+  "source": "case-006",
+  "items": [
+    {
+      "id": "alpha",
+      "label": "from-data-source"
+    }
+  ]
+}

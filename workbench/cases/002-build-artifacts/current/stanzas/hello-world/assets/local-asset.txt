@@ -1,0 +1,1 @@
+hello-world stanza asset for build artifact case
