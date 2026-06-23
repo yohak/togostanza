@@ -1,0 +1,191 @@
+# 010 togostanza-utils compatibility
+
+## 目的
+
+既存 `togostanza-utils` packageをリメイク版runtimeでも無変更で利用できるか確認する。
+
+このケースでは `togostanza-utils` の中身を再実装・修正せず、Stanzaソースから既存packageをimportして、runtime側が満たすべき互換条件を観測する。
+
+## 対応する方針
+
+- `references/metastanza` が直接利用している `togostanza-utils` API / import pathは、少なくともdrop-in互換対象として扱う。
+- 理想形は、`togostanza-utils` package自体に手を入れず、既存packageがそのまま動くことである。
+- `root.host.stanzaInstance.element` のような現行runtime内部構造への依存は、drop-in互換に必要な範囲でcompat propertyとして受け入れる。
+
+## 入力条件
+
+- `togostanza-utils` をpackage dependencyとして入れる。
+- Stanzaソースでは次のimport pathを使う。
+  - `togostanza-utils`
+  - `togostanza-utils/load-data`
+  - `togostanza-utils/apply-filter`
+- `togostanza-utils/spinner.png` はこのケースでは扱わない。package asset importとして007で扱う。
+- fixture dataは小さなJSON/CSV/TSV/SPARQL results JSONを使う。
+- `loadData()` には `this.root.querySelector("main")` を渡し、loading/error DOMも観測する。
+- download menu helpers用にshadow root内へSVGを描画する。
+
+## ケース入力と観測補助
+
+```text
+current-pnpm/
+  mise.toml
+  generated-repo/
+    package.json
+    common.scss
+    fixtures/
+      utils-compat.html
+      custom-a.css
+      custom-b.css
+      data/
+        records.csv
+        records.json
+        records.tsv
+        sparql-results.json
+    stanzas/
+      utils-probe/
+        index.js
+        metadata.json
+        style.scss
+        templates/
+          stanza.html.hbs
+```
+
+`current-pnpm/generated-repo/package.json` は `togostanza-utils` をGitHub commitで固定する。package内コードはケース入力側では変更しない。
+
+## 現行版で観測すること
+
+- `togostanza-utils` のimportが現行ビルドで解決されること。
+- `loadData()` がJSON/CSV/TSV/SPARQL results JSONを読み込むこと。
+- `loadData()` が配列データに `__togostanza_id__` を付与すること。
+- `loadData()` が同じURL/type/limit/offsetの連続呼び出しでcacheを返すこと。
+- `loadData()` が `mainElement` にloading DOMを出し、完了後に消すこと。
+- `loadData()` 失敗時にerror DOMを出すこと。
+- `appendCustomCss()` が既存 `link[data-togostanza-custom-css]` を削除し、新しいlinkへ差し替えること。
+- download menu helpersが `{ type, label, handler }` のitemを返すこと。
+- `dividerMenuItem()` が `{ type: "divider" }` を返すこと。
+- `applyFilter()` が `substring` / `gte` / `lte` を処理すること。
+- SVG/PNG download helperが依存する `stanza.root`、shadow root内 `style`、`root.host.stanzaInstance.element` が存在すること。
+- runtime menu UIが表示される環境では、SVG/PNG/JSON/CSV/TSV handlerを呼び出したときにruntime構造依存の例外が出ないこと。
+
+## リメイク版で観測すること
+
+- 同じStanzaソースと同じ `togostanza-utils` packageを、package側の修正なしで利用できること。
+- `this.root` がshadow rootとしてDOM APIを提供すること。
+- shadow root内に `main` があり、loading/error/custom DOMの挿入先として使えること。
+- shadow root内にgenerated stylesheet情報があり、download helperが参照できること。
+- `this.element` と `this.root.host.stanzaInstance.element` がhost custom elementを指すこと。
+- runtime menuが `{ type, label, handler }` と `{ type: "divider" }` を扱えること。
+
+## 合格条件
+
+- `togostanza-utils` packageを変更せずにbuildできる。
+- fixtureをブラウザで開いたとき、観測値がすべて `ok` になる。
+- ブラウザコンソールにruntime errorが出ない。
+- download menu itemが表示され、SVG/PNG/JSON/CSV/TSV handlerを呼び出してもruntime構造依存の例外が出ない。
+- 差分がある場合は、package変更ではなくruntime compat、移行メモ、または採用範囲の見直しとして説明できる。
+
+## 記録する差分
+
+- import解決結果。
+- `loadData()` のdata type別の戻り値。
+- loading/error DOMのclass/id。
+- `__togostanza_id__` の付与有無。
+- cache同一性。
+- custom CSS linkの差し替え結果。
+- menu item contract。
+- download handler実行時の例外有無。
+- `root.host.stanzaInstance.element` compat propertyの有無。
+
+## 現行版の観測状況
+
+確認済み。
+
+- 確認日: 2026-06-23
+- 作業ディレクトリ: `workbench/cases/010-togostanza-utils-compat/current-pnpm/generated-repo/`
+- Node.js: `v18.20.4`
+- pnpm: `9.15.9`
+- `togostanza`: `3.0.0-beta.57`
+- `togostanza-utils`: `0.0.0`
+- 確認URL: `http://127.0.0.1:4178/fixtures/utils-compat.html`
+
+### 実行したコマンド
+
+```sh
+cd workbench/cases/010-togostanza-utils-compat/current-pnpm/generated-repo
+mise trust ../mise.toml
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza --version
+mise exec -- pnpm exec togostanza build --output-path dist
+mise exec -- pnpm run serve:fixture
+```
+
+`mise.toml` は `current-pnpm/` に置き、Node.jsの18系とpnpmの9系を固定している。
+
+`mise trust` は、ユーザーから明示承認を受けて実行した。
+
+`install`、`build`、ローカルHTTPサーバーは、Codex sandboxの権限制約、network制限、またはwatcher制限を避けるため、承認済みの通常コマンド実行で行った。
+
+### ビルド結果
+
+- `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
+- `mise exec -- pnpm exec togostanza --version` は `3.0.0-beta.57` を返した。
+- `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
+- ビルド時にSass deprecation警告が多数出た。
+- `dist/` には `utils-probe.js`、`utils-probe.js.map`、`utils-probe.css`、`utils-probe.html`、`utils-probe/metadata.json`、`index.html`、`-togostanza/*` が生成された。
+
+### ブラウザ観測
+
+`http://127.0.0.1:4178/fixtures/utils-compat.html` をin-app browserで開き、shadow root内の観測値を確認した。
+
+- host custom elementは存在した。
+- open shadow rootは存在した。
+- overall statusは `ok` だった。
+- ブラウザコンソールのerror/warnは観測されなかった。
+
+観測値:
+
+| check | status | detail |
+| ---- | ---- | ---- |
+| `loadData json` | `ok` | `3 rows` |
+| `__togostanza_id__` | `ok` | `0,1,2` |
+| `loadData cache` | `ok` | `same object returned` |
+| `loadData csv` | `ok` | `alpha,beta,alphabet` |
+| `loadData tsv` | `ok` | `alpha,beta,alphabet` |
+| `loadData sparql-results-json` | `ok` | SPARQL results JSONから2行に変換された |
+| `loadData error ui` | `ok` | missing JSON fetchでerror UIが出た |
+| `loadData loading cleanup` | `ok` | loading elementは完了後に削除された |
+| `applyFilter` | `ok` | `alpha,alphabet` |
+| `appendCustomCss replacement` | `ok` | `custom-b.css` のlinkだけが残った |
+| `download root compat` | `ok` | `root.host.stanzaInstance.element` は `TOGOSTANZA-UTILS-PROBE` を指した |
+| `download style compat` | `ok` | shadow root内のgenerated `style` を確認 |
+| `menu item contract` | `ok` | `Download SVG,Download PNG,divider,Download JSON,Download CSV,Download TSV` |
+| `divider menu item` | `ok` | divider itemを確認 |
+
+direct embedでは現行runtimeのmenu UIはlight DOMに表示されなかった。そのため、runtime menu UI経由のdownload handlerクリックは未確認。Stanza instanceの `menu()` 戻り値と、download helperが必要とするruntime構造依存はStanza内観測で確認する。
+
+## 実行コマンド
+
+現行版の確認は `current-pnpm/generated-repo/` で行う。
+
+```sh
+cd workbench/cases/010-togostanza-utils-compat/current-pnpm/generated-repo
+mise trust ../mise.toml
+mise exec -- node -v
+mise exec -- pnpm -v
+mise exec -- pnpm install
+mise exec -- pnpm exec togostanza --version
+mise exec -- pnpm exec togostanza build --output-path dist
+mise exec -- pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4178/fixtures/utils-compat.html` とする。
+
+`install`、`build`、ローカルHTTPサーバーは、Codex sandboxの権限制約、network制限、またはwatcher制限を避けるため、必要に応じて承認済みの通常コマンド実行で行う。
+
+## 未決定事項
+
+- `Data` class、`togostanza-utils/data`、graph/tree helperをこのケースに追加するか。
+- SVG/PNG downloadの出力内容まで厳密比較するか、handler実行時のruntime互換確認に留めるか。
+- `appendCustomCss()` の複数回呼び出しで前のcustom CSSが消える挙動を互換必須の詳細とするか。

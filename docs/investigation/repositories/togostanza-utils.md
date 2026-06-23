@@ -65,11 +65,12 @@
 
 ## 次の調査手順
 
-1. `loadData` の最小ケース入力と観測補助を作る。対象はJSON/CSV/TSV/SPARQL results JSON、loading UI、error UI、 `__togostanza_id__` 。
-2. `appendCustomCss` の最小ケース入力と観測補助を作る。対象は既存custom CSS linkの削除と新規link追加。
-3. download menu helpersの最小ケース入力と観測補助を作る。対象は `menu()` item contract、SVG/PNG/JSON/CSV/TSV handler。
-4. `applyFilter` はpure utilityとして小さなunit観測で足りるか判断する。
-5. `spinner.png` は007のpackage asset import観測に含め、関数APIとは分離する。
+1. `workbench/cases/010-togostanza-utils-compat` で、`loadData` / `appendCustomCss` / download menu helpers / `applyFilter` の最小ケース入力を現行版で観測する。
+2. `loadData` の対象はJSON/CSV/TSV/SPARQL results JSON、loading UI、error UI、 `__togostanza_id__` 、cache同一性とする。
+3. `appendCustomCss` の対象は既存custom CSS linkの削除と新規link追加とする。
+4. download menu helpersの対象は `menu()` item contract、SVG/PNG/JSON/CSV/TSV handlerとする。
+5. `applyFilter` は `010-togostanza-utils-compat` 内の小さなruntime観測で足りるか、現行観測後に判断する。
+6. `spinner.png` は007のpackage asset import観測に含め、関数APIとは分離する。
 
 ## 未解決事項
 

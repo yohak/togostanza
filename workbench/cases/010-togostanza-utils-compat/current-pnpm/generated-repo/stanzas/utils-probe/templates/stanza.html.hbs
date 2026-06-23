@@ -1,0 +1,26 @@
+<section class="utils-probe" data-probe="utils-probe">
+  <p class="utils-probe__status" data-probe="overall">{{overallStatus}}</p>
+  <table class="utils-probe__table">
+    <thead>
+      <tr>
+        <th>check</th>
+        <th>status</th>
+        <th>detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each checks}}
+        <tr data-check="{{name}}">
+          <td>{{name}}</td>
+          <td data-status="{{status}}">{{status}}</td>
+          <td>{{detail}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+  <svg class="utils-probe__chart" data-probe="download-svg" viewBox="0 0 180 48" style="width: 180px; height: 48px;">
+    <rect x="0" y="8" width="48" height="24" fill="var(--case-010-accent)"></rect>
+    <rect x="56" y="16" width="72" height="16" fill="#7a5c99"></rect>
+    <rect x="136" y="4" width="32" height="28" fill="#d9863d"></rect>
+  </svg>
+</section>

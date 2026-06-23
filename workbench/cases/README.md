@@ -59,6 +59,7 @@ workbench/cases/
 | [007-config-and-resolution](./007-config-and-resolution/) | config / alias / assets | 開発契約 | build設定、import解決、asset参照の扱いを確認する。 |
 | [008-react-runtime](./008-react-runtime/) | TSX / Reactランタイム | 開発契約 | React Stanzaソースのマウントと再描画を確認する。 |
 | [009-vue-runtime](./009-vue-runtime/) | Vue SFCランタイム | 開発契約 | Vue Stanzaソースのマウントとランタイムチャンクを確認する。 |
+| [010-togostanza-utils-compat](./010-togostanza-utils-compat/) | `togostanza-utils` | 開発契約 / 利用契約 | 既存 `togostanza-utils` packageをStanzaソースから無変更で利用できるか確認する。 |
 
 ## 検証ケースの書き方
 

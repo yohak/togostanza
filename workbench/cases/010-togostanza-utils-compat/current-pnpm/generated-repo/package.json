@@ -1,0 +1,17 @@
+{
+  "name": "case-010-togostanza-utils-compat-current",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "",
+  "scripts": {
+    "serve:fixture": "node ../../../../scripts/static-fixture-server.mjs --port 4178 --default /fixtures/utils-compat.html"
+  },
+  "dependencies": {
+    "togostanza": "github:togostanza/togostanza",
+    "togostanza-utils": "github:togostanza/togostanza-utils#daaf62cfa254abcecdae3b4a41cbe6121c47db22"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "private": true
+}
