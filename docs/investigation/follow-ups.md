@@ -11,13 +11,13 @@
 - 非採用になる可能性が高い案も、後から判断材料にできるように残す。
 - 採用する場合は、目的、影響範囲、migration noteの要否を確認する。
 
-## metadata validationの強化
+## メタデータ検証の強化
 
 - 種別: 機能改善
-- 背景: `metadata.json` はcustom element名、parameter変換、menu、help previewに影響する。
+- 背景: `metadata.json` はcustom element名、パラメーター変換、menu、ヘルププレビューに影響する。
 - 改善案: `build`/`serve` 開始時に `metadata.json` を検証し、Stanza IDとファイルパスを含む分かりやすいエラーを出す。
 - 採用候補:
-  - `metadata["@id"]` とstanza directory名の不一致をエラーにする。
+  - `metadata["@id"]` とstanzaディレクトリ名の不一致をエラーにする。
   - `stanza:parameter` のkey/type/exampleを検査する。
   - boolean/number/jsonなど、runtime変換に関わるtypeを検査する。
 - 注意: 既存の正しいmetadataは壊さない。現行で曖昧に通っていた不正入力は、警告またはエラーになる可能性がある。
@@ -26,13 +26,13 @@
 ## 診断メッセージの整理
 
 - 種別: 機能改善
-- 背景: 現行版ではSass deprecation warning、help previewのfetch失敗、環境由来エラーが分かりにくい場合がある。
+- 背景: 現行版ではSass deprecation警告、ヘルププレビューのfetch失敗、環境由来エラーが分かりにくい場合がある。
 - 改善案: エラーや警告に対象Stanza ID、ファイルパス、修正すべき内容を含める。
 - 採用候補:
-  - validation error
-  - migration warning
-  - preview warning
-  - environment warning
+  - validationエラー
+  - migration警告
+  - preview警告
+  - environment警告
 - 注意: CLI出力文言そのものは互換対象にしない。
 - 今回のスコープ: ツールチェーン更新で自然に改善される範囲を優先し、独自診断の作り込みは後続判断にする。
 
@@ -61,7 +61,7 @@
 ## `stanza:include` の扱い
 
 - 種別: 追加調査
-- 背景: 現行版には、metadataの共通パラメータ定義を `stanza:include` で展開する仕組みがある。
+- 背景: 現行版には、メタデータの共通パラメーター定義を `stanza:include` で展開する仕組みがある。
 - 確認案:
   - 実プロジェクトでの使用有無を確認する。
   - 現行docs/testsでの使用例を確認する。
@@ -74,16 +74,16 @@
 - 種別: 実装時判断
 - 背景: 現行版にはalias的挙動があり、実プロジェクトではtsconfig pathsや独自import prefixも観測されている。
 - 確認案:
-  - 既存Stanza sourceが使っているaliasを実プロジェクトごとに確認する。
+  - 既存Stanzaソースが使っているaliasを実プロジェクトごとに確認する。
   - Viteの標準 `resolve.alias` やtsconfig pathsで吸収できる範囲を確認する。
   - 互換layerが必要か判断する。
-- 注意: 独自alias全廃は現時点では採用しない。既存Stanza sourceが壊れないことを優先する。
+- 注意: 独自alias全廃は現時点では採用しない。既存Stanzaソースが壊れないことを優先する。
 - 今回のスコープ: alias合成順やVite設定の詳細は固定しない。
 
 ## serveの埋め込み検証
 
 - 種別: 実装時確認
-- 背景: StanzaのWeb Componentは、一般的なWebサイトへ直接埋め込めることを前提にする。`serve` はhelp previewだけでなく、別のローカルページや別アプリからruntime scriptを読み込む確認にも使える必要がある。
+- 背景: StanzaのWeb Componentは、一般的なWebサイトへ直接埋め込めることを前提にする。`serve` はヘルププレビューだけでなく、別のローカルページや別アプリからランタイムscriptを読み込む確認にも使える必要がある。
 - 確認案:
   - 一般Webサイトに近いHTMLから `<script type="module" src=".../{id}.js">` と `<togostanza-{id}>` で動くことを確認する。
   - ローカルの別ページや別アプリから `serve` 中の `{id}.js` を読み込めることを確認する。
@@ -93,25 +93,25 @@
 ## asset処理の詳細
 
 - 種別: 実装時判断
-- 背景: 現行版には、公開assetsのコピーとStanza sourceからのasset importがある。
+- 背景: 現行版には、公開assetsのコピーとStanzaソースからのasset importがある。
 - 確認案:
-  - 既存Stanza sourceからのasset importが壊れないことを確認する。
-  - repository root `assets/` とstanza個別 `assets/` の公開pathを確認する。
+  - 既存Stanzaソースからのasset importが壊れないことを確認する。
+  - リポジトリルート `assets/` とstanza個別 `assets/` の公開pathを確認する。
   - metastanza/TogoMediumのasset使用状況を見て実装方式を判断する。
-- 注意: data URL inline、別ファイルemit、hash名、size thresholdなどの詳細は今固定しない。既存sourceやHTMLが参照するpathを壊す場合はmigration noteが必要。
+- 注意: data URL inline、別ファイルemit、hash名、size thresholdなどの詳細は今固定しない。既存ソースやHTMLが参照するpathを壊す場合は移行メモが必要。
 
-## help previewの改善
+## ヘルププレビューの改善
 
 - 種別: 機能改善
-- 背景: 現行help previewはmetadata exampleからcustom elementを生成する。存在しないexample URLをfetchすると、ブラウザconsoleのJSON parse errorになる場合がある。
+- 背景: 現行ヘルププレビューはメタデータ例からcustom elementを生成する。存在しないexample URLをfetchすると、ブラウザコンソールのJSON parseエラーになる場合がある。
 - 改善案: preview上でexampleの読み込み失敗を分かりやすく表示する。
-- 注意: help previewはruntime埋め込みとは別物であり、UIや実装技術は再設計可能。
+- 注意: ヘルププレビューはランタイム埋め込みとは別物であり、UIや実装技術は再設計可能。
 - 今回のスコープ: `serve` がローカルpreviewを提供する目的は維持し、UI改善は後続判断にする。
 
 ## 細かいCLIエラーコード
 
 - 種別: 機能改善
 - 背景: 現行は成功 `0`、失敗 `1` が基本。
-- 改善案: validation error、config error、build errorなどにエラーコードを分ける。
+- 改善案: validationエラー、configエラー、buildエラーなどにエラーコードを分ける。
 - 注意: CI互換として重要なのは、成功 `0` / 失敗non-zeroを維持すること。
 - 今回のスコープ: 細かいエラーコード分類は扱わない。

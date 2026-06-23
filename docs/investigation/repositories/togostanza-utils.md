@@ -24,7 +24,7 @@
 
 | API / import | 利用箇所 | 調査観点 | 判断材料 |
 | ---- | ---- | ---- | ---- |
-| `loadData` from `togostanza-utils/load-data` | `barchart`, `linechart`, `piechart`, `scorecard`, `scatterplot`, `tree`, `pagination-table`, `scroll-table`, `hash-table` | fetch type、loading UI、cache、timeout、SPARQL/CSV/TSV/JSON変換、 `__togostanza_id__` 付与 | metastanzaで直接利用 |
+| `loadData` from `togostanza-utils/load-data` | `barchart`, `linechart`, `piechart`, `scorecard`, `scatterplot`, `tree`, `pagination-table`, `scroll-table`, `hash-table` | fetch type、loading UI、キャッシュ、timeout、SPARQL/CSV/TSV/JSON変換、 `__togostanza_id__` 付与 | metastanzaで直接利用 |
 | `appendCustomCss` from `togostanza-utils` | `text`, `scorecard`, `scroll-table` など | shadow root内のcustom stylesheet link差し替え | metastanzaで直接利用 |
 | download menu helpers from `togostanza-utils` | chart系stanza | SVG/PNG/JSON/CSV/TSVのdownload menu itemと `stanza.root` / CSS参照 | metastanzaで直接利用 |
 | `applyFilter` from `togostanza-utils/apply-filter` | `scatterplot` | filter DSLとdata processing | metastanzaで直接利用 |

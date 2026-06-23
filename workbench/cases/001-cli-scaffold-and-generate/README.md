@@ -1,4 +1,4 @@
-# 001 CLI scaffold and generate
+# 001 CLIの雛形生成とgenerate
 
 ## 目的
 
@@ -161,9 +161,9 @@ current-npm/
 
 ### 注意した警告
 
-- `npm install` では、`sass@1.101.0`、`chokidar@5.0.0`、`readdirp@5.0.0` などがNode `>=20.19.0` を要求する `EBADENGINE` warningを出した。
-- `npm install` はdeprecated package warningとaudit warningを多数出した。
-- `build` はSassのlegacy JS API、`@import`、global builtin、color functionなどのdeprecation warningを多数出した。
+- `npm install` では、`sass@1.101.0`、`chokidar@5.0.0`、`readdirp@5.0.0` などがNode `>=20.19.0` を要求する `EBADENGINE` 警告を出した。
+- `npm install` はdeprecated package警告とaudit警告を多数出した。
+- `build` はSassのlegacy JS API、`@import`、global builtin、color functionなどのdeprecation警告を多数出した。
 - この検証ケースではscaffold/generateの確認を目的にするため、これらの警告は記録に留める。
 
 ## pnpm観測メモ (`current-pnpm/generated-repo/`)

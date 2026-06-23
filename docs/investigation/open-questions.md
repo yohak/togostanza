@@ -19,23 +19,23 @@
 
 ## 質問一覧
 
-## `metadata["@id"]` と stanza directory名が異なる場合の挙動
+## `metadata["@id"]` とstanzaディレクトリ名が異なる場合の挙動
 
-- 文脈: `build` の出力ファイル名は stanza directoryのbasenameを使う箇所があり、help pageのscript srcとcustom element名は `metadata["@id"]` を使う箇所がある。
+- 文脈: `build` の出力ファイル名はstanzaディレクトリのbasenameを使う箇所があり、ヘルプページのscript srcとcustom element名は `metadata["@id"]` を使う箇所がある。
 - 根拠: `src/stanza-repository.mjs`、`src/build-stanzas.mjs`、`src/templates/help.html.hbs`、`doc/Reference.md`。
 - 重要な理由: HTML埋め込みのscript URLとcustom element名は利用契約に関わる。
-- 次に確認すること: リメイク版では、`metadata["@id"]` と stanza directory名の一致を前提条件として仕様化する。
+- 次に確認すること: リメイク版では、`metadata["@id"]` とstanzaディレクトリ名の一致を前提条件として仕様化する。
 - 担当: Codex
-- 状態: 仕様判断済み。想定外として扱う。`metastanza` と `togomedium-web/@packages/stanza` では、確認できた `metadata.json` の `@id` は stanza directory名と一致していた。
+- 状態: 仕様判断済み。想定外として扱う。`metastanza` と `togomedium-web/@packages/stanza` では、確認できた `metadata.json` の `@id` はstanzaディレクトリ名と一致していた。
 
 ## `this.query` の既定 HTTP method
 
 - 文脈: docsではdefault methodが `GET` と説明されているが、実装では `method || "POST"` に見える。
 - 根拠: `doc/Reference.md`、`stanza.ts`。
-- 重要な理由: 既存stanza sourceが `this.query()` にmethod未指定で依存している場合、開発契約に関わる。
+- 重要な理由: 既存stanzaソースが `this.query()` にmethod未指定で依存している場合、開発契約に関わる。
 - 次に確認すること: リメイク版では、method未指定時の `POST` を仕様化する。
 - 担当: Codex
-- 状態: 仕様判断済み。`metastanza` と `togomedium-web` では `this.query` または `.query(` の使用は観測されなかった。runtime観測用stanzaでは、method未指定の `this.query()` が `POST` で `/sparql` へリクエストした。
+- 状態: 仕様判断済み。`metastanza` と `togomedium-web` では `this.query` または `.query(` の使用は観測されなかった。ランタイム観測用stanzaでは、method未指定の `this.query()` が `POST` で `/sparql` へリクエストした。
 
 ## `togostanza--data-container` 表記
 
@@ -55,23 +55,23 @@
 - 担当: Codex
 - 状態: 仕様判断済み。`metastanza` と `togomedium-web/@packages/stanza` では `style.scss` が観測され、`stanza.scss` は観測されなかった。
 
-## boolean parameter のブラウザ実挙動
+## booleanパラメーターのブラウザ実挙動
 
-- 文脈: docsはboolean parameterをHTML attributeとして説明しているが、実装は `attributes.hasOwnProperty(key)` を使っている。
+- 文脈: docsはbooleanパラメーターをHTML属性として説明しているが、実装は `attributes.hasOwnProperty(key)` を使っている。
 - 根拠: `doc/Getting-Started.md`、`doc/Reference.md`、`stanza.ts`。
-- 重要な理由: custom element attributeのboolean変換は埋め込みHTMLとruntime挙動の境界にある。
-- 次に確認すること: リメイク版では、boolean parameterを属性の有無で判定する挙動を仕様化する。
+- 重要な理由: custom element属性のboolean変換は埋め込みHTMLとランタイム挙動の境界にある。
+- 次に確認すること: リメイク版では、booleanパラメーターを属性の有無で判定する挙動を仕様化する。
 - 担当: Codex
-- 状態: 仕様判断済み。runtime観測用stanzaでは、空の `flag` attributeが `boolean` の `true`、`flag` attributeがない場合は `boolean` の `false` として `this.params` に渡された。
+- 状態: 仕様判断済み。ランタイム観測用stanzaでは、空の `flag` 属性が `boolean` の `true`、`flag` 属性がない場合は `boolean` の `false` として `this.params` に渡された。
 
 ## local serve のブラウザ実挙動
 
-- 文脈: `serve` のhelpと実装に加えて、localhost上の画面、module script、shadow root、CSS、runtime parameter変換をsandboxで観測した。
+- 文脈: `serve` のhelpと実装に加えて、localhost上の画面、module script、shadow root、CSS、ランタイムパラメーター変換をsandboxで観測した。
 - 根拠: `src/commands/serve.mjs`、`src/build-stanzas.mjs`、`src/stanza-element.mjs`。
 - 重要な理由: HTML埋め込み、表示、操作、asset読み込みは利用契約に関わる。
-- 次に確認すること: help previewは開発支援機能として再設計可能とする。runtime埋め込み形式とは別物として扱う。
+- 次に確認すること: ヘルププレビューは開発支援機能として再設計可能とする。ランタイム埋め込み形式とは別物として扱う。
 - 担当: Codex
-- 状態: 仕様判断済み。`sandbox/current-cli-smoke` で `serve --port 8099` を起動し、in-app browserで `/` と `runtime-check.html` を確認した。`/` は `List of Stanzas` として表示され、help pageはmodule script、help app、development reloaderを読み込んだ。`runtime-check.html` のhelp previewでは `data-url="./data.json"` が存在しないため、JSON parse errorが出た。
+- 状態: 仕様判断済み。`sandbox/current-cli-smoke` で `serve --port 8099` を起動し、in-appブラウザで `/` と `runtime-check.html` を確認した。`/` は `List of Stanzas` として表示され、ヘルプページはmodule script、help app、development reloaderを読み込んだ。`runtime-check.html` のヘルププレビューでは `data-url="./data.json"` が存在しないため、JSON parseエラーが出た。
 
 ## Codex managed execと通常ターミナルのwatcher挙動差
 

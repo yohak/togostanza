@@ -49,7 +49,7 @@
 
 ## 対象範囲
 
-リメイク版の互換対象は、現行版TogoStanza 3系のStanza repositoryとStanza sourceとする。
+リメイク版の互換対象は、現行版TogoStanza 3系のStanzaリポジトリとStanzaソースとする。
 
 現行版よりさらに古い構成は対象外とする。現行版の `upgrade` commandが扱っていた旧構成からの自動変換は提供しない。
 
@@ -63,15 +63,15 @@
 
 `type="module"` scriptと `<togostanza-{id}>` custom elementによる埋め込み形式は、**利用契約**として `必須` とする。
 
-- Stanzaの公開runtime artifactは、ブラウザからmodule scriptとして読み込める。
+- Stanzaの公開ランタイム生成物は、ブラウザからmodule scriptとして読み込める。
 - custom element名は `metadata["@id"]` から `togostanza-{id}` として定義する。
-- help previewの実装やUIは、runtime埋め込み形式とは別物として扱う。
+- ヘルププレビューの実装やUIは、ランタイム埋め込み形式とは別物として扱う。
 
-StanzaのWeb Componentは、一般的なWebサイトへ直接埋め込めることを前提にする。埋め込み先Webサイトに、Vite、React、Vue、npm install、追加build stepなどを要求しない。
+StanzaのWeb Componentは、一般的なWebサイトへ直接埋め込めることを前提にする。埋め込み先Webサイトに、Vite、React、Vue、`npm install`、追加ビルド手順などを要求しない。
 
-Stanza内部でframeworkを使う場合も、必要なruntimeはStanzaの配布物側に含める。bundle sizeが多少増えても、埋め込み容易性を優先する。
+Stanza内部でframeworkを使う場合も、必要なランタイムはStanzaの配布物側に含める。bundle sizeが多少増えても、埋め込み容易性を優先する。
 
-1つの `{id}.js` が完全な単一ファイルであることまでは要求しない。`dist/` 配下の `{id}.js` と共有chunk一式で自己完結し、静的ホスティング上で相対importにより動けばよい。
+1つの `{id}.js` が完全な単一ファイルであることまでは要求しない。`dist/` 配下の `{id}.js` と共有チャンク一式で自己完結し、静的ホスティング上で相対importにより動けばよい。
 
 ### Shadow DOM
 
@@ -81,13 +81,13 @@ StanzaごとのCSSはshadow root内に適用する。
 
 外部ページがshadow DOM内部を直接queryして触る使い方は、**利用契約**としては保証しない。
 
-一方で、Stanza source内からの `this.root` と `this.root.querySelector("main")` は、実プロジェクトで強く使われているため、**開発契約**として `必須` とする。`main.parentNode` や `togostanza--menu` の詳細DOM形状は必須互換にしないが、実プロジェクトのregression testで重点確認する。
+一方で、Stanzaソース内からの `this.root` と `this.root.querySelector("main")` は、実プロジェクトで強く使われているため、**開発契約**として `必須` とする。`main.parentNode` や `togostanza--menu` の詳細DOM形状は必須互換にしないが、実プロジェクトのregression testで重点確認する。
 
 ### Parameter
 
-`this.params` は、metadataの `stanza:parameter` と `stanza:type` に基づき、HTML attributesをStanza sourceから扱う値へ変換する。
+`this.params` は、メタデータの `stanza:parameter` と `stanza:type` に基づき、HTML属性をStanzaソースから扱う値へ変換する。
 
-boolean parameterはHTML boolean attributeとして扱い、属性の有無で判定する。
+booleanパラメーターはHTML boolean属性として扱い、属性の有無で判定する。
 
 - 属性あり: `true`
 - 属性なし: `false`
@@ -103,13 +103,13 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 旧ドキュメントの `GET` 説明は、現行実装とブラウザ観測に反するため誤記として扱う。
 
-この挙動は、Stanza sourceから利用される**開発契約**として `必須` とする。
+この挙動は、Stanzaソースから利用される**開発契約**として `必須` とする。
 
 ### Stanza間連携
 
 `togostanza--container` はStanza間連携の入口として維持する。
 
-`togostanza--event-map` は概念を維持するが、現行の「送信元selectorを持たず、container内の同名outgoing eventをすべて拾う」挙動は `再設計` 候補とする。再設計する場合は、現行HTMLからの移行メモを残す。
+`togostanza--event-map` は概念を維持するが、現行の「送信元selectorを持たず、container内の同名送出イベントをすべて拾う」挙動は `再設計` 候補とする。再設計する場合は、現行HTMLからの移行メモを残す。
 
 `togostanza--data-source` は、外部データをStanzaに渡す仕組みとしての目的は維持する。ただし、現行のblob URL経由、`url` / `receiver` / `target-attribute` APIは `再設計` 候補とする。再設計する場合は、現行HTMLからの移行メモを残す。
 
@@ -117,7 +117,7 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 ### Menu
 
-`stanza:menu-placement` metadata keyと `togostanza-menu_placement` attributeは維持する。placementによってmenu表示位置を変える目的も維持する。
+`stanza:menu-placement` メタデータkeyと `togostanza-menu_placement` 属性は維持する。placementによってmenu表示位置を変える目的も維持する。
 
 `togostanza--menu` から辿れる `About this stanza` 相当の導線は維持する。この導線が参照する `${id}.html` の存在も維持する。
 
@@ -127,11 +127,11 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 ## Stanza Source
 
-既存のStanza sourceは、可能な限り変更しない方針とする。
+既存のStanzaソースは、可能な限り変更しない方針とする。
 
 `import Stanza from "togostanza/stanza"` と `export default class Xxx extends Stanza` の形式は**開発契約**として `必須` とする。
 
-次のAPIは、既存Stanza source互換のため維持する。
+次のAPIは、既存Stanzaソース互換のため維持する。
 
 - `this.params`
 - `this.root`
@@ -141,9 +141,9 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 - `this.importWebFontCSS`
 - `this.handleAttributeChange`
 
-`this.importWebFontCSS(cssUrl)` は、既存Stanza source互換のため維持する。linkの注入先や重複制御などの詳細は、現行版の観測と実プロジェクトのregression testをもとに実装時に判断する。
+`this.importWebFontCSS(cssUrl)` は、既存Stanzaソース互換のため維持する。linkの注入先や重複制御などの詳細は、現行版の観測と実プロジェクトのregression testをもとに実装時に判断する。
 
-`this.handleAttributeChange(name, oldValue, newValue)` は、custom element attribute変更時のlifecycle hookとして維持する。既定の再描画やdebounceなどの内部スケジューリング詳細は、この文書では固定しない。
+`this.handleAttributeChange(name, oldValue, newValue)` は、custom element属性変更時のlifecycle hookとして維持する。既定の再描画やdebounceなどの内部スケジューリング詳細は、この文書では固定しない。
 
 ### `togostanza-utils`
 
@@ -170,28 +170,28 @@ Stanza entrypointは `index.js`、`index.ts`、`index.tsx` を受ける。TypeSc
 
 Stanza stylesheetは `style.scss` を正とする。`stanza.scss` は旧ドキュメントの誤記として扱い、特別な互換処理はしない。必要なら移行メモで `style.scss` へのrenameを案内する。
 
-`metadata["@id"]` とStanza directory名は一致必須とする。不一致の現行挙動は想定外として扱い、リメイク版では検出時またはbuild時に分かりやすいerrorにしてよい。
+`metadata["@id"]` とStanzaディレクトリ名は一致必須とする。不一致の現行挙動は想定外として扱い、リメイク版では検出時またはビルド時に分かりやすいエラーにしてよい。
 
 ## 生成物
 
-runtime用の主要artifact配置は**利用契約**として維持する。
+ランタイム用の主要生成物配置は**利用契約**として維持する。
 
 - `${id}.js`
 - `${id}.css`
 - `${id}.html`
 - `${id}/metadata.json`
 - `${id}/assets/*`
-- repository rootの `assets/` から `dist/assets/` へのコピー
+- リポジトリルートの `assets/` から `dist/assets/` へのコピー
 
 `${id}.js.map` は開発支援寄りの生成物として扱い、必須互換には置かない。
 
-`index.html`、`-togostanza/help-app.js` などのhelp preview側生成物は `再設計` 可能とする。`${id}.html` はmenuのAbout導線から参照されるため存在は維持するが、内容は再設計可能とする。
+`index.html`、`-togostanza/help-app.js` などのヘルププレビュー側生成物は `再設計` 可能とする。`${id}.html` はmenuのAbout導線から参照されるため存在は維持するが、内容は再設計可能とする。
 
-既存Stanza sourceからのasset importが壊れないことも開発契約として見る。ただし、data URL inline、別ファイルemit、hash名、size thresholdなどのasset処理詳細は実装時に判断する。
+既存Stanzaソースからのasset importが壊れないことも開発契約として見る。ただし、data URL inline、別ファイルemit、hash名、size thresholdなどのasset処理詳細は実装時に判断する。
 
 ## CLI
 
-主要command名と短縮aliasは入口として維持する。ただし内部挙動、出力文言、help UI、generatorの詳細は再設計可能とする。
+主要command名と短縮aliasは入口として維持する。ただし内部挙動、出力文言、ヘルプUI、generatorの詳細は再設計可能とする。
 
 - `togostanza build` / `togostanza b`
 - `togostanza serve` / `togostanza s`
@@ -210,7 +210,7 @@ CLI exit codeは、成功時 `0`、失敗時non-zeroを維持する。細かいe
 
 生成内容は再設計可能だが、いたずらに変更しない。生成後に `build`、`serve`、`generate stanza` が自然に動くことを重視する。
 
-`generate stanza` の生成物は、既存Stanza source互換を優先し、必要最小限の再設計に留める。
+`generate stanza` の生成物は、既存Stanzaソース互換を優先し、必要最小限の再設計に留める。
 
 - `stanzas/{id}/metadata.json` は維持する。
 - `index.js` は維持する。必要なら将来 `index.ts` / `index.tsx` 生成optionを追加する。
@@ -252,7 +252,7 @@ Svelteなど、旧ドキュメントに例はあるが実プロジェクトで�
 - Vite 8 / Node 24化に伴って自然に必要になるもの。
 - 既存挙動が明確に壊れやすいもの。
 - エラーが分かりにくく、調査や移行を阻害するもの。
-- `metadata["@id"]` とdirectory名不一致のように、想定外扱いが確定したものを明示errorにするもの。
+- `metadata["@id"]` とディレクトリ名不一致のように、想定外扱いが確定したものを明示エラーにするもの。
 
 非採用になる可能性が高い改善案も、判断材料として `docs/investigation/follow-ups.md` に残す。
 
@@ -262,4 +262,4 @@ Svelteなど、旧ドキュメントに例はあるが実プロジェクトで�
 - Vite 8実装設計。
 - `togostanza.config.ts` の具体schema。
 - 実プロジェクトregression testの設計。
-- help previewの再設計範囲。
+- ヘルププレビューの再設計範囲。

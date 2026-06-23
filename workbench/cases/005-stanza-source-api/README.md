@@ -1,19 +1,19 @@
-# 005 Stanza source API
+# 005 StanzaソースAPI
 
 ## 目的
 
-既存Stanza sourceが依存しているStanza base APIを確認する。
+既存Stanzaソースが依存しているStanza base APIを確認する。
 
 ## 対応する方針
 
-- 既存Stanza sourceは、可能な限り変更しない。
+- 既存Stanzaソースは、可能な限り変更しない。
 - `import Stanza from "togostanza/stanza"` と `export default class Xxx extends Stanza` を維持する。
 - `this.params`、`this.root`、`this.element`、`this.renderTemplate`、`this.query`、`this.importWebFontCSS`、`this.handleAttributeChange` を維持する。
 - Handlebars templateを維持する。
 
 ## 入力条件
 
-- 代表的なStanza sourceを用意する。
+- 代表的なStanzaソースを用意する。
 - `templates/*.hbs`、`style.scss`、`index.js` を使う。
 - 必要に応じて `index.ts`、`index.tsx` の検証stanzaを追加する。
 
@@ -28,23 +28,23 @@
 
 ## リメイク版で観測すること
 
-- 同じStanza sourceが小規模な手修正なし、または説明可能な手修正だけで動くこと。
+- 同じStanzaソースが小規模な手修正なし、または説明可能な手修正だけで動くこと。
 - `this.root` と `main` 参照が実プロジェクトで壊れないこと。
 - `this.query()` の既定methodが `POST` であること。
 - lifecycle hookとtemplate renderingが維持されること。
 
 ## 合格条件
 
-- 既存Stanza source APIが同じ名前で利用できる。
+- 既存StanzaソースAPIが同じ名前で利用できる。
 - `this.query()` の既定methodが維持される。
 - `renderTemplate` とHandlebars templateが動く。
 - `importWebFontCSS()` と `handleAttributeChange()` が呼び出し可能である。
 
 ## 記録する差分
 
-- Stanza sourceの変更有無。
+- Stanzaソースの変更有無。
 - APIごとの観測結果。
-- browser console/network request。
+- ブラウザコンソール/network request。
 - template renderingの出力。
 - lifecycle hookの呼び出し順。
 
@@ -86,17 +86,17 @@ current-pnpm/
 
 `current-pnpm/generated-repo/package.json` は `togostanza` を `github:togostanza/togostanza` として参照し、`current-pnpm/mise.toml` はNode.jsの18系とpnpmの9系を指定する。
 
-`current-pnpm/generated-repo/fixtures/source-api.html` はbuild後の `../dist/api-probe.js` を直接読み込み、help previewではなく通常のHTML埋め込みとしてStanza source APIを確認する。
-この観測補助HTMLはquery endpointあり/なしの2つの `<togostanza-api-probe>` と、attribute mutation用の操作ボタンを持つ。
+`current-pnpm/generated-repo/fixtures/source-api.html` はビルド後の `../dist/api-probe.js` を直接読み込み、ヘルププレビューではなく通常のHTML埋め込みとしてStanzaソースAPIを確認する。
+この観測補助HTMLはquery endpointあり/なしの2つの `<togostanza-api-probe>` と、属性変更用の操作ボタンを持つ。
 
 ## API観測範囲
 
-- `this.params`: `label`、`limit`、`enabled`、`payload`、`query-endpoint` を `metadata.json` に定義し、`index.js` からtemplate parameterに渡して `templates/stanza.html.hbs` に出力する。
+- `this.params`: `label`、`limit`、`enabled`、`payload`、`query-endpoint` を `metadata.json` に定義し、`index.js` からtemplateパラメーターに渡して `templates/stanza.html.hbs` に出力する。
 - `this.root`: render前後で `this.root?.querySelector("main")` を確認し、render後の `main.dataset.apiProbeRoot` を更新する。
 - `this.element`: `this.element?.tagName` をtemplateに出力し、render後の `main.dataset.apiProbeElement` にも記録する。
 - `this.renderTemplate`: `templates/stanza.html.hbs` を `this.renderTemplate({ template, parameters })` で描画し、`data-probe` 付き要素へ観測値を出力する。
 - `this.importWebFontCSS`: `./assets/api-probe-font.css` をrender内で注入する。
-- `this.handleAttributeChange`: overrideして最後の `name`、`oldValue`、`newValue` を記録し、`super.handleAttributeChange(...)` を呼ぶ。記録値は次回renderのtemplate parameterに渡す。
+- `this.handleAttributeChange`: overrideして最後の `name`、`oldValue`、`newValue` を記録し、`super.handleAttributeChange(...)` を呼ぶ。記録値は次回renderのtemplateパラメーターに渡す。
 - `this.query()`: `query-endpoint` が指定された場合に `templates/query.sparql.hbs` を使い、method未指定で `this.query({ template, parameters, endpoint })` を呼ぶ。`query-endpoint` 未指定時は `not-run` としてtemplateに出力する。
 
 ## 実行コマンド
@@ -112,7 +112,7 @@ mise exec -- pnpm install
 mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build後、生成された現行版stanzaをbrowserで開き、template出力、DOM dataset、font CSS link注入、attribute change、`this.query()` のnetwork methodを確認する。
+ビルド後、生成された現行版stanzaをブラウザで開き、template出力、DOM dataset、font CSS link注入、属性変更、`this.query()` のnetwork methodを確認する。
 
 ## 現行版の観測状況
 
@@ -142,11 +142,11 @@ mise exec -- pnpm run serve:fixture
 
 `mise trust`、`install`、`build`、ローカルHTTPサーバーは、Codex sandboxの権限制約、network制限、またはwatcher制限を避けるため、承認済みの通常コマンド実行で行った。
 
-### build結果
+### ビルド結果
 
 - `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
-- build時にSass deprecation warningが多数出た。
+- ビルド時にSass deprecation警告が多数出た。
 - `dist/` には `api-probe.js`、`api-probe.js.map`、`api-probe.css`、`api-probe.html`、`api-probe/metadata.json`、`index.html`、`-togostanza/*` が生成された。
 
 ローカルブラウザ観測サーバ:
@@ -162,8 +162,8 @@ URL: `http://127.0.0.1:4175/fixtures/source-api.html`.
 ## 観測結果
 
 - `mise trust`、Node.js 18系選択、pnpm 9系選択は検証環境で動作した。
-- ケース入力のsourceは、import形状を変えずに対象Stanza source APIを扱う。import形状は `import Stanza from 'togostanza/stanza'` と `export default class ApiProbe extends Stanza`。
-- 依存installとbuildは、承認済みの実行環境でrepositoryの通常コマンドとして確認した。
+- ケース入力のソースは、import形状を変えずに対象StanzaソースAPIを扱う。import形状は `import Stanza from 'togostanza/stanza'` と `export default class ApiProbe extends Stanza`。
+- 依存インストールとビルドは、承認済みの実行環境でリポジトリの通常コマンドとして確認した。
 - 現行版検証環境のブラウザ確認は完了している。
 
 ### ブラウザ観測
@@ -181,12 +181,12 @@ URL: `http://127.0.0.1:4175/fixtures/source-api.html`.
 - `this.renderTemplate({ template, parameters })` は期待した `data-probe` 値を描画した。
 - `this.params` の値は次のように観測された。
   - `label`: string.
-  - `limit`: `number` parameter由来のnumber相当の描画値。
-  - `enabled`: boolean attributeが存在するとき `true`。
+  - `limit`: `number` パラメーター由来のnumber相当の描画値。
+  - `enabled`: boolean属性が存在するとき `true`。
   - `payload`: parse済みJSONを `JSON.stringify` で再描画した値。
 - `this.importWebFontCSS('./assets/api-probe-font.css')` はshadow rootに `dist/assets/api-probe-font.css` を注入した。
 - 通常stylesheet linkとして `dist/api-probe.css` も存在した。
-- browser consoleのerror/warningは観測されなかった。
+- ブラウザコンソールのエラー/警告は観測されなかった。
 
 `this.query()` の観測:
 
@@ -196,7 +196,7 @@ URL: `http://127.0.0.1:4175/fixtures/source-api.html`.
 - 初期query bodyには `LIMIT 3` が含まれた。
 - `limit` を `5` に変更した後のquery bodyには `LIMIT 5` が含まれた。
 
-attribute mutation観測:
+属性変更の観測:
 
 | 操作 | render count | 最後のattribute | 観測値 |
 | --------- | ------------ | -------------- | -------------- |
@@ -214,4 +214,4 @@ attribute mutation観測:
 ## 未確認事項
 
 - `importWebFontCSS()` のlink重複挿入を互換必須の詳細とするか、現行実装の詳細に留めるか。
-- boolean attribute削除時の `handleAttributeChange()` `oldValue` / `newValue` を厳密に見る必要がある場合は、`null` と空文字を区別して描画するケース入力を追加する。現在のtemplateは `|| ''` を使うため、削除は `booleanParam: false` では見えるが、`newValue` のdistinctな描画値としては見えない。
+- boolean属性削除時の `handleAttributeChange()` `oldValue` / `newValue` を厳密に見る必要がある場合は、`null` と空文字を区別して描画するケース入力を追加する。現在のtemplateは `|| ''` を使うため、削除は `booleanParam: false` では見えるが、`newValue` のdistinctな描画値としては見えない。

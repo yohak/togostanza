@@ -1,21 +1,21 @@
-# 004 Runtime parameters
+# 004 Runtimeパラメーター
 
 ## 目的
 
-HTML attributesが `metadata.json` の `stanza:parameter` と `stanza:type` に基づいて `this.params` へ渡ることを確認する。
+HTML属性が `metadata.json` の `stanza:parameter` と `stanza:type` に基づいて `this.params` へ渡ることを確認する。
 
 ## 対応する方針
 
-- `this.params` はmetadataに基づく値変換を維持する。
-- boolean parameterはHTML boolean attributeとして扱う。
+- `this.params` はメタデータに基づく値変換を維持する。
+- booleanパラメーターはHTML boolean属性として扱う。
 - boolean以外の詳細変換は、現行版の観測結果をもとに同等の動作を実装する。
 
 ## 入力条件
 
-- `string`、`number`、`boolean`、`json`、`single-choice`、`text` を含むruntime観測用stanzaを用意する。
+- `string`、`number`、`boolean`、`json`、`single-choice`、`text` を含むランタイム観測用stanzaを用意する。
 - `stanza:style` には `color`、`number`、`text` を含める。
-- 必要に応じて `date`、`datetime`、URL系parameterも追加する。
-- Stanza sourceは `this.params` の値と型を画面またはログに出す。
+- 必要に応じて `date`、`datetime`、URL系パラメーターも追加する。
+- Stanzaソースは `this.params` の値と型を画面またはログに出す。
 
 ## ケース入力と観測補助
 
@@ -42,10 +42,10 @@ current-pnpm/
 
 - `current-pnpm/mise.toml` でNode.jsの18系とpnpmの9系を指定する。検証ケース直下には `mise.toml` を置かない。
 - `current-pnpm/generated-repo/package.json` は `togostanza` を `github:togostanza/togostanza` として参照する。tgz化はしない。
-- `parameter-probe` は `metadata.json` に `string`、`number`、`boolean`、`json`、`single-choice`、`text` のparameterを持つ。
-- `parameter-probe` は `metadata.json` に `color`、`number`、`text` のstyleを持つ。style metadata由来の値も `this.params` で観測する。
-- `index.js` は `this.params` の値と `typeof` を描画し、`handleAttributeChange()` で最後のattribute変更を記録する。
-- `fixtures/runtime-parameters.html` はbuild後の `../dist/parameter-probe.js` を直接読み込み、次の入力を並べて確認する。
+- `parameter-probe` は `metadata.json` に `string`、`number`、`boolean`、`json`、`single-choice`、`text` のパラメーターを持つ。
+- `parameter-probe` は `metadata.json` に `color`、`number`、`text` のstyleを持つ。styleメタデータ由来の値も `this.params` で観測する。
+- `index.js` は `this.params` の値と `typeof` を描画し、`handleAttributeChange()` で最後の属性変更を記録する。
+- `fixtures/runtime-parameters.html` はビルド後の `../dist/parameter-probe.js` を直接読み込み、次の入力を並べて確認する。
   - boolean attributeあり: `flag`
   - boolean attributeなし
   - 文字列値: `flag="false"`
@@ -53,9 +53,9 @@ current-pnpm/
   - json: object/array
   - single-choice: `mode="compact"`、`mode="comfortable"`
   - text: `note="..."`
-  - style metadata: `--parameter-probe-gap="..."`、`--parameter-probe-caption="..."`
-  - attribute mutation: `window.parameterProbeObserver` から `flag`、`count`、`payload` を変更する
-- in-app browserからmutationを再現できるように、`fixtures/runtime-parameters.html` にはmutation用の操作ボタンも置く。
+  - styleメタデータ: `--parameter-probe-gap="..."`、`--parameter-probe-caption="..."`
+  - 属性変更: `window.parameterProbeObserver` から `flag`、`count`、`payload` を変更する
+- in-appブラウザから変更を再現できるように、`fixtures/runtime-parameters.html` には変更用の操作ボタンも置く。
 - `date`、`datetime`、`url` は追加候補として残す。現時点の観測補助HTMLには入れず、主要4種の現行観測を優先する。
 
 ## 実行コマンド
@@ -71,7 +71,7 @@ mise exec -- pnpm install
 mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build後は `fixtures/runtime-parameters.html` を静的配信してブラウザで確認する。help previewではなく直接埋め込みHTMLを確認対象にする。
+ビルド後は `fixtures/runtime-parameters.html` を静的配信してブラウザで確認する。ヘルププレビューではなく直接埋め込みHTMLを確認対象にする。
 
 ```sh
 mise exec -- pnpm run serve:fixture
@@ -89,9 +89,9 @@ http://localhost:4174/fixtures/runtime-parameters.html
 - 属性なしbooleanが `false` になること。
 - `flag="false"` のような文字列値がfalse扱いされないこと。
 - number、jsonなどの実際の変換結果。
-- `single-choice` と `text` parameterの実際の変換結果。
-- `number` と `text` style metadataが `this.params` でどう見えるか。
-- attribute変更時の再評価挙動。
+- `single-choice` と `text` パラメーターの実際の変換結果。
+- `number` と `text` styleメタデータが `this.params` でどう見えるか。
+- 属性変更時の再評価挙動。
 
 ### 現行版の観測状況
 
@@ -121,29 +121,29 @@ mise exec -- pnpm run serve:fixture
 
 `mise trust`、`install`、`build`、ローカルHTTPサーバーは、Codex sandboxの権限制約、network制限、またはwatcher制限を避けるため、承認済みの通常コマンド実行で行った。
 
-### build結果
+### ビルド結果
 
 - `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
-- build時にSass deprecation warningが多数出た。
+- ビルド時にSass deprecation警告が多数出た。
 - `dist/` には `parameter-probe.js`、`parameter-probe.js.map`、`parameter-probe.css`、`parameter-probe.html`、`parameter-probe/metadata.json`、`index.html`、`-togostanza/*` が生成された。
 
-### 初期parameter変換
+### 初期パラメーター変換
 
 | 入力 | `this.params.label` | `this.params.count` | `this.params.flag` | `this.params.payload` |
 | ---- | ------------------- | ------------------- | ------------------ | --------------------- |
 | `flag` attributeあり | `flag-present:string` | `42:number` | `true:boolean` | object `{ "kind": "present", "values": [1, 2] }` |
 | `flag` attributeなし | `flag-absent:string` | `0:number` | `false:boolean` | object `{ "kind": "absent", "enabled": false }` |
 | `flag="false"` | `flag-string-false:string` | `7.5:number` | `true:boolean` | array object `["false-string", { "nested": true }]` |
-| mutation初期値 | `before-mutation:string` | `1:number` | `false:boolean` | object `{ "kind": "mutation", "step": "initial" }` |
+| 変更前の初期値 | `before-mutation:string` | `1:number` | `false:boolean` | object `{ "kind": "mutation", "step": "initial" }` |
 
-`single-choice`、`text` parameterと `number`、`text` style metadataは `dist/parameter-probe/metadata.json` と `dist/parameter-probe.js` に含まれることを確認した。
+`single-choice`、`text` パラメーターと `number`、`text` styleメタデータは `dist/parameter-probe/metadata.json` と `dist/parameter-probe.js` に含まれることを確認した。
 
-追加browser観測では、`mode` と `note` は `this.params` 上でstringとして見えた。`--parameter-probe-gap` と `--parameter-probe-caption` はmetadataとHTML attributeには存在するが、`this.params` 上では `undefined` だった。
+追加ブラウザ観測では、`mode` と `note` は `this.params` 上でstringとして見えた。`--parameter-probe-gap` と `--parameter-probe-caption` はメタデータとHTML属性には存在するが、`this.params` 上では `undefined` だった。
 
-### attribute mutation
+### 属性変更
 
-mutation targetに対して操作ボタンからattributeを変更した。
+変更対象に対して操作ボタンから属性を変更した。
 
 | 操作 | `renderCount` | `lastAttributeChange` | 観測値 |
 | ---- | ------------- | --------------------- | ------ |
@@ -154,38 +154,38 @@ mutation targetに対して操作ボタンからattributeを変更した。
 | `payload` をobject JSONに変更 | `6` | `payload`, old initial JSON, new changed JSON | `payload` はobjectとして更新 |
 | `mode="comfortable"` を設定 | `2` | `mode`, old `"compact"`, new `"comfortable"` | `mode` は `comfortable:string` |
 | `note="after text mutation"` を設定 | `3` | `note`, old `"before text mutation"`, new `"after text mutation"` | `note` は `after text mutation:string` |
-| style attributesを変更 | `3` | 変化なし | `--parameter-probe-*` は `this.params` では `undefined` のまま |
+| style属性を変更 | `3` | 変化なし | `--parameter-probe-*` は `this.params` では `undefined` のまま |
 
-style attributesを `--parameter-probe-gap="16"`、`--parameter-probe-caption="after style text mutation"` に変更してもrender countは増えなかった。hostのcomputed custom propertyはmetadata default相当の `--parameter-probe-gap: 8`、`--parameter-probe-caption: metadata caption` のままだった。
+style属性を `--parameter-probe-gap="16"`、`--parameter-probe-caption="after style text mutation"` に変更してもrender countは増えなかった。hostのcomputed custom propertyはメタデータ既定値相当の `--parameter-probe-gap: 8`、`--parameter-probe-caption: metadata caption` のままだった。
 
 ### ブラウザ観測メモ
 
 - 各 `<togostanza-parameter-probe>` にはopen shadow rootが作られた。
 - stylesheet linkは `http://127.0.0.1:4174/dist/parameter-probe.css`。
-- browser consoleのerror/warningは観測されなかった。
+- ブラウザコンソールのエラー/警告は観測されなかった。
 
 ## リメイク版で観測すること
 
 - booleanの公開挙動が一致すること。
 - boolean以外も、現行版の観測結果と同等に扱われること。
-- 不正な値に対するwarning/errorが改善される場合、既存の正しい入力を壊していないこと。
+- 不正な値に対する警告/エラーが改善される場合、既存の正しい入力を壊していないこと。
 
 ## 合格条件
 
-- boolean parameterの属性有無による判定が一致する。
+- booleanパラメーターの属性有無による判定が一致する。
 - 主要な `stanza:type` の変換結果が、現行版観測と矛盾しない。
-- 実プロジェクト由来の `single-choice` / `text` parameterと `number` / `text` style metadataの扱いが説明できる。
-- `this.params` がStanza sourceから同じ形で参照できる。
+- 実プロジェクト由来の `single-choice` / `text` パラメーターと `number` / `text` styleメタデータの扱いが説明できる。
+- `this.params` がStanzaソースから同じ形で参照できる。
 
 ## 記録する差分
 
-- metadataのparameter定義。
-- HTML attributes。
+- メタデータのパラメーター定義。
+- HTML属性。
 - `this.params` の値と型。
-- attribute変更時の挙動。
-- 不正入力時のwarning/error。
+- 属性変更時の挙動。
+- 不正入力時の警告/エラー。
 
 ## 未決定事項
 
 - boolean以外の詳細変換規則を、どこまで正式仕様へ移すか。
-- validation errorとruntime fallbackの境界。
+- validationエラーとランタイムfallbackの境界。

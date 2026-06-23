@@ -13,10 +13,10 @@ Stanza間連携の入口を確認し、維持するものと再設計するも�
 
 ## 入力条件
 
-- sender/receiverの複数stanzaを含むHTMLを用意する。
-- outgoing eventとreceiver attribute更新を観測できるようにする。
-- outgoing eventとreceiver `handleEvent()` 呼び出しを観測できるようにする。
-- data sourceからreceiverへデータが渡るケースを用意する。
+- 送信側/受信側の複数stanzaを含むHTMLを用意する。
+- 送出イベントと受信側属性の更新を観測できるようにする。
+- 送出イベントと受信側 `handleEvent()` 呼び出しを観測できるようにする。
+- data sourceから受信側へデータが渡るケースを用意する。
 
 ## ケース入力と観測補助
 
@@ -37,11 +37,11 @@ current-pnpm/
       coordination-receiver/
 ```
 
-- `coordination-sender` は `value` parameterを受け取り、ボタン押下時に `selectedValue` eventをdispatchする。payloadは `detail.payload.label` で観測する。
-- `coordination-receiver` は `selected-label` と `data-url` attributesをStanza parametersとして読み、受け取った値と `data-url` から取得したJSONの先頭item labelを表示する。
-- `coordination-receiver` は現行runtimeの `stanza:incomingEvent` 経路で呼ばれる `handleEvent()` を最小実装し、最後に受け取った `event.type` と `event.detail` を表示する。
-- `fixtures/inter-stanza.html` は `togostanza--container` 内にsender/receiver/`togostanza--event-map`/`togostanza--data-source` を並べた最小HTML。`togostanza--event-map` は `selectedValue` の `payload.label` をreceiverの `selected-label` に渡す。`togostanza--data-source` は `sample-data.json` を読み、receiverの `data-url` に渡す。
-- `fixtures/sample-data.json` は `togostanza--data-source` からreceiverへ渡る外部データの最小サンプル。receiverはこのJSONの `items[0].label` を表示する。
+- `coordination-sender` は `value` パラメーターを受け取り、ボタン押下時に `selectedValue` イベントを送出する。payloadは `detail.payload.label` で観測する。
+- `coordination-receiver` は `selected-label` と `data-url` 属性をStanzaパラメーターとして読み、受け取った値と `data-url` から取得したJSONの先頭item labelを表示する。
+- `coordination-receiver` は現行ランタイムの `stanza:incomingEvent` 経路で呼ばれる `handleEvent()` を最小実装し、最後に受け取った `event.type` と `event.detail` を表示する。
+- `fixtures/inter-stanza.html` は `togostanza--container` 内に送信側/受信側/`togostanza--event-map`/`togostanza--data-source` を並べた最小HTML。`togostanza--event-map` は `selectedValue` の `payload.label` を受信側の `selected-label` に渡す。`togostanza--data-source` は `sample-data.json` を読み、受信側の `data-url` に渡す。
+- `fixtures/sample-data.json` は `togostanza--data-source` から受信側へ渡る外部データの最小サンプル。受信側はこのJSONの `items[0].label` を表示する。
 
 ## 実行コマンド
 
@@ -56,8 +56,8 @@ mise exec -- pnpm install
 mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build後は観測補助用package scriptで `fixtures/inter-stanza.html` を配信し、browserで開く。
-senderのボタン押下後にreceiverの `selected-label` が更新されることと、`data-url` 経由で `sample-data.json` のlabelが表示されることを確認する。
+ビルド後は観測補助用package scriptで `fixtures/inter-stanza.html` を配信し、ブラウザで開く。
+送信側のボタン押下後に受信側の `selected-label` が更新されることと、`data-url` 経由で `sample-data.json` のlabelが表示されることを確認する。
 
 ```sh
 mise exec -- pnpm run serve:fixture
@@ -66,13 +66,13 @@ mise exec -- pnpm run serve:fixture
 ## 現行版で観測すること
 
 - `togostanza--container` がStanza間連携の入口として動くこと。
-- `togostanza--event-map` がcontainer内の同名outgoing eventを拾うこと。
+- `togostanza--event-map` がcontainer内の同名送出イベントを拾うこと。
 - event-mapが送信元selectorを持たないこと。
 - `togostanza--data-source` が `url` / `receiver` / `target-attribute` を使うこと。
 - blob URL経由のdata handoff。
 - `togostanza--data-container` がcustom elementとして実装されていないこと。
 - Sending Eventsは `this.element.dispatchEvent(new CustomEvent(...))` と `stanza:outgoingEvent` を入口として観測する。
-- `togostanza--container` が `stanza:incomingEvent` を見てreceiverの `handleEvent()` を呼ぶこと。
+- `togostanza--container` が `stanza:incomingEvent` を見て受信側の `handleEvent()` を呼ぶこと。
 
 ### 現行版観測状況
 
@@ -102,26 +102,26 @@ mise exec -- pnpm run serve:fixture
 
 `mise trust`、`install`、`build`、ローカルHTTPサーバーは、Codex sandboxの権限制約、network制限、またはwatcher制限を避けるため、承認済みの通常コマンド実行で行った。
 
-### build結果
+### ビルド結果
 
 - `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
-- build時にSass deprecation warningが多数出た。
+- ビルド時にSass deprecation警告が多数出た。
 - `dist/` には `coordination-sender.js`、`coordination-sender.css`、`coordination-receiver.js`、`coordination-receiver.css`、各stanzaの `metadata.json`、`index.html`、`-togostanza/*` が生成された。
 
 ### ブラウザ観測結果
 
 - `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` は観測補助HTMLのDOM上に存在した。
 - `togostanza--data-container` は観測補助HTMLのDOM上に存在しない。
-- sender/receiverにはopen shadow rootが作られた。
-- 初期状態ではreceiverの `selected-label` attributeは未設定で、表示値は `(none)`。
-- `togostanza--data-source` は `sample-data.json` をblob URLとしてreceiverの `data-url` attributeに渡した。
-- receiverは `data-url` からJSONを取得し、`items[0].label` の `from-data-source` を表示した。
-- senderの `Send from-sender` ボタンを押すと、receiverの `selected-label` attributeが `from-sender` に更新され、表示値も `from-sender` になった。
-- `togostanza--event-map` は送信元selectorを持たず、container内の `selectedValue` eventを拾った。
-- senderの `Send from-sender` ボタンを押すと、receiverの `handleEvent()` が呼ばれた。
+- 送信側/受信側にはopen shadow rootが作られた。
+- 初期状態では受信側の `selected-label` 属性は未設定で、表示値は `(none)`。
+- `togostanza--data-source` は `sample-data.json` をblob URLとして受信側の `data-url` 属性に渡した。
+- 受信側は `data-url` からJSONを取得し、`items[0].label` の `from-data-source` を表示した。
+- 送信側の `Send from-sender` ボタンを押すと、受信側の `selected-label` 属性が `from-sender` に更新され、表示値も `from-sender` になった。
+- `togostanza--event-map` は送信元selectorを持たず、container内の `selectedValue` イベントを拾った。
+- 送信側の `Send from-sender` ボタンを押すと、受信側の `handleEvent()` が呼ばれた。
 - `handled-event-type` には `selectedValue`、`handled-event-detail` には `{"payload":{"label":"from-sender"}}` が表示された。
-- 同じeventで `togostanza--event-map` も動き、receiverの `selected-label` attributeと表示値が `from-sender` になった。
+- 同じイベントで `togostanza--event-map` も動き、受信側の `selected-label` 属性と表示値が `from-sender` になった。
 
 ## リメイク版で観測すること
 
@@ -133,15 +133,15 @@ mise exec -- pnpm run serve:fixture
 ## 合格条件
 
 - Stanza間連携の入口が確認できる。
-- Stanza sourceから外向き `CustomEvent` を発火できる。
-- `event-map` と `handleEvent()` の両経路で、metadataに列挙されたeventだけが扱われることを説明できる。
+- Stanzaソースから外向き `CustomEvent` を発火できる。
+- `event-map` と `handleEvent()` の両経路で、メタデータに列挙されたイベントだけが扱われることを説明できる。
 - 再設計対象は、目的、影響範囲、移行方法が記録されている。
 - 破棄対象は、持ち込まれないことと根拠が確認できる。
 
 ## 記録する差分
 
 - HTML snippet。
-- event name、receiver selector、target attribute。
+- イベント名、受信側selector、対象属性。
 - `stanza:outgoingEvent` / `stanza:incomingEvent`。
 - `handleEvent()` に渡る `event.type` と `event.detail`。
 - data handoffのpathまたはURL。

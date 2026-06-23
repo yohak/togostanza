@@ -62,25 +62,25 @@ Error: EMFILE: too many open files, watch
 
 ### `npm install` の失敗
 
-`npm install` がnpmのcache、store、設定ディレクトリ、権限、network sandboxなどの理由で失敗した場合は、現行版CLIや観測補助の失敗と混同しない。
+`npm install` がnpmのキャッシュ、store、設定ディレクトリ、権限、network sandboxなどの理由で失敗した場合は、現行版CLIや観測補助の失敗と混同しない。
 
 ```text
 Your cache folder contains root-owned files
 ```
 
-このような失敗が出た場合、cache path、store、設定ディレクトリ、環境変数、実行場所をその場だけ変えて通常手順の代替にしない。まず次を確認する。
+このような失敗が出た場合、キャッシュpath、store、設定ディレクトリ、環境変数、実行場所をその場だけ変えて通常手順の代替にしない。まず次を確認する。
 
 - 実行したコマンド。
 - 実行場所。
 - 対象caseの `package.json` / lockfile / `mise.toml`。
-- npm cacheやuser stateの権限問題かどうか。
+- npmキャッシュやuser stateの権限問題かどうか。
 - network sandboxによる名前解決や外部通信の失敗かどうか。
 
 原因切り分けのために通常手順外の一時実験を行った場合でも、その結果だけで成功、完了、検証済みとして扱わない。完了前の確認は、リポジトリに定義された通常の開発手順で行う。
 
 途中で失敗した `npm install` は、`node_modules/` を中途半端な状態にすることがある。対象に `package-lock.json` がある場合は、lockfileを基準に `node_modules` を作り直す `npm ci` を有力な復旧候補として扱う。
 
-`npm ci` は、cache、store、設定ディレクトリ、環境変数、実行場所をその場だけ変える迂回とは別に扱う。lockfileがあるcaseで `npm ci` を使った場合は、「lockfileからのclean install」として記録する。
+`npm ci` は、キャッシュ、store、設定ディレクトリ、環境変数、実行場所をその場だけ変える迂回とは別に扱う。lockfileがあるケースで `npm ci` を使った場合は、「lockfileからのクリーンインストール」として記録する。
 
 lockfileがない場合は、`npm ci` を使えない。通常手順をどう整えるか、またはlockfileをcase入力として追加するかを確認する。
 
@@ -108,10 +108,10 @@ in-app browserの `evaluate` はDOM読み取りには使えるが、任意のDOM
 
 - `document.querySelector(...).setAttribute(...)` を `evaluate` 内で直接呼ぶ。
 - `window.__lastActionName = ...` のようにpage globalを追加する。
-- `window.parameterProbeObserver` のようなpage側global helperを `evaluate` から呼ぶ。
+- `window.parameterProbeObserver` のようなページ側global helperを `evaluate` から呼ぶ。
 - `javascript:` URLでmutationを起こす。
 
-attribute mutationをブラウザで観測したい場合は、観測補助HTMLに操作ボタンを置き、実ページ上のuser interactionとしてmutationを発火できるようにする。
+属性変更をブラウザで観測したい場合は、観測補助HTMLに操作ボタンを置き、実ページ上のユーザー操作として変更を発火できるようにする。
 
 ## Python系ツールを標準手順にしない
 
@@ -131,4 +131,4 @@ python3 -m http.server 4173
 
 - 検証環境ごとにNode.jsバージョンが変わりうるため、Node.js固定が必要なコマンドは対象ディレクトリ内で実行する。
 - `references/` は読み取り対象として扱い、試行錯誤で汚さない。
-- `node_modules/`、`dist/`、cache、一時ログはGit管理しない。
+- `node_modules/`、`dist/`、キャッシュ、一時ログはGit管理しない。

@@ -14,8 +14,8 @@
 - CLIコマンドとオプション。
 - stanzaリポジトリの入力構造。
 - `build` / `serve` / `generate` / `init` の仕様。
-- runtime artifactと埋め込み形式。
-- Stanza sourceから利用できるAPI。
+- ランタイム生成物と埋め込み形式。
+- Stanzaソースから利用できるAPI。
 - 設定ファイルのスキーマ。
 - migration noteから仕様へ取り込まれた確定事項。
 

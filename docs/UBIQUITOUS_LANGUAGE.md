@@ -39,7 +39,7 @@
 | **検証環境** | 検証ケースごとに置く、現行版またはリメイク版のCLIを実行するための環境ディレクトリ | 検証プロジェクト、検証ケースパッケージ | `workbench/cases/<case>/current/`、`workbench/cases/<case>/remake/`、`current-npm/`、`current-pnpm/` | 確認済み |
 | **生成リポジトリ** | `togostanza init` などのCLI実行によって検証環境内に生成されるStanzaリポジトリ | 生成先、生成結果、generated repo | `generated-repo/` | 確認済み |
 | **検証ケース** | 同じ確認を現行版とリメイク版の検証環境で行うための手順、入力、観測定義をまとめた単位 | ケース、テスト、検証シナリオ | `workbench/cases/<case>/README.md` | 確認済み |
-| **ケース入力** | **検証ケース**で現行版またはリメイク版に与える最小のStanza source、metadata、style、設定、package定義などの入力一式 | fixture、検証ケース、サンプルプロジェクト | case input、`generated-repo/` 内のstanza source | 確認済み |
+| **ケース入力** | **検証ケース**で現行版またはリメイク版に与える最小のStanzaソース、メタデータ、style、設定、package定義などの入力一式 | fixture、検証ケース、サンプルプロジェクト | case input、`generated-repo/` 内のstanza source | 確認済み |
 | **fixture** | **検証ケース**の観測を補助する、Stanza利用側のHTML、local data、CSS、画像、操作用UIなど | case input、検証ケース、観測契約 | `fixtures/*.html`、local fixture data | 確認済み |
 | **観測契約** | **検証ケース**で確認したい、互換性判断対象の観測可能な振る舞い | fixture、テスト内容、実装要件 | observed contract、observation requirement | 確認済み |
 | **生成物** | CLI実行や `build` によって作られる比較・確認用のファイルやディレクトリ | 生成出力、成果物、アーティファクト | output、generated output | 確認済み |
@@ -91,7 +91,7 @@
 - **生成リポジトリ**は、`init` 自体を確認する**検証ケース**で**検証環境**の内側に作られる。
 - **検証ケース**では、同じケース内の両方の**検証環境**に対して同じ**CLI挙動**やランタイム挙動を確認する。
 - **ケース入力**は**観測契約**を確認するために現行版やリメイク版へ与える入力であり、**fixture**はその入力をブラウザやCLIから観測するための補助である。
-- **fixture**はStanza利用側コードや補助データを指し、Stanza sourceそのものや**観測契約**そのものを指さない。
+- **fixture**はStanza利用側コードや補助データを指し、Stanzaソースそのものや**観測契約**そのものを指さない。
 - **リメイク版パッケージ**は `package/` 直下に置く。
 - **ルートpackage.json**は、今の段階では置かない。
 - **ワークスペース化**は、複数パッケージが必要になった時点で検討する。

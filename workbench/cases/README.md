@@ -19,9 +19,9 @@
 
 package managerや実行条件を分けて観測する必要がある場合は、`current-npm/`、`current-pnpm/` のように目的が分かる検証環境名を使ってよい。
 
-`README.md` は検証ケース定義の判断基準として扱う。各検証環境には、必要になった時点で `package.json`、Stanza source、検証用HTMLなどを置く。
+`README.md` は検証ケース定義の判断基準として扱う。各検証環境には、必要になった時点で `package.json`、Stanzaソース、検証用HTMLなどを置く。
 
-`init` 自体の挙動を確認する検証ケースでは、検証環境の中で `init --name <name>` を実行し、その生成先ディレクトリをStanzaリポジトリとして扱う。検証環境直下に `mise.toml` を置き、`generated-repo/` のような生成先ディレクトリに `package.json` やStanza sourceを置く形を標準とする。
+`init` 自体の挙動を確認する検証ケースでは、検証環境の中で `init --name <name>` を実行し、その生成先ディレクトリをStanzaリポジトリとして扱う。検証環境直下に `mise.toml` を置き、`generated-repo/` のような生成先ディレクトリに `package.json` やStanzaソースを置く形を標準とする。
 
 `node_modules/`、`dist/`、一時ログ、cacheはGit管理外とする。
 
@@ -50,15 +50,15 @@ workbench/cases/
 
 | 検証ケース | 主な対象 | 契約 | 目的 |
 | ---- | -------- | ---- | ---- |
-| [001-cli-scaffold-and-generate](./001-cli-scaffold-and-generate/) | `init` / `generate stanza` | 開発契約 | StanzaリポジトリとStanza sourceの入口を確認する。 |
-| [002-build-artifacts](./002-build-artifacts/) | `build` / `dist` | 利用契約 / 開発契約 | runtime artifactと生成物配置を確認する。 |
+| [001-cli-scaffold-and-generate](./001-cli-scaffold-and-generate/) | `init` / `generate stanza` | 開発契約 | StanzaリポジトリとStanzaソースの入口を確認する。 |
+| [002-build-artifacts](./002-build-artifacts/) | `build` / `dist` | 利用契約 / 開発契約 | ランタイム生成物と生成物配置を確認する。 |
 | [003-runtime-embedding](./003-runtime-embedding/) | module script / custom element | 利用契約 | 一般Webサイトへの直接埋め込みを確認する。 |
-| [004-runtime-parameters](./004-runtime-parameters/) | `this.params` / `stanza:type` | 利用契約 / 開発契約 | HTML attributesからStanza sourceへの値変換を確認する。 |
-| [005-stanza-source-api](./005-stanza-source-api/) | Stanza base API | 開発契約 | 既存Stanza source互換のAPIを確認する。 |
+| [004-runtime-parameters](./004-runtime-parameters/) | `this.params` / `stanza:type` | 利用契約 / 開発契約 | HTML属性からStanzaソースへの値変換を確認する。 |
+| [005-stanza-source-api](./005-stanza-source-api/) | Stanza base API | 開発契約 | 既存Stanzaソース互換のAPIを確認する。 |
 | [006-inter-stanza-coordination](./006-inter-stanza-coordination/) | `togostanza--container` など | 利用契約 | Stanza間連携の維持・再設計対象を確認する。 |
 | [007-config-and-resolution](./007-config-and-resolution/) | config / alias / assets | 開発契約 | build設定、import解決、asset参照の扱いを確認する。 |
-| [008-react-runtime](./008-react-runtime/) | TSX / React runtime | 開発契約 | React Stanza sourceのmountと再描画を確認する。 |
-| [009-vue-runtime](./009-vue-runtime/) | Vue SFC runtime | 開発契約 | Vue Stanza sourceのmountとruntime chunkを確認する。 |
+| [008-react-runtime](./008-react-runtime/) | TSX / Reactランタイム | 開発契約 | React Stanzaソースのマウントと再描画を確認する。 |
+| [009-vue-runtime](./009-vue-runtime/) | Vue SFCランタイム | 開発契約 | Vue Stanzaソースのマウントとランタイムチャンクを確認する。 |
 
 ## 検証ケースの書き方
 
@@ -84,7 +84,7 @@ workbench/cases/
 5. `remake/` は、リメイク版CLIが実装されるまで空の検証環境として残す。
 6. リメイク版実装後、同じ入力意図を `remake/` に作り、差分を検証ケースの `README.md` に記録する。
 
-現行版の検証環境は、検証ケースの目的に必要な最小構成にする。すべての検証ケースで `init` から作り直す必要はない。`build`、runtime、parameter、Stanza source APIなど、Stanzaリポジトリが必要な検証ケースでは、001で作ったscaffoldの構成を参考にしてよい。
+現行版の検証環境は、検証ケースの目的に必要な最小構成にする。すべての検証ケースで `init` から作り直す必要はない。`build`、ランタイム、パラメーター、StanzaソースAPIなど、Stanzaリポジトリが必要な検証ケースでは、001で作った雛形の構成を参考にしてよい。
 
 ただし、`init` 自体の挙動を確認する検証ケースでは、手作業で構成を作らず、検証環境内で現行版CLIの `init` を実行して生成リポジトリを作る。
 
@@ -106,8 +106,8 @@ Git管理する候補は次の通り。
 - `mise.toml`
 - `package.json`
 - `package-lock.json`
-- Stanza source
-- metadata
+- Stanzaソース
+- メタデータ
 - templates
 - stylesheet
 - 検証用HTML
@@ -117,17 +117,17 @@ Git管理しないものは次の通り。
 
 - `node_modules/`
 - `dist/`
-- cache
+- キャッシュ
 - 一時ログ
 - サーバ実行中に生成される一時ファイル
 
 ## 検証ケース別の初期方針
 
-- 002 build artifacts: 001のscaffoldに近い最小Stanzaリポジトリを `current-pnpm/generated-repo/` に置き、`build --output-path dist` の生成物を観測する。`dist/` はGit管理せず、treeと重要ファイルだけREADMEに記録する。
-- 003 runtime embedding: 002のbuild結果を前提にするか、同等のStanzaリポジトリを `current-pnpm/generated-repo/` に置く。help previewではない最小HTMLを `generated-repo/` に置く。
-- 004 runtime parameters: parameter観測用Stanzaを `current-pnpm/generated-repo/` に置く。値と型が画面またはログで分かるようにする。
-- 005 Stanza source API: APIごとに最小Stanza sourceを `current-pnpm/generated-repo/` に作る。`this.query()` など外部通信が絡むものは、観測用の最小endpointまたはモック方針をREADMEに書く。
-- 006 inter stanza coordination: sender/receiver/containerを含む最小HTMLを `current-pnpm/generated-repo/` に置く。`togostanza--container` はStanza間連携の入口として維持対象、`togostanza--event-map` はoutgoing eventをreceiver attributeへ渡す概念を維持しつつ詳細挙動は再設計候補、`togostanza--data-source` は外部データをreceiver attributeへ渡す目的を維持しつつAPI詳細は再設計候補、`togostanza--data-container` は旧ドキュメント内の誤記として破棄対象として扱う。再設計候補は現行挙動の観測と移行メモを分けて書く。
+- 002 ビルド生成物: 001の雛形に近い最小Stanzaリポジトリを `current-pnpm/generated-repo/` に置き、`build --output-path dist` の生成物を観測する。`dist/` はGit管理せず、treeと重要ファイルだけREADMEに記録する。
+- 003 ランタイム埋め込み: 002のビルド結果を前提にするか、同等のStanzaリポジトリを `current-pnpm/generated-repo/` に置く。ヘルププレビューではない最小HTMLを `generated-repo/` に置く。
+- 004 ランタイムパラメーター: パラメーター観測用Stanzaを `current-pnpm/generated-repo/` に置く。値と型が画面またはログで分かるようにする。
+- 005 StanzaソースAPI: APIごとに最小Stanzaソースを `current-pnpm/generated-repo/` に作る。`this.query()` など外部通信が絡むものは、観測用の最小endpointまたはモック方針をREADMEに書く。
+- 006 Stanza間連携: 送信側/受信側/コンテナを含む最小HTMLを `current-pnpm/generated-repo/` に置く。`togostanza--container` はStanza間連携の入口として維持対象、`togostanza--event-map` は送出イベントを受信側属性へ渡す概念を維持しつつ詳細挙動は再設計候補、`togostanza--data-source` は外部データを受信側属性へ渡す目的を維持しつつAPI詳細は再設計候補、`togostanza--data-container` は旧ドキュメント内の誤記として破棄対象として扱う。再設計候補は現行挙動の観測と移行メモを分けて書く。
 - 007 config and resolution: 設定ファイル、alias、asset importを分けて小さく `current-pnpm/generated-repo/` で確認する。旧設定ファイルは無条件実行しない方針を確認対象に含める。
 
 ## 判断の扱い
