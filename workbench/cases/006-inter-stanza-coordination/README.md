@@ -2,26 +2,26 @@
 
 ## 目的
 
-Stanza 間連携の入口を確認し、維持するものと再設計するものを分けて観測する。
+Stanza間連携の入口を確認し、維持するものと再設計するものを分けて観測する。
 
 ## 対応する方針
 
-- `togostanza--container` は Stanza 間連携の入口として維持する。
+- `togostanza--container` は Stanza間連携の入口として維持する。
 - `togostanza--event-map` は概念を維持するが、現行の詳細挙動は再設計候補。
-- `togostanza--data-source` は外部データを Stanza に渡す目的を維持するが、API詳細は再設計候補。
+- `togostanza--data-source` は外部データをStanzaに渡す目的を維持するが、API詳細は再設計候補。
 - `togostanza--data-container` は旧ドキュメント内の誤記として破棄する。
 
 ## 入力条件
 
-- sender / receiver の複数 stanza を含むHTMLを用意する。
-- outgoing event と receiver attribute 更新を観測できるようにする。
-- outgoing event と receiver `handleEvent()` 呼び出しを観測できるようにする。
-- data source から receiver へデータが渡るケースを用意する。
+- sender/receiverの複数stanzaを含むHTMLを用意する。
+- outgoing eventとreceiver attribute更新を観測できるようにする。
+- outgoing eventとreceiver `handleEvent()` 呼び出しを観測できるようにする。
+- data sourceからreceiverへデータが渡るケースを用意する。
 
 ## ケース入力と観測補助
 
-`current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
-`generated-repo/` には、現行版の Stanza 間連携を観測するための最小プロジェクトを置く。
+`current-pnpm/` はpnpmで現行版を確認する検証環境として用意する。
+`generated-repo/` には、現行版のStanza間連携を観測するための最小プロジェクトを置く。
 
 ```text
 current-pnpm/
@@ -37,11 +37,11 @@ current-pnpm/
       coordination-receiver/
 ```
 
-- `coordination-sender` は `value` parameter を受け取り、ボタン押下時に `selectedValue` event を dispatch する。payload は `detail.payload.label` で観測する。
-- `coordination-receiver` は `selected-label` と `data-url` attributes を Stanza parameters として読み、受け取った値と `data-url` から取得した JSON の先頭 item label を表示する。
-- `coordination-receiver` は現行 runtime の `stanza:incomingEvent` 経路で呼ばれる `handleEvent()` を最小実装し、最後に受け取った `event.type` と `event.detail` を表示する。
-- `fixtures/inter-stanza.html` は `togostanza--container` 内に sender / receiver / `togostanza--event-map` / `togostanza--data-source` を並べた最小HTML。`togostanza--event-map` は `selectedValue` の `payload.label` を receiver の `selected-label` に渡す。`togostanza--data-source` は `sample-data.json` を読み、receiver の `data-url` に渡す。
-- `fixtures/sample-data.json` は `togostanza--data-source` から receiver へ渡る外部データの最小サンプル。receiver はこの JSON の `items[0].label` を表示する。
+- `coordination-sender` は `value` parameterを受け取り、ボタン押下時に `selectedValue` eventをdispatchする。payloadは `detail.payload.label` で観測する。
+- `coordination-receiver` は `selected-label` と `data-url` attributesをStanza parametersとして読み、受け取った値と `data-url` から取得したJSONの先頭item labelを表示する。
+- `coordination-receiver` は現行runtimeの `stanza:incomingEvent` 経路で呼ばれる `handleEvent()` を最小実装し、最後に受け取った `event.type` と `event.detail` を表示する。
+- `fixtures/inter-stanza.html` は `togostanza--container` 内にsender/receiver/`togostanza--event-map`/`togostanza--data-source` を並べた最小HTML。`togostanza--event-map` は `selectedValue` の `payload.label` をreceiverの `selected-label` に渡す。`togostanza--data-source` は `sample-data.json` を読み、receiverの `data-url` に渡す。
+- `fixtures/sample-data.json` は `togostanza--data-source` からreceiverへ渡る外部データの最小サンプル。receiverはこのJSONの `items[0].label` を表示する。
 
 ## 実行コマンド
 
@@ -56,8 +56,8 @@ mise exec -- pnpm install
 mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build 後は観測補助用 package script で `fixtures/inter-stanza.html` を配信し、browser で開く。
-sender のボタン押下後に receiver の `selected-label` が更新されることと、`data-url` 経由で `sample-data.json` の label が表示されることを確認する。
+build後は観測補助用package scriptで `fixtures/inter-stanza.html` を配信し、browserで開く。
+senderのボタン押下後にreceiverの `selected-label` が更新されることと、`data-url` 経由で `sample-data.json` のlabelが表示されることを確認する。
 
 ```sh
 mise exec -- pnpm run serve:fixture
@@ -65,14 +65,14 @@ mise exec -- pnpm run serve:fixture
 
 ## 現行版で観測すること
 
-- `togostanza--container` が関連携の入口として動くこと。
-- `togostanza--event-map` が container 内の同名 outgoing event を拾うこと。
-- event-map が送信元 selector を持たないこと。
+- `togostanza--container` がStanza間連携の入口として動くこと。
+- `togostanza--event-map` がcontainer内の同名outgoing eventを拾うこと。
+- event-mapが送信元selectorを持たないこと。
 - `togostanza--data-source` が `url` / `receiver` / `target-attribute` を使うこと。
-- blob URL 経由の data handoff。
-- `togostanza--data-container` が custom element として実装されていないこと。
-- Sending Events は `this.element.dispatchEvent(new CustomEvent(...))` と `stanza:outgoingEvent` を入口として観測する。
-- `togostanza--container` が `stanza:incomingEvent` を見て receiver の `handleEvent()` を呼ぶこと。
+- blob URL経由のdata handoff。
+- `togostanza--data-container` がcustom elementとして実装されていないこと。
+- Sending Eventsは `this.element.dispatchEvent(new CustomEvent(...))` と `stanza:outgoingEvent` を入口として観測する。
+- `togostanza--container` が `stanza:incomingEvent` を見てreceiverの `handleEvent()` を呼ぶこと。
 
 ### 現行版観測状況
 
@@ -98,43 +98,43 @@ mise exec -- pnpm exec togostanza build --output-path dist
 mise exec -- pnpm run serve:fixture
 ```
 
-`mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。
+`mise.toml` は `current-pnpm/` に置き、Node.jsの18系とpnpmの9系を固定している。
 
-`mise trust`、`install`、`build`、local HTTP server は、Codex sandbox の権限制約、network 制限、または watcher 制限を避けるため、承認済みの通常コマンド実行で行った。
+`mise trust`、`install`、`build`、ローカルHTTPサーバーは、Codex sandboxの権限制約、network制限、またはwatcher制限を避けるため、承認済みの通常コマンド実行で行った。
 
-### build 結果
+### build結果
 
 - `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
-- build 時に Sass deprecation warning が多数出た。
-- `dist/` には `coordination-sender.js`、`coordination-sender.css`、`coordination-receiver.js`、`coordination-receiver.css`、各 stanza の `metadata.json`、`index.html`、`-togostanza/*` が生成された。
+- build時にSass deprecation warningが多数出た。
+- `dist/` には `coordination-sender.js`、`coordination-sender.css`、`coordination-receiver.js`、`coordination-receiver.css`、各stanzaの `metadata.json`、`index.html`、`-togostanza/*` が生成された。
 
 ### ブラウザ観測結果
 
-- `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` は観測補助HTMLの DOM 上に存在した。
-- `togostanza--data-container` は観測補助HTMLの DOM 上に存在しない。
-- sender / receiver には open shadow root が作られた。
-- 初期状態では receiver の `selected-label` attribute は未設定で、表示値は `(none)`。
-- `togostanza--data-source` は `sample-data.json` を blob URL として receiver の `data-url` attribute に渡した。
-- receiver は `data-url` から JSON を取得し、`items[0].label` の `from-data-source` を表示した。
-- sender の `Send from-sender` ボタンを押すと、receiver の `selected-label` attribute が `from-sender` に更新され、表示値も `from-sender` になった。
-- `togostanza--event-map` は送信元 selector を持たず、container 内の `selectedValue` event を拾った。
-- sender の `Send from-sender` ボタンを押すと、receiver の `handleEvent()` が呼ばれた。
+- `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` は観測補助HTMLのDOM上に存在した。
+- `togostanza--data-container` は観測補助HTMLのDOM上に存在しない。
+- sender/receiverにはopen shadow rootが作られた。
+- 初期状態ではreceiverの `selected-label` attributeは未設定で、表示値は `(none)`。
+- `togostanza--data-source` は `sample-data.json` をblob URLとしてreceiverの `data-url` attributeに渡した。
+- receiverは `data-url` からJSONを取得し、`items[0].label` の `from-data-source` を表示した。
+- senderの `Send from-sender` ボタンを押すと、receiverの `selected-label` attributeが `from-sender` に更新され、表示値も `from-sender` になった。
+- `togostanza--event-map` は送信元selectorを持たず、container内の `selectedValue` eventを拾った。
+- senderの `Send from-sender` ボタンを押すと、receiverの `handleEvent()` が呼ばれた。
 - `handled-event-type` には `selectedValue`、`handled-event-detail` には `{"payload":{"label":"from-sender"}}` が表示された。
-- 同じ event で `togostanza--event-map` も動き、receiver の `selected-label` attribute と表示値が `from-sender` になった。
+- 同じeventで `togostanza--event-map` も動き、receiverの `selected-label` attributeと表示値が `from-sender` になった。
 
 ## リメイク版で観測すること
 
 - `togostanza--container` の目的が維持されること。
-- event-map / data-source を再設計する場合、現行HTMLとの差分、移行メモ、修正手順があること。
-- Sending Events を再設計する場合、`stanza:outgoingEvent` / `stanza:incomingEvent` との対応、`event.detail` の扱い、`value-path` の扱いが説明できること。
+- event-map/data-sourceを再設計する場合、現行HTMLとの差分、移行メモ、修正手順があること。
+- Sending Eventsを再設計する場合、`stanza:outgoingEvent` / `stanza:incomingEvent` との対応、`event.detail` の扱い、`value-path` の扱いが説明できること。
 - `togostanza--data-container` を持ち込まないこと。
 
 ## 合格条件
 
-- Stanza 間連携の入口が確認できる。
-- Stanza source から外向き `CustomEvent` を発火できる。
-- `event-map` と `handleEvent()` の両経路で、metadata に列挙された event だけが扱われることを説明できる。
+- Stanza間連携の入口が確認できる。
+- Stanza sourceから外向き `CustomEvent` を発火できる。
+- `event-map` と `handleEvent()` の両経路で、metadataに列挙されたeventだけが扱われることを説明できる。
 - 再設計対象は、目的、影響範囲、移行方法が記録されている。
 - 破棄対象は、持ち込まれないことと根拠が確認できる。
 
@@ -144,11 +144,11 @@ mise exec -- pnpm run serve:fixture
 - event name、receiver selector、target attribute。
 - `stanza:outgoingEvent` / `stanza:incomingEvent`。
 - `handleEvent()` に渡る `event.type` と `event.detail`。
-- data handoff の path または URL。
+- data handoffのpathまたはURL。
 - 再設計する場合の新旧対応表。
 
 ## 未決定事項
 
-- event-map の新しい送信元指定方法。
-- data-source の新しい API。
-- blob URL 経由を維持するかどうか。
+- event-mapの新しい送信元指定方法。
+- data-sourceの新しいAPI。
+- blob URL経由を維持するかどうか。

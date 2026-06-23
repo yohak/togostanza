@@ -1,6 +1,6 @@
 # リファレンスセットアップ
 
-`references/` は、調査・比較に使うリファレンスリポジトリを複数置くGit管理外領域。
+`references/` は、調査・比較に使うリファレンスリポジトリを置くGit管理外の領域。
 
 ## 読む順番
 
@@ -8,9 +8,9 @@
 2. 初回セットアップで3つのリポジトリを取得する。
 3. 調査対象に応じて、次の順に必要なセットアップを行う。
     - 現行版リポジトリまたは **metastanza** を調べる場合は、Node設定を行う。
-    - 現行版リポジトリを調べる場合は、現行版リポジトリのセットアップとCLI確認を行う。
-    - **metastanza** を調べる場合は、metastanzaのセットアップとCLI確認を行う。
-    - **TogoMedium Stanza** を調べる場合は、TogoMedium StanzaのセットアップとCLI確認を行う。
+    - 現行版リポジトリを調べる場合は、セットアップとCLIの確認を行う。
+    - **metastanza** を調べる場合は、セットアップとCLIの確認を行う。
+    - **TogoMedium Stanza** を調べる場合は、セットアップとCLIの確認を行う。
 4. 調査結果はリファレンスリポジトリ側ではなく、`docs/investigation/` に記録する。
 
 ## 想定レイアウト
@@ -22,13 +22,13 @@ references/
   togomedium-web/
 ```
 
-## 初期セットアップで取得するリポジトリ
+## 初回セットアップで取得するリポジトリ
 
 | 配置先 | 取得元 | 確認する文脈 |
 | ------ | ------ | ------------ |
 | `references/togostanza` | `https://github.com/togostanza/togostanza.git` | 現行版リポジトリの実装、ドキュメント、テスト |
-| `references/metastanza` | `https://github.com/togostanza/metastanza.git` | **metastanza** の挙動とStanza側CLI |
-| `references/togomedium-web` | `https://github.com/dbcls/togomedium-web.git` | **TogoMedium Stanza** のセットアップとStanza側CLI |
+| `references/metastanza` | `https://github.com/togostanza/metastanza.git` | **metastanza** の挙動とStanza側のCLI |
+| `references/togomedium-web` | `https://github.com/dbcls/togomedium-web.git` | **TogoMedium Stanza** のセットアップとStanza側のCLI |
 
 ## 初回セットアップ手順
 
@@ -43,7 +43,7 @@ git clone https://github.com/togostanza/metastanza.git references/metastanza
 git clone https://github.com/dbcls/togomedium-web.git references/togomedium-web
 ```
 
-`references/` はGit管理外領域なので、cloneした中身はこのリポジトリにはコミットしない。
+`references/` はGit管理外の領域なので、取得した中身はこのリポジトリにはコミットしない。
 
 ### Node設定
 
@@ -77,7 +77,7 @@ mise exec -- npm -v
 mise exec -- npm ci
 ```
 
-CLI確認には次を使う。
+CLIの確認には次を使う。
 
 ```sh
 mise exec -- node bin/togostanza.mjs --version
@@ -96,7 +96,7 @@ mise exec -- npm -v
 mise exec -- npm ci
 ```
 
-Stanza側のCLI確認には次を使う。
+Stanza側でCLIを確認するときは次を使う。
 
 ```sh
 mise exec -- npx togostanza --version
@@ -116,7 +116,7 @@ mise exec -- pnpm -v
 mise exec -- pnpm install --frozen-lockfile
 ```
 
-Stanza側のCLI確認には次を使う。
+Stanza側でCLIを確認するときは次を使う。
 
 ```sh
 mise exec -- pnpm --filter @packages/stanza exec togostanza --version
@@ -124,7 +124,7 @@ mise exec -- pnpm --filter @packages/stanza exec togostanza --help
 mise exec -- pnpm --filter @packages/stanza stanza:build
 ```
 
-ここに置くリポジトリは、この3つに限定しない。追加のリファレンスリポジトリが必要になった場合は、用途が分かる名前で `references/` 配下に追加し、この文書に取得元と用途を追記する。
+`references/` に置くリポジトリは、この3つに限定しない。追加のリファレンスリポジトリが必要になった場合は、用途が分かる名前で `references/` 配下に追加し、取得元と用途をこの文書に追記する。
 
 ## 方針
 

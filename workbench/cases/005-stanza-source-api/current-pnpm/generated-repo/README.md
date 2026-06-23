@@ -1,6 +1,5 @@
-# Current case input for verification case 005
+# Verification case 005のcurrent case input
 
-This repository is a minimal current-version Stanza repository for observing the
-Stanza base API used by existing Stanza source code.
+このリポジトリは、既存のStanza source codeが使うStanza base APIを観測するための、現行版の最小Stanzaリポジトリ。
 
-The main probe stanza is `stanzas/api-probe`.
+主な観測用stanzaは `stanzas/api-probe`。

@@ -2,26 +2,26 @@
 
 ## 目的
 
-Stanza Web Component が、一般的なWebサイトへ直接埋め込めることを確認する。
+Stanza Web Componentが、一般的なWebサイトへ直接埋め込めることを確認する。
 
 ## 対応する方針
 
-- `type="module"` script と `<togostanza-{id}>` custom element による埋め込み形式は利用契約として必須。
-- 埋め込み先Webサイトに Vite、React、Vue、npm install、追加 build step を要求しない。
-- help preview の実装やUIは runtime 埋め込み形式とは別物として扱う。
+- `type="module"` scriptと `<togostanza-{id}>` custom elementによる埋め込み形式は利用契約として必須。
+- 埋め込み先WebサイトにVite、React、Vue、npm install、追加build stepを要求しない。
+- help previewの実装やUIはruntime埋め込み形式とは別物として扱う。
 - `serve` はローカル確認の入口として維持する。
 
 ## 入力条件
 
-- build 済みの `dist/` を静的に配信できる状態にする。
-- help preview ではない、最小のHTMLページを用意する。
-- HTML は `<script type="module" src="./{id}.js">` と `<togostanza-{id}>` を直接書く。
-- `stanza:menu-placement` が `none` の stanza も含め、直接埋め込み時に余計な menu UI が出ないことを見る。
+- build済みの `dist/` を静的に配信できる状態にする。
+- help previewではない、最小のHTMLページを用意する。
+- HTMLは `<script type="module" src="./{id}.js">` と `<togostanza-{id}>` を直接書く。
+- `stanza:menu-placement` が `none` のstanzaも含め、直接埋め込み時に余計なmenu UIが出ないことを見る。
 
 ## 検証環境とケース入力
 
-`current-pnpm/` は pnpm で現行版を確認する検証環境として用意する。
-`generated-repo/` は 001 の scaffold 結果を参考にした、現行版用の最小 Stanza repository として扱う。
+`current-pnpm/` はpnpmで現行版を確認する検証環境として用意する。
+`generated-repo/` は001のscaffold結果を参考にした、現行版用の最小Stanzaリポジトリとして扱う。
 
 ```text
 current-pnpm/
@@ -44,9 +44,9 @@ current-pnpm/
         templates/stanza.html.hbs
 ```
 
-`runtime-embed.html` は help preview とは別の確認用HTMLで、build 後の `./dist/hello.js` と `./dist/menuless-hello.js` を module script として読み込み、`<togostanza-hello say-to="runtime">` と `<togostanza-menuless-hello say-to="runtime">` を直接配置する。
+`runtime-embed.html` はhelp previewとは別の確認用HTMLで、build後の `./dist/hello.js` と `./dist/menuless-hello.js` をmodule scriptとして読み込み、`<togostanza-hello say-to="runtime">` と `<togostanza-menuless-hello say-to="runtime">` を直接配置する。
 
-`menuless-hello` は `metadata.json` に `"stanza:menu-placement": "none"` を持つ。Web 側 wrapper の `URL_STANZA` 組み立ては利用側ロジックなので、この検証ケースでは扱わない。
+`menuless-hello` は `metadata.json` に `"stanza:menu-placement": "none"` を持つ。Web側wrapperの `URL_STANZA` 組み立ては利用側ロジックなので、この検証ケースでは扱わない。
 
 `remake/` はリメイク版CLI実装後に、同じ入力意図で作る。
 
@@ -63,13 +63,13 @@ mise exec -- pnpm install
 mise exec -- pnpm exec togostanza build --output-path dist
 ```
 
-build 後は、`current-pnpm/generated-repo/runtime-embed.html` を静的配信してブラウザで確認する。確認方法は `serve` または簡易HTTPサーバのどちらでもよいが、help preview ではなく `runtime-embed.html` を開く。
+build後は、`current-pnpm/generated-repo/runtime-embed.html` を静的配信してブラウザで確認する。確認方法は `serve` または簡易HTTPサーバのどちらでもよいが、help previewではなく `runtime-embed.html` を開く。
 
 ```sh
 mise exec -- pnpm exec togostanza serve
 ```
 
-または、build artifact の静的配信だけを確認する場合は、観測補助用 package script を使う。
+または、build artifactの静的配信だけを確認する場合は、観測補助用package scriptを使う。
 
 ```sh
 mise exec -- pnpm run serve:fixture
@@ -83,12 +83,12 @@ http://localhost:4173/runtime-embed.html
 
 ## 現行版で観測すること
 
-- module script が読み込まれること。
-- custom element が定義されること。
-- shadow root が `open` で作られること。
-- Stanza ごとの CSS が shadow root 内に適用されること。
-- help preview と直接埋め込みで挙動を混同しないこと。
-- `stanza:menu-placement: none` の stanza を direct embed しても、runtime 埋め込み画面に余計な menu UI が出ないこと。
+- module scriptが読み込まれること。
+- custom elementが定義されること。
+- shadow rootが `open` で作られること。
+- StanzaごとのCSSがshadow root内に適用されること。
+- help previewと直接埋め込みで挙動を混同しないこと。
+- `stanza:menu-placement: none` のstanzaをdirect embedしても、runtime埋め込み画面に余計なmenu UIが出ないこと。
 
 ### 現行版の観測状況
 
@@ -114,68 +114,68 @@ mise exec -- pnpm exec togostanza build --output-path dist
 mise exec -- pnpm run serve:fixture
 ```
 
-`mise.toml` は `current-pnpm/` に置き、Node 18 と pnpm 9 を固定している。
+`mise.toml` は `current-pnpm/` に置き、Node.jsの18系とpnpmの9系を固定している。
 
-`mise trust`、`install`、`build`、local HTTP server は、Codex sandbox の権限制約、network 制限、または watcher 制限を避けるため、承認済みの通常コマンド実行で行った。
+`mise trust`、`install`、`build`、ローカルHTTPサーバーは、Codex sandboxの権限制約、network制限、またはwatcher制限を避けるため、承認済みの通常コマンド実行で行った。
 
-### build 結果
+### build結果
 
 - `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
 - `mise exec -- pnpm exec togostanza build --output-path dist` は成功した。
-- build 時に Sass deprecation warning が多数出た。
-- `dist/` には `hello.js`、`menuless-hello.js`、それぞれの CSS / HTML / metadata、`index.html`、`-togostanza/*` が生成された。
-- `menuless-hello` の direct embed browser 観測も実施した。
+- build時にSass deprecation warningが多数出た。
+- `dist/` には `hello.js`、`menuless-hello.js`、それぞれのCSS/HTML/metadata、`index.html`、`-togostanza/*` が生成された。
+- `menuless-hello` のdirect embedブラウザ観測も実施した。
 
 ### ブラウザ観測結果
 
 - `dist/hello.js` が生成されるか。
   - 生成された。
-- `runtime-embed.html` から `dist/hello.js` が module script として読み込まれるか。
+- `runtime-embed.html` から `dist/hello.js` がmodule scriptとして読み込まれるか。
   - 読み込まれ、`<togostanza-hello say-to="runtime">` が描画された。
 - `customElements.get("togostanza-hello")` が定義済みになるか。
-  - in-app browser の read-only 評価では registry の確認が安定しなかったため、custom element registry そのものは未記録。
-  - ただし `<togostanza-hello>` に shadow root が作られているため、element upgrade は完了していると判断する。
-- `<togostanza-hello>` に open shadow root が作られるか。
+  - in-app browserのread-only評価ではregistryの確認が安定しなかったため、custom element registryそのものは未記録。
+  - ただし `<togostanza-hello>` にshadow rootが作られているため、element upgradeは完了していると判断する。
+- `<togostanza-hello>` にopen shadow rootが作られるか。
   - `host.shadowRoot` を取得できた。
 - `say-to="runtime"` が `this.params["say-to"]` として反映されるか。
-  - shadow root 内の `main` に `Hello, runtime!` と描画された。
-- console に致命的な module load error が出ないか。
-  - error / warning は観測されなかった。
+  - shadow root内の `main` に `Hello, runtime!` と描画された。
+- consoleに致命的なmodule load errorが出ないか。
+  - error/warningは観測されなかった。
 
-### shadow root 観測メモ
+### shadow root観測メモ
 
-- shadow root の直下には `div`、`style`、`link` が観測された。
-- stylesheet link は `http://127.0.0.1:4173/dist/hello.css`。
-- shadow root 内の text は `Hello, runtime!` を含む。
-- `menuless-hello` も open shadow root が作られ、shadow root 内の `main` に `Hello without menu, runtime!` と描画された。
-- `menuless-hello` の stylesheet link は `http://127.0.0.1:4173/dist/menuless-hello.css`。
-- `menuless-hello` には `togostanza--menu` 要素自体は存在したが、`display: none`、`0x0` で UI としては表示されなかった。
-- `menuless-hello` でも console の error / warning は観測されなかった。
+- shadow rootの直下には `div`、`style`、`link` が観測された。
+- stylesheet linkは `http://127.0.0.1:4173/dist/hello.css`。
+- shadow root内のtextは `Hello, runtime!` を含む。
+- `menuless-hello` もopen shadow rootが作られ、shadow root内の `main` に `Hello without menu, runtime!` と描画された。
+- `menuless-hello` のstylesheet linkは `http://127.0.0.1:4173/dist/menuless-hello.css`。
+- `menuless-hello` には `togostanza--menu` 要素自体は存在したが、`display: none`、`0x0` でUIとしては表示されなかった。
+- `menuless-hello` でもconsoleのerror/warningは観測されなかった。
 
 ## リメイク版で観測すること
 
-- 同じHTMLで custom element が動くこと。
-- 埋め込み先が追加 build step を持たなくても動くこと。
-- framework runtime が必要な場合も Stanza 配布物側に含まれていること。
-- shared chunk がある場合、静的ホスティング上の相対 import で動くこと。
+- 同じHTMLでcustom elementが動くこと。
+- 埋め込み先が追加build stepを持たなくても動くこと。
+- framework runtimeが必要な場合もStanza配布物側に含まれていること。
+- shared chunkがある場合、静的ホスティング上の相対importで動くこと。
 
 ## 合格条件
 
 - `<togostanza-{id}>` がブラウザ上で描画される。
-- shadow root と stylesheet が確認できる。
-- console に致命的な module load error が出ない。
-- help preview のUIに依存せず確認できる。
-- `stanza:menu-placement: none` の direct embed で menu UI が表示されない。
+- shadow rootとstylesheetが確認できる。
+- consoleに致命的なmodule load errorが出ない。
+- help previewのUIに依存せず確認できる。
+- `stanza:menu-placement: none` のdirect embedでmenu UIが表示されない。
 
 ## 記録する差分
 
 - 確認URL。
 - HTML snippet。
-- network request の主要 path。
-- browser console の warning / error。
-- shadow root と描画結果の観測メモ。
+- network requestの主要path。
+- browser consoleのwarning/error。
+- shadow rootと描画結果の観測メモ。
 
 ## 未決定事項
 
-- `serve` の CORS、HMR、watch、livereload の詳細。
-- in-app browser 以外のブラウザ検証をどの段階で行うか。
+- `serve` のCORS、HMR、watch、livereloadの詳細。
+- in-app browser以外のブラウザ検証をどの段階で行うか。

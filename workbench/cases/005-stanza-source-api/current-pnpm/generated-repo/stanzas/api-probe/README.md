@@ -1,3 +1,3 @@
 # API Probe
 
-Case input stanza for observing current-version Stanza source APIs.
+現行版Stanza source APIを観測するためのケース入力stanza。

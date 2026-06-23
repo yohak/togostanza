@@ -1,11 +1,11 @@
 # config-resolution
 
-Case input Stanza for verification case 007.
+検証ケース007のケース入力Stanza。
 
-It keeps active imports small and harmless:
+active importは小さく、副作用のない形に留める。
 
-- relative helper import from `../../lib/observation-label.js`
-- local asset import from `./assets/local-marker.svg`
-- public root asset reference by path
+- `../../lib/observation-label.js` からの相対helper import
+- `./assets/local-marker.svg` からのlocal asset import
+- pathによるpublic root asset参照
 
-Alias examples are documented in `alias-candidates.md` but are not active imports.
+alias例は `alias-candidates.md` に記録し、active importにはしない。

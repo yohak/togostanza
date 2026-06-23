@@ -1,3 +1,3 @@
 # coordination-receiver
 
-Displays attributes updated by `togostanza--event-map` and `togostanza--data-source`.
+`togostanza--event-map` と `togostanza--data-source` で更新された属性を表示する。

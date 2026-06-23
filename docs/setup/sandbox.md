@@ -1,6 +1,6 @@
 # サンドボックスセットアップ
 
-`sandbox/` は、仕様確認のために一時的な Stanza群プロジェクトを作って壊す作業用領域。
+`sandbox/` は、仕様確認のために一時的なStanza群プロジェクトを作成・破棄する作業用領域とする。
 
 調査中の試行錯誤はまず `sandbox/` で行い、再現可能な検証手順として残す段階で `workbench/` に移す。
 
@@ -25,12 +25,12 @@
 | ---- | -------------- | -------- |
 | 目的 | 仕様確認の試行錯誤 | 再現可能な比較 |
 | Git管理 | しない | 検証環境と検証ケース定義は管理する想定 |
-| 内容 | 作って壊す途中状態を許可する | 後から同じ確認を実行できる状態に整える |
+| 内容 | 作成・破棄の途中状態を許可する | 後から同じ確認を実行できる状態に整える |
 | 配置 | `sandbox/` | `workbench/` |
 
 ## 初期作成
 
-必要になった環境で作成する。
+必要になった時点で作成する。
 
 ```sh
 mkdir -p sandbox
@@ -38,9 +38,9 @@ mkdir -p sandbox
 
 `sandbox/` はGit管理外領域なので、作成した内容はこのリポジトリにはコミットしない。
 
-## 現行版CLIのsandboxを作るときの注意
+## 現行版CLIのサンドボックス作成時の注意
 
-現行版の Stanza群プロジェクトを確認するときは、手作業で構成を作らず、まず現行版CLIの `init` で生成する。
+現行版のStanza群プロジェクトを確認するときは、手作業で構成を作らず、まず現行版CLIの `init` で生成する。
 
 ```sh
 cd /Volumes/DATA/repositories/togostanza-remake/sandbox
@@ -56,16 +56,16 @@ mise exec -- npx togostanza init \
 
 `togostanza init` は、指定した `--name` のサブディレクトリを作る。`sandbox/current-cli-smoke` の中で実行すると `sandbox/current-cli-smoke/current-cli-smoke` のように二重になるため、`sandbox/` 直下で実行する。
 
-`--skip-install` と `--skip-git` を付け、初期生成物の確認と依存installを分ける。生成直後の `package.json` は `dependencies.togostanza` が `github:togostanza/togostanza` になる。
+`--skip-install` と `--skip-git` を付け、初期生成物の確認と依存関係のインストールを分ける。生成直後の `package.json` は、`dependencies.togostanza` が `github:togostanza/togostanza` になる。
 
 ```sh
 cd /Volumes/DATA/repositories/togostanza-remake/sandbox/current-cli-smoke
 mise exec -- npm install
 ```
 
-現行版は最近ほとんど動いていないため、sandbox では通常利用に近い `github:togostanza/togostanza` 参照のまま扱う。ローカルで作ったパッケージに差し替えるようなイレギュラーなセットアップは、通常経路との差分が増えるため避ける。
+現行版は最近ほとんど動いていないため、`sandbox/` では通常利用に近い `github:togostanza/togostanza` 参照のまま扱う。ローカルで作成したパッケージに差し替えるような例外的なセットアップは、通常経路との差分が増えるため避ける。
 
-`npm install` は GitHub と npm registry へのアクセスを行う。AIが実行する場合は、通常の `npm install` として必要な外部通信や権限を確認したうえで実行する。
+`npm install` はGitHubとnpm registryへのアクセスを行う。AIが実行する場合は、通常の `npm install` として必要な外部通信や権限を確認したうえで実行する。
 
 ```sh
 ls -la node_modules/togostanza
@@ -85,11 +85,11 @@ mise exec -- npx togostanza generate stanza hello \
 
 ## AI実行時の注意
 
-Codex などのAIが管理された shell sandbox 内で `togostanza build` や `togostanza serve` を実行すると、Broccoli watcher が `EMFILE: too many open files, watch` で失敗する場合がある。
+CodexなどのAIが管理されたshell sandbox内で `togostanza build` や `togostanza serve` を実行すると、Broccoli watcherが `EMFILE: too many open files, watch` で失敗する場合がある。
 
-この失敗は、少なくとも `current-cli-smoke` では現行版CLIの一般的な失敗ではない。同じ環境でも、ユーザーの通常ターミナルと Codex の unsandboxed 実行では `build` が完了した。
+この失敗は、少なくとも `current-cli-smoke` では現行版CLIの一般的な失敗ではない。同じ環境でも、ユーザーの通常ターミナルとCodexのunsandboxed実行では `build` が完了した。
 
-AIが現行版CLIの `build` / `serve` を確認するときは、sandboxed exec で粘らず、許可済みの unsandboxed 実行として扱う。`.codex/rules/default.rules` には、現行版調査で使う `togostanza build` / `serve` 系コマンドを許可対象として記載する。
+AIが現行版CLIの `build` / `serve` を確認するときは、sandboxed execで粘らず、許可済みのunsandboxed実行として扱う。`.codex/rules/default.rules` には、現行版調査で使う `togostanza build` / `serve` 系コマンドを許可対象として記載する。
 
 ```sh
 cd /Volumes/DATA/repositories/togostanza-remake/sandbox/current-cli-smoke
@@ -106,4 +106,4 @@ mise exec -- npx togostanza serve --port 8099
 - 停止方法
 - ブラウザ確認に使ったURL
 
-ローカルホスト確認は外部ブラウザを起動せず、in-app browser で行う。
+ローカルホスト確認は外部ブラウザを起動せず、in-app browserで行う。

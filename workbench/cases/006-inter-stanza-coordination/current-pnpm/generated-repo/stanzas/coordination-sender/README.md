@@ -1,3 +1,3 @@
 # coordination-sender
 
-Dispatches `selectedValue` when the button is clicked.
+ボタンがクリックされたときに `selectedValue` を送出する。
