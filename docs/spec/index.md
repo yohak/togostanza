@@ -48,9 +48,12 @@ CLIは成功時にexit code `0` を返す。失敗時はnon-zeroを返す。細�
 
 ## Stanzaリポジトリ
 
-Stanzaリポジトリは、1つ以上のstanzaと、TogoStanza CLIを実行するためのNode package定義、関連設定、共通assetを含むディレクトリである。リメイク版は、少なくとも次の入力を扱う。
+Stanzaリポジトリは、1つ以上のstanzaと、TogoStanza CLIを実行するためのNode package定義、関連設定、共通assetを含むディレクトリである。リメイク版は、少なくとも次の構成を扱う。
 
 ```text
+.github/
+  workflows/
+    publish.yml
 package.json
 package-lock.json | pnpm-lock.yaml
 README.md
@@ -76,6 +79,8 @@ Stanzaリポジトリは `togostanza` を依存として持つ。依存の置き
 lockfileは、使用するパッケージマネージャーの依存解決結果として扱う。`init` がどのlockfileを生成するか、また既存lockfileをどう更新するかは、選択されたパッケージマネージャーに従う。`--skip-install` で初期化した場合、lockfileは開発者が後から `npm install` または `pnpm install` を実行したときに生成される。
 
 `README.md` はStanzaリポジトリまたは各stanzaの説明として扱う。ヘルプページや一覧で参照してよいが、本文のDOM構造や表示UIは固定しない。
+
+`init` は、標準scaffoldにGitHub Pages公開用のGitHub Actions workflowを含める。workflowは、選択されたパッケージマネージャーで依存関係をインストールし、`togostanza build` を実行し、生成された `dist/` をGitHub Pages artifactとしてアップロードしてdeployする目的を持つ。workflowのjob名、Actionのバージョン、細かなYAML構造は固定しないが、Stanza開発者が生成直後のリポジトリをGitHub Pagesへ公開できる導線は維持する。
 
 stanzaは `stanzas/{id}/metadata.json` によって検出する。`metadata.json` の `@id` とstanzaディレクトリ名 `{id}` は一致必須とする。不一致は想定外入力として扱い、ビルド時または検出時に分かりやすいエラーにする。
 

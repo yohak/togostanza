@@ -210,6 +210,8 @@ CLI exit codeは、成功時 `0`、失敗時non-zeroを維持する。細かいe
 
 生成内容は再設計可能だが、いたずらに変更しない。生成後に `build`、`serve`、`generate stanza` が自然に動くことを重視する。
 
+現行版の `init` は `.github/workflows/publish.yml` を生成し、GitHub Actions上で `togostanza build` を実行して `dist/` をGitHub Pagesへdeployする導線を持つ。このGitHub Pages公開導線は、Stanza開発者が生成物を静的ホスティングへ配置するための開発契約として維持する。ActionのバージョンやYAMLの細部は再設計可能とする。
+
 `generate stanza` の生成物は、既存Stanzaソース互換を優先し、必要最小限の再設計に留める。
 
 - `stanzas/{id}/metadata.json` は維持する。

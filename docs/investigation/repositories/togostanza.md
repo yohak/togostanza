@@ -80,6 +80,7 @@
 - `generate stanza` のtimestamp既定値は `fecha.format(new Date(), 'isoDate')`。調査日のhelpでは `2026-06-20` と表示された。
 - `generate stanza` は `stanzas/{id}/metadata.json`、`README.md`、`index.js`、`style.scss`、`assets/.keep`、`templates/stanza.html.hbs` を生成する。
 - `init` はリポジトリgeneratorを呼び、npm/yarn、git初期化、インストール、GitHub Pages workflowなどをtemplateから構成する。
+- 生成される `.github/workflows/publish.yml` は `main` branchへのpushで起動し、依存関係のインストール、`togostanza build`、`dist/` のPages artifact upload、`actions/deploy-pages` によるGitHub Pages deployを行う。
 
 ### upgrade挙動
 

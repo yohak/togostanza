@@ -7,6 +7,7 @@
 ## 対応する方針
 
 - `togostanza init` はStanzaリポジトリを作る入口として維持する。
+- `togostanza init` はGitHub Pages公開用workflowを含むStanzaリポジトリを作る。
 - `generate stanza` は既存Stanzaソース互換を優先し、必要最小限の再設計に留める。
 - 主要コマンド名と短縮aliasは入口として維持する。
 - `togostanza upgrade` は破棄する。
@@ -25,6 +26,7 @@
 ## 現行版で観測すること
 
 - `init` が作るリポジトリのscaffold。
+- `init` が作るGitHub Pages公開用workflowの有無と内容。
 - `generate stanza` が作る `stanzas/{id}/` 配下のファイル。
 - idのkebab-case化。
 - `build` / `serve` / `generate stanza` へ進める初期状態かどうか。
@@ -33,6 +35,7 @@
 ## リメイク版で観測すること
 
 - `init` と `generate stanza` が同じ入口として使えること。
+- `init` がGitHub Pages公開用workflowを生成し、`build` 生成物を公開する導線を持つこと。
 - 生成物が既存Stanzaソース互換を大きく外していないこと。
 - 生成後に `build`、`serve`、追加の `generate stanza` が自然に動くこと。
 - `upgrade` が提供されない、または明確に非対応として扱われること。
@@ -40,6 +43,7 @@
 ## 合格条件
 
 - Stanza開発者が、既存の入口名でStanzaリポジトリとStanzaソースを作れる。
+- 生成されたStanzaリポジトリにGitHub Pages公開用workflowがあり、依存関係のインストール、`togostanza build`、`dist/` のPages artifact化、deployの流れを確認できる。
 - 生成されたStanzaソースが `build` 対象になる。
 - `stanzas/{id}/metadata.json`、`index.js`、`style.scss`、`templates/stanza.html.hbs` が確認できる。
 - 生成内容の差分がある場合、理由と移行メモの要否が説明できる。
@@ -48,7 +52,8 @@
 
 - 生成ファイル一覧。
 - `package.json` の依存、script、パッケージマネージャー周辺。
-- README、workflow、git初期化など、開発支援寄りの差分。
+- README、GitHub Pages workflow、git初期化など、開発支援寄りの差分。
+- GitHub Pages workflow内のinstall command、build command、artifact path、deploy action。
 - stdout/stderrの代表ログ。
 
 ## 未決定事項
@@ -121,6 +126,7 @@ mise exec -- npx togostanza upgrade --help
 - `current-npm/mise.toml` は、Node.js 18系固定のために観測用の検証環境設定として追加した。
 - `current-npm/` 内で `init --name generated-repo` を実行すると、`generated-repo/` ディレクトリが作成された。既存のディレクトリがある場合は、空でも `destination path already exists` で失敗する。
 - `init` は `package.json`、`README.md`、`.gitignore`、`common.scss`、`assets/.keep`、`lib/.keep`、`.github/workflows/publish.yml` を生成した。
+- `.github/workflows/publish.yml` は `main` branchへのpushで起動し、`npm ci`、`npx togostanza build`、`actions/upload-pages-artifact@v1` による `./dist` upload、`actions/deploy-pages@v1` によるdeployを行う。
 - 生成直後の `package.json` は `dependencies.togostanza` に `github:togostanza/togostanza` を持つ。
 - `generate stanza` はローカルインストール済みの `togostanza` を要求する。事前確認では、`npm install` 前に実行すると、`togostanza is not installed locally. Try npm install or yarn install.` という内容のエラーで失敗した。
 - `npm install` 後、`generate stanza hello` は `stanzas/hello/` を生成した。
@@ -217,6 +223,7 @@ mise exec -- pnpm exec togostanza build --output-path dist
 - `current-pnpm/mise.toml` でNode.js 18系とpnpm 9系を固定できた。
 - `current-pnpm/` 内で `pnpm dlx togostanza init --name generated-repo ... --skip-install` を実行すると、`generated-repo/` ディレクトリが作成された。
 - 現行版 `init --help` の `--package-manager` は `<npm|yarn>` で、pnpmは選択肢にない。そのため、`init` には `--package-manager npm --skip-install` を渡し、依存取得以降をpnpmに切り替えた。
+- `.github/workflows/publish.yml` はnpm向けtemplateとして生成され、`npm ci`、`npx togostanza build`、`actions/upload-pages-artifact@v1` による `./dist` upload、`actions/deploy-pages@v1` によるdeployを行う。これは `init --package-manager npm` を渡したためで、pnpm向けworkflowは現行版では観測対象外。
 - `mise exec -- pnpm install` は成功し、`pnpm-lock.yaml` が生成された。
 - `mise exec -- pnpm exec togostanza --version` は `3.0.0-beta.57` を返した。
 - `mise exec -- pnpm exec togostanza generate stanza pnpmProbe ...` は失敗した。

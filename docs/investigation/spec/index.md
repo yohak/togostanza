@@ -36,6 +36,7 @@
 - `--version` は `package.json` の `version` を表示する。調査時点では `3.0.0-beta.57`。[code][cli]
 - `build`、`serve`、`generate stanza` は stanza repository内で実行される前提で、`cwd` の `package.json` とローカルインストール済み `togostanza` を確認する。[code]
 - `init` はリポジトリ雛形生成のためのコマンドで、既存stanzaリポジトリ内での実行前提とは異なる。[code][tests]
+- `init` が生成するscaffoldには `.github/workflows/publish.yml` が含まれ、GitHub Actionsで `togostanza build` を実行し、`dist/` をGitHub Pages artifactとしてuploadしてdeployする。[code][tests][cli]
 - `upgrade` は旧構成から現行構成への移行コマンドとして、メタデータの移動と `index.js` 変換を行う。[code][tests]
 
 ### オプション
