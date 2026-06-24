@@ -4,9 +4,13 @@ TogoStanzaリメイク版は、Stanzaを作成、開発、ビルドし、Webペ�
 
 この仕様では、リメイク版が提供するCLI、Stanzaリポジトリの入力構造、ビルド生成物、開発サーバ、ブラウザランタイム、StanzaソースAPIを定義する。
 
+用語の意味は [用語集](../UBIQUITOUS_LANGUAGE.md) に従う。
+
 ## 基本方針
 
 開発と検証で使う標準Node.jsはNode 24 LTSとする。内部ビルド基盤はVite 8を基本にする。ただし、Stanzaソースや埋め込み先Webサイトから見た外部契約として、Broccoli、Rollup、Vueを必須要件にはしない。
+
+配布されるTogoStanza CLIはNode 24 LTS以上で動作することを前提にする。生成されたStanzaのブラウザランタイムは、ES modules、custom elements、open Shadow DOMに対応するブラウザを前提にする。
 
 リメイク版で生成されたStanzaは、一般的なWebサイトへ直接埋め込める必要がある。埋め込み先Webサイトには、Vite、React、Vue、`npm install`、追加ビルド手順を要求しない。Stanza内部でframeworkを使う場合も、必要なランタイムはStanzaの配布物側に含める。
 
@@ -44,6 +48,10 @@ Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行す�
 
 `init` は既定で依存関係のインストールまで実行する。`--skip-install` が指定された場合はインストールを実行せず、lockfileも生成しない。`pnpm` を使う場合、開発者環境で `pnpm` コマンドが利用できることを前提にする。TogoStanza CLIは `pnpm` 自体を自動導入しない。
 
+`init` は既定でgit初期化を行う。`--skip-git` が指定された場合はgit初期化を行わない。GitHub Pages workflow生成はgit初期化の有無とは独立して扱う。
+
+`generate stanza` / `g stanza` は、引数 `[id]` と、`--label`、`--definition`、`--license`、`--author`、`--timestamp` を受け付ける。`id` はStanza IDとして使えるkebab-caseへ正規化する。生成されるstanzaは、少なくとも `stanzas/{id}/metadata.json`、`index.js`、`style.scss`、`templates/stanza.html.hbs` を持つ。
+
 CLIは成功時にexit code `0` を返す。失敗時はnon-zeroを返す。細かいerror code分類とstdout/stderrの詳細な文言は互換対象にしない。ただし、入力不備、設定移行、ビルド失敗は、Stanza IDやファイルパスなど修正に必要な情報が分かる診断を出す。
 
 ## Stanzaリポジトリ
@@ -80,7 +88,7 @@ lockfileは、使用するパッケージマネージャーの依存解決結果
 
 `README.md` はStanzaリポジトリまたは各stanzaの説明として扱う。ヘルプページや一覧で参照してよいが、本文のDOM構造や表示UIは固定しない。
 
-`init` は、標準scaffoldにGitHub Pages公開用のGitHub Actions workflowを含める。workflowは、選択されたパッケージマネージャーで依存関係をインストールし、`togostanza build` を実行し、生成された `dist/` をGitHub Pages artifactとしてアップロードしてdeployする目的を持つ。workflowのjob名、Actionのバージョン、細かなYAML構造は固定しないが、Stanza開発者が生成直後のリポジトリをGitHub Pagesへ公開できる導線は維持する。
+`init` は、標準scaffoldにGitHub Pages公開用のGitHub Actions workflowを含める。workflowは、Stanza開発者が生成直後のリポジトリをGitHub Pagesへ公開できる導線として扱う。workflow生成は `--skip-install` やgit初期化の有無とは独立して扱う。
 
 stanzaは `stanzas/{id}/metadata.json` によって検出する。`metadata.json` の `@id` とstanzaディレクトリ名 `{id}` は一致必須とする。不一致は想定外入力として扱い、ビルド時または検出時に分かりやすいエラーにする。
 
@@ -90,7 +98,11 @@ Stanza stylesheetは `style.scss` を正とする。`stanza.scss` は特別な�
 
 `templates/*.hbs` はHandlebars templateとして扱う。Stanzaソースからは `this.renderTemplate()` と `this.query()` で利用できる。
 
-stanza別 `assets/` は `dist/{id}/assets/` へコピーする。リポジトリルートの `assets/` は `dist/assets/` へコピーする。`.keep` のような空ディレクトリ維持用ファイルは公開生成物に含めなくてよい。
+`common.scss` は、stanza間で共有するSass stylesheetとして扱う。Sassからは `@/` をStanzaリポジトリルートへのaliasとして利用できる。たとえば `style.scss` から `@use "@/common.scss"` を参照できる。
+
+stanza別 `assets/` は `dist/{id}/assets/` へコピーする。リポジトリルートの `assets/` は `dist/assets/` へコピーする。build生成物内では、ルートassetを相対URLで参照できる。`.keep` のような空ディレクトリ維持用ファイルは公開生成物に含めなくてよい。
+
+Stanza entrypointからimportされるリポジトリ内ファイルは、stanza外の共有ソースとしてbuild対象に含める。共有ソースのディレクトリ名は固定しない。`components/`、`utils/`、`state/`、`lib/` など、任意のリポジトリ内ディレクトリを共有ソースとして使える。
 
 `stanza:include` の扱い、詳細なメタデータschema、広範なvalidation規則は、この文書では固定しない。ただし、正しい既存入力を壊さないこと、想定外入力を分かりやすく診断することを優先する。
 
@@ -123,6 +135,26 @@ dist/
 
 Stanzaソースからのasset importは壊さない。data URL inline、別ファイルemit、hash名、size thresholdなどの詳細は固定しない。
 
+## GitHub Pages公開
+
+リメイク版は、`init` 直後のStanzaリポジトリからGitHub Pagesへ公開できる導線を提供する。
+
+`init` が生成する `.github/workflows/publish.yml` は、少なくとも次の流れを持つ。
+
+1. Node.jsをセットアップする。
+2. 選択されたパッケージマネージャーで依存関係をインストールする。
+3. `togostanza build` を実行し、公開用生成物を `dist/` に出力する。
+4. `dist/` をGitHub Pages artifactとしてアップロードする。
+5. アップロードしたartifactをGitHub Pagesへdeployする。
+
+workflowは、`init` で選択されたパッケージマネージャーに合わせて生成する。`npm` の場合は `package-lock.json` を使った再現可能なインストール、`pnpm` の場合は `pnpm-lock.yaml` を使った再現可能なインストールを行う。
+
+workflowのjob名、trigger、Actionのバージョン、permissions、concurrency、YAML構造の詳細は固定しない。ただし、Stanza開発者がGitHub側でPagesを有効化すれば、追加の手作業を最小限にして `dist/` を公開できることを維持する。
+
+GitHub Pages上では、リポジトリ名を含むサブパス配信で動くことを前提にする。`build` 生成物内のJavaScript、CSS、metadata、asset、共有チャンクへの参照は、Pagesのサブパスで壊れないように相対URLで解決できる必要がある。
+
+GitHub Pages公開導線は、Stanzaリポジトリそのものを公開するための開発契約である。任意の外部Webアプリへdeployする汎用deploy機能、custom domain、CNAME生成、GitHub repository設定の自動変更は、この文書では固定しない。
+
 ## 開発サーバ
 
 `togostanza serve` は、Stanza開発者がlocalhost上でStanzaを確認するための開発サーバである。外部Webアプリ向けの配信サーバとしては扱わない。
@@ -148,7 +180,7 @@ Stanzaソースからのasset importは壊さない。data URL inline、別フ�
 
 `serve` は変更された入力と依存関係に基づき、可能な範囲で影響を受けるstanzaだけを再ビルドする。依存関係を安全に特定できない変更では、全体をinvalidateしてよい。
 
-Stanza entrypoint、stylesheet、template、metadata、stanza別assetの変更は、原則として対象stanzaだけをinvalidateする。stanza追加削除、共通ファイル、設定、依存関係解決に影響する変更は、必要に応じてstanza一覧、関連stanza、または全体をinvalidateする。
+Stanza entrypoint、stylesheet、template、metadata、stanza別assetの変更は、原則として対象stanzaだけをinvalidateする。Stanza entrypointからimportされる共有ソースの変更は、依存グラフ上で影響を受けるstanzaをinvalidateする。stanza追加削除、共通ファイル、設定、依存関係解決に影響する変更は、必要に応じてstanza一覧、関連stanza、または全体をinvalidateする。
 
 `serve` は初回ビルドや再ビルドに失敗しても終了しない。ビルド失敗中の対象URLには、エラー内容が分かるHTMLをHTTP 500で返す。入力が修正された場合は再ビルドし、通常のプレビューとbuild相当URLへ復帰する。
 
@@ -169,11 +201,13 @@ StanzaごとのCSSはShadow DOM内に適用する。`metadata["stanza:style"]` �
 
 外部ページがShadow DOM内部を直接queryして操作する使い方は、利用契約として保証しない。一方で、Stanzaソース内から `this.root` と `this.root.querySelector("main")` を使うことは開発契約として維持する。
 
-menu placementは、`metadata["stanza:menu-placement"]` と `togostanza-menu_placement` 属性で指定できる。`none` の場合、menu UIは表示されない。`togostanza--menu` の内部DOM構造や見た目は再設計可能だが、About導線と `${id}.html` への参照は維持する。
+menu placementは、`metadata["stanza:menu-placement"]` と `togostanza-menu-placement` 属性で指定できる。`none` の場合、menu UIは表示されない。`togostanza-menu_placement` はリメイク版では受け付けない。`togostanza--menu` の内部DOM構造や見た目は再設計可能だが、About導線と `${id}.html` への参照は維持する。
 
 ## パラメーター
 
 `this.params` は、`metadata.json` の `stanza:parameter` に基づいてHTML属性をStanzaソースから扱う値へ変換したobjectである。
+
+`stanza:parameter` のkeyは変換せず、HTML属性名と `this.params` のプロパティ名としてそのまま使う。`gm_id`、`data-url` などのkeyをkebab-caseやcamelCaseへ正規化しない。
 
 booleanパラメーターはHTML boolean属性として扱う。
 
@@ -226,12 +260,16 @@ export default class Example extends Stanza {
 | `this.query({ template, parameters, endpoint, method })` | Handlebars templateからSPARQL queryを生成し、HTTP requestを送る。 |
 | `this.importWebFontCSS(cssUrl)` | CSS URLをstylesheet linkとして読み込む。 |
 | `this.handleAttributeChange(name, oldValue, newValue)` | custom element属性変更時に呼ばれるlifecycle hook。 |
+| `this.handleEvent(event)` | `stanza:incomingEvent` に対応するイベントを受け取るlifecycle hook。 |
+| `this.menu()` | runtime menuへ渡すmenu item配列を返す。 |
 
 `this.renderTemplate()` は `templates/*.hbs` のファイル名を `template` として指定できる。該当templateがない場合はエラーにする。
 
 `this.query()` は、`method` 未指定時に `POST` を使う。request bodyは `query` を含む `application/x-www-form-urlencoded` とし、`Accept` はSPARQL results JSONを期待する。`GET` 既定にはしない。
 
 `this.importWebFontCSS()` のlink注入先と重複制御の詳細は固定しない。ただし、既存Stanzaソースから同じ名前で呼び出せること、Shadow DOM内の表示に必要なCSSを読み込めることを維持する。
+
+`this.menu()` は、`{ type: "item", label, handler }` と `{ type: "divider" }` を返せる。runtime menuはこれらのitemを扱い、`handler` を呼び出せる。menu UIのDOM構造や見た目は固定しない。
 
 ## Stanza間連携
 
@@ -257,7 +295,9 @@ Stanza間連携を再設計する場合は、目的、影響範囲、既存HTML�
 
 Stanzaソースの相対import、stanza内asset import、package内asset import、Sassからの共通stylesheet参照は、既存Stanzaソースを大きく変えずに移行できることを重視する。
 
-alias合成順、tsconfig pathsの扱い、asset inline/emit/hash/threshold、root public asset pathの詳細はこの文書では固定しない。未対応の解決規則がある場合は、失敗させるだけでなく移行手順または対応可否が分かる診断を出す。
+`tsconfig.json` はTypeScript / TSXビルド設定として尊重する。`jsxImportSource` や `paths` は入力として扱う。
+
+alias合成順、tsconfig pathsの扱い、asset inline/emit/hash/threshold、Stanzaソース内でルートassetを参照する個別記法はこの文書では固定しない。未対応の解決規則がある場合は、失敗させるだけでなく移行手順または対応可否が分かる診断を出す。
 
 ## Framework互換
 
@@ -271,16 +311,21 @@ React、Vue以外のframework supportは、この文書では必須仕様にし�
 
 ## `togostanza-utils` 互換
 
-`metastanza` が利用している `togostanza-utils` の主要APIとimport pathは、drop-in互換対象として扱う。
+`togostanza-utils` packageは、全APIの挙動互換対象として扱う。
 
 少なくとも次のimport pathを対象にする。
 
 - `togostanza-utils`
 - `togostanza-utils/load-data`
 - `togostanza-utils/apply-filter`
+- `togostanza-utils/data`
+- `togostanza-utils/lib/graph`
+- `togostanza-utils/lib/tree`
 - `togostanza-utils/spinner.png`
 
 理想形は、`togostanza-utils` package自体に手を入れず、既存packageをStanzaソースからそのままimportして動かせることである。
+
+`togostanza-utils` の対象APIには、download menu helpers、`appendCustomCss()`、`loadData()`、`applyFilter()`、`Data` class、tree / graph helperを含める。
 
 `togostanza-utils` が依存する範囲で、次のruntime構造を維持またはcompat propertyとして提供する。
 
@@ -289,9 +334,9 @@ React、Vue以外のframework supportは、この文書では必須仕様にし�
 - Shadow DOM内に生成stylesheet情報がある。
 - `this.element` がhost custom elementを指す。
 - `this.root.host.stanzaInstance.element` がhost custom elementを指す。
-- runtime menuが `{ type: "item", label, handler }` と `{ type: "divider" }` を扱える。
+- runtime menuが `this.menu()` の返す `{ type: "item", label, handler }` と `{ type: "divider" }` を扱える。
 
-`togostanza-utils` の全API再実装はこの文書の対象にしない。追加対象は実プロジェクトでの使用有無と検証ケースに基づいて判断する。
+APIごとの細かいedge caseや出力バイト列の完全一致は、`togostanza-utils` の追加調査と検証ケースで扱う。
 
 ## 検証
 
@@ -299,7 +344,7 @@ React、Vue以外のframework supportは、この文書では必須仕様にし�
 
 | ケース | 仕様領域 |
 | ------ | -------- |
-| [001 CLIの雛形生成とgenerate](../../workbench/cases/001-cli-scaffold-and-generate/) | `init` / `generate stanza` |
+| [001 CLIの雛形生成とgenerate](../../workbench/cases/001-cli-scaffold-and-generate/) | `init` / `generate stanza` / GitHub Pages workflow |
 | [002 ビルド生成物](../../workbench/cases/002-build-artifacts/) | `build` / 生成物 |
 | [003 ランタイム埋め込み](../../workbench/cases/003-runtime-embedding/) | direct embed / `serve` / Shadow DOM |
 | [004 Runtimeパラメーター](../../workbench/cases/004-runtime-parameters/) | `this.params` / 属性変換 |
@@ -323,7 +368,10 @@ React、Vue以外のframework supportは、この文書では必須仕様にし�
 - assetのinline、emit、hash、threshold。
 - `togostanza--event-map` と `togostanza--data-source` の具体API。
 - alias合成順とtsconfig pathsの詳細。
+- Stanzaソース内でルートassetを参照する個別記法。
 - 細かいCLI error code分類。
 - React、Vue以外のframework support。
 - ヘルププレビューのUI、DOM構造、内部生成物。
+- GitHub Pages workflowのjob名、trigger、Actionバージョン、YAML構造の詳細。
+- custom domain、CNAME生成、GitHub repository設定の自動変更。
 - HMR。

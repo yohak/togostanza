@@ -10,6 +10,7 @@ Stanza Web Componentが、一般的なWebサイトへ直接埋め込めること
 - 埋め込み先WebサイトにVite、React、Vue、`npm install`、追加ビルド手順を要求しない。
 - ヘルププレビューの実装やUIはランタイム埋め込み形式とは別物として扱う。
 - `serve` はローカル確認の入口として維持する。
+- リメイク版ではHTML属性 `togostanza-menu-placement` を正式なmenu placement指定とし、`togostanza-menu_placement` は受け付けない。
 
 ## 入力条件
 
@@ -17,6 +18,7 @@ Stanza Web Componentが、一般的なWebサイトへ直接埋め込めること
 - ヘルププレビューではない、最小のHTMLページを用意する。
 - HTMLは `<script type="module" src="./{id}.js">` と `<togostanza-{id}>` を直接書く。
 - `stanza:menu-placement` が `none` のstanzaも含め、直接埋め込み時に余計なmenu UIが出ないことを見る。
+- リメイク版では、HTML属性として `togostanza-menu-placement="none"` を指定した場合にmenu UIが表示されないことを見る。
 
 ## 検証環境とケース入力
 
@@ -47,6 +49,8 @@ current-pnpm/
 `runtime-embed.html` はヘルププレビューとは別の確認用HTMLで、ビルド後の `./dist/hello.js` と `./dist/menuless-hello.js` をmodule scriptとして読み込み、`<togostanza-hello say-to="runtime">` と `<togostanza-menuless-hello say-to="runtime">` を直接配置する。
 
 `menuless-hello` は `metadata.json` に `"stanza:menu-placement": "none"` を持つ。Web側wrapperの `URL_STANZA` 組み立ては利用側ロジックなので、この検証ケースでは扱わない。
+
+リメイク版のケース入力では、metadataによる `none` に加えて、HTML側の `togostanza-menu-placement="none"` も確認する。`togostanza-menu_placement` は現行版コード由来の表記として扱い、リメイク版の正式属性にはしない。
 
 `remake/` はリメイク版CLI実装後に、同じ入力意図で作る。
 
@@ -89,6 +93,7 @@ http://localhost:4173/runtime-embed.html
 - StanzaごとのCSSがshadow root内に適用されること。
 - ヘルププレビューと直接埋め込みで挙動を混同しないこと。
 - `stanza:menu-placement: none` のstanzaをdirect embedしても、ランタイム埋め込み画面に余計なmenu UIが出ないこと。
+- 現行版コード由来の `togostanza-menu_placement` と、実プロジェクトで使われている `togostanza-menu-placement` の差分を記録すること。
 
 ### 現行版の観測状況
 
@@ -158,6 +163,8 @@ mise exec -- pnpm run serve:fixture
 - 埋め込み先が追加ビルド手順を持たなくても動くこと。
 - frameworkランタイムが必要な場合もStanza配布物側に含まれていること。
 - sharedチャンクがある場合、静的ホスティング上の相対importで動くこと。
+- `togostanza-menu-placement="none"` でmenu UIが表示されないこと。
+- `togostanza-menu_placement` を互換属性として扱わないこと。
 
 ## 合格条件
 
@@ -166,6 +173,8 @@ mise exec -- pnpm run serve:fixture
 - コンソールに致命的なmodule loadエラーが出ない。
 - ヘルププレビューのUIに依存せず確認できる。
 - `stanza:menu-placement: none` のdirect embedでmenu UIが表示されない。
+- `togostanza-menu-placement` が正式属性として機能する。
+- `togostanza-menu_placement` に依存しない。
 
 ## 記録する差分
 
@@ -174,6 +183,7 @@ mise exec -- pnpm run serve:fixture
 - network requestの主要path。
 - ブラウザコンソールの警告/エラー。
 - shadow rootと描画結果の観測メモ。
+- menu placement属性名の差分。
 
 ## 未決定事項
 

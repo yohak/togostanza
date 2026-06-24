@@ -8,7 +8,9 @@
 
 - `togostanza init` はStanzaリポジトリを作る入口として維持する。
 - `togostanza init` はGitHub Pages公開用workflowを含むStanzaリポジトリを作る。
+- `togostanza init` は既定でgit初期化を行い、`--skip-git` で抑止できる。
 - `generate stanza` は既存Stanzaソース互換を優先し、必要最小限の再設計に留める。
+- `generate stanza` は主要optionと必須生成物を維持する。
 - 主要コマンド名と短縮aliasは入口として維持する。
 - `togostanza upgrade` は破棄する。
 
@@ -27,7 +29,9 @@
 
 - `init` が作るリポジトリのscaffold。
 - `init` が作るGitHub Pages公開用workflowの有無と内容。
+- `init --skip-git` がgit初期化を抑止すること。
 - `generate stanza` が作る `stanzas/{id}/` 配下のファイル。
+- `generate stanza [id]` が `--label`、`--definition`、`--license`、`--author`、`--timestamp` を受け付けること。
 - idのkebab-case化。
 - `build` / `serve` / `generate stanza` へ進める初期状態かどうか。
 - 短縮alias `g stanza` の入口。
@@ -36,6 +40,8 @@
 
 - `init` と `generate stanza` が同じ入口として使えること。
 - `init` がGitHub Pages公開用workflowを生成し、`build` 生成物を公開する導線を持つこと。
+- `init` が既定でgit初期化し、`--skip-git` で抑止できること。
+- `generate stanza [id]` が主要optionを受け付け、idをkebab-case化すること。
 - 生成物が既存Stanzaソース互換を大きく外していないこと。
 - 生成後に `build`、`serve`、追加の `generate stanza` が自然に動くこと。
 - `upgrade` が提供されない、または明確に非対応として扱われること。
@@ -44,8 +50,10 @@
 
 - Stanza開発者が、既存の入口名でStanzaリポジトリとStanzaソースを作れる。
 - 生成されたStanzaリポジトリにGitHub Pages公開用workflowがあり、依存関係のインストール、`togostanza build`、`dist/` のPages artifact化、deployの流れを確認できる。
+- `--skip-git` を指定しない場合はgit初期化され、`--skip-git` を指定した場合はgit初期化されない。
 - 生成されたStanzaソースが `build` 対象になる。
 - `stanzas/{id}/metadata.json`、`index.js`、`style.scss`、`templates/stanza.html.hbs` が確認できる。
+- `generate stanza helloWorld` などの入力idが `hello-world` のようにkebab-case化される。
 - 生成内容の差分がある場合、理由と移行メモの要否が説明できる。
 
 ## 記録する差分
@@ -54,6 +62,7 @@
 - `package.json` の依存、script、パッケージマネージャー周辺。
 - README、GitHub Pages workflow、git初期化など、開発支援寄りの差分。
 - GitHub Pages workflow内のinstall command、build command、artifact path、deploy action。
+- `generate stanza` の主要optionと生成ファイル一覧。
 - stdout/stderrの代表ログ。
 
 ## 未決定事項
@@ -63,9 +72,6 @@
 - リメイク版 `init` で、子ディレクトリ作成だけでなく現在のディレクトリへscaffoldする入口を用意するか。
   - 例: `togostanza init .`
   - 既存ファイルがある場合の衝突検出、merge、上書きoptionの扱いも合わせて検討する。
-- リメイク版 `init` のパッケージマネージャー対応をどうするか。
-  - npmとpnpmを主対象にする。
-  - yarnは、現行版の選択肢にはあるが、リメイク版では不要候補として扱う。
 
 ## npm観測メモ (`current-npm/generated-repo/`)
 

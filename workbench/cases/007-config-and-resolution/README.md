@@ -11,6 +11,10 @@
 - 旧設定ファイルは無条件に実行せず、検出して移行メモへ誘導する。
 - 既存Stanzaソースからのasset importが壊れないことを見る。
 - alias互換は実装時判断とするが、既存Stanzaソースを壊さないことを優先する。
+- Sassでは `@/` をリポジトリルートaliasとして扱い、`@use "@/common.scss"` を維持する。
+- stanza外の共有ソースはディレクトリ名ではなくimport graph基準で扱う。
+- `tsconfig.json` はTypeScript / TSXビルド設定として尊重する。
+- ルート `assets/` は `dist/assets/` に出力され、生成物から相対URLで参照できる。
 
 ## 入力条件
 
@@ -18,7 +22,8 @@
 - `togostanza-build.js` を持つケースを用意する。
 - asset importとpublic asset参照を含むStanzaソースを用意する。
 - 実プロジェクトで観測されたalias/tsconfig pathsを必要に応じて反映する。
-- Sass alias `@use "@/common.scss"` を含む。
+- Sass alias `@use "@/common.scss"` を含む。これはSass限定の固定契約として扱い、JS/TS aliasとは分離する。
+- Stanza entrypointからimportされるstanza外共有ソースを含む。
 - 依存パッケージ内asset importを含む。これは `togostanza-utils` 関数API互換とは分離し、asset resolutionだけを見る。
 
 ## ケース入力と観測補助
@@ -69,9 +74,9 @@ current-pnpm/
 - `style.scss` 内の `@use "@/common.scss"`
 - root `assets/root-public-marker.txt` へのpublic path参照
 
-workspace import aliasはまだactive importにしていない。候補は `%stanza/*`、`%core/*` として `tsconfig.json` と `stanzas/config-resolution/alias-candidates.md` に記録し、移行メモの要否を判断するための入力として扱う。
+`../../lib/observation-label.js` は、`lib/` という名前そのものではなく、Stanza entrypointからimportされるリポジトリ内共有ソースの代表例として扱う。リメイク版では `components/`、`utils/`、`state/`、`lib/` など任意の共有ソースディレクトリをimport graph基準で扱う。
 
-`tsconfig.json` は `paths` の候補を記録しつつ、JSソースの現行ビルドがTypeScript support有効化後に失敗しないよう `allowJs: true` を指定する。
+workspace import aliasはまだactive importにしていない。候補は `%stanza/*`、`%core/*` として `tsconfig.json` と `stanzas/config-resolution/alias-candidates.md` に記録し、移行メモの要否を判断するための入力として扱う。`tsconfig.json` は、JSソースの現行ビルドがTypeScript support有効化後に失敗しないよう `allowJs: true` を指定する。
 
 ## 現行版で観測すること
 
@@ -81,6 +86,9 @@ workspace import aliasはまだactive importにしていない。候補は `%sta
 - package asset importの出力path。
 - root `assets/` とstanza `assets/` の公開path。
 - Sass alias `@/common.scss` が現行ビルドで解決されるか。
+- `tsconfig.json` がTypeScript / TSXビルド設定として使われるか。
+- stanza外共有ソースがimport graph上の依存として扱われるか。
+- root `assets/` が `dist/assets/` に出力され、生成物から相対URLで参照できるか。
 - 実プロジェクトで使われているalias。
 
 ### 実行コマンド
@@ -167,7 +175,7 @@ mise exec -- pnpm run serve:fixture
 - `style.scss` 内の `url("./assets/local-marker.svg")` はブラウザ上では `http://127.0.0.1:4177/dist/assets/local-marker.svg` として解決された。
 - stanza assetは `dist/config-resolution/assets/local-marker.svg` に出力された。
 - root assetは `dist/assets/root-public-marker.txt` に出力され、`http://127.0.0.1:4177/dist/assets/root-public-marker.txt` は `200` で `case-007 root public asset marker` を返した。
-- Stanzaソースが表示したroot public asset pathは `./assets/root-public-marker.txt`。このpathはdirect embed URL `fixtures/config-resolution.html` を基準にすると `fixtures/assets/root-public-marker.txt` へ解決され、HTTP statusは `404` だった。
+- Stanzaソースが表示したルートasset pathは `./assets/root-public-marker.txt`。このpathはdirect embed URL `fixtures/config-resolution.html` を基準にすると `fixtures/assets/root-public-marker.txt` へ解決され、HTTP statusは `404` だった。
 - ブラウザコンソールのエラー/警告は観測されなかった。
 
 ## リメイク版で観測すること
@@ -175,8 +183,12 @@ mise exec -- pnpm run serve:fixture
 - 旧設定ファイルを検出したときの警告/エラー。
 - `togostanza.config.ts` の読み込み。
 - Vite plugin/Vite configのescape hatch。
+- `tsconfig.json` がTypeScript / TSXビルド設定として尊重されること。
 - asset importとpublic asset参照が壊れていないこと。
-- Sass aliasとpackage asset importが壊れていないこと、または移行メモが出ること。
+- Sass alias `@/` がリポジトリルートを指し、`@use "@/common.scss"` が解決されること。
+- package asset importが壊れていないこと、または移行メモが出ること。
+- stanza外共有ソースの変更がbuild / serveの依存グラフに含まれること。
+- root `assets/` が `dist/assets/` に出力され、生成物から相対URLで参照できること。
 - aliasが必要な既存ソースを吸収できること。
 
 ### リメイク版の期待観測
@@ -184,6 +196,9 @@ mise exec -- pnpm run serve:fixture
 - `togostanza-build.mjs` / `togostanza-build.js` は無条件実行しない。
 - 旧設定ファイルを検出した場合、`togostanza.config.ts` など移行先が分かる移行メモを出す。
 - asset importとpublic asset参照は、既存Stanzaソースを大きく変えずに移行できる。
+- Sass `@/` aliasはSass限定の契約として維持する。
+- `tsconfig.json` は尊重するが、paths合成順やVite aliasとの優先順位は固定しない。
+- 共有ソースは特定のディレクトリ名ではなくimport graph基準で扱う。
 - aliasが未対応の場合は、失敗させるだけでなく、移行手順または対応可否が分かる診断を出す。
 
 ## 合格条件
@@ -192,6 +207,9 @@ mise exec -- pnpm run serve:fixture
 - 移行先が分かる診断が出る。
 - 既存Stanzaソースのasset参照が壊れない。
 - `@/common.scss` と依存package内asset importの対応可否が説明できる。
+- `tsconfig.json` の尊重範囲が説明できる。
+- 共有ソースimportが解決される。
+- root `assets/` の出力URL契約が説明できる。
 - alias由来の差分がある場合、移行メモの要否が判断できる。
 
 ## 記録する差分
@@ -202,6 +220,9 @@ mise exec -- pnpm run serve:fixture
 - asset出力path。
 - package asset importの出力path。
 - Sass aliasの解決結果。
+- `tsconfig.json` の読み込みと反映範囲。
+- 共有ソースimport graphの扱い。
+- root `assets/` の出力URL。
 - alias設定の有無。
 
 ## コマンド記録
@@ -223,4 +244,4 @@ mise exec -- pnpm run serve:fixture
 - `defineTogoStanzaConfig()` のschema。
 - alias合成順。
 - assetのinline/emit/hash/threshold。
-- direct embedでroot public asset pathをどう表現するか。
+- Stanzaソース内でルートasset pathをどう表現するか。

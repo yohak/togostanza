@@ -117,7 +117,7 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 ### Menu
 
-`stanza:menu-placement` メタデータkeyと `togostanza-menu_placement` 属性は維持する。placementによってmenu表示位置を変える目的も維持する。
+`stanza:menu-placement` メタデータkeyと `togostanza-menu-placement` 属性は維持する。`togostanza-menu_placement` は現行版コード由来の属性名だが、リメイク版では正式属性として受け付けない。placementによってmenu表示位置を変える目的も維持する。
 
 `togostanza--menu` から辿れる `About this stanza` 相当の導線は維持する。この導線が参照する `${id}.html` の存在も維持する。
 
@@ -140,6 +140,8 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 - `this.query`
 - `this.importWebFontCSS`
 - `this.handleAttributeChange`
+- `this.handleEvent`
+- `this.menu`
 
 `this.importWebFontCSS(cssUrl)` は、既存Stanzaソース互換のため維持する。linkの注入先や重複制御などの詳細は、現行版の観測と実プロジェクトのregression testをもとに実装時に判断する。
 
@@ -147,17 +149,20 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 ### `togostanza-utils`
 
-`references/metastanza` が直接利用している `togostanza-utils` API / import pathは、少なくともdrop-in互換対象として扱う。
+`togostanza-utils` package全APIをdrop-in互換対象として扱う。
 
 理想形は、`togostanza-utils` package自体に手を入れず、既存packageがそのまま動くことである。そのために必要なruntime compatibilityは、実プロジェクト調査と追加workbench検証ケースで観測する。
 
 `root.host.stanzaInstance.element` のような現行runtime内部構造への依存は、通常は公開APIとして望ましくない。ただし、`togostanza-utils` のdrop-in互換のために必要な範囲では、リメイク版runtime側のcompat propertyとして受け入れる。
 
-対象範囲の初期候補は次の通り。
+対象範囲は次の通り。
 
 - `togostanza-utils`
 - `togostanza-utils/load-data`
 - `togostanza-utils/apply-filter`
+- `togostanza-utils/data`
+- `togostanza-utils/lib/graph`
+- `togostanza-utils/lib/tree`
 - `togostanza-utils/spinner.png`
 
 Handlebars templateは維持する。
