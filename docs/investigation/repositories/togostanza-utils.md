@@ -11,7 +11,7 @@
   - `references/metastanza/node_modules/togostanza-utils`
 - 追加参照元:
   - `references/togostanza-utils` commit `daaf62cfa254abcecdae3b4a41cbe6121c47db22`
-- 目的: `togostanza-utils` package全APIを一覧化し、既存パッケージをそのまま利用する場合に必要な実行時依存と、ケース入力/観測補助候補を切り分ける。
+- 目的: `togostanza-utils` の公開APIを一覧化し、TogoStanza runtime API、runtime menu contract、生成DOM構造に触れるAPIと、package単体で完結する純粋なデータ処理APIを切り分ける。
 - この調査ログでは採用判断を確定しない。 `togostanza-utils` をdrop-in互換対象に含めるかどうかの判断は、[リメイク方針](../../spec/remake-policy.md) に記録する。
 - 調査上の前提: `togostanza-utils` には手を入れず、既存パッケージがそのまま動くかどうかを先に確認する。
 - この調査は `007-config-and-resolution` のpackage asset importとは別に扱う。
@@ -20,25 +20,25 @@
 
 ## API inventory
 
-`references/togostanza-utils` で確認した公開対象を記録する。
+`references/togostanza-utils` で確認した公開対象を記録する。TogoStanza接点があるAPIはリメイク版runtimeの互換検証対象にする。TogoStanza接点がないAPIは、package単体の責務として扱い、リメイク版runtimeの互換検証対象にはしない。
 
-| import path | export / asset | 主な挙動 |
-| ---- | ---- | ---- |
-| `togostanza-utils` | `dividerMenuItem()` | `{ type: "divider" }` を返す。 |
-| `togostanza-utils` | `downloadSvgMenuItem()` | SVG download用の `{ type: "item", label, handler }` を返す。 |
-| `togostanza-utils` | `downloadPngMenuItem()` | PNG download用の `{ type: "item", label, handler }` を返す。 |
-| `togostanza-utils` | `downloadJSONMenuItem()` | JSON download用の `{ type: "item", label, handler }` を返す。 |
-| `togostanza-utils` | `downloadCSVMenuItem()` | CSV download用の `{ type: "item", label, handler }` を返す。 |
-| `togostanza-utils` | `downloadTSVMenuItem()` | TSV download用の `{ type: "item", label, handler }` を返す。 |
-| `togostanza-utils` | `appendCustomCss()` | shadow root内の既存 `link[data-togostanza-custom-css]` を削除し、指定URLのstylesheet linkを追加する。 |
-| `togostanza-utils/load-data` | default `loadData()` | JSON、CSV、TSV、SPARQL results JSON、Elasticsearch、textを読み込み、loading / error DOM、timeout、limit / offset、cache、`__togostanza_id__` 付与を扱う。 |
-| `togostanza-utils/apply-filter` | default `applyFilter()` | `substring`、`lte`、`gte` のfilterを適用し、未対応filter typeではエラーにする。 |
-| `togostanza-utils/data` | `Data` class | `Data.load()`、`.data`、`.asTree()`、`.asGraph()` を提供する。 |
-| `togostanza-utils/lib/tree` | `asTree()` | flat dataをtree node配列へ変換する。 |
-| `togostanza-utils/lib/tree` | `asD3Hierarchy()` | tree node配列をD3 hierarchyへ変換する。 |
-| `togostanza-utils/lib/tree` | `selectSubTree()` | tree node配列から指定root配下のsubtreeを取り出す。 |
-| `togostanza-utils/lib/graph` | `asGraph()` | node / edge dataをgraph objectへ変換する。 |
-| `togostanza-utils/spinner.png` | image asset | package asset import対象。 |
+| import path | export / asset | 主な挙動 | TogoStanza接点 |
+| ---- | ---- | ---- | ---- |
+| `togostanza-utils` | `dividerMenuItem()` | runtime menu用の `{ type: "divider" }` を返す。 | runtime menu contract |
+| `togostanza-utils` | `downloadSvgMenuItem()` | SVG download用の `{ type: "item", label, handler }` を返し、handlerが `stanza.root` と生成stylesheet情報を参照する。 | runtime menu contract、`stanza.root` |
+| `togostanza-utils` | `downloadPngMenuItem()` | PNG download用の `{ type: "item", label, handler }` を返し、handlerが `stanza.root` と生成stylesheet情報を参照する。 | runtime menu contract、`stanza.root` |
+| `togostanza-utils` | `downloadJSONMenuItem()` | JSON download用の `{ type: "item", label, handler }` を返す。 | runtime menu contract |
+| `togostanza-utils` | `downloadCSVMenuItem()` | CSV download用の `{ type: "item", label, handler }` を返す。 | runtime menu contract |
+| `togostanza-utils` | `downloadTSVMenuItem()` | TSV download用の `{ type: "item", label, handler }` を返す。 | runtime menu contract |
+| `togostanza-utils` | `appendCustomCss()` | `stanza.root` 内の既存 `link[data-togostanza-custom-css]` を削除し、指定URLのstylesheet linkを追加する。 | `stanza.root` |
+| `togostanza-utils/load-data` | default `loadData()` | JSON、CSV、TSV、SPARQL results JSON、Elasticsearch、textを読み込み、`mainElement` へのloading / error DOM、timeout、limit / offset、cache、`__togostanza_id__` 付与を扱う。 | Shadow DOM内 `main` |
+| `togostanza-utils/apply-filter` | default `applyFilter()` | `substring`、`lte`、`gte` のfilterを適用し、未対応filter typeではエラーにする。 | なし |
+| `togostanza-utils/data` | `Data` class | `Data.load()`、`.data`、`.asTree()`、`.asGraph()` を提供する。 | なし |
+| `togostanza-utils/lib/tree` | `asTree()` | flat dataをtree node配列へ変換する。 | なし |
+| `togostanza-utils/lib/tree` | `asD3Hierarchy()` | tree node配列をD3 hierarchyへ変換する。 | なし |
+| `togostanza-utils/lib/tree` | `selectSubTree()` | tree node配列から指定root配下のsubtreeを取り出す。 | なし |
+| `togostanza-utils/lib/graph` | `asGraph()` | node / edge dataをgraph objectへ変換する。 | なし |
+| `togostanza-utils/spinner.png` | image asset | package asset import対象。 | asset解決対象 |
 
 `Data.asTree()` が返す `Tree` objectは `.data` と `.asD3Hierarchy()` を持つ。`Data.asGraph()` が返す `Graph` objectは `.data`、`.nodes`、`.edges` を持つ。
 
@@ -54,7 +54,9 @@
 | `applyFilter` from `togostanza-utils/apply-filter` | `scatterplot` | filter DSLとdata processing | metastanzaで直接利用 |
 | `spinner.png` | `text` | package asset import | metastanzaで直接利用、007のasset resolution観測対象 |
 
-`Data` class、`togostanza-utils/data`、`asTree`、`asGraph`、`asD3Hierarchy`、`selectSubTree` は、`references/metastanza` のsourceでは直接利用を確認していない。ただし、リメイク版では `togostanza-utils` package全APIを挙動互換対象として扱う。
+`applyFilter`、`Data` class、`togostanza-utils/data`、`asTree`、`asGraph`、`asD3Hierarchy`、`selectSubTree` はTogoStanza接点を持たない。これらはpackage単体で完結するAPIとして扱い、リメイク版runtimeの互換検証対象にはしない。
+
+ただし、`togostanza-utils/apply-filter` は `references/metastanza` の `scatterplot` で直接importされている。無変更移行の範囲では、挙動互換対象にしない場合でもimport pathの解決は維持する。
 
 ## 現行版構造への依存
 
@@ -89,16 +91,14 @@
 
 ## 次の調査手順
 
-1. `workbench/cases/010-togostanza-utils-compat` で、`loadData` / `appendCustomCss` / download menu helpers / `applyFilter` / `Data` / tree helper / graph helperの最小ケース入力を現行版で観測する。
+1. `workbench/cases/010-togostanza-utils-compat` で、`loadData` / `appendCustomCss` / download menu helpersの最小ケース入力を現行版で観測する。
 2. `loadData` の対象はJSON/CSV/TSV/SPARQL results JSON、loading UI、error UI、 `__togostanza_id__` 、cache同一性とする。
 3. `appendCustomCss` の対象は既存custom CSS linkの削除と新規link追加とする。
 4. download menu helpersの対象は `menu()` item contract、SVG/PNG/JSON/CSV/TSV handlerとする。
-5. `Data` / tree helper / graph helperは、固定の小さな入力から `.data`、`.nodes`、`.edges`、D3 hierarchy root、subtreeを観測する。
-6. `applyFilter` は `010-togostanza-utils-compat` 内の小さなruntime観測で足りるか、現行観測後に判断する。
-7. `spinner.png` は007のpackage asset import観測に含め、関数APIとは分離する。
+5. `spinner.png` は007のpackage asset import観測に含め、関数APIとは分離する。
 
 ## 未解決事項
 
 - `togostanza-utils` をremake monorepo内の別パッケージとして維持するか、shimとして提供するか。
 - download menu helpersのSVG/PNG出力が現行runtime menuとどこまで一致すべきか。
-- package全APIのedge caseをどこまで受け入れ検証に含めるか。
+- TogoStanza接点があるAPIのedge caseをどこまで受け入れ検証に含めるか。

@@ -8,9 +8,10 @@
 
 ## 対応する方針
 
-- `togostanza-utils` package全APIをdrop-in互換対象として扱う。
+- `togostanza-utils` packageのうち、TogoStanza runtime API、runtime menu contract、生成DOM構造に触れるAPIをdrop-in互換対象として扱う。
 - 理想形は、`togostanza-utils` package自体に手を入れず、既存packageがそのまま動くことである。
 - `root.host.stanzaInstance.element` のような現行runtime内部構造への依存は、drop-in互換に必要な範囲でcompat propertyとして受け入れる。
+- `togostanza-utils` 単体で完結する純粋なデータ処理APIは、このケースの受け入れ対象にしない。
 
 ## 入力条件
 
@@ -19,14 +20,10 @@
   - `togostanza-utils`
   - `togostanza-utils/load-data`
   - `togostanza-utils/apply-filter`
-  - `togostanza-utils/data`
-  - `togostanza-utils/lib/graph`
-  - `togostanza-utils/lib/tree`
 - `togostanza-utils/spinner.png` はこのケースでは扱わない。package asset importとして007で扱う。
 - fixture dataは小さなJSON/CSV/TSV/SPARQL results JSONを使う。
 - `loadData()` には `this.root.querySelector("main")` を渡し、loading/error DOMも観測する。
 - download menu helpers用にshadow root内へSVGを描画する。
-- `Data` class、tree helper、graph helper用に固定の小さなJSON dataを使う。
 
 ## ケース入力と観測補助
 
@@ -67,18 +64,13 @@ current-pnpm/
 - `appendCustomCss()` が既存 `link[data-togostanza-custom-css]` を削除し、新しいlinkへ差し替えること。
 - download menu helpersが `{ type, label, handler }` のitemを返すこと。
 - `dividerMenuItem()` が `{ type: "divider" }` を返すこと。
-- `applyFilter()` が `substring` / `gte` / `lte` を処理すること。
-- `Data.load()` が `Data` objectを返し、`.data` にraw dataを持つこと。
-- `Data.asTree()` が `Tree` objectを返し、`.data` と `.asD3Hierarchy()` を使えること。
-- `Data.asGraph()` が `Graph` objectを返し、`.nodes` と `.edges` を使えること。
-- `asTree()`、`asD3Hierarchy()`、`selectSubTree()`、`asGraph()` を直接importして使えること。
 - SVG/PNG download helperが依存する `stanza.root`、shadow root内 `style`、`root.host.stanzaInstance.element` が存在すること。
 - runtime menu UIが表示される環境では、SVG/PNG/JSON/CSV/TSV handlerを呼び出したときにruntime構造依存の例外が出ないこと。
 
 ## リメイク版で観測すること
 
 - 同じStanzaソースと同じ `togostanza-utils` packageを、package側の修正なしで利用できること。
-- package全APIのimport pathと挙動が維持されること。
+- TogoStanza runtime API、runtime menu contract、生成DOM構造に触れるAPIのimport pathと挙動が維持されること。
 - `this.root` がshadow rootとしてDOM APIを提供すること。
 - shadow root内に `main` があり、loading/error/custom DOMの挿入先として使えること。
 - shadow root内にgenerated stylesheet情報があり、download helperが参照できること。
@@ -88,10 +80,9 @@ current-pnpm/
 ## 合格条件
 
 - `togostanza-utils` packageを変更せずにbuildできる。
-- fixtureをブラウザで開いたとき、観測値がすべて `ok` になる。
+- fixtureをブラウザで開いたとき、受け入れ対象の観測値がすべて `ok` になる。
 - ブラウザコンソールにruntime errorが出ない。
 - download menu itemが表示され、SVG/PNG/JSON/CSV/TSV handlerを呼び出してもruntime構造依存の例外が出ない。
-- `Data` / tree / graph helperの観測値が現行版と一致する。
 - 差分がある場合は、package変更ではなくruntime compat、移行メモ、または採用範囲の見直しとして説明できる。
 
 ## 記録する差分
@@ -104,7 +95,6 @@ current-pnpm/
 - custom CSS linkの差し替え結果。
 - menu item contract。
 - download handler実行時の例外有無。
-- `Data` / tree / graph helperの戻り値。
 - `root.host.stanzaInstance.element` compat propertyの有無。
 
 ## 現行版の観測状況
@@ -176,7 +166,7 @@ mise exec -- pnpm run serve:fixture
 
 direct embedでは現行runtimeのmenu UIはlight DOMに表示されなかった。そのため、runtime menu UI経由のdownload handlerクリックは未確認。Stanza instanceの `menu()` 戻り値と、download helperが必要とするruntime構造依存はStanza内観測で確認する。
 
-`Data` class、`togostanza-utils/data`、graph/tree helperは、この時点の現行観測にはまだ含めていない。リメイク版実装前に同じケースへ追加し、現行版の戻り値を記録する。
+`applyFilter` はTogoStanza接点を持たない純粋データ処理APIなので、上の観測値は参考観測として扱う。ただし、既存Stanzaソースが直接importしているため、`togostanza-utils/apply-filter` のimport解決は確認対象に含める。`Data` class、`togostanza-utils/data`、graph/tree helperは、このケースの受け入れ対象には含めない。
 
 ## 実行コマンド
 
@@ -200,4 +190,4 @@ mise exec -- pnpm run serve:fixture
 ## 未決定事項
 
 - SVG/PNG downloadの出力内容まで厳密比較するか、handler実行時のruntime互換確認に留めるか。
-- package全APIのedge caseをどこまで受け入れ検証に含めるか。
+- TogoStanza接点があるAPIのedge caseをどこまで受け入れ検証に含めるか。

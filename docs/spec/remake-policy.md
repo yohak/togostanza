@@ -149,7 +149,7 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 ### `togostanza-utils`
 
-`togostanza-utils` package全APIをdrop-in互換対象として扱う。
+`togostanza-utils` packageのうち、TogoStanza runtime API、runtime menu contract、生成DOM構造に触れるAPIをdrop-in互換対象として扱う。`togostanza-utils` 単体で完結する純粋なデータ処理APIは、TogoStanzaリメイク版の互換対象にしない。
 
 理想形は、`togostanza-utils` package自体に手を入れず、既存packageがそのまま動くことである。そのために必要なruntime compatibilityは、実プロジェクト調査と追加workbench検証ケースで観測する。
 
@@ -159,11 +159,11 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 - `togostanza-utils`
 - `togostanza-utils/load-data`
-- `togostanza-utils/apply-filter`
-- `togostanza-utils/data`
-- `togostanza-utils/lib/graph`
-- `togostanza-utils/lib/tree`
 - `togostanza-utils/spinner.png`
+
+`togostanza-utils/apply-filter` は挙動互換対象ではない。ただし、既存Stanzaソースが直接importしているため、無変更移行の範囲ではimport pathを解決できることを維持する。
+
+`applyFilter()`、`Data` class、tree / graph helperのような純粋なデータ処理APIは、既存package側の責務として扱い、リメイク版runtimeのcompat propertyやDOM契約では吸収しない。
 
 Handlebars templateは維持する。
 

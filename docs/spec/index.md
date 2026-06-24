@@ -311,21 +311,19 @@ React、Vue以外のframework supportは、この文書では必須仕様にし�
 
 ## `togostanza-utils` 互換
 
-`togostanza-utils` packageは、全APIの挙動互換対象として扱う。
+`togostanza-utils` packageのうち、TogoStanza runtime API、runtime menu contract、生成DOM構造に触れるAPIを挙動互換対象として扱う。`togostanza-utils` 単体で完結する純粋なデータ処理APIは、TogoStanzaリメイク版の互換契約には含めない。
 
 少なくとも次のimport pathを対象にする。
 
 - `togostanza-utils`
 - `togostanza-utils/load-data`
-- `togostanza-utils/apply-filter`
-- `togostanza-utils/data`
-- `togostanza-utils/lib/graph`
-- `togostanza-utils/lib/tree`
 - `togostanza-utils/spinner.png`
+
+`togostanza-utils/apply-filter` は挙動互換対象ではない。ただし、既存Stanzaソースが直接importしているため、無変更移行の範囲ではimport pathを解決できることを維持する。
 
 理想形は、`togostanza-utils` package自体に手を入れず、既存packageをStanzaソースからそのままimportして動かせることである。
 
-`togostanza-utils` の対象APIには、download menu helpers、`appendCustomCss()`、`loadData()`、`applyFilter()`、`Data` class、tree / graph helperを含める。
+`togostanza-utils` の対象APIには、download menu helpers、`appendCustomCss()`、`loadData()` を含める。`applyFilter()`、`Data` class、tree / graph helperのようにTogoStanza runtime API、runtime menu contract、生成DOM構造に触れないAPIは、この互換契約では挙動を固定しない。
 
 `togostanza-utils` が依存する範囲で、次のruntime構造を維持またはcompat propertyとして提供する。
 
