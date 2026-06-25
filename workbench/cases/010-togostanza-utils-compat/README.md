@@ -21,9 +21,24 @@
   - `togostanza-utils/load-data`
   - `togostanza-utils/apply-filter`
 - `togostanza-utils/spinner.png` はこのケースでは扱わない。package asset importとして007で扱う。
+- `togostanza-utils/params/data-chart.json` はこのケースでは扱わない。`stanza:include` とpackage内JSON解決の扱いは別follow-upで判断する。
 - fixture dataは小さなJSON/CSV/TSV/SPARQL results JSONを使う。
 - `loadData()` には `this.root.querySelector("main")` を渡し、loading/error DOMも観測する。
 - download menu helpers用にshadow root内へSVGを描画する。
+
+## 受け入れ対象と参考観測
+
+受け入れ対象:
+
+- `togostanza-utils`
+- `togostanza-utils/load-data`
+- download menu helpers、`dividerMenuItem()`、`appendCustomCss()`、`loadData()` が依存するruntime API / menu contract / 生成DOM構造。
+- `togostanza-utils/apply-filter` のimport path解決。
+
+参考観測:
+
+- `applyFilter()` の戻り値。既存Stanzaソースが直接importしているため観測するが、純粋データ処理APIとして挙動互換対象にはしない。
+- `Data` class、`togostanza-utils/data`、tree / graph helper。実プロジェクトで直接importが見つかっていないため、このケースの受け入れ対象には含めない。
 
 ## ケース入力と観測補助
 
@@ -55,6 +70,8 @@ current-pnpm/
 
 ## 現行版で観測すること
 
+受け入れ対象:
+
 - `togostanza-utils` のimportが現行ビルドで解決されること。
 - `loadData()` がJSON/CSV/TSV/SPARQL results JSONを読み込むこと。
 - `loadData()` が配列データに `__togostanza_id__` を付与すること。
@@ -67,10 +84,15 @@ current-pnpm/
 - SVG/PNG download helperが依存する `stanza.root`、shadow root内 `style`、`root.host.stanzaInstance.element` が存在すること。
 - runtime menu UIが表示される環境では、SVG/PNG/JSON/CSV/TSV handlerを呼び出したときにruntime構造依存の例外が出ないこと。
 
+参考観測:
+
+- `applyFilter()` がfixture dataへfilterを適用できること。
+
 ## リメイク版で観測すること
 
 - 同じStanzaソースと同じ `togostanza-utils` packageを、package側の修正なしで利用できること。
 - TogoStanza runtime API、runtime menu contract、生成DOM構造に触れるAPIのimport pathと挙動が維持されること。
+- `togostanza-utils/apply-filter` のimport pathが解決できること。`applyFilter()` の挙動は参考観測に留める。
 - `this.root` がshadow rootとしてDOM APIを提供すること。
 - shadow root内に `main` があり、loading/error/custom DOMの挿入先として使えること。
 - shadow root内にgenerated stylesheet情報があり、download helperが参照できること。
@@ -83,6 +105,7 @@ current-pnpm/
 - fixtureをブラウザで開いたとき、受け入れ対象の観測値がすべて `ok` になる。
 - ブラウザコンソールにruntime errorが出ない。
 - download menu itemが表示され、SVG/PNG/JSON/CSV/TSV handlerを呼び出してもruntime構造依存の例外が出ない。
+- `togostanza-utils/apply-filter` のimport pathが解決できる。
 - 差分がある場合は、package変更ではなくruntime compat、移行メモ、または採用範囲の見直しとして説明できる。
 
 ## 記録する差分
