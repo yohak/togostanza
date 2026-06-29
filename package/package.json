@@ -1,0 +1,34 @@
+{
+  "name": "togostanza",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:cli": "tsx src/cli.ts",
+    "format": "oxfmt -c oxfmt.config.ts .",
+    "format:check": "oxfmt -c oxfmt.config.ts --check .",
+    "lint": "oxlint -c oxlint.config.ts .",
+    "lint:fix": "oxlint -c oxlint.config.ts . --fix",
+    "type-check": "tsc --noEmit",
+    "test": "pnpm run test:unit",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:browser": "playwright test --config playwright.config.ts",
+    "check-all": "pnpm run format:check && pnpm run lint && pnpm run type-check && pnpm run test:unit && pnpm run test:integration && pnpm run test:browser"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.0.1",
+    "oxfmt": "^0.56.0",
+    "oxlint": "^1.71.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
