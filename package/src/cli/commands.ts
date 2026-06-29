@@ -40,3 +40,7 @@ export function findCommand(args: readonly string[]): CommandDefinition | undefi
     return parts.every((part, index) => args[index] === part);
   });
 }
+
+export function listCommandUsages(): string[] {
+  return commandDefinitions.map((command) => command.usage);
+}

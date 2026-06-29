@@ -1,28 +1,12 @@
 import { formatPackageIdentity } from "../index.js";
-import { commandDefinitions, findCommand } from "./commands.js";
+import { findCommand, listCommandUsages } from "./commands.js";
 import { failure, success, type CliResult } from "./result.js";
-
-const helpText = `Usage: togostanza [command]
-
-Commands:
-  init
-  generate stanza
-  g stanza
-  build
-  b
-  serve
-  s
-
-Global options:
-  --help
-  --version
-  -v`;
 
 export function routeCli(args: readonly string[]): CliResult {
   const [firstArg] = args;
 
   if (!firstArg || firstArg === "--help") {
-    return success(helpText);
+    return success(formatHelpText());
   }
 
   if (firstArg === "--version" || firstArg === "-v") {
@@ -42,6 +26,18 @@ export function routeCli(args: readonly string[]): CliResult {
   return failure(`Command is not implemented yet: ${command.canonicalName}`);
 }
 
-export function listCommandUsages(): string[] {
-  return commandDefinitions.map((command) => command.usage);
+function formatHelpText(): string {
+  const commandLines = listCommandUsages().map((usage) => `  ${usage}`);
+
+  return [
+    "Usage: togostanza [command]",
+    "",
+    "Commands:",
+    ...commandLines,
+    "",
+    "Global options:",
+    "  --help",
+    "  --version",
+    "  -v",
+  ].join("\n");
 }

@@ -1,9 +1,14 @@
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const packageJson = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8")) as {
+  name: string;
+  version: string;
+};
 
 function runCli(args: string[]): Promise<{
   code: number | null;
@@ -40,7 +45,7 @@ describe("CLI smoke", () => {
 
     expect(result.code).toBe(0);
     expect(result.stderr).toBe("");
-    expect(result.stdout.trim()).toBe("togostanza@0.0.0");
+    expect(result.stdout.trim()).toBe(`${packageJson.name}@${packageJson.version}`);
   });
 
   it("prints help through the bin entry", async () => {

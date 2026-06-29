@@ -24,11 +24,12 @@ mise exec -- pnpm --version
 
 | script | 目的 |
 | ------ | ---- |
+| `pnpm clean` | `dist/` のcompiled JS生成物を削除する。 |
 | `pnpm format` | `oxfmt` で整形する。 |
 | `pnpm format:check` | 整形差分がないことを確認する。 |
 | `pnpm lint` | `oxlint` でlintを実行する。 |
 | `pnpm type-check` | `tsc --noEmit` で型チェックを実行する。 |
-| `pnpm build` | TypeScriptソースから `dist/` へcompiled JSを出力する。 |
+| `pnpm build` | `dist/` をcleanしてから、TypeScriptソースからcompiled JSを出力する。 |
 | `pnpm test:unit` | Vitestのunit testを実行する。 |
 | `pnpm test:integration` | CLI integration testを実行する。 |
 | `pnpm test:browser` | Playwrightのbrowser smoke testを実行する。 |
@@ -41,7 +42,7 @@ cd package
 mise exec -- pnpm check-all
 ```
 
-CLI integration testはbuild後のcompiled JS入口を確認する。完了前確認では、`pnpm check-all` の中で `pnpm build` の後に実行する。
+CLI integration testはbuild後のcompiled JS入口を確認する。`pnpm test:integration` は事前にbuildを実行するため、単独実行でも最新の `dist/` を確認する。
 
 ## CLI手元確認
 

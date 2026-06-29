@@ -7,8 +7,9 @@
   },
   "type": "module",
   "scripts": {
+    "clean": "node ./scripts/clean-dist.mjs",
     "dev:cli": "tsx src/cli.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "pnpm run clean && tsc -p tsconfig.build.json",
     "format": "oxfmt -c oxfmt.config.ts .",
     "format:check": "oxfmt -c oxfmt.config.ts --check .",
     "lint": "oxlint -c oxlint.config.ts .",
@@ -16,7 +17,7 @@
     "type-check": "tsc --noEmit",
     "test": "pnpm run test:unit",
     "test:unit": "vitest run --config vitest.config.ts",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:integration": "pnpm run build && vitest run --config vitest.integration.config.ts",
     "test:browser": "playwright test --config playwright.config.ts",
     "check-all": "pnpm run format:check && pnpm run lint && pnpm run type-check && pnpm run build && pnpm run test:unit && pnpm run test:integration && pnpm run test:browser"
   },
