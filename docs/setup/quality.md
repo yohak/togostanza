@@ -1,6 +1,6 @@
 # 品質確認
 
-この文書では、リメイク版実装パッケージで使うformat、lint、type-check、testの入口を扱う。
+この文書では、リメイク版実装パッケージで使うformat、lint、type-check、build、testの入口を扱う。
 
 ## 対象範囲
 
@@ -28,6 +28,7 @@ mise exec -- pnpm --version
 | `pnpm format:check` | 整形差分がないことを確認する。 |
 | `pnpm lint` | `oxlint` でlintを実行する。 |
 | `pnpm type-check` | `tsc --noEmit` で型チェックを実行する。 |
+| `pnpm build` | TypeScriptソースから `dist/` へcompiled JSを出力する。 |
 | `pnpm test:unit` | Vitestのunit testを実行する。 |
 | `pnpm test:integration` | CLI integration testを実行する。 |
 | `pnpm test:browser` | Playwrightのbrowser smoke testを実行する。 |
@@ -39,6 +40,8 @@ mise exec -- pnpm --version
 cd package
 mise exec -- pnpm check-all
 ```
+
+CLI integration testはbuild後のcompiled JS入口を確認する。完了前確認では、`pnpm check-all` の中で `pnpm build` の後に実行する。
 
 ## 整形対象
 
