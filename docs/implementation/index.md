@@ -19,13 +19,15 @@
 
 ## Phase 0: skeleton
 
-ゴールは、`package/` 直下の単一パッケージとしてリメイク版の開発土台を固めることである。既存の最小実装は、Phase 0進行中として扱う。
+ゴールは、`package/` 直下の単一パッケージとしてリメイク版の開発土台を固めることである。詳細計画は [Phase 0: skeleton 詳細計画](./phase-0-skeleton.md) に置く。既存の最小実装は、Phase 0の途中成果として扱う。
 
 含める範囲:
 
 - `package/` の単一パッケージ構成。
+- compiled JSとして実行できる `bin` 入口。
 - CLI起動、command routing、終了コードの基本構造。
 - format、lint、type-check、unit、integration、browser testの実行入口。
+- package buildと、buildを含む完了前確認。
 - 後続フェーズで実装を足せるディレクトリ構成。
 
 含めない範囲:
@@ -34,7 +36,7 @@
 - Stanzaリポジトリの生成、ビルド生成物、ランタイム実装。
 - 互換性確認。
 
-フェーズ開始時に `docs/implementation/phase-0-skeleton.md` を作る。
+Phase 0では、詳細計画に従って残りのCLI骨格を実装する。
 
 ## Phase 1: scaffold生成
 
