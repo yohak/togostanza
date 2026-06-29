@@ -8,9 +8,9 @@
 
 ## フェーズ一覧
 
-| フェーズ | ゴール | 主な検証・成果物 | 詳細計画 |
+| フェーズ | ゴール | 主な検証・成果物 | 関連文書 |
 | ---- | ---- | ---- | ---- |
-| Phase 0: skeleton | リメイク版パッケージとCLI土台を固める。 | パッケージ内のsmoke test | `phase-0-skeleton.md` |
+| Phase 0: skeleton | リメイク版パッケージとCLI土台を固める。 | パッケージ内のsmoke test | [設計](./phase-0/plan.md)、[引き継ぎ](./phase-0/handoff.md) |
 | Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/) | `phase-1-scaffold.md` |
 | Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | `phase-2-build-runtime.md` |
 | Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | `phase-3-serve.md` |
@@ -19,7 +19,7 @@
 
 ## Phase 0: skeleton
 
-ゴールは、`package/` 直下の単一パッケージとしてリメイク版の開発土台を固めることである。詳細計画は [Phase 0: skeleton 詳細計画](./phase-0-skeleton.md) に置く。既存の最小実装は、Phase 0の途中成果として扱う。
+ゴールは、`package/` 直下の単一パッケージとしてリメイク版の開発土台を固めることである。Phase 0の設計は [Phase 0: skeleton 設計](./phase-0/plan.md) に置き、完了後の状態とPhase 1への引き継ぎは [Phase 0: skeleton 引き継ぎ](./phase-0/handoff.md) に置く。
 
 含める範囲:
 
@@ -36,7 +36,7 @@
 - Stanzaリポジトリの生成、ビルド生成物、ランタイム実装。
 - 互換性確認。
 
-Phase 0では、詳細計画に従って残りのCLI骨格を実装する。
+Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計画を作る。
 
 ## Phase 1: scaffold生成
 
