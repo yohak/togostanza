@@ -60,6 +60,8 @@ workbench/cases/
 | [008-react-runtime](./008-react-runtime/) | TSX / Reactランタイム | 開発契約 | React Stanzaソースのマウントと再描画を確認する。 |
 | [009-vue-runtime](./009-vue-runtime/) | Vue SFCランタイム | 開発契約 | Vue Stanzaソースのマウントとランタイムチャンクを確認する。 |
 | [010-togostanza-utils-compat](./010-togostanza-utils-compat/) | `togostanza-utils` | 開発契約 / 利用契約 | 既存 `togostanza-utils` packageをStanzaソースから無変更で利用できるか確認する。 |
+| [011-serve-development-server](./011-serve-development-server/) | `serve` / watch | 開発契約 | localhost開発サーバーと変更反映を確認する。 |
+| [012-real-project-regression](./012-real-project-regression/) | metastanza / TogoMedium Stanza | 開発契約 / 利用契約 | 実プロジェクト群で重点compatibility対象の回帰を確認する。 |
 
 ## 検証ケースの書き方
 
@@ -130,6 +132,8 @@ Git管理しないものは次の通り。
 - 005 StanzaソースAPI: APIごとに最小Stanzaソースを `current-pnpm/generated-repo/` に作る。`this.query()` など外部通信が絡むものは、観測用の最小endpointまたはモック方針をREADMEに書く。
 - 006 Stanza間連携: 送信側/受信側/コンテナを含む最小HTMLを `current-pnpm/generated-repo/` に置く。`togostanza--container` はStanza間連携の入口として維持対象、`togostanza--event-map` は送出イベントを受信側属性へ渡す概念を維持しつつ詳細挙動は再設計候補、`togostanza--data-source` は外部データを受信側属性へ渡す目的を維持しつつAPI詳細は再設計候補、`togostanza--data-container` は旧ドキュメント内の誤記として破棄対象として扱う。再設計候補は現行挙動の観測と移行メモを分けて書く。
 - 007 config and resolution: 設定ファイル、alias、asset importを分けて小さく `current-pnpm/generated-repo/` で確認する。旧設定ファイルは無条件実行しない方針を確認対象に含める。
+- 011 serve development server: 002と003に近い最小Stanzaリポジトリを `current-pnpm/generated-repo/` に置き、`serve` のroot URL、watch、差分invalidate、HTTP 500エラーページ、修正後復帰を確認する。
+- 012 real project regression: `references/metastanza` と `references/togomedium-web` を直接の入力として参照し、リファレンスリポジトリを汚さず、実行コマンド、対象stanza、観測結果、必要な移行メモをREADMEに記録する。
 
 ## 判断の扱い
 

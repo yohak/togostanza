@@ -344,7 +344,7 @@ APIごとの細かいedge caseや出力バイト列の完全一致は、`togosta
 | ------ | -------- |
 | [001 CLIの雛形生成とgenerate](../../workbench/cases/001-cli-scaffold-and-generate/) | `init` / `generate stanza` / GitHub Pages workflow |
 | [002 ビルド生成物](../../workbench/cases/002-build-artifacts/) | `build` / 生成物 |
-| [003 ランタイム埋め込み](../../workbench/cases/003-runtime-embedding/) | direct embed / `serve` / Shadow DOM |
+| [003 ランタイム埋め込み](../../workbench/cases/003-runtime-embedding/) | direct embed / Shadow DOM |
 | [004 Runtimeパラメーター](../../workbench/cases/004-runtime-parameters/) | `this.params` / 属性変換 |
 | [005 StanzaソースAPI](../../workbench/cases/005-stanza-source-api/) | `Stanza` base API |
 | [006 Inter stanza coordination](../../workbench/cases/006-inter-stanza-coordination/) | Stanza間連携 |
@@ -352,8 +352,10 @@ APIごとの細かいedge caseや出力バイト列の完全一致は、`togosta
 | [008 Reactランタイム](../../workbench/cases/008-react-runtime/) | React / TSX |
 | [009 Vueランタイム](../../workbench/cases/009-vue-runtime/) | Vue SFC |
 | [010 togostanza-utils compatibility](../../workbench/cases/010-togostanza-utils-compat/) | `togostanza-utils` |
+| [011 Serve development server](../../workbench/cases/011-serve-development-server/) | `serve` / watch / 差分invalidate |
+| [012 Real project regression](../../workbench/cases/012-real-project-regression/) | 実プロジェクト回帰 |
 
-`serve` の初回ビルド失敗からの復帰、差分再ビルド、全体invalidate、ページ再読み込み、HTTP 500エラーページと復帰は、実装時に [003 ランタイム埋め込み](../../workbench/cases/003-runtime-embedding/) へ追加するか、専用のserve検証ケースとして切り出す。
+`serve` の初回ビルド失敗からの復帰、差分再ビルド、全体invalidate、ページ再読み込み、HTTP 500エラーページと復帰は、専用のserve検証ケースで確認する。
 
 検証ケースのREADMEには観測ログと差分を記録してよい。この仕様本文には、長い観測ログ、過去経緯、採用判断の詳細を入れない。
 

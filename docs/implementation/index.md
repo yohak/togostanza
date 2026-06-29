@@ -1,0 +1,170 @@
+# 実装計画
+
+この文書では、リメイク版の実装順序とフェーズごとのゴールを定義する。
+
+詳細な仕様は [リメイク版仕様](../spec/index.md) を正とする。採用判断は [リメイク方針](../spec/remake-policy.md) を正とする。この文書では、各フェーズの細かなAPI設計や実装方針は固定しない。
+
+各フェーズでは、開始時に詳細計画を作り、その詳細計画に基づいて実装と検証を行う。検証ケースはフェーズを縛るものではなく、各フェーズの完了判定に紐づくゴールとして扱う。再設計や破棄を含むフェーズでは、必要な移行メモ、差分説明、未固定事項の整理も詳細計画の成果物に含める。
+
+## フェーズ一覧
+
+| フェーズ | ゴール | 主な検証・成果物 | 詳細計画 |
+| ---- | ---- | ---- | ---- |
+| Phase 0: skeleton | リメイク版パッケージとCLI土台を固める。 | パッケージ内のsmoke test | `phase-0-skeleton.md` |
+| Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/) | `phase-1-scaffold.md` |
+| Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | `phase-2-build-runtime.md` |
+| Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | `phase-3-serve.md` |
+| Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | `phase-4-compatibility.md` |
+| Phase 5: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | `phase-5-distribution.md` |
+
+## Phase 0: skeleton
+
+ゴールは、`package/` 直下の単一パッケージとしてリメイク版の開発土台を固めることである。既存の最小実装は、Phase 0進行中として扱う。
+
+含める範囲:
+
+- `package/` の単一パッケージ構成。
+- CLI起動、command routing、終了コードの基本構造。
+- format、lint、type-check、unit、integration、browser testの実行入口。
+- 後続フェーズで実装を足せるディレクトリ構成。
+
+含めない範囲:
+
+- `init`、`generate stanza`、`build`、`serve` の実挙動。
+- Stanzaリポジトリの生成、ビルド生成物、ランタイム実装。
+- 互換性確認。
+
+フェーズ開始時に `docs/implementation/phase-0-skeleton.md` を作る。
+
+## Phase 1: scaffold生成
+
+ゴールは、Stanza開発者が `init` と `generate stanza` で作業を開始できる状態を作ることである。
+
+含める範囲:
+
+- `togostanza init`。
+- `togostanza generate stanza` / `togostanza g stanza`。
+- npmとpnpmの初期化方針。
+- lockfile同時存在や `--package-manager` 指定矛盾の診断。
+- `--skip-install`、`--skip-git`。
+- GitHub Pages workflow生成。
+- 生成直後に後続フェーズの `build` / `serve` へ進める雛形。
+
+含めない範囲:
+
+- 実際の `build` 生成物の完成。
+- ランタイム動作。
+- React、Vue、`togostanza-utils` 互換。
+
+対応する主な検証ケースは [001 CLIの雛形生成とgenerate](../../workbench/cases/001-cli-scaffold-and-generate/) とする。フェーズ開始時に `docs/implementation/phase-1-scaffold.md` を作る。
+
+## Phase 2: build + runtime
+
+ゴールは、Phase 1で作ったStanzaリポジトリをビルドし、一般Webサイトへ直接埋め込める生成物として動かすことである。
+
+含める範囲:
+
+- `togostanza build` / `togostanza b`。
+- `build --output-path <dir>` と未指定時の `dist` 出力。
+- Stanza検出、metadata検証、entrypoint、stylesheet、template、asset解決。
+- `togostanza.config.ts`、旧 `togostanza-build.mjs` / `togostanza-build.js` の検出と診断、Sass `@/` alias、`tsconfig.json`、ルートassetとstanza別asset。
+- Stanza entrypointからimportされる共有ソースと、そのimport graph。
+- `${id}.js`、`${id}.css`、`${id}.html`、metadata、asset、共有チャンク。
+- GitHub Pagesのサブパス配信で壊れない生成物URL。
+- module scriptとcustom elementによる直接埋め込み。
+- open Shadow DOM、Shadow DOM内 `main`。
+- `stanza:style` からCSS custom propertyの既定値への反映。
+- `stanza:menu-placement`、`togostanza-menu-placement` 属性、`none`、`togostanza-menu_placement` の拒否。
+- `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()`、`handleAttributeChange()`、`handleEvent()`。
+- `togostanza--container`、CustomEvent、incoming eventとoutgoing event。
+- `togostanza--event-map` と `togostanza--data-source` の再設計、実装、移行メモ。
+- `togostanza--data-container` を持ち込まないことの確認。
+
+含めない範囲:
+
+- `serve` のwatch、差分invalidate、HTTP 500復帰。
+- React、Vue固有のcompatibility。
+- `togostanza-utils` compatibility。
+
+対応する主な検証ケースは [002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) とする。`docs/implementation/phase-2-build-runtime.md` では、最小のbuild + runtime契約を先に成立させ、その後に `togostanza--event-map` と `togostanza--data-source` の具体APIを固定して実装する順序を切る。
+
+## Phase 3: serve
+
+ゴールは、Stanza開発者がlocalhostで開発中のStanzaを確認し、変更を反映できる状態を作ることである。
+
+含める範囲:
+
+- `togostanza serve` / `togostanza s`。
+- `serve --port <port>` と未指定時のport `8080`。
+- localhostでの配信。
+- build相当URLの提供。
+- stanza一覧と最小プレビュー。
+- watch、依存グラフベースの差分invalidate、安全に特定できない変更の全体invalidate。
+- 初回ビルド失敗、再ビルド失敗、修正後復帰。
+- ビルド失敗時のHTTP 500エラーページ。
+
+含めない範囲:
+
+- 外部Webアプリ向け配信サーバーとしての利用契約。
+- HMR。
+- CORS保証。
+- React、Vue、`togostanza-utils` の追加互換。
+
+serve用検証は、専用検証ケース `workbench/cases/011-serve-development-server/` として作る。フェーズ開始時に `docs/implementation/phase-3-serve.md` を作る。
+
+## Phase 4: compatibility
+
+ゴールは、重点compatibility対象を既存Stanzaソースに近い形で動かすことである。
+
+含める範囲:
+
+- React TSX Stanzaソース。
+- Vue SFC Stanzaソース。
+- `togostanza-utils` のうち、TogoStanza runtime API、runtime menu contract、生成DOM構造に触れるAPI。
+- `togostanza-utils/apply-filter` のimport path解決。
+- compatibilityのために必要なruntime compat property。
+- **実プロジェクト群**であるmetastanzaとTogoMedium Stanzaの回帰検証。
+
+含めない範囲:
+
+- React、Vue以外のframework support。
+- `togostanza-utils` 全APIの挙動互換。
+- `Data` class、tree / graph helperの挙動互換。
+- SVG/PNG download出力の完全なバイト列一致。
+- npm package公開。
+
+対応する主な検証ケースは [008 React runtime](../../workbench/cases/008-react-runtime/)、[009 Vue runtime](../../workbench/cases/009-vue-runtime/)、[010 togostanza-utils compatibility](../../workbench/cases/010-togostanza-utils-compat/)、[012 Real project regression](../../workbench/cases/012-real-project-regression/) とする。実プロジェクト回帰では `references/metastanza` と `references/togomedium-web` を入力として参照し、観測結果と差分を012ケースへ記録する。フェーズ開始時に `docs/implementation/phase-4-compatibility.md` を作る。
+
+## Phase 5: distribution
+
+ゴールは、将来npm packageとして配布する場合に必要な判断、手順、確認項目を整理することである。現時点ではnpm公開そのものを目標にしない。
+
+含める範囲:
+
+- npm配布に必要なpackage metadata、`bin`、`exports`、`files`、`engines` の確認項目。
+- `npm exec togostanza@latest init` と `pnpm dlx togostanza@latest init` を公開後に成立させるための前提整理。
+- npm公開前に必要な検証、tag、release、rollback、権限管理の計画。
+- 公開を行う場合に残る未固定事項と判断者の整理。
+
+含めない範囲:
+
+- `npm publish` の実行。
+- tag作成。
+- GitHub release作成。
+- `latest` として公開されたpackageの実利用確認。
+
+フェーズ開始時に `docs/implementation/phase-5-distribution.md` を作る。
+
+## 詳細計画の扱い
+
+各フェーズの詳細計画では、次を決めてから実装に入る。
+
+- そのフェーズで満たす仕様項目。
+- そのフェーズで満たす検証ケースの観測契約。
+- 実装対象の主要モジュール。
+- 失敗時の診断方針。
+- 実行する確認コマンド。
+- そのフェーズで扱わない事項。
+- 必要な移行メモ、差分説明、未固定事項。
+
+詳細計画は、実装前に作成し、必要なレビューを受けてから実装する。フェーズ完了時には、対応する検証ケースにリメイク版の観測結果を記録する。
