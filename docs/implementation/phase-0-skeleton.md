@@ -83,6 +83,8 @@ Phase 0では、CLI parserはNode.js標準機能を中心にした最小実装�
 
 compiled JSと `bin` 入口をPhase 0に含めるのは、将来の `npm exec togostanza@latest` や `pnpm dlx togostanza@latest` で使う実行経路を早期に確認するためである。ただし、npm公開そのものと配布対象ファイルの最終設計はPhase 5に残す。
 
+Phase 0で確認するCLI入口は、`bin/togostanza.mjs` からcompiled JSへ接続される経路である。手元環境で裸の `togostanza` commandを実行できることは、PATH上の既存版 `togostanza` との衝突、package manager経由の実行、npm公開後の配布確認を含むため、Phase 0の完了条件には含めない。裸の `togostanza` commandとしての実行確認は、Phase 5のdistribution確認で扱う。
+
 package buildは、Phase 0では追加のbundlerを使わず、TypeScript compilerで行う。`tsconfig.build.json` を用意し、`src/` から `dist/` へJavaScriptと型定義を出力する。
 
 Phase 0で認識するcommandは次の通り。

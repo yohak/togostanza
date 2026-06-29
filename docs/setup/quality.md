@@ -43,6 +43,19 @@ mise exec -- pnpm check-all
 
 CLI integration testはbuild後のcompiled JS入口を確認する。完了前確認では、`pnpm check-all` の中で `pnpm build` の後に実行する。
 
+## CLI手元確認
+
+リメイク版CLIを手元で確認する場合は、裸の `togostanza` commandではなく、package内の `bin` 入口を明示して実行する。裸の `togostanza` commandは、PATH上にある現行版を起動する可能性がある。
+
+```sh
+cd package
+mise exec -- pnpm build
+mise exec -- node ./bin/togostanza.mjs --version
+mise exec -- node ./bin/togostanza.mjs --help
+```
+
+この確認は、`bin/togostanza.mjs` からbuild後のcompiled JSへ接続される経路を確認するためのものとする。PATH上の `togostanza` command名解決や、package manager経由の実行確認は配布確認の範囲で扱う。
+
 ## 整形対象
 
 整形は `oxfmt` を使う。初期状態ではTS、JS、JSON、SCSSを主対象とし、MarkdownとHandlebars templateは対象外とする。
