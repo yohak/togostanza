@@ -37,13 +37,16 @@
 - `{id}.js` と共有チャンク一式が、`dist/` 内で相対importにより自己完結すること。
 - `${id}.html` が存在すること。
 - `${id}.js.map` と `${id}.css.map` が存在し、生成物から相対参照されること。
+- Phase 2-1では、source map生成を検証目標とする。ただしsource mapは外部互換契約として扱わない。
+- Phase 2-1では、`@use '@/common.scss';` を含む `style.scss` がcompileできること。
 - Phase 2-1では、`index.html` と `-togostanza/` を生成しないこと。
 - Phase 2-1では、stanzaが1つもない場合は分かりやすく失敗すること。
 - ヘルププレビュー側生成物が変わる場合、ランタイム生成物との差分が説明できること。
 
 ## 合格条件
 
-- 一般Webサイトから読み込むためのmodule scriptとcustom element用生成物が揃う。
+- 一般Webサイトから読み込むためのmodule scriptが生成される。
+- Phase 2-1では、custom elementとして動くことは確認しない。後続runtimeが使うJS生成物が存在することまでを確認する。
 - `${id}.css` が生成される。
 - `${id}/metadata.json` が生成される。
 - asset参照が壊れていない。

@@ -51,6 +51,7 @@ Phase 2-1は、Phase 2-0で用意した `build` / `b` のpreflightを、最小�
 - `togostanza/stanza` build用runtime stub。
 - `sass` の内部導入。
 - stanza別 `style.scss` のcompile。
+- Sassの最小 `@/` alias。
 - CSS source map。
 - `style.scss` がない場合の空CSS生成。
 - root assetとstanza別assetのファイルコピー。
@@ -70,7 +71,7 @@ Phase 2-1は、Phase 2-0で用意した `build` / `b` のpreflightを、最小�
 - `togostanza` dependencyの実利用可能性確認。
 - Stanza entrypointからのasset importの完全対応。
 - CSS内 `url(...)` の高度なasset解決。
-- Sass `@/` alias。
+- Sassの高度なmodule解決。
 - `togostanza.config.ts` の読み込み。
 - 依存パッケージ内asset import。
 - `index.html` と `-togostanza/` の生成。
@@ -113,7 +114,7 @@ Phase 2-1では、検出したStanza entrypointを `rollupOptions.input` にま�
 
 このruntime stubの正本はCLI package内に置く。Stanzaリポジトリの `dependencies.togostanza` はrepo判定と利用者向け依存宣言として扱い、Phase 2-1のbundle時にはrepo側 `node_modules/togostanza` を実解決しない。Phase 2-2で本格runtimeへ進めるときも、CLI同梱runtimeと生成リポジトリの依存宣言versionがずれる可能性を前提にし、どちらを正本にするかを再確認する。
 
-Vite buildでは `{id}.js.map` と共有チャンクのsource mapを生成する。source mapは存在と相対参照を確認するが、内部構造やbyte-level互換は固定しない。
+Vite buildでは `{id}.js.map` と共有チャンクのsource mapを生成する。source map生成はPhase 2-1の検証目標であり、外部互換契約ではない。source mapは存在と相対参照を確認するが、内部構造やbyte-level互換は固定しない。
 
 ## CSS build方針
 
@@ -121,9 +122,11 @@ Stanza entrypointとstylesheetは別成果物として扱う。ViteにはJS bund
 
 `style.scss` が存在しない場合は、空の `dist/{id}.css` と軽い `dist/{id}.css.map` を生成する。
 
+Phase 2-1では、002ケース入力をbuildできるように、Sassの最小 `@/` aliasを扱う。`@/` はStanzaリポジトリrootへ解決し、`@use '@/common.scss';` が通ることを確認する。
+
 Sass compile errorはbuild失敗として扱い、stanza IDと `style.scss` pathが分かる診断を出す。
 
-`common.scss`、Sass `@/` alias、CSS内 `url(...)` の高度な解決はPhase 2-4で扱う。
+Sassの高度なmodule解決、CSS内 `url(...)` の高度な解決はPhase 2-4で扱う。
 
 ## metadata validation
 
@@ -248,6 +251,7 @@ Phase 2-1では、runtimeからmetadataやassetを実fetchする挙動までは�
 - markerを持たない既存の非空出力先では失敗する。
 - assetコピーで `.keep` を除外する。
 - `{id}.html` が相対URLだけを使う。
+- Sass `@/` aliasがStanzaリポジトリrootへ解決される。
 
 ### integration test
 
@@ -263,6 +267,7 @@ Phase 2-1では、runtimeからmetadataやassetを実fetchする挙動までは�
 - Phase 1生成の `index.js` に含まれる `import Stanza from "togostanza/stanza"` がbundleで解決される。
 - 生成された `{id}.js` に、ブラウザで解決できないbare import `togostanza/stanza` が残らない。
 - source map fileが存在し、生成物から相対参照される。
+- `@use '@/common.scss';` を含む `style.scss` をcompileできる。
 - `index.html` と `-togostanza/` が生成されないことを確認する。
 
 ### 002ケース更新
@@ -290,7 +295,7 @@ browser testがsandbox環境で失敗する場合は、既存の運用方針に�
 | `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()` | Phase 2-3 |
 | `templates/*.hbs` の読み込み | Phase 2-3 |
 | CLI同梱runtimeと生成リポジトリの依存宣言versionの扱い | Phase 2-2 / Phase 5 |
-| Sass `@/` alias | Phase 2-4 |
+| Sassの高度なmodule解決 | Phase 2-4 |
 | `togostanza.config.ts` | Phase 2-4 |
 | Stanza entrypointからのasset import | Phase 2-4 |
 | CSS内 `url(...)` の高度なasset解決 | Phase 2-4 |
