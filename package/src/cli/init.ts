@@ -176,7 +176,7 @@ function createScaffold(input: {
   writeFileSync(join(input.destination, "lib", ".keep"), "", "utf8");
   writeFileSync(
     join(input.destination, ".github", "workflows", "publish.yml"),
-    formatWorkflowPlaceholder(input.packageManager),
+    formatPagesWorkflow(input.packageManager),
     "utf8",
   );
 }
@@ -196,18 +196,71 @@ function createPackageJson(input: { license: string; name: string }): Record<str
   };
 }
 
-function formatWorkflowPlaceholder(packageManager: PackageManager): string {
+function formatPagesWorkflow(packageManager: PackageManager): string {
+  const setupSteps =
+    packageManager === "pnpm"
+      ? [
+          "      - uses: pnpm/action-setup@v6",
+          "        with:",
+          "          version: 10",
+          "          run_install: false",
+          "      - uses: actions/setup-node@v6",
+          "        with:",
+          "          node-version: 24",
+          "          cache: pnpm",
+          "          cache-dependency-path: pnpm-lock.yaml",
+        ]
+      : [
+          "      - uses: actions/setup-node@v6",
+          "        with:",
+          "          node-version: 24",
+          "          cache: npm",
+          "          cache-dependency-path: package-lock.json",
+        ];
+  const installCommand = packageManager === "pnpm" ? "pnpm install --frozen-lockfile" : "npm ci";
+  const buildCommand =
+    packageManager === "pnpm" ? "pnpm exec togostanza build" : "npm exec togostanza build";
+
   return [
     "name: Publish GitHub Pages",
     "",
     "on:",
+    "  push:",
+    "    branches:",
+    "      - main",
     "  workflow_dispatch:",
     "",
+    "permissions:",
+    "  contents: read",
+    "  pages: write",
+    "  id-token: write",
+    "",
+    "concurrency:",
+    "  group: pages",
+    "  cancel-in-progress: false",
+    "",
     "jobs:",
-    "  placeholder:",
+    "  build:",
     "    runs-on: ubuntu-latest",
     "    steps:",
-    `      - run: echo "GitHub Pages deploy workflow for ${packageManager} will be enabled in Phase 2."`,
+    "      - uses: actions/checkout@v7",
+    ...setupSteps,
+    "      - uses: actions/configure-pages@v6",
+    `      - run: ${installCommand}`,
+    `      - run: ${buildCommand}`,
+    "      - uses: actions/upload-pages-artifact@v5",
+    "        with:",
+    "          path: dist",
+    "",
+    "  deploy:",
+    "    needs: build",
+    "    runs-on: ubuntu-latest",
+    "    environment:",
+    "      name: github-pages",
+    "      url: ${{ steps.deployment.outputs.page_url }}",
+    "    steps:",
+    "      - id: deployment",
+    "        uses: actions/deploy-pages@v5",
     "",
   ].join("\n");
 }

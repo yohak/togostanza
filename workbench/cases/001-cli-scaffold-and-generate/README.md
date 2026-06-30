@@ -275,6 +275,67 @@ current-pnpm/
 
 ## リメイク版観測メモ
 
-リメイク版CLIはまだ未実装のため、`remake/` は空の検証環境として残す。
+### Phase 2-6観測
 
-実装後は、同じ入力意図で `init`、`generate stanza`、短縮alias、`upgrade` 非対応を確認する。
+- 確認日: 2026-06-30
+- 対象: Phase 2-6 GitHub Pages workflow
+- 確認環境: `package/` のunit testとintegration testで、リメイク版CLIの生成workflowを確認した。
+- `remake/` は、生成物をGit管理しないため空の検証領域として残す。
+
+### 実行したコマンド
+
+Phase 2-6では、package test内で次と同等の流れを確認した。
+
+```sh
+cd package
+mise exec -- pnpm run test:unit
+mise exec -- pnpm run test:integration
+```
+
+生成リポジトリ側では、compiled bin経由で次の入口を確認した。
+
+```sh
+togostanza init --name npm-repo --package-manager npm --skip-install --skip-git
+togostanza init --name pnpm-repo --package-manager pnpm --skip-install --skip-git
+togostanza init . --package-manager pnpm --skip-install --skip-git
+togostanza init . --skip-install --skip-git
+```
+
+既存 `pnpm-lock.yaml` がある `init .` では、lockfile推定によりpnpm向けworkflowが生成されることも確認した。
+
+### workflow観測
+
+- `.github/workflows/publish.yml` は `push` to `main` と `workflow_dispatch` で起動する。
+- workflowは `contents: read`、`pages: write`、`id-token: write` を含む。
+- workflowは `build` jobで依存をインストールし、`togostanza build` を実行し、`dist/` をPages artifactとしてuploadする。
+- workflowは `deploy` jobでupload済みartifactをGitHub Pagesへdeployする。
+- npm向けworkflowは `npm ci` と `npm exec togostanza build` を使う。
+- pnpm向けworkflowは `pnpm/action-setup` でpnpm 10系を用意し、`pnpm install --frozen-lockfile` と `pnpm exec togostanza build` を使う。
+- npm向けworkflowにpnpm固有stepは混ざらない。
+- pnpm向けworkflowに `npm ci` は混ざらない。
+- Phase 1のplaceholder文言は残らない。
+- workflowは `dist/` 内のURLを書き換えず、Phase 2で成立したサブパス安全な生成物をそのまま公開対象にする。
+
+### Action tag確認
+
+生成workflowで使うAction tagは、実装時点でGitHub上のtagとして存在することを確認した。
+
+- `actions/checkout@v7`
+- `actions/setup-node@v6`
+- `actions/configure-pages@v6`
+- `actions/upload-pages-artifact@v5`
+- `actions/deploy-pages@v5`
+- `pnpm/action-setup@v6`
+
+### lockfile前提
+
+- npm向けworkflowは `npm ci` を使うため、`package-lock.json` をcommitしてからpushする前提である。
+- pnpm向けworkflowは `pnpm install --frozen-lockfile` を使うため、`pnpm-lock.yaml` をcommitしてからpushする前提である。
+- pnpm向けworkflowはpnpm 10系を使うため、`pnpm-lock.yaml` もpnpm 10系で生成してcommitする前提である。
+- `--skip-install` の場合はlockfileが生成されないため、Stanza開発者が `npm install` またはpnpm 10系の `pnpm install` を実行し、lockfileをcommitしてからpushする必要がある。
+
+### 現行版との差分
+
+- 現行版workflowは `actions/upload-pages-artifact@v1` と `actions/deploy-pages@v1` を使っていたが、リメイク版では実装時点で確認したAction major tagへ更新した。
+- 現行版の観測ではpnpm向けworkflowは対象外だった。リメイク版ではpnpmを公式サポート対象として扱い、pnpm向けworkflowを生成する。
+- リメイク版では、公開npm packageとしての `dependencies.togostanza` 解決やGitHub Actions上でのlive deploy成功はPhase 5 distributionまたは配布前検証へ送る。Phase 2-6では、生成workflowがinstall、build、artifact upload、deployの流れを持つことまでを確認する。

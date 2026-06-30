@@ -70,7 +70,15 @@ describe("CLI smoke", () => {
   it("creates an init scaffold through the bin entry", async () => {
     const cwd = makeTemporaryDirectory();
     const result = await runCli(
-      ["init", "--name", "generated-repo", "--skip-install", "--skip-git"],
+      [
+        "init",
+        "--name",
+        "generated-repo",
+        "--package-manager",
+        "npm",
+        "--skip-install",
+        "--skip-git",
+      ],
       cwd,
     );
 
@@ -83,9 +91,9 @@ describe("CLI smoke", () => {
       },
       name: "generated-repo",
     });
-    expect(
+    expectNpmPagesWorkflow(
       readFileSync(resolve(cwd, "generated-repo", ".github", "workflows", "publish.yml"), "utf8"),
-    ).toContain("workflow_dispatch");
+    );
   });
 
   it("creates an init scaffold in the current directory through the bin entry", async () => {
@@ -133,8 +141,8 @@ describe("CLI smoke", () => {
 
     expect(result.code).toBe(0);
     expect(result.stderr).toBe("");
-    expect(readFileSync(resolve(cwd, ".github", "workflows", "publish.yml"), "utf8")).toContain(
-      "for pnpm",
+    expectPnpmPagesWorkflow(
+      readFileSync(resolve(cwd, ".github", "workflows", "publish.yml"), "utf8"),
     );
   });
 
@@ -162,7 +170,7 @@ describe("CLI smoke", () => {
   });
 
   for (const packageManager of ["npm", "pnpm"]) {
-    it(`creates a ${packageManager} workflow placeholder through the bin entry`, async () => {
+    it(`creates a ${packageManager} Pages workflow through the bin entry`, async () => {
       const cwd = makeTemporaryDirectory();
       const result = await runCli(
         [
@@ -179,14 +187,32 @@ describe("CLI smoke", () => {
 
       expect(result.code).toBe(0);
       expect(result.stderr).toBe("");
-      expect(
-        readFileSync(
-          resolve(cwd, `${packageManager}-repo`, ".github", "workflows", "publish.yml"),
-          "utf8",
-        ),
-      ).toContain(`for ${packageManager}`);
+      const workflow = readFileSync(
+        resolve(cwd, `${packageManager}-repo`, ".github", "workflows", "publish.yml"),
+        "utf8",
+      );
+
+      if (packageManager === "pnpm") {
+        expectPnpmPagesWorkflow(workflow);
+      } else {
+        expectNpmPagesWorkflow(workflow);
+      }
     });
   }
+
+  it("creates a pnpm Pages workflow for init . --package-manager pnpm through the bin entry", async () => {
+    const cwd = makeNamedTemporaryDirectory("explicit-pnpm-current-repo");
+    const result = await runCli(
+      ["init", ".", "--package-manager", "pnpm", "--skip-install", "--skip-git"],
+      cwd,
+    );
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toBe("");
+    expectPnpmPagesWorkflow(
+      readFileSync(resolve(cwd, ".github", "workflows", "publish.yml"), "utf8"),
+    );
+  });
 
   it("creates a stanza through the bin entry", async () => {
     const cwd = await makeStanzaRepoRoot();
@@ -307,4 +333,43 @@ async function makeStanzaRepoRoot(): Promise<string> {
 
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
+}
+
+function expectNpmPagesWorkflow(workflow: string): void {
+  expectCommonPagesWorkflow(workflow);
+  expect(workflow).toContain("cache: npm");
+  expect(workflow).toContain("cache-dependency-path: package-lock.json");
+  expect(workflow).toContain("npm ci");
+  expect(workflow).toContain("npm exec togostanza build");
+  expect(workflow).not.toContain("pnpm/action-setup");
+  expect(workflow).not.toContain("pnpm install --frozen-lockfile");
+  expect(workflow).not.toContain("will be enabled in Phase 2");
+}
+
+function expectPnpmPagesWorkflow(workflow: string): void {
+  expectCommonPagesWorkflow(workflow);
+  expect(workflow).toContain("pnpm/action-setup@v6");
+  expect(workflow).toContain("version: 10");
+  expect(workflow).toContain("run_install: false");
+  expect(workflow).toContain("cache: pnpm");
+  expect(workflow).toContain("cache-dependency-path: pnpm-lock.yaml");
+  expect(workflow).toContain("pnpm install --frozen-lockfile");
+  expect(workflow).toContain("pnpm exec togostanza build");
+  expect(workflow).not.toContain("npm ci");
+  expect(workflow).not.toContain("will be enabled in Phase 2");
+}
+
+function expectCommonPagesWorkflow(workflow: string): void {
+  expect(workflow).toContain("workflow_dispatch");
+  expect(workflow).toContain("branches:");
+  expect(workflow).toContain("- main");
+  expect(workflow).toContain("pages: write");
+  expect(workflow).toContain("id-token: write");
+  expect(workflow).toContain("actions/checkout@v7");
+  expect(workflow).toContain("actions/setup-node@v6");
+  expect(workflow).toContain("node-version: 24");
+  expect(workflow).toContain("actions/configure-pages@v6");
+  expect(workflow).toContain("actions/upload-pages-artifact@v5");
+  expect(workflow).toContain("path: dist");
+  expect(workflow).toContain("actions/deploy-pages@v5");
 }

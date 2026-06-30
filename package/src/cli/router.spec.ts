@@ -104,9 +104,20 @@ describe("CLI router", () => {
 
   it("creates an init scaffold without install or git when skipped", () => {
     const cwd = makeTemporaryDirectory();
-    const result = routeCli(["init", "--name", "generated-repo", "--skip-install", "--skip-git"], {
-      cwd,
-    });
+    const result = routeCli(
+      [
+        "init",
+        "--name",
+        "generated-repo",
+        "--package-manager",
+        "npm",
+        "--skip-install",
+        "--skip-git",
+      ],
+      {
+        cwd,
+      },
+    );
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBeUndefined();
@@ -120,25 +131,40 @@ describe("CLI router", () => {
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.dependencies.togostanza).toBe(`^${packageMetadata.version}`);
     expect(packageJson.packageManager).toBeUndefined();
-    expect(readText(join(cwd, "generated-repo", ".github", "workflows", "publish.yml"))).toContain(
-      "workflow_dispatch",
+    expectNpmPagesWorkflow(
+      readText(join(cwd, "generated-repo", ".github", "workflows", "publish.yml")),
     );
   });
 
   it("creates an init scaffold in the current directory", () => {
     const cwd = makeNamedTemporaryDirectory("current-repo");
-    const result = routeCli(["init", ".", "--skip-install", "--skip-git"], {
-      cwd,
-    });
+    const result = routeCli(
+      ["init", ".", "--package-manager", "npm", "--skip-install", "--skip-git"],
+      {
+        cwd,
+      },
+    );
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBeUndefined();
     expect(readJson(join(cwd, "package.json"))).toMatchObject({
       name: "current-repo",
     });
-    expect(readText(join(cwd, ".github", "workflows", "publish.yml"))).toContain(
-      "workflow_dispatch",
+    expectNpmPagesWorkflow(readText(join(cwd, ".github", "workflows", "publish.yml")));
+  });
+
+  it("creates a pnpm Pages workflow in the current directory when pnpm is selected", () => {
+    const cwd = makeNamedTemporaryDirectory("current-pnpm-repo");
+    const result = routeCli(
+      ["init", ".", "--package-manager", "pnpm", "--skip-install", "--skip-git"],
+      {
+        cwd,
+      },
     );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBeUndefined();
+    expectPnpmPagesWorkflow(readText(join(cwd, ".github", "workflows", "publish.yml")));
   });
 
   it("uses --name as a package name override for init .", () => {
@@ -214,6 +240,7 @@ describe("CLI router", () => {
 
     expect(result.exitCode).toBe(0);
     expect(calls).toEqual([`pnpm install @ ${cwd}`]);
+    expectPnpmPagesWorkflow(readText(join(cwd, ".github", "workflows", "publish.yml")));
   });
 
   it("rejects init . when both lockfiles exist", () => {
@@ -288,8 +315,8 @@ describe("CLI router", () => {
     );
 
     expect(result.exitCode).toBe(0);
-    expect(readText(join(cwd, "child-repo", ".github", "workflows", "publish.yml"))).toContain(
-      "for pnpm",
+    expectPnpmPagesWorkflow(
+      readText(join(cwd, "child-repo", ".github", "workflows", "publish.yml")),
     );
   });
 
@@ -334,8 +361,8 @@ describe("CLI router", () => {
 
     expect(result.exitCode).toBe(0);
     expect(calls).toEqual([`pnpm install @ ${join(cwd, "pnpm-repo")}`]);
-    expect(readText(join(cwd, "pnpm-repo", ".github", "workflows", "publish.yml"))).toContain(
-      "for pnpm",
+    expectPnpmPagesWorkflow(
+      readText(join(cwd, "pnpm-repo", ".github", "workflows", "publish.yml")),
     );
   });
 
@@ -357,9 +384,7 @@ describe("CLI router", () => {
 
     expect(result.exitCode).toBe(0);
     expect(calls).toEqual([`npm install @ ${join(cwd, "npm-repo")}`]);
-    expect(readText(join(cwd, "npm-repo", ".github", "workflows", "publish.yml"))).toContain(
-      "for npm",
-    );
+    expectNpmPagesWorkflow(readText(join(cwd, "npm-repo", ".github", "workflows", "publish.yml")));
   });
 
   it("rejects unsupported package managers", () => {
@@ -1020,6 +1045,49 @@ describe("CLI router", () => {
     return JSON.parse(readText(path));
   }
 });
+
+function expectNpmPagesWorkflow(workflow: string): void {
+  expectCommonPagesWorkflow(workflow);
+  expect(workflow).toContain("actions/setup-node@v6");
+  expect(workflow).toContain("node-version: 24");
+  expect(workflow).toContain("cache: npm");
+  expect(workflow).toContain("cache-dependency-path: package-lock.json");
+  expect(workflow).toContain("npm ci");
+  expect(workflow).toContain("npm exec togostanza build");
+  expect(workflow).not.toContain("pnpm/action-setup");
+  expect(workflow).not.toContain("pnpm install --frozen-lockfile");
+  expect(workflow).not.toContain("will be enabled in Phase 2");
+}
+
+function expectPnpmPagesWorkflow(workflow: string): void {
+  expectCommonPagesWorkflow(workflow);
+  expect(workflow).toContain("pnpm/action-setup@v6");
+  expect(workflow).toContain("version: 10");
+  expect(workflow).toContain("run_install: false");
+  expect(workflow).toContain("actions/setup-node@v6");
+  expect(workflow).toContain("node-version: 24");
+  expect(workflow).toContain("cache: pnpm");
+  expect(workflow).toContain("cache-dependency-path: pnpm-lock.yaml");
+  expect(workflow).toContain("pnpm install --frozen-lockfile");
+  expect(workflow).toContain("pnpm exec togostanza build");
+  expect(workflow).not.toContain("npm ci");
+  expect(workflow).not.toContain("will be enabled in Phase 2");
+}
+
+function expectCommonPagesWorkflow(workflow: string): void {
+  expect(workflow).toContain("name: Publish GitHub Pages");
+  expect(workflow).toContain("workflow_dispatch");
+  expect(workflow).toContain("branches:");
+  expect(workflow).toContain("- main");
+  expect(workflow).toContain("contents: read");
+  expect(workflow).toContain("pages: write");
+  expect(workflow).toContain("id-token: write");
+  expect(workflow).toContain("actions/checkout@v7");
+  expect(workflow).toContain("actions/configure-pages@v6");
+  expect(workflow).toContain("actions/upload-pages-artifact@v5");
+  expect(workflow).toContain("path: dist");
+  expect(workflow).toContain("actions/deploy-pages@v5");
+}
 
 function writeConfigImportFixture(rootDirectory: string): void {
   const packageDirectory = join(rootDirectory, "node_modules", "togostanza");
