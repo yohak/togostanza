@@ -171,6 +171,60 @@ dist/
 
 ## リメイク版観測メモ
 
-リメイク版CLIはまだ未実装のため、`remake/` は空の検証環境として残す。
+### Phase 2-1観測
 
-実装後は、同じ入力意図でビルド生成物を生成し、現行版との差分を記録する。
+- 確認日: 2026-06-30
+- 対象: Phase 2-1 build artifact spine
+- 確認環境: `package/` のintegration testで、compiled `bin/togostanza.mjs` を実行した。
+- `remake/` は、生成物をGit管理しないため空の検証領域として残す。
+
+### 実行したコマンド
+
+Phase 2-1では、integration test内で次と同等の流れを確認した。
+
+```sh
+cd package
+pnpm run test:integration
+```
+
+生成リポジトリ内では、compiled bin経由で次の操作を行った。
+
+```sh
+togostanza init . --skip-install --skip-git
+togostanza generate stanza helloWorld --timestamp 2026-06-30
+togostanza build --output-path public
+```
+
+root assetとして `assets/root-asset.txt` を追加し、stanza個別assetとして `stanzas/hello-world/assets/local-asset.txt` を追加した。
+
+### 生成結果
+
+```text
+public/
+  .togostanza-build-output
+  hello-world.js
+  hello-world.js.map
+  hello-world.css
+  hello-world.css.map
+  hello-world.html
+  hello-world/
+    metadata.json
+    assets/
+      local-asset.txt
+  assets/
+    root-asset.txt
+```
+
+### 主要生成物の観測
+
+- `hello-world.js` と `hello-world.js.map` が生成された。
+- `hello-world.css` と `hello-world.css.map` が生成された。
+- `hello-world.html` が生成された。
+- `hello-world/metadata.json` が生成された。
+- リポジトリルートの `assets/root-asset.txt` は `public/assets/root-asset.txt` にコピーされた。
+- stanza個別の `assets/local-asset.txt` は `public/hello-world/assets/local-asset.txt` にコピーされた。
+- `hello-world.js` には、ブラウザで解決できないbare import `togostanza/stanza` は残らない。
+- build用runtime stubはbundleされる。ただし、custom element登録や実DOM動作の確認はPhase 2-2へ送る。
+- `index.html` と `-togostanza/` はPhase 2-1では生成しない。これは現行版との差分として扱う。
+- source mapは生成と相対参照だけを確認する。source map内部のpathや内容互換は固定しない。
+- `.togostanza-build-output` は、TogoStanzaが所有する出力先として次回buildでcleanできることを示すmarkerである。

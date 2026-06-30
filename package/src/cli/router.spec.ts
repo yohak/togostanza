@@ -668,6 +668,33 @@ describe("CLI router", () => {
     expect(readText(join(cwd, "public", "manual.txt"))).toBe("manual\n");
   });
 
+  it("recovers from a failed build on the next build", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "recoverProbe"], { cwd, currentDate });
+    writeFileSync(
+      join(cwd, "stanzas", "recover-probe", "style.scss"),
+      ".broken {\n  color: ;\n}\n",
+      "utf8",
+    );
+
+    const failedResult = await routeCliAsync(["build"], { cwd });
+
+    expect(failedResult.exitCode).toBe(1);
+    expect(failedResult.stderr).toContain("Sass compile failed");
+    expect(existsSync(join(cwd, "dist", ".togostanza-build-output"))).toBe(true);
+
+    writeFileSync(
+      join(cwd, "stanzas", "recover-probe", "style.scss"),
+      ".recover-probe {\n  color: green;\n}\n",
+      "utf8",
+    );
+
+    const recoveredResult = await routeCliAsync(["build"], { cwd });
+
+    expect(recoveredResult.exitCode).toBe(0);
+    expect(readText(join(cwd, "dist", "recover-probe.css"))).toContain("green");
+  });
+
   function makeTemporaryDirectory(): string {
     const directory = mkdtempSync(join(tmpdir(), "togostanza-cli-"));
     temporaryDirectories.push(directory);
