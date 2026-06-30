@@ -226,5 +226,6 @@ public/
 - `hello-world.js` には、ブラウザで解決できないbare import `togostanza/stanza` は残らない。
 - build用runtime stubはbundleされる。ただし、custom element登録や実DOM動作の確認はPhase 2-2へ送る。
 - `index.html` と `-togostanza/` はPhase 2-1では生成しない。これは現行版との差分として扱う。
+- 空の初期scaffoldに対するbuildは、現行版ではヘルププレビュー生成により成功するが、リメイク版Phase 2-1ではstanzaがないためエラーにする。
 - source mapは生成と相対参照だけを確認する。source map内部のpathや内容互換は固定しない。
 - `.togostanza-build-output` は、TogoStanzaが所有する出力先として次回buildでcleanできることを示すmarkerである。
