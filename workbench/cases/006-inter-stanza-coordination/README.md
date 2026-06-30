@@ -134,6 +134,7 @@ mise exec -- pnpm run serve:fixture
 - `togostanza--data-source` の `target-attribute` は、受信側の `stanza:parameter` に列挙されたkeyとして扱う。
 - Sending Eventsは `this.element.dispatchEvent(new CustomEvent(...))` と `stanza:outgoingEvent` を入口として観測する。Phase 2-5では送信側custom elementへlistenerを張るため、現行fixtureのような非bubbling `CustomEvent` も受ける。
 - `stanza:outgoingEvent` / `stanza:incomingEvent` との対応、`event.detail` の扱い、`value-path` の扱いが説明できること。
+- sender / receiverの複数bundleを同じHTMLで読み込んでも、連携用custom elementの重複登録で例外にならないこと。
 - `togostanza--data-container` を持ち込まないこと。
 
 ## 合格条件

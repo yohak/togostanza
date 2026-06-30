@@ -18,6 +18,7 @@ Phase 2-5は、Phase 2-4までに成立したビルド生成物とランタイ�
 
 - `togostanza build` / `togostanza b` が、006ケース相当のStanzaリポジトリをビルドできる。
 - `togostanza--container` がcustom elementとして登録され、同じcontainer内の連携スコープを作る。
+- `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` は、複数のStanza bundleから同じページで読み込まれても重複登録で例外にならない。
 - 送信側Stanzaから送出した `CustomEvent` を、送信側custom elementに張ったlistenerで捕捉できる。
 - `stanza:outgoingEvent` に列挙されていないイベントは、Phase 2-5のcontainer連携で扱わない。
 - 受信側の `stanza:incomingEvent` に列挙されたイベントだけが、`handleEvent(event)` 呼び出し対象になる。
@@ -35,6 +36,7 @@ Phase 2-5は、Phase 2-4までに成立したビルド生成物とランタイ�
 ## 含めるもの
 
 - `togostanza--container` custom element。
+- `togostanza--container` / `togostanza--event-map` / `togostanza--data-source` の冪等なcustom element登録。
 - container内イベントの監視。
 - `stanza:outgoingEvent` の最小解釈。
 - `stanza:incomingEvent` の最小解釈。
@@ -73,6 +75,8 @@ Phase 2-5は、Phase 2-4までに成立したビルド生成物とランタイ�
 対象:
 
 - `togostanza--container` のcustom element登録。
+- `togostanza--event-map` と `togostanza--data-source` のcustom element登録。
+- 連携用custom element登録前の `customElements.get()` guard。
 - 送信側custom elementへのevent listener登録。
 - 送信側custom elementに紐づくmetadataから `stanza:outgoingEvent` を読む。
 - 受信側custom elementに紐づくmetadataから `stanza:incomingEvent` を読む。
@@ -82,6 +86,8 @@ Phase 2-5は、Phase 2-4までに成立したビルド生成物とランタイ�
 現行fixtureの送信側は `this.element.dispatchEvent(new CustomEvent("selectedValue", { detail }))` を使っている。現行版 `togostanza--container` は、container自身でbubbleを待つのではなく、metadataの `stanza:outgoingEvent` を持つ送信側custom elementへ `addEventListener(eventName, ...)` を張る。この方式では、送信側hostから送出された非bubbling `CustomEvent` も標準DOMのtarget phaseで捕捉できる。
 
 Phase 2-5でも、既存Stanza sourceを壊さないため、このchild-listener方式を基本にする。`bubbles: true` が付いたイベントも送信側hostのlistenerで捕捉できるため、実プロジェクト側で既にbubbling eventを送出している場合も壊さない。container自身が任意の非bubbling eventを横取りする特殊挙動は作らない。
+
+006ケースはsender / receiverの2本のbundleを同じHTMLで読み込む。連携用custom element runtimeを各bundleに含める場合、各bundleが `customElements.define("togostanza--container", ...)` を実行すると2本目で例外になる。そのため、Phase 2-5では既存の `registerStanza()` と同様に、`customElements.get()` で既存定義を確認してから登録する。重複登録のidempotencyはbrowser testで確認する。
 
 ### 2-5b event-map
 
@@ -235,6 +241,7 @@ fetch失敗時の表示、retry、ステータス属性、error eventはPhase 2-
 
 - static fixtureで `coordination-sender.js` と `coordination-receiver.js` をmodule scriptとして読み込む。
 - `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` を含むHTMLを読み込む。
+- sender / receiverの複数Stanza bundleを同一ページで読み込み、連携用custom elementの重複登録例外が出ないことを確認する。
 - 初期状態で受信側の表示が未選択状態になる。
 - data-source経由で `from-data-source` が表示される。
 - 送信側ボタンをクリックすると、受信側の `selected-label` 属性が `from-sender` になる。
