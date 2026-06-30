@@ -25,7 +25,7 @@ Phase 2では、先に全体のサブフェーズ境界を固定する。各サ�
 | サブフェーズ | ゴール | 主な検証ケース | 詳細計画 |
 | ------------ | ------ | -------------- | -------- |
 | Phase 2-0: preflight / repo detection | Phase 1の必須follow-upと、`build` 前提のStanzaリポジトリ検出を整える。 | [001](../../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../../workbench/cases/002-build-artifacts/) | [計画](./phase-2-0/plan.md)、[引き継ぎ](./phase-2-0/handoff.md) |
-| Phase 2-1: build artifact spine | `build` / `b` と、サブパス安全な最小 `dist/` 生成物を成立させる。 | [002](../../../workbench/cases/002-build-artifacts/) | 後続作成 |
+| Phase 2-1: build artifact spine | `build` / `b` と、サブパス安全な最小 `dist/` 生成物を成立させる。 | [002](../../../workbench/cases/002-build-artifacts/) | [計画](./phase-2-1/plan.md) |
 | Phase 2-2: minimal runtime embedding | module script、custom element、open Shadow DOM、Shadow DOM内 `main`、menu placement / About導線を成立させる。 | [003](../../../workbench/cases/003-runtime-embedding/) | 後続作成 |
 | Phase 2-3: Stanza source API | `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()` などを段階的に成立させる。 | [004](../../../workbench/cases/004-runtime-parameters/)、[005](../../../workbench/cases/005-stanza-source-api/) | 後続作成 |
 | Phase 2-4: config / resolution / assets | `togostanza.config.ts`、旧設定検出、Sass `@/` alias、`tsconfig.json`、共有ソース、asset解決を扱う。 | [007](../../../workbench/cases/007-config-and-resolution/) | 後続作成 |
@@ -42,11 +42,11 @@ Phase 2-0では、`build` の中身は実装しない。`init .`、既存ディ�
 
 ### Phase 2-1: build artifact spine
 
-Phase 2-1では、最小のビルド生成物を出す。対象は `build` / `b`、`--output-path`、未指定時の `dist`、Stanza検出、metadata検証、entrypoint候補、stylesheet、template、assetコピー、最小HTML生成までとする。
+Phase 2-1では、最小のビルド生成物を出す。対象は `build` / `b`、`--output-path`、未指定時の `dist`、Stanza検出、metadata検証、entrypoint候補、Viteによるentrypoint bundle、build用runtime stub、stylesheet、template、assetコピー、source map、最小HTML生成までとする。
 
 GitHub Pagesのサブパス配信で壊れない相対URL生成は、Phase 2-1の所有範囲に含める。`{id}.js`、`{id}.css`、`{id}.html`、metadata、asset、共有チャンクへの参照は、`dist/` を任意のサブパスへ置いても相対URLで解決できる形を目指す。
 
-ランタイムの完全なAPI互換は扱わない。ここでは、後続のruntime embeddingが参照できる生成物の形を先に作る。
+custom element登録、Shadow DOM、menu、Stanza source APIの本格挙動は扱わない。ここでは、後続のruntime embeddingが参照できる生成物の形と、Vite buildが通る最小runtime stubを先に作る。
 
 ### Phase 2-2: minimal runtime embedding
 
@@ -106,7 +106,7 @@ Phase 2-6では、Phase 1のGitHub Pages workflow placeholderを、実deploy可�
 | bare `init` をprompt付き入口として追加するかの判断 | [Phase 2-0引き継ぎ](./phase-2-0/handoff.md) に記録済み。後続判断 |
 | `index.ts` / `index.tsx` 生成option | Phase 2-1以降の必要時 |
 | ヘルププレビューUIの詳細 | Phase 2-1以降の必要時、またはPhase 3 |
-| source mapの扱い | Phase 2-1以降の必要時 |
+| source map内部のsources pathや内容の詳細 | Phase 2-1で生成は行う。詳細は後続の必要時 |
 | 広範なmetadata schema validation | Phase 2-1以降の必要時 |
 | `stanza:include` の扱い | Phase 2-4以降の必要時 |
 | React、Vue、`togostanza-utils` | Phase 4 |

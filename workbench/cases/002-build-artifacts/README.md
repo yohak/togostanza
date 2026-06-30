@@ -30,8 +30,12 @@
 ## リメイク版で観測すること
 
 - 同じ入力から、利用契約上必要な生成物が生成されること。
+- Phase 2-1では、ViteでStanza entrypointがbundleされること。
+- Phase 2-1では、`togostanza/stanza` がbuild用runtime stubとしてbundle解決されること。
 - `{id}.js` と共有チャンク一式が、`dist/` 内で相対importにより自己完結すること。
 - `${id}.html` が存在すること。
+- `${id}.js.map` と `${id}.css.map` が存在し、生成物から相対参照されること。
+- Phase 2-1では、`index.html` と `-togostanza/` を生成しないこと。
 - ヘルププレビュー側生成物が変わる場合、ランタイム生成物との差分が説明できること。
 
 ## 合格条件
@@ -40,19 +44,22 @@
 - `${id}.css` が生成される。
 - `${id}/metadata.json` が生成される。
 - asset参照が壊れていない。
-- source mapの有無は必須互換にしない。
+- Phase 2-1では、`${id}.js.map` と `${id}.css.map` が生成される。ただしsource map内容の互換は固定しない。
 
 ## 記録する差分
 
 - `dist/` treeの一覧。
 - 主要生成物のpath。
 - sharedチャンクの有無。
+- source mapのpathと相対参照。
 - ヘルププレビュー関連生成物の差分。
 - ビルド時の警告/エラー。
 
 ## 未決定事項
 
 - assetのinline/emit/hash/thresholdの詳細。
+- Stanza entrypointからのasset importの詳細。
+- source map内部のsources pathや内容の詳細。
 - ヘルププレビュー生成物の最終構造。
 
 ## 現行版準備メモ
