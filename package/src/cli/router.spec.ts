@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -11,15 +11,14 @@ const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");
 };
 
+const failingGitRunner: CommandRunner = () => {
+  throw new Error("git runner should not be called for existing .git");
+};
+
 describe("CLI router", () => {
   const temporaryDirectories: string[] = [];
   const currentDate = new Date("2026-06-30T00:00:00.000Z");
-  const recognizedCommandExamples: readonly (readonly string[])[] = [
-    ["build"],
-    ["b"],
-    ["serve"],
-    ["s"],
-  ];
+  const recognizedCommandExamples: readonly (readonly string[])[] = [["serve"], ["s"]];
 
   afterEach(() => {
     for (const directory of temporaryDirectories.splice(0)) {
@@ -97,6 +96,174 @@ describe("CLI router", () => {
     expect(packageJson.packageManager).toBeUndefined();
     expect(readText(join(cwd, "generated-repo", ".github", "workflows", "publish.yml"))).toContain(
       "workflow_dispatch",
+    );
+  });
+
+  it("creates an init scaffold in the current directory", () => {
+    const cwd = makeNamedTemporaryDirectory("current-repo");
+    const result = routeCli(["init", ".", "--skip-install", "--skip-git"], {
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBeUndefined();
+    expect(readJson(join(cwd, "package.json"))).toMatchObject({
+      name: "current-repo",
+    });
+    expect(readText(join(cwd, ".github", "workflows", "publish.yml"))).toContain(
+      "workflow_dispatch",
+    );
+  });
+
+  it("uses --name as a package name override for init .", () => {
+    const cwd = makeNamedTemporaryDirectory("Invalid Directory Name");
+    const result = routeCli(
+      ["init", ".", "--name", "explicit-name", "--skip-install", "--skip-git"],
+      {
+        cwd,
+      },
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(readJson(join(cwd, "package.json"))).toMatchObject({
+      name: "explicit-name",
+    });
+  });
+
+  it("rejects init . when the current directory name is not a valid package name", () => {
+    const cwd = makeNamedTemporaryDirectory("Invalid Directory Name");
+
+    expect(routeCli(["init", ".", "--skip-install", "--skip-git"], { cwd })).toEqual({
+      exitCode: 1,
+      stderr: "Invalid package name for current directory: Invalid Directory Name",
+    });
+  });
+
+  it("keeps an existing .git directory when init . runs", () => {
+    const cwd = makeNamedTemporaryDirectory("git-repo");
+    mkdirSync(join(cwd, ".git"));
+
+    const result = routeCli(["init", ".", "--skip-install"], {
+      cwd,
+      gitRunner: failingGitRunner,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(readJson(join(cwd, "package.json"))).toMatchObject({
+      name: "git-repo",
+    });
+  });
+
+  it("uses an existing package-lock.json to infer npm for init .", () => {
+    const cwd = makeNamedTemporaryDirectory("npm-lock-repo");
+    writeFileSync(join(cwd, "package-lock.json"), "{}\n", "utf8");
+    const calls: string[] = [];
+    const installRunner: CommandRunner = (command, args, options) => {
+      calls.push(`${command} ${args.join(" ")} @ ${options.cwd}`);
+      return { exitCode: 0 };
+    };
+
+    const result = routeCli(["init", ".", "--skip-git"], {
+      cwd,
+      installRunner,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(calls).toEqual([`npm install @ ${cwd}`]);
+  });
+
+  it("uses an existing pnpm-lock.yaml to infer pnpm for init .", () => {
+    const cwd = makeNamedTemporaryDirectory("pnpm-lock-repo");
+    writeFileSync(join(cwd, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n", "utf8");
+    const calls: string[] = [];
+    const installRunner: CommandRunner = (command, args, options) => {
+      calls.push(`${command} ${args.join(" ")} @ ${options.cwd}`);
+      return { exitCode: 0 };
+    };
+
+    const result = routeCli(["init", ".", "--skip-git"], {
+      cwd,
+      installRunner,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(calls).toEqual([`pnpm install @ ${cwd}`]);
+  });
+
+  it("rejects init . when both lockfiles exist", () => {
+    const cwd = makeNamedTemporaryDirectory("conflicting-lockfiles-repo");
+    writeFileSync(join(cwd, "package-lock.json"), "{}\n", "utf8");
+    writeFileSync(join(cwd, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n", "utf8");
+
+    expect(routeCli(["init", ".", "--skip-install", "--skip-git"], { cwd })).toEqual({
+      exitCode: 1,
+      stderr: "Conflicting lockfiles found: package-lock.json and pnpm-lock.yaml.",
+    });
+  });
+
+  it("rejects init . when --package-manager conflicts with package-lock.json", () => {
+    const cwd = makeNamedTemporaryDirectory("npm-conflict-repo");
+    writeFileSync(join(cwd, "package-lock.json"), "{}\n", "utf8");
+
+    expect(
+      routeCli(["init", ".", "--package-manager", "pnpm", "--skip-install", "--skip-git"], {
+        cwd,
+      }),
+    ).toEqual({
+      exitCode: 1,
+      stderr: "--package-manager pnpm conflicts with existing package-lock.json.",
+    });
+  });
+
+  it("rejects init . when --package-manager conflicts with pnpm-lock.yaml", () => {
+    const cwd = makeNamedTemporaryDirectory("pnpm-conflict-repo");
+    writeFileSync(join(cwd, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n", "utf8");
+
+    expect(
+      routeCli(["init", ".", "--package-manager", "npm", "--skip-install", "--skip-git"], {
+        cwd,
+      }),
+    ).toEqual({
+      exitCode: 1,
+      stderr: "--package-manager npm conflicts with existing pnpm-lock.yaml.",
+    });
+  });
+
+  it("rejects init . when scaffold paths already exist", () => {
+    const cwd = makeNamedTemporaryDirectory("colliding-repo");
+    writeFileSync(join(cwd, "README.md"), "# Existing\n", "utf8");
+
+    expect(routeCli(["init", ".", "--skip-install", "--skip-git"], { cwd })).toEqual({
+      exitCode: 1,
+      stderr: "Cannot initialize in a non-empty directory. Conflicting paths: README.md",
+    });
+  });
+
+  it("treats .gitignore and LICENSE as init . collisions", () => {
+    const cwd = makeNamedTemporaryDirectory("almost-empty-repo");
+    writeFileSync(join(cwd, ".gitignore"), "node_modules/\n", "utf8");
+    writeFileSync(join(cwd, "LICENSE"), "MIT\n", "utf8");
+
+    expect(routeCli(["init", ".", "--skip-install", "--skip-git"], { cwd })).toEqual({
+      exitCode: 1,
+      stderr: "Cannot initialize in a non-empty directory. Conflicting paths: .gitignore, LICENSE",
+    });
+  });
+
+  it("does not use parent lockfiles for init --name <dir>", () => {
+    const cwd = makeTemporaryDirectory();
+    writeFileSync(join(cwd, "package-lock.json"), "{}\n", "utf8");
+
+    const result = routeCli(
+      ["init", "--name", "child-repo", "--package-manager", "pnpm", "--skip-install", "--skip-git"],
+      {
+        cwd,
+      },
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(readText(join(cwd, "child-repo", ".github", "workflows", "publish.yml"))).toContain(
+      "for pnpm",
     );
   });
 
@@ -255,7 +422,7 @@ describe("CLI router", () => {
   });
 
   it("creates a generated stanza and normalizes the id", () => {
-    const cwd = makeTemporaryDirectory();
+    const cwd = makeStanzaRepoRoot();
     const result = routeCli(
       [
         "generate",
@@ -297,7 +464,7 @@ describe("CLI router", () => {
   });
 
   it("supports the g stanza alias", () => {
-    const cwd = makeTemporaryDirectory();
+    const cwd = makeStanzaRepoRoot();
     const result = routeCli(["g", "stanza", "aliasProbe"], { cwd, currentDate });
 
     expect(result.exitCode).toBe(0);
@@ -309,7 +476,7 @@ describe("CLI router", () => {
   });
 
   it("uses default generate stanza options", () => {
-    const cwd = makeTemporaryDirectory();
+    const cwd = makeStanzaRepoRoot();
     const result = routeCli(["generate", "stanza", "defaultProbe"], { cwd, currentDate });
 
     expect(result.exitCode).toBe(0);
@@ -339,7 +506,7 @@ describe("CLI router", () => {
   });
 
   it("rejects existing stanza destinations", () => {
-    const cwd = makeTemporaryDirectory();
+    const cwd = makeStanzaRepoRoot();
 
     routeCli(["generate", "stanza", "duplicate"], { cwd });
 
@@ -349,9 +516,62 @@ describe("CLI router", () => {
     });
   });
 
+  it("rejects generate stanza outside a Stanza repository root", () => {
+    const cwd = makeTemporaryDirectory();
+
+    const result = routeCli(["generate", "stanza", "outside"], { cwd });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("missing package.json");
+  });
+
+  it("rejects build outside a Stanza repository root", () => {
+    const cwd = makeTemporaryDirectory();
+
+    const result = routeCli(["build"], { cwd });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("missing package.json");
+  });
+
+  it("runs build preflight in a Stanza repository root before returning an unimplemented diagnostic", () => {
+    const cwd = makeStanzaRepoRoot();
+
+    expect(routeCli(["build", "--output-path", "public"], { cwd })).toEqual({
+      exitCode: 1,
+      stderr: "Build is not implemented yet for Stanza repository: repo (output: public).",
+    });
+  });
+
+  it("supports the b alias for build preflight", () => {
+    const cwd = makeStanzaRepoRoot();
+
+    expect(routeCli(["b"], { cwd })).toEqual({
+      exitCode: 1,
+      stderr: "Build is not implemented yet for Stanza repository: repo (output: dist).",
+    });
+  });
+
   function makeTemporaryDirectory(): string {
     const directory = mkdtempSync(join(tmpdir(), "togostanza-cli-"));
     temporaryDirectories.push(directory);
+    return directory;
+  }
+
+  function makeNamedTemporaryDirectory(name: string): string {
+    const parentDirectory = makeTemporaryDirectory();
+    const directory = join(parentDirectory, name);
+    mkdirSync(directory);
+    return directory;
+  }
+
+  function makeStanzaRepoRoot(): string {
+    const directory = makeNamedTemporaryDirectory("repo");
+    writeFileSync(
+      join(directory, "package.json"),
+      `${JSON.stringify({ dependencies: { togostanza: "^0.0.0" }, name: "repo" }, null, 2)}\n`,
+      "utf8",
+    );
     return directory;
   }
 

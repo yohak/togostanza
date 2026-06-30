@@ -1,7 +1,8 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { packageMetadata } from "../index.js";
 import { getBooleanOption, getStringOption, parseOptions } from "./options.js";
+import { resolvePackageManager, type PackageManager } from "./package-manager.js";
 import { failure, success, type CliResult } from "./result.js";
 import { runCommand, type CommandRunner } from "./runner.js";
 
@@ -12,8 +13,6 @@ export type InitOptions = {
   gitRunner?: CommandRunner;
   installRunner?: CommandRunner;
 };
-
-type PackageManager = "npm" | "pnpm";
 
 export function handleInit(args: readonly string[], options: InitOptions = {}): CliResult {
   const parsedResult = parseOptions(args, [
@@ -30,26 +29,55 @@ export function handleInit(args: readonly string[], options: InitOptions = {}): 
 
   const { parsed } = parsedResult;
 
-  if (parsed.positional.length > 0) {
+  if (parsed.positional.length > 1) {
+    return failure(`Unexpected argument: ${parsed.positional[1]}`);
+  }
+
+  const target = parsed.positional[0];
+
+  if (target && target !== ".") {
     return failure(`Unexpected argument: ${parsed.positional[0]}`);
   }
 
   const name = getStringOption(parsed, "--name");
+  const cwd = options.cwd ?? process.cwd();
+  const initCurrentDirectory = target === ".";
 
-  if (!name) {
+  if (!initCurrentDirectory && !name) {
     return failure("Missing required option: --name <dir>");
   }
 
-  if (!isValidPackageName(name)) {
-    return failure(`Invalid package name for --name: ${name}`);
+  const packageName = name ?? basename(cwd);
+
+  if (!isValidPackageName(packageName)) {
+    if (name) {
+      return failure(`Invalid package name for --name: ${name}`);
+    }
+
+    return failure(`Invalid package name for current directory: ${packageName}`);
   }
 
-  const cwd = options.cwd ?? process.cwd();
-  const destination = join(cwd, name);
-  const packageManager = resolvePackageManager(getStringOption(parsed, "--package-manager"));
+  const destination = initCurrentDirectory ? cwd : join(cwd, packageName);
+  const packageManagerResult = resolvePackageManager(
+    withOptionalRootDirectory({
+      explicitPackageManager: getStringOption(parsed, "--package-manager"),
+      rootDirectory: initCurrentDirectory ? destination : undefined,
+      useLockfile: initCurrentDirectory,
+    }),
+  );
 
-  if (!packageManager) {
-    return failure("Invalid package manager. Expected npm or pnpm.");
+  if ("error" in packageManagerResult) {
+    return failure(packageManagerResult.error);
+  }
+
+  if (initCurrentDirectory) {
+    const collisionResult = findInitCurrentDirectoryCollisions(destination);
+
+    if (collisionResult.length > 0) {
+      return failure(
+        `Cannot initialize in a non-empty directory. Conflicting paths: ${collisionResult.join(", ")}`,
+      );
+    }
   }
 
   const license = getStringOption(parsed, "--license") ?? "MIT";
@@ -58,8 +86,9 @@ export function handleInit(args: readonly string[], options: InitOptions = {}): 
     createScaffold({
       destination,
       license,
-      name,
-      packageManager,
+      name: packageName,
+      packageManager: packageManagerResult.packageManager,
+      useExistingDirectory: initCurrentDirectory,
     });
   } catch (error) {
     if (isFileExistsError(error)) {
@@ -69,7 +98,7 @@ export function handleInit(args: readonly string[], options: InitOptions = {}): 
     throw error;
   }
 
-  if (!getBooleanOption(parsed, "--skip-git")) {
+  if (!getBooleanOption(parsed, "--skip-git") && !hasExistingGitDirectory(destination)) {
     const gitResult = (options.gitRunner ?? runCommand)("git", ["init", "-b", "main"], {
       cwd: destination,
     });
@@ -80,7 +109,7 @@ export function handleInit(args: readonly string[], options: InitOptions = {}): 
   }
 
   if (!getBooleanOption(parsed, "--skip-install")) {
-    const installCommand = formatInstallCommand(packageManager);
+    const installCommand = formatInstallCommand(packageManagerResult.packageManager);
     const installResult = (options.installRunner ?? runCommand)(
       installCommand.command,
       installCommand.args,
@@ -99,7 +128,7 @@ export function handleInit(args: readonly string[], options: InitOptions = {}): 
     }
   }
 
-  return success(`Created Stanza repository: ${name}`);
+  return success(`Created Stanza repository: ${packageName}`);
 }
 
 export function formatInstallCommand(packageManager: PackageManager): {
@@ -117,8 +146,12 @@ function createScaffold(input: {
   license: string;
   name: string;
   packageManager: PackageManager;
+  useExistingDirectory: boolean;
 }): void {
-  mkdirSync(input.destination);
+  if (!input.useExistingDirectory) {
+    mkdirSync(input.destination);
+  }
+
   mkdirSync(join(input.destination, ".github", "workflows"), { recursive: true });
   mkdirSync(join(input.destination, "assets"));
   mkdirSync(join(input.destination, "lib"));
@@ -179,30 +212,74 @@ function formatWorkflowPlaceholder(packageManager: PackageManager): string {
   ].join("\n");
 }
 
-function resolvePackageManager(value: string | undefined): PackageManager | undefined {
-  if (value === "npm" || value === "pnpm") {
-    return value;
-  }
-
-  if (value) {
-    return undefined;
-  }
-
-  const userAgent = process.env.npm_config_user_agent;
-
-  if (userAgent?.startsWith("pnpm/")) {
-    return "pnpm";
-  }
-
-  if (userAgent?.startsWith("npm/")) {
-    return "npm";
-  }
-
-  return "npm";
-}
-
 function isValidPackageName(name: string): boolean {
   return /^[a-z0-9][a-z0-9._-]*$/.test(name) && name !== "." && name !== "..";
+}
+
+function findInitCurrentDirectoryCollisions(directory: string): string[] {
+  return readdirSync(directory)
+    .map((name) => ({
+      isAllowedPreflightMarker: isAllowedPreflightMarker(directory, name),
+      name,
+    }))
+    .filter((entry) => !entry.isAllowedPreflightMarker)
+    .map((entry) => entry.name)
+    .toSorted();
+}
+
+function isAllowedPreflightMarker(directory: string, name: string): boolean {
+  if (name === "package-lock.json" || name === "pnpm-lock.yaml") {
+    return pathIsFile(join(directory, name));
+  }
+
+  return name === ".git" && hasExistingGitDirectory(directory);
+}
+
+function pathIsFile(path: string): boolean {
+  try {
+    return statSync(path).isFile();
+  } catch (error) {
+    if (isFileNotFound(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+function hasExistingGitDirectory(directory: string): boolean {
+  try {
+    return statSync(join(directory, ".git")).isDirectory();
+  } catch (error) {
+    if (isFileNotFound(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+function basename(path: string): string {
+  const parts = path.split(/[/\\]+/).filter(Boolean);
+  return parts.at(-1) ?? "";
+}
+
+function withOptionalRootDirectory(input: {
+  explicitPackageManager: string | undefined;
+  rootDirectory: string | undefined;
+  useLockfile: boolean;
+}): {
+  explicitPackageManager?: string;
+  rootDirectory?: string;
+  useLockfile: boolean;
+} {
+  return {
+    ...(input.explicitPackageManager
+      ? { explicitPackageManager: input.explicitPackageManager }
+      : {}),
+    ...(input.rootDirectory ? { rootDirectory: input.rootDirectory } : {}),
+    useLockfile: input.useLockfile,
+  };
 }
 
 function formatJson(value: unknown): string {
@@ -221,4 +298,8 @@ function formatRunnerFailure(label: string, result: { exitCode: number; stderr?:
 
 function isFileExistsError(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "EEXIST";
+}
+
+function isFileNotFound(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }

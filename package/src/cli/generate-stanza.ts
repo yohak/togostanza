@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getStringOption, parseOptions } from "./options.js";
+import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure, success, type CliResult } from "./result.js";
 
 export type GenerateStanzaOptions = {
@@ -47,13 +48,19 @@ export function handleGenerateStanza(
   }
 
   const cwd = options.cwd ?? process.cwd();
+  const repoContextResult = resolveStanzaRepoContext(cwd);
+
+  if ("error" in repoContextResult) {
+    return failure(repoContextResult.error);
+  }
+
   const date = formatDate(options.currentDate ?? new Date());
   const label = getStringOption(parsed, "--label") ?? titleCase(id);
   const definition = getStringOption(parsed, "--definition") ?? `${label} stanza.`;
   const license = getStringOption(parsed, "--license") ?? "MIT";
   const author = getStringOption(parsed, "--author") ?? "";
   const timestamp = getStringOption(parsed, "--timestamp") ?? date;
-  const destination = join(cwd, "stanzas", id);
+  const destination = join(repoContextResult.context.rootDirectory, "stanzas", id);
 
   try {
     createStanzaSource({

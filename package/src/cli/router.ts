@@ -1,4 +1,5 @@
 import { formatPackageIdentity } from "../index.js";
+import { handleBuild } from "./build.js";
 import { findCommand, listCommandUsages, type CommandDefinition } from "./commands.js";
 import { handleGenerateStanza } from "./generate-stanza.js";
 import { handleInit, type CommandRunner } from "./init.js";
@@ -48,6 +49,10 @@ function routeCommand(
 
   if (command.canonicalName === "generate stanza") {
     return handleGenerateStanza(args, options);
+  }
+
+  if (command.canonicalName === "build") {
+    return handleBuild(args, options);
   }
 
   return failure(`Command is not implemented yet: ${command.canonicalName}`);
