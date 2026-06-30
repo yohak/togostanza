@@ -159,22 +159,48 @@ mise exec -- pnpm run serve:fixture
 
 ## リメイク版で観測すること
 
-- 同じHTMLでcustom elementが動くこと。
-- 埋め込み先が追加ビルド手順を持たなくても動くこと。
-- frameworkランタイムが必要な場合もStanza配布物側に含まれていること。
+Phase 2-2では、ランタイム埋め込みの土台を確認する。本文描画はPhase 2-3で回収する。
+
+Phase 2-2で観測すること:
+
+- 同じHTMLでcustom elementがupgradeされること。
+- 埋め込み先が追加ビルド手順を持たなくても、`type="module"` scriptとcustom element登録が動くこと。
 - sharedチャンクがある場合、静的ホスティング上の相対importで動くこと。
+- open shadow rootが作られること。
+- Shadow DOM内に `main` が作られること。
+- StanzaごとのCSSがShadow DOM内に適用され、`getComputedStyle()` などでCSSルールが効いていること。
+- `stanza:style` がCSS custom propertyの既定値として反映されること。
+  - Phase 2-2では `stanza:style` を配列として読み、各要素の `stanza:key` をCSS custom property名、`stanza:default` を既定値として扱う。
+- `this.root` がhost custom elementのopen shadow rootを返す土台になっていること。
+- `this.element` がhost custom elementを返す土台になっていること。
+- runtime初期化用metadataはJSへinlineされ、ブラウザ実行時に `dist/{id}/metadata.json` をfetchしないこと。
+- `dist/{id}/metadata.json` がHTTP 500でもcustom elementがupgradeされる、またはrequest logで `dist/{id}/metadata.json` へのrequestが発生しないこと。
+- `dist/{id}/metadata.json` は公開配布物として存在し、Download JSON、外部参照、後続ツール、ヘルプやAbout導線の参照対象になること。
 - `togostanza-menu-placement="none"` でmenu UIが表示されないこと。
+- `none` 以外のmenu placement値がmenu shellへ反映されること。
+- `metadata["stanza:menu-placement"]` が `bottom-right` など `none` 以外のstanzaでは、menu shellが表示され、`${id}.html` へ向くAbout linkを持つこと。
 - `togostanza-menu_placement` を互換属性として扱わないこと。
+- `metadata["stanza:menu-placement"]` が `bottom-right` のstanzaに `togostanza-menu_placement="none"` を付けても、menu shellが非表示にならないこと。
+- About導線が、module scriptの `import.meta.url` を基準に解決された `${id}.html` へ向くこと。
+
+Phase 2-3で回収すること:
+
+- `say-to="runtime"` が `this.params["say-to"]` として反映されること。
+- `renderTemplate()` がtemplateを描画すること。
+- shadow root内の `main` に `Hello, runtime!` 相当の本文が描画されること。
+- Stanza source classの `render()` が適切なタイミングで呼ばれること。
 
 ## 合格条件
 
-- `<togostanza-{id}>` がブラウザ上で描画される。
-- shadow rootとstylesheetが確認できる。
+- `<togostanza-{id}>` がブラウザ上でupgradeされる。
+- shadow rootとstylesheetが確認でき、CSSルールが実際に適用される。
 - コンソールに致命的なmodule loadエラーが出ない。
 - ヘルププレビューのUIに依存せず確認できる。
 - `stanza:menu-placement: none` のdirect embedでmenu UIが表示されない。
 - `togostanza-menu-placement` が正式属性として機能する。
 - `togostanza-menu_placement` に依存しない。
+
+Phase 2-2時点では、Stanza source由来の本文描画は合格条件にしない。本文描画、`this.params`、`renderTemplate()` はPhase 2-3の合格条件として扱う。
 
 ## 記録する差分
 

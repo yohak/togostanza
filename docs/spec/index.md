@@ -131,6 +131,8 @@ dist/
 
 `{id}.html` は、menuのAbout導線から参照できるStanza説明ページとして存在させる。ページのUI、DOM構造、プレビュー機能、snippet生成の詳細は再設計可能とする。
 
+`{id}/metadata.json` は公開配布物として出力する。ランタイム初期化に必要なmetadataは `{id}.js` へinlineしてよく、ブラウザ実行時に `{id}/metadata.json` をfetchすることは必須にしない。`{id}/metadata.json` は、Download JSON、外部参照、後続ツール、ヘルプやAbout導線で参照できる公開資料として扱う。
+
 `{id}.js.map` などのsource mapは開発支援生成物として扱い、必須互換にはしない。`index.html`、`-togostanza/*` などヘルププレビュー内部生成物の構造も必須互換にはしない。
 
 Stanzaソースからのasset importは壊さない。data URL inline、別ファイルemit、hash名、size thresholdなどの詳細は固定しない。
