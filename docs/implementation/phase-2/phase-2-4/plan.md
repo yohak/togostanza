@@ -25,8 +25,10 @@ Phase 2-4は、Phase 2-3までに成立した `build` とランタイムAPIの�
 - Stanza entrypointからimportされるstanza外共有ソースがbundle対象になる。
 - Sass `@use "@/common.scss"` がリポジトリルートを指すaliasとして引き続き解決される。
 - `style.scss` 内の `url("./assets/...")` が、生成CSSから解決可能なURLになる。
+- `style.scss` 内のstanza asset参照は、生成CSS内で `url("./{id}/assets/...")` 相当に解決される。
 - Stanza entrypointからの `./assets/...` importが解決され、生成bundleから参照できる。
 - Stanza entrypointからの依存パッケージ内asset importが解決され、生成bundleから参照できる。
+- Viteがemitするassetは、root `assets/` のコピー先と混ざらない出力先へ分離する。
 - リポジトリルートの `assets/` が `dist/assets/` に出力され、生成物から相対URLで参照できる契約を説明できる。
 - asset import、CSS URL、共有チャンク、metadata、About HTMLへの参照が、GitHub Pagesのサブパス配信相当で壊れないことをbrowser testまたはintegration testで確認する。
 - 007ケースREADMEに、実行したリメイク版コマンド、生成物、asset解決結果、旧設定診断、残した差分を記録する。
@@ -109,11 +111,16 @@ Phase 2-4では、alias合成順を広く固定しない。007ケースのactive
 - root `assets/` から `dist/assets/` へのコピー契約。
 - asset importからemitされたファイルやinline URLを、生成bundleから参照できること。
 - CSS URLが、`{id}.css` の配置から解決できること。
+- Vite emit assetとroot `assets/` コピー先を分けること。
 - static fixtureで、document baseとscript/CSS baseがずれてもassetが解決できること。
 
 assetのinline、emit、hash、thresholdは外部互換として固定しない。Phase 2-4で固定するのは、正しい既存入力が壊れず、生成物内の参照がサブパス安全に解決できることである。
 
-root `assets/` の参照記法は注意して扱う。`dist/assets/` への出力は維持するが、Stanzaソース内で `./assets/...` と書いた場合に埋め込みHTML基準へ解決される問題は、007ケースの観測どおり差分になり得る。Phase 2-4では、生成物から相対URLで参照できる契約と、Stanzaソースからの推奨参照方法を説明できる状態にする。
+CSS `url("./assets/...")` はPhase 2-4で明示的に解決する。Phase 2-1ではSassをViteではなくstandalone sassで処理し、`{id}.css` を `dist/` 直下へ出している。このままではブラウザが `url("./assets/x.svg")` を `dist/assets/x.svg` として解決する一方、stanza別assetは `dist/{id}/assets/x.svg` に置かれる。Phase 2-4では、`style.scss` 由来のstanza asset相対URLを生成CSS内で `url("./{id}/assets/...")` 相当に書き換える方針を採る。
+
+この書き換えは、`url("./assets/...")` と `url("assets/...")` のようなstanza stylesheetからの相対asset参照に限定する。絶対URL、data URL、外部URL、root asset参照、package asset参照まで同じ規則で吸収しない。より広いCSS asset pipeline化やVite CSS移行は、必要になった時点の後続判断にする。
+
+root `assets/` の参照記法は注意して扱う。`dist/assets/` への出力は維持するが、Stanzaソース内で `./assets/...` と書いた場合に埋め込みHTML基準へ解決される問題は、007ケースの観測どおり差分になり得る。Phase 2-4では、生成物から相対URLで参照できる契約を確認する一方、Stanzaソースからroot assetを直接参照する推奨APIやhelperは未解決の既知制約として記録する。
 
 ### 2-4d verification / case update
 
@@ -129,8 +136,9 @@ root `assets/` の参照記法は注意して扱う。`dist/assets/` への出�
 - Sass `@/` aliasの解決結果。
 - JS asset importの出力結果。
 - package asset importの出力結果。
-- CSS `url(...)` の解決結果。
+- CSS `url("./assets/...")` が `./{id}/assets/...` 相当へ解決された結果。
 - root `assets/` の出力と参照結果。
+- Stanzaソースからroot assetを `./assets/...` として参照するケースはPhase 2-4では未解決の既知制約であること。
 - サブパス配信相当のbrowser観測。
 - 現行版との差分と後続へ送る事項。
 
@@ -139,6 +147,8 @@ root `assets/` の参照記法は注意して扱う。`dist/assets/` への出�
 旧 `togostanza-build.mjs` / `togostanza-build.js` は無条件に実行しない。Phase 2-4では、存在を検出し、移行先として `togostanza.config.ts` をwarningで案内する。旧設定ファイルの存在だけではbuildを失敗させない。
 
 `togostanza.config.ts` は新しい設定入口として扱う。設定APIには `defineTogoStanzaConfig()` を提供する。これは型補助と将来のschema拡張のための薄いhelperであり、Phase 2-4では複雑なvalidationやplugin互換を作り込みすぎない。
+
+007ケース入力には `togostanza.config.ts` が含まれていない。そのため、新設定の検出、読み込み、`defineTogoStanzaConfig()` の確認は、007ケースとは別のunit testまたは専用integration fixtureで扱う。
 
 Phase 2-4の最小schema候補は次の範囲に留める。
 
@@ -151,6 +161,8 @@ Phase 2-4の最小schema候補は次の範囲に留める。
 ## tsconfig / alias方針
 
 `tsconfig.json` はTypeScript / TSXビルド設定として尊重する。Viteが既定で読む範囲はViteに任せ、TogoStanza側で独自に再実装しすぎない。
+
+現行版では、`tsconfig.json` があるとTypeScript supportが有効化され、JSソースだけのケースで `allowJs` が無い場合に `TS18003` で失敗することが007ケースで観測されている。リメイク版はVite/esbuildを基本にするため、同じ `tsc` 駆動の `TS18003` を互換挙動として再現することは目指さない。`tsconfig.json` は尊重するが、現行版の失敗条件そのものは固定しない。
 
 Phase 2-4では、`paths` やVite aliasの合成順を外部契約として固定しない。必要な場合は、次の優先で扱う。
 
@@ -166,9 +178,11 @@ stanza別 `assets/` は `dist/{id}/assets/` へコピーする。root `assets/` 
 
 Stanza entrypointからimportしたassetは、Viteのasset処理に乗せる。出力がdata URL inlineになるか、別ファイルemitになるか、hash名になるかは固定しない。ただし、生成bundleから参照でき、static hosting上で壊れないことを確認する。
 
+Viteが非inline assetをemitする場合、root `assets/` のコピー先である `dist/assets/` とは分ける。Phase 2-4では、Vite emit assetの出力先を `_assets/` などの内部生成物ディレクトリへ寄せ、Stanza開発者が置いたroot assetとビルドemit assetが同じ `assets/` に混在しないようにする。
+
 依存パッケージ内asset importは、`togostanza-utils` API互換とは分離して扱う。Phase 2-4では、依存パッケージからassetをimportできるか、未対応なら移行手順が分かる診断が出ることを確認する。
 
-CSS `url(...)` は、生成された `{id}.css` から解決できる必要がある。Phase 2-1のようにSass単体でCSSを書き出すだけでは、URLの基準がずれて壊れる可能性があるため、Phase 2-4では実ブラウザで「読み込まれた」ことまで確認する。
+CSS `url(...)` は、生成された `{id}.css` から解決できる必要がある。Phase 2-1のようにSass単体でCSSを書き出すだけでは、URLの基準がずれて壊れるため、Phase 2-4ではstanza asset相対URLを書き換えたうえで、実ブラウザで「読み込まれた」ことまで確認する。
 
 ## 検証計画
 
@@ -177,8 +191,10 @@ Unit test:
 - 旧設定ファイル検出が旧設定を実行しないこと。
 - 旧設定ファイル診断が移行先を含むこと。
 - `togostanza.config.ts` の最小shapeを読み込めること。
+- `togostanza.config.ts` の読み込みは、007ケースとは別の専用fixtureで確認すること。
 - config読み込み失敗時に対象pathが分かる診断を返すこと。
 - Sass `@/` aliasが維持されること。
+- CSS `url("./assets/...")` の書き換え対象と対象外を確認すること。
 
 Integration test:
 
@@ -186,6 +202,7 @@ Integration test:
 - `build` / `b` の両方で同じ解決設定が使われること。
 - 共有ソースimportを含むentrypointがbundleされること。
 - Stanza entrypoint asset importとpackage asset importを含むbundleが生成されること。
+- Vite emit assetがroot `assets/` と別の出力先へ分離されること。
 - root `assets/` とstanza別 `assets/` が期待位置へ出力されること。
 - unsafe output pathやpreflightの既存テストが退行しないこと。
 
@@ -198,6 +215,7 @@ Browser test:
 - package asset import由来の画像が読み込まれる。
 - CSS `url(...)` 由来の画像またはstyleが実際に適用される。
 - root `assets/` が `dist/assets/` から取得できる。
+- Stanzaソースからroot assetを `./assets/...` として参照するケースは、Phase 2-4では既知制約として007ケースREADMEに記録される。
 - `{id}/metadata.json` fetchにruntime初期化が依存しない既存契約が維持される。
 
 Documentation:
