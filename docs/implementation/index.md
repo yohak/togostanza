@@ -12,7 +12,7 @@
 | ---- | ---- | ---- | ---- |
 | Phase 0: skeleton | リメイク版パッケージとCLI土台を固める。 | パッケージ内のsmoke test | [設計](./phase-0/plan.md)、[引き継ぎ](./phase-0/handoff.md) |
 | Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-1/plan.md)、[引き継ぎ](./phase-1/handoff.md) |
-| Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | [サブフェーズ計画](./phase-2/index.md) |
+| Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | [サブフェーズ計画](./phase-2/index.md)、[引き継ぎ](./phase-2/handoff.md) |
 | Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | `phase-3-serve.md` |
 | Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | `phase-4-compatibility.md` |
 | Phase 5: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | `phase-5-distribution.md` |
@@ -94,7 +94,7 @@ Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計
 - React、Vue固有のcompatibility。
 - `togostanza-utils` compatibility。
 
-対応する主な検証ケースは [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) とする。GitHub Pages workflowの実deploy導線は、`dist/` 生成とサブパス配信を確認できるPhase 2でplaceholderから置き換え、001のPhase 2合格条件として確認する。Phase 2の詳細は [Phase 2: build + runtime サブフェーズ計画](./phase-2/index.md) で扱う。Phase 2では、最小のbuild + runtime契約を先に成立させ、その後に `togostanza--event-map` と `togostanza--data-source` の具体APIを固定して実装する順序を切る。
+対応する主な検証ケースは [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) とする。GitHub Pages workflowの実deploy導線は、`dist/` 生成とサブパス配信を確認できるPhase 2でplaceholderから置き換え、001のPhase 2合格条件として確認する。Phase 2の詳細は [Phase 2: build + runtime サブフェーズ計画](./phase-2/index.md) で扱い、完了後の状態は [Phase 2: build + runtime 引き継ぎ](./phase-2/handoff.md) に置く。Phase 2では、最小のbuild + runtime契約を先に成立させ、その後に `togostanza--event-map` と `togostanza--data-source` の具体APIを固定して実装する順序を切る。
 
 ## Phase 3: serve
 
