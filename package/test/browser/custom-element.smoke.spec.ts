@@ -454,6 +454,101 @@ test("supports Phase 2-3 Stanza source APIs in built custom elements", async ({ 
   }
 });
 
+test("loads Phase 2-4 CSS and JavaScript asset references from built custom elements", async ({
+  page,
+}) => {
+  test.setTimeout(20_000);
+
+  const cwd = makeTemporaryDirectory();
+  await test.step("build asset resolution fixture", async () => {
+    await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+    writeAssetResolutionProbe(cwd);
+    await runCli(["build", "--output-path", "public"], cwd);
+  });
+  writeFileSync(
+    resolve(cwd, "fixture.html"),
+    `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/asset-resolution-probe.js"></script>
+    <togostanza-asset-resolution-probe id="asset-resolution"></togostanza-asset-resolution-probe>
+  </body>
+</html>
+`,
+    "utf8",
+  );
+  const requestLog: string[] = [];
+  const server = await startStaticServer(cwd, requestLog);
+
+  try {
+    const port = addressPort(server);
+    const origin = `http://127.0.0.1:${port}`;
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`);
+    await page.waitForFunction(() => customElements.get("togostanza-asset-resolution-probe"));
+
+    await expect
+      .poll(
+        () =>
+          page.locator("#asset-resolution").evaluate((element) => {
+            const root = element.shadowRoot;
+            const localImage = root?.querySelector<HTMLImageElement>("[data-probe='local-asset']");
+            const packageImage = root?.querySelector<HTMLImageElement>(
+              "[data-probe='package-asset']",
+            );
+            const cssMarker = root?.querySelector<HTMLElement>("[data-probe='css-asset']");
+
+            return {
+              cssBackground: cssMarker ? getComputedStyle(cssMarker).backgroundImage : "",
+              localLoaded:
+                (localImage?.naturalHeight ?? 0) > 0 && (localImage?.naturalWidth ?? 0) > 0,
+              localSource: localImage?.currentSrc ?? "",
+              packageLoaded:
+                (packageImage?.naturalHeight ?? 0) > 0 && (packageImage?.naturalWidth ?? 0) > 0,
+              packageSource: packageImage?.currentSrc ?? "",
+            };
+          }),
+        { timeout: 2_000 },
+      )
+      .toMatchObject({
+        localLoaded: true,
+        packageLoaded: true,
+      });
+
+    const assetState = await page.locator("#asset-resolution").evaluate((element) => {
+      const root = element.shadowRoot;
+      const localImage = root?.querySelector<HTMLImageElement>("[data-probe='local-asset']");
+      const packageImage = root?.querySelector<HTMLImageElement>("[data-probe='package-asset']");
+      const cssMarker = root?.querySelector<HTMLElement>("[data-probe='css-asset']");
+
+      return {
+        cssBackground: cssMarker ? getComputedStyle(cssMarker).backgroundImage : "",
+        localSource: localImage?.currentSrc ?? "",
+        packageSource: packageImage?.currentSrc ?? "",
+      };
+    });
+
+    expect(assetState.cssBackground).toContain(
+      `${origin}/public/asset-resolution-probe/assets/css-marker.svg`,
+    );
+    expect(assetState.cssBackground).not.toContain(`${origin}/assets/css-marker.svg`);
+    expect(assetState.localSource).toContain("/public/_assets/local-marker-");
+    expect(assetState.localSource).not.toContain(`${origin}/_assets/local-marker-`);
+    expect(assetState.packageSource).toContain("/public/_assets/package-marker-");
+    expect(assetState.packageSource).not.toContain(`${origin}/_assets/package-marker-`);
+
+    await expect
+      .poll(() =>
+        requestLog.some(
+          (requestPath) => requestPath === "/public/asset-resolution-probe/assets/css-marker.svg",
+        ),
+      )
+      .toBe(true);
+    expect(requestLog.some((requestPath) => requestPath.startsWith("/assets/"))).toBe(false);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 async function expectMenuState(
   page: Page,
   selector: string,
@@ -516,7 +611,7 @@ function runCli(args: string[], cwd: string): Promise<void> {
   return new Promise((resolveRun, reject) => {
     const child = spawn(process.execPath, [resolve(packageRoot, "bin/togostanza.mjs"), ...args], {
       cwd,
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["ignore", "ignore", "pipe"],
     });
     let stderr = "";
 
@@ -801,6 +896,100 @@ function formatAttributeChange(change) {
   );
 }
 
+function writeAssetResolutionProbe(cwd: string): void {
+  const stanzaDirectory = resolve(cwd, "stanzas", "asset-resolution-probe");
+  const packageDirectory = resolve(cwd, "node_modules", "case-browser-asset-package");
+  mkdirSync(resolve(stanzaDirectory, "assets"), { recursive: true });
+  mkdirSync(resolve(stanzaDirectory, "templates"), { recursive: true });
+  mkdirSync(packageDirectory, { recursive: true });
+  writeFileSync(
+    resolve(stanzaDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "asset-resolution-probe",
+        "stanza:label": "Asset Resolution Probe",
+        "stanza:menu-placement": "none",
+        "stanza:parameter": [],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(packageDirectory, "package.json"),
+    `${JSON.stringify({
+      name: "case-browser-asset-package",
+      type: "module",
+      version: "0.0.0",
+    })}\n`,
+    "utf8",
+  );
+  writeFileSync(resolve(stanzaDirectory, "assets", "css-marker.svg"), formatSvg(16, "css"), "utf8");
+  writeFileSync(
+    resolve(stanzaDirectory, "assets", "local-marker.svg"),
+    formatLargeSvg(12, "local"),
+    "utf8",
+  );
+  writeFileSync(
+    resolve(packageDirectory, "package-marker.svg"),
+    formatLargeSvg(14, "package"),
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "style.scss"),
+    `.asset-resolution-probe__css {
+  background-image: url("./assets/css-marker.svg");
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  height: 16px;
+  width: 16px;
+}
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "index.js"),
+    `import Stanza from "togostanza/stanza";
+import localMarkerUrl from "./assets/local-marker.svg";
+import packageMarkerUrl from "case-browser-asset-package/package-marker.svg";
+
+export default class AssetResolutionProbe extends Stanza {
+  render() {
+    this.renderTemplate({
+      template: "stanza.html.hbs",
+      parameters: {
+        localMarkerUrl,
+        packageMarkerUrl,
+      },
+    });
+  }
+}
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "templates", "stanza.html.hbs"),
+    `<div
+  class="asset-resolution-probe__css"
+  data-probe="css-asset"
+></div>
+<img alt="local asset" data-probe="local-asset" src="{{localMarkerUrl}}">
+<img alt="package asset" data-probe="package-asset" src="{{packageMarkerUrl}}">
+`,
+    "utf8",
+  );
+}
+
+function formatSvg(size: number, label: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><title>${label}</title><rect width="${size}" height="${size}" fill="#2f6f73"/></svg>\n`;
+}
+
+function formatLargeSvg(size: number, label: string): string {
+  return formatSvg(size, `${label}-${"x".repeat(5000)}`);
+}
+
 function makeTemporaryDirectory(): string {
   const parentDirectory = mkdtempSync(resolve(tmpdir(), "togostanza-browser-"));
   const directory = resolve(parentDirectory, "repo");
@@ -883,6 +1072,7 @@ function closeServer(server: Server): Promise<void> {
 
       resolveClose();
     });
+    server.closeAllConnections();
   });
 }
 
@@ -892,6 +1082,8 @@ function contentType(path: string): string {
       return "text/css; charset=utf-8";
     case ".html":
       return "text/html; charset=utf-8";
+    case ".svg":
+      return "image/svg+xml; charset=utf-8";
     case ".js":
       return "text/javascript; charset=utf-8";
     case ".json":
