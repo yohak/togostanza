@@ -38,5 +38,9 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ]
+  },
+  "dependencies": {
+    "sass": "^1.101.0",
+    "vite": "^8.1.0"
   }
 }
