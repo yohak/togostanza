@@ -23,8 +23,9 @@ Phase 2-3は、Phase 2-2で作ったcustom elementとShadow DOMの土台に、�
 - `metadata["stanza:style"]` は `this.params` に入らず、Phase 2-2のCSS custom property既定値用途を維持する。
 - Stanza instanceの `render()` が初期表示時に呼ばれる。
 - async `render()` を扱える。
-- `renderTemplate({ template, parameters })` が `templates/*.hbs` を描画し、既定ではShadow DOM内 `main` へ挿入する。
+- `renderTemplate({ template, parameters })` が `templates/*.hbs` を描画し、既定ではShadow DOM内 `main` の内容を置換する。
 - `renderTemplate({ template, parameters, selector })` が指定selectorへ描画できる。
+- `renderTemplate()` は対象要素の内容を置換し、属性変更後の再描画で本文が重複しない。
 - 存在しないtemplateを指定した場合、修正対象が分かるエラーになる。
 - パラメーター属性変更時に `this.params` が更新される。
 - 属性変更時に `handleAttributeChange(name, oldValue, newValue)` が呼ばれる。
@@ -34,6 +35,7 @@ Phase 2-3は、Phase 2-2で作ったcustom elementとShadow DOMの土台に、�
 - `query()` のrequest bodyは `query` を含む `application/x-www-form-urlencoded` として送られる。
 - `importWebFontCSS(cssUrl)` がShadow DOM内にstylesheet linkを追加する。
 - `menu()` が返す `{ type: "item", label, handler }` と `{ type: "divider" }` を最小menu shellへ反映できる。
+- `menu()` は初期表示時と再描画後に再評価され、`this.params` に依存するmenu itemを反映できる。
 - menu itemをクリックすると該当handlerが呼ばれる。
 - unit test、integration test、browser testで、004/005相当の挙動を確認できる。
 - 004ケースREADMEと005ケースREADMEに、Phase 2-3で確認したリメイク版の観測範囲を記録する。
@@ -51,6 +53,7 @@ Phase 2-3は、Phase 2-2で作ったcustom elementとShadow DOMの土台に、�
 - `render()` 呼び出し。
 - async `render()` の扱い。
 - 属性変更の監視対象をmetadata上のparameter keyへ広げること。
+- `observedAttributes` を、runtime登録時のmetadataから得たparameter key群と `togostanza-menu-placement` から生成すること。
 - `handleAttributeChange()`。
 - 属性変更時の既定再描画。
 - `query()`。
@@ -97,6 +100,7 @@ Phase 2-3は、Phase 2-2で作ったcustom elementとShadow DOMの土台に、�
 - 属性変更時に `this.params` を更新する。
 - `handleAttributeChange()` を呼ぶ。
 - 既定の属性変更後再描画を行う。
+- `renderTemplate()` が対象要素の内容を置換し、再描画が冪等になることを確認する。
 
 2-3aの完了目安は、004ケースの主要パラメーター変換と、005ケースの `renderTemplate()` / `this.root` / `this.element` / `this.params` がブラウザで確認できることである。
 
@@ -171,22 +175,27 @@ Phase 2-3では、custom elementが接続された後にStanza instanceの `rend
 1. `this.params` を最新属性から再生成する。
 2. `handleAttributeChange(name, oldValue, newValue)` を呼ぶ。
 3. 既定実装では再描画する。
+4. 再描画後に `menu()` を再評価し、menu shellを更新する。
 
 Stanza sourceが `handleAttributeChange()` をoverrideし、`super.handleAttributeChange(...)` を呼んだ場合に既定再描画が動く形を目指す。overrideして `super` を呼ばない場合の詳細挙動は、既存ソース互換を見ながら実装時に確認する。
 
 debounce、render中の再入、連続属性変更の順序制御はPhase 2-3では作り込みすぎない。
 
+`observedAttributes` はcustom element定義時に静的に決まる。そのため、Phase 2-3ではruntime登録時のinline metadataから `stanza:parameter` のkey群を取り出し、Phase 2-2で扱った `togostanza-menu-placement` と合わせて監視対象を生成する。
+
 ## template方針
 
 `templates/*.hbs` は、build時に検出して `{id}.js` へbundleすることを基本候補にする。runtimeでtemplateファイルをfetchする形にはしない。
 
-`renderTemplate({ template, parameters })` は、`template` に指定されたファイル名のHandlebars templateを描画する。描画先は、`selector` が指定されている場合は `this.root.querySelector(selector)`、未指定の場合はShadow DOM内 `main` とする。
+Handlebars templateは、build時にprecompileする方針を基本にする。browser bundleには可能な限りHandlebars runtimeだけを含め、全stanza bundleへフルコンパイラを載せないことを目指す。ただし、まずPhase 2-3の観測契約を通すために必要な範囲では、実装方式を段階的にしてよい。
+
+`renderTemplate({ template, parameters })` は、`template` に指定されたファイル名のHandlebars templateを描画する。描画先は、`selector` が指定されている場合は `this.root.querySelector(selector)`、未指定の場合はShadow DOM内 `main` とする。描画時は対象要素の内容を置換し、追記しない。これにより、属性変更後の再描画でも本文が重複しない。
 
 templateが存在しない場合やselectorが見つからない場合は、対象stanzaとtemplate名またはselectorが分かるエラーにする。エラー文言そのものは互換対象にしない。
 
-Handlebarsの高度なhelper互換、partial、template precompile方式、escapingの細部はPhase 2-3では必要最小限に留める。既存ケース入力とPhase 1生成templateが動くことを優先する。
+Handlebarsの高度なhelper互換、partial、precompile出力の細部、escapingの細部はPhase 2-3では必要最小限に留める。既存ケース入力とPhase 1生成templateが動くことを優先する。
 
-Handlebarsを新しく依存に追加する場合は、`build` 実行時に必要な依存として扱う。browser runtimeでtemplateをcompile/renderする実装にする場合も、Vite bundleへ含め、埋め込み先Webサイトに追加installや追加buildを要求しない。
+Handlebarsを新しく依存に追加する場合は、`build` 実行時に必要な依存として扱う。precompileではなくbrowser runtimeでtemplateをcompile/renderする一時実装にする場合も、Vite bundleへ含め、埋め込み先Webサイトに追加installや追加buildを要求しない。
 
 ## query方針
 
@@ -214,6 +223,8 @@ Phase 2-2のmenu shellは、placement、`none`、About導線だけを扱った�
 - `{ type: "divider" }`
 
 itemのDOM構造や見た目は固定しない。browser testでは、item labelが表示され、クリック時にhandlerが呼ばれることを確認する。
+
+`menu()` は初期render後に呼ぶ。属性変更後の既定再描画でも再評価し、`this.params` に依存するmenu itemが更新されるようにする。再評価時は既存のsource由来menu itemを置換し、重複追加しない。
 
 `metadata["stanza:menu-placement"]` または `togostanza-menu-placement` が `none` の場合は、menu itemがあってもmenu shellは表示しない。
 
@@ -255,9 +266,11 @@ Phase 2-3では、004ケースの現行版観測を踏まえつつ、リメイ�
 - number、json、date、datetime、single-choice、text、string、その他typeの変換を確認する。
 - `stanza:style` が `this.params` に入らないことを確認する。
 - template mapから `renderTemplate()` がHTMLを生成する。
+- `renderTemplate()` が対象要素の内容を置換し、追記しないことを確認する。
 - 存在しないtemplateで失敗する。
 - selector指定時に描画先が変わる。
 - 属性変更時にparams更新と `handleAttributeChange()` 呼び出しが起きる。
+- metadataのparameter key群と `togostanza-menu-placement` から監視属性を生成する。
 - `query()` がmethod未指定でPOST requestを組み立てる。
 - `importWebFontCSS()` がlinkを追加する。
 - `menu()` item APIがmenu shellへ反映される。
@@ -279,6 +292,7 @@ Phase 2-3では、004ケースの現行版観測を踏まえつつ、リメイ�
 - `/sparql` fixture endpointで `query()` のPOST、content type、bodyを確認する。
 - `importWebFontCSS()` のlink追加を確認する。
 - `menu()` item labelとhandler呼び出しを確認する。
+- 属性変更後に `menu()` itemが重複せず更新されることを確認する。
 - コンソールに致命的なmodule loadエラーが出ないことを確認する。
 
 ## 後続判断として残すこと
