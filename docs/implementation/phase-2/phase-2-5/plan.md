@@ -18,14 +18,16 @@ Phase 2-5は、Phase 2-4までに成立したビルド生成物とランタイ�
 
 - `togostanza build` / `togostanza b` が、006ケース相当のStanzaリポジトリをビルドできる。
 - `togostanza--container` がcustom elementとして登録され、同じcontainer内の連携スコープを作る。
-- 送信側Stanzaから送出した `CustomEvent` が、containerに到達する条件を説明できる。
+- 送信側Stanzaから送出した `CustomEvent` を、送信側custom elementに張ったlistenerで捕捉できる。
 - `stanza:outgoingEvent` に列挙されていないイベントは、Phase 2-5のcontainer連携で扱わない。
 - 受信側の `stanza:incomingEvent` に列挙されたイベントだけが、`handleEvent(event)` 呼び出し対象になる。
 - `handleEvent(event)` には、元の `CustomEvent` と同じ `event.type` と `event.detail` を観測できる形で渡す。
 - `togostanza--event-map` が、metadataで許可されたイベントから値を取り出し、同じcontainer内の受信側Stanza属性へ反映する。
 - `togostanza--event-map` の `value-path` は、`event.detail` を起点にしたドット区切りpathとして扱う。
+- `togostanza--event-map` の `target-attribute` は、受信側metadataの `stanza:parameter` に列挙されたkeyであることを前提にする。
 - `togostanza--event-map` による属性更新が、Phase 2-3の `this.params` 更新、`handleAttributeChange()`、再描画につながる。
 - `togostanza--data-source` が外部JSONを取得し、同じcontainer内の受信側Stanza属性へ渡す。
+- `togostanza--data-source` の `target-attribute` は、受信側metadataの `stanza:parameter` に列挙されたkeyであることを前提にする。
 - Phase 2-5では、`togostanza--data-source` は現行観測に合わせてblob URL handoffを維持する。
 - `togostanza--data-container` をcustom elementとして登録しない。
 - 006ケースREADMEに、実行したリメイク版コマンド、生成物、browser観測、現行版との差分、後続へ送る事項を記録する。
@@ -71,15 +73,15 @@ Phase 2-5は、Phase 2-4までに成立したビルド生成物とランタイ�
 対象:
 
 - `togostanza--container` のcustom element登録。
-- container内での `CustomEvent` 監視。
+- 送信側custom elementへのevent listener登録。
 - 送信側custom elementに紐づくmetadataから `stanza:outgoingEvent` を読む。
 - 受信側custom elementに紐づくmetadataから `stanza:incomingEvent` を読む。
 - incoming eventが一致する受信側Stanza instanceへ `handleEvent(event)` を呼ぶ。
 - metadataに列挙されていないイベントを無視する。
 
-現行fixtureの送信側は `this.element.dispatchEvent(new CustomEvent("selectedValue", { detail }))` を使っている。標準DOMでは、これだけではイベントがbubbleしない。Phase 2-5のリメイク版観測では、送信側Stanza sourceを `bubbles: true`、必要なら `composed: true` を付けて送出する形へ寄せる。
+現行fixtureの送信側は `this.element.dispatchEvent(new CustomEvent("selectedValue", { detail }))` を使っている。現行版 `togostanza--container` は、container自身でbubbleを待つのではなく、metadataの `stanza:outgoingEvent` を持つ送信側custom elementへ `addEventListener(eventName, ...)` を張る。この方式では、送信側hostから送出された非bubbling `CustomEvent` も標準DOMのtarget phaseで捕捉できる。
 
-これは仕様の入口を `CustomEvent` に置く判断と整合する。containerが任意の非bubbling eventを横取りするような特殊挙動は作らない。移行メモには、Stanza間連携でcontainerへイベントを届けるにはbubbling eventとして送出することを残す。
+Phase 2-5でも、既存Stanza sourceを壊さないため、このchild-listener方式を基本にする。`bubbles: true` が付いたイベントも送信側hostのlistenerで捕捉できるため、実プロジェクト側で既にbubbling eventを送出している場合も壊さない。container自身が任意の非bubbling eventを横取りする特殊挙動は作らない。
 
 ### 2-5b event-map
 
@@ -95,6 +97,8 @@ Phase 2-5で扱う属性は次の範囲にする。
 現行版ではevent-mapが送信元selectorを持たず、container内の同名イベントを拾う。Phase 2-5でも、`sender` selectorは正式APIとして固定しない。代わりに、送信側のmetadataに `stanza:outgoingEvent` があり、受信側のmetadataに `stanza:incomingEvent` があることを最小の安全境界にする。
 
 `receiver` はcontainerの子孫に限定する。container外の要素へ属性を書き込まない。
+
+`target-attribute` は、受信側metadataの `stanza:parameter` に列挙されたkeyであることを前提にする。Phase 2-3のcustom elementはparameter keyを `observedAttributes` に入れるため、未宣言属性を更新しても `this.params` 更新や再描画につながらない。未宣言の `target-attribute` は無言の成功にせず、warningまたは診断可能な失敗として扱う。
 
 `value-path` は `payload.label` のような単純なドット区切りだけを扱う。pathが存在しない場合、Phase 2-5では属性を更新せずwarningを出す候補にする。warning文言の細部は互換対象にしない。
 
@@ -149,9 +153,11 @@ metadataが無い要素、TogoStanza custom elementではない要素、まだup
 
 Stanza sourceは、送信側custom elementである `this.element` から `CustomEvent` を送出する。
 
-Stanza間連携でcontainerへ届けたいイベントは、`bubbles: true` を付ける。Shadow DOM内から送出する場合や外側のcontainerへ届ける必要がある場合は、`composed: true` も付ける。
+Phase 2-5のcontainerは、送信側metadataの `stanza:outgoingEvent` に列挙されたイベント名ごとに、送信側custom elementへlistenerを張る。これにより、`this.element.dispatchEvent(new CustomEvent("selectedValue", { detail }))` のような非bubbling eventも捕捉できる。
 
-Phase 2-5では、containerが標準DOMイベントモデルを尊重する。非bubbling eventを特別に拾い上げる互換処理は作らない。
+`bubbles: true` が付いたeventも同じlistenerで捕捉できるため、実プロジェクト側でbubbling eventを使っている場合も許容する。ただし、Phase 2-5のStanza間連携では `bubbles` や `composed` を必須条件にしない。`this.element` から送出する限り、`composed: true` は不要である。
+
+Shadow DOM内部の要素から送出されたeventをcontainerへ届ける場合は別問題である。Phase 2-5では、Stanza sourceが `this.element` から送出する経路を対象にし、Shadow DOM内部からの自動拾い上げは扱わない。
 
 `handleEvent(event)` には、元のevent objectを渡す。受信側は `event.type` と `event.detail` を観測できる。
 
@@ -165,6 +171,8 @@ Phase 2-5では、現行fixtureと同じ属性名を最小互換として維持�
 
 `target-attribute` はHTML属性名として扱う。camelCase property assignmentは行わない。
 
+`target-attribute` は、受信側metadataの `stanza:parameter` keyである必要がある。これは属性変更を `this.params` 更新と再描画へつなげるための制約である。
+
 `value-path` は `event.detail` を起点にしたpathである。たとえば `value-path="payload.label"` は `event.detail.payload.label` を読む。
 
 取得した値は文字列化して属性へ設定する。objectやarrayを直接渡す契約はPhase 2-5では固定しない。
@@ -177,6 +185,8 @@ Phase 2-5では、現行fixtureと同じ `url` / `receiver` / `target-attribute`
 
 `url` はdocument base基準で解決する。これはHTML上の宣言要素であり、Stanza bundle内assetとは責務が異なるためである。
 
+`target-attribute` は、受信側metadataの `stanza:parameter` keyである必要がある。これはblob URLを `this.params` 経由で受信側Stanza sourceへ渡すための制約である。
+
 data-sourceは `url` からJSONを取得し、取得したJSONをblob URLにして受信側属性へ設定する。受信側StanzaはそのURLを自分でfetchする。
 
 fetch失敗時の表示、retry、ステータス属性、error eventはPhase 2-5では作り込みすぎない。browser testでは成功経路を優先し、失敗経路はunit testまたは後続判断へ回す。
@@ -186,9 +196,10 @@ fetch失敗時の表示、retry、ステータス属性、error eventはPhase 2-
 006ケースでは、リメイク版で次を確認する。
 
 - `togostanza--container` がcustom elementとしてupgradeされること。
-- 送信側Stanzaが `CustomEvent("selectedValue", { bubbles: true, composed: true, detail })` を送出できること。
+- 送信側Stanzaが `CustomEvent("selectedValue", { detail })` を `this.element` から送出できること。
 - `coordination-sender` の `stanza:outgoingEvent` に `selectedValue` があること。
 - `coordination-receiver` の `stanza:incomingEvent` に `selectedValue` があること。
+- `coordination-receiver` の `stanza:parameter` に `selected-label` と `data-url` があること。
 - 受信側の `handleEvent(event)` が呼ばれ、`event.type` と `event.detail` がDOMで観測できること。
 - `togostanza--event-map` が `payload.label` を読み、受信側の `selected-label` 属性を更新すること。
 - 属性更新後に受信側の表示が `from-sender` になること。
@@ -197,7 +208,7 @@ fetch失敗時の表示、retry、ステータス属性、error eventはPhase 2-
 - metadataに列挙されていないイベントは `handleEvent()` とevent-mapの対象にならないこと。
 - `togostanza--data-container` が不要であること。
 
-現行fixtureの送信側コードは、`CustomEvent` に `bubbles` を付けていない。リメイク版観測では、標準DOMイベントとしてcontainerへ届けるため、fixture側の送出コードを更新する。
+現行fixtureの送信側コードは、`CustomEvent` に `bubbles` を付けていない。Phase 2-5ではchild-listener方式を採るため、この送出コードを変更せずに観測できることを優先する。
 
 ## 検証計画
 
@@ -208,6 +219,7 @@ fetch失敗時の表示、retry、ステータス属性、error eventはPhase 2-
 - `value-path` が `event.detail` から値を取り出す。
 - `value-path` が存在しない場合の挙動を確認する。
 - receiver selectorがcontainer内に限定される。
+- `target-attribute` が受信側 `stanza:parameter` に無い場合、診断可能に扱う。
 - `target-attribute` が属性更新として反映される。
 - data-sourceのURL解決がdocument base基準になる。
 - data-sourceがJSONからblob URLを作る処理を分離できる場合は確認する。

@@ -128,9 +128,11 @@ mise exec -- pnpm run serve:fixture
 - `togostanza--container` の目的が維持されること。
 - `togostanza--event-map` は、Phase 2-5では現行fixtureの `on` / `receiver` / `value-path` / `target-attribute` を最小互換として受ける。
 - `togostanza--event-map` は、`stanza:outgoingEvent` と `stanza:incomingEvent` に列挙されたイベントだけを扱う。
+- `togostanza--event-map` の `target-attribute` は、受信側の `stanza:parameter` に列挙されたkeyとして扱う。
 - `togostanza--data-source` は、Phase 2-5では現行fixtureの `url` / `receiver` / `target-attribute` を最小互換として受ける。
 - `togostanza--data-source` は、Phase 2-5ではblob URL handoffを維持する。
-- Sending Eventsは `this.element.dispatchEvent(new CustomEvent(...))` と `stanza:outgoingEvent` を入口として観測する。containerへ届けるイベントは `bubbles: true` を付ける。
+- `togostanza--data-source` の `target-attribute` は、受信側の `stanza:parameter` に列挙されたkeyとして扱う。
+- Sending Eventsは `this.element.dispatchEvent(new CustomEvent(...))` と `stanza:outgoingEvent` を入口として観測する。Phase 2-5では送信側custom elementへlistenerを張るため、現行fixtureのような非bubbling `CustomEvent` も受ける。
 - `stanza:outgoingEvent` / `stanza:incomingEvent` との対応、`event.detail` の扱い、`value-path` の扱いが説明できること。
 - `togostanza--data-container` を持ち込まないこと。
 
