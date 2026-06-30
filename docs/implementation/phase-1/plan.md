@@ -214,8 +214,8 @@ Phase 1ではNode標準APIベースのCLI parserを継続する。option解析�
 ### integration test
 
 - build後の `bin/togostanza.mjs` 経由で `init --name generated-repo --skip-install --skip-git` を実行し、雛形ファイルと `package.json` を確認する。
-- `init --name generated-repo --package-manager npm` で、`package.json` の内容、npm向けworkflow placeholder、install command組み立てを確認する。外部package取得は行わない。
-- `init --name generated-repo --package-manager pnpm` で、`package.json` の内容、pnpm向けworkflow placeholder、install command組み立てを確認する。外部package取得は行わない。
+- `init --name generated-repo --package-manager npm --skip-install` で、`package.json` の内容とnpm向けworkflow placeholderを確認する。install command組み立てはrunner注入が必要なためunit testで確認する。
+- `init --name generated-repo --package-manager pnpm --skip-install` で、`package.json` の内容とpnpm向けworkflow placeholderを確認する。install command組み立てはrunner注入が必要なためunit testで確認する。
 - `--skip-install` の場合、install commandが実行されず、lockfileも生成されないことを確認する。
 - 生成リポジトリ内相当のcwdで `generate stanza helloWorld ...` を実行し、`stanzas/hello-world/` が生成されることを確認する。
 - `g stanza` aliasでも同じ生成結果になることを確認する。

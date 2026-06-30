@@ -88,6 +88,33 @@ describe("CLI smoke", () => {
     ).toContain("workflow_dispatch");
   });
 
+  for (const packageManager of ["npm", "pnpm"]) {
+    it(`creates a ${packageManager} workflow placeholder through the bin entry`, async () => {
+      const cwd = makeTemporaryDirectory();
+      const result = await runCli(
+        [
+          "init",
+          "--name",
+          `${packageManager}-repo`,
+          "--package-manager",
+          packageManager,
+          "--skip-install",
+          "--skip-git",
+        ],
+        cwd,
+      );
+
+      expect(result.code).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(
+        readFileSync(
+          resolve(cwd, `${packageManager}-repo`, ".github", "workflows", "publish.yml"),
+          "utf8",
+        ),
+      ).toContain(`for ${packageManager}`);
+    });
+  }
+
   it("creates a stanza through the bin entry", async () => {
     const cwd = makeTemporaryDirectory();
     const result = await runCli(
@@ -101,6 +128,18 @@ describe("CLI smoke", () => {
       "@id": "hello-world",
       "stanza:label": "Hello World",
       "stanza:created": "2026-06-30",
+    });
+  });
+
+  it("creates a stanza through the short g alias", async () => {
+    const cwd = makeTemporaryDirectory();
+    const result = await runCli(["g", "stanza", "aliasProbe", "--timestamp", "2026-06-30"], cwd);
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(readJson(resolve(cwd, "stanzas", "alias-probe", "metadata.json"))).toMatchObject({
+      "@id": "alias-probe",
+      "stanza:label": "Alias Probe",
     });
   });
 

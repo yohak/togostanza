@@ -146,6 +146,36 @@ describe("CLI router", () => {
     );
   });
 
+  it("builds an npm install command when npm is selected", () => {
+    const cwd = makeTemporaryDirectory();
+    const calls: string[] = [];
+    const installRunner: CommandRunner = (command, args, options) => {
+      calls.push(`${command} ${args.join(" ")} @ ${options.cwd}`);
+      return { exitCode: 0 };
+    };
+
+    const result = routeCli(
+      ["init", "--name", "npm-repo", "--package-manager", "npm", "--skip-git"],
+      {
+        cwd,
+        installRunner,
+      },
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(calls).toEqual([`npm install @ ${join(cwd, "npm-repo")}`]);
+    expect(readText(join(cwd, "npm-repo", ".github", "workflows", "publish.yml"))).toContain(
+      "for npm",
+    );
+  });
+
+  it("rejects unsupported package managers", () => {
+    expect(routeCli(["init", "--name", "bad-pm-repo", "--package-manager", "yarn"])).toEqual({
+      exitCode: 1,
+      stderr: "Invalid package manager. Expected npm or pnpm.",
+    });
+  });
+
   it("infers pnpm from npm_config_user_agent", () => {
     const cwd = makeTemporaryDirectory();
     const previousUserAgent = process.env.npm_config_user_agent;
@@ -201,6 +231,15 @@ describe("CLI router", () => {
       stderr: "Missing required option: --name <dir>",
     });
   });
+
+  for (const name of [".", "foo/bar", "UpperCase"]) {
+    it(`rejects invalid init --name value ${name}`, () => {
+      expect(routeCli(["init", "--name", name])).toEqual({
+        exitCode: 1,
+        stderr: `Invalid package name for --name: ${name}`,
+      });
+    });
+  }
 
   it("rejects existing init destinations", () => {
     const cwd = makeTemporaryDirectory();
@@ -269,10 +308,33 @@ describe("CLI router", () => {
     });
   });
 
+  it("uses default generate stanza options", () => {
+    const cwd = makeTemporaryDirectory();
+    const result = routeCli(["generate", "stanza", "defaultProbe"], { cwd, currentDate });
+
+    expect(result.exitCode).toBe(0);
+    expect(readJson(join(cwd, "stanzas", "default-probe", "metadata.json"))).toMatchObject({
+      "@id": "default-probe",
+      "stanza:author": "",
+      "stanza:definition": "Default Probe stanza.",
+      "stanza:label": "Default Probe",
+      "stanza:license": "MIT",
+      "stanza:created": "2026-06-30",
+      "stanza:updated": "2026-06-30",
+    });
+  });
+
   it("rejects generate stanza without an id", () => {
     expect(routeCli(["generate", "stanza"])).toEqual({
       exitCode: 1,
       stderr: "Missing required argument: id",
+    });
+  });
+
+  it("rejects invalid stanza ids after normalization", () => {
+    expect(routeCli(["generate", "stanza", "___"])).toEqual({
+      exitCode: 1,
+      stderr: "Invalid stanza id: ___",
     });
   });
 
