@@ -30,7 +30,7 @@ Phase 2では、先に全体のサブフェーズ境界を固定する。各サ�
 | Phase 2-3: Stanza source API | `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()` などを段階的に成立させる。 | [004](../../../workbench/cases/004-runtime-parameters/)、[005](../../../workbench/cases/005-stanza-source-api/) | [計画](./phase-2-3/plan.md)、[引き継ぎ](./phase-2-3/handoff.md) |
 | Phase 2-4: config / resolution / assets | `togostanza.config.ts`、旧設定検出、Sassの高度なmodule解決、`tsconfig.json`、共有ソース、asset解決を扱う。 | [007](../../../workbench/cases/007-config-and-resolution/) | [計画](./phase-2-4/plan.md)、[引き継ぎ](./phase-2-4/handoff.md) |
 | Phase 2-5: inter-stanza coordination | `togostanza--container`、CustomEvent、incoming / outgoing event、`event-map` / `data-source` の再設計を扱う。 | [006](../../../workbench/cases/006-inter-stanza-coordination/) | [計画](./phase-2-5/plan.md)、[引き継ぎ](./phase-2-5/handoff.md) |
-| Phase 2-6: GitHub Pages workflow | Phase 1のworkflow placeholderを実deploy可能なworkflowへ置き換える。 | [001](../../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../../workbench/cases/002-build-artifacts/) | [計画](./phase-2-6/plan.md) |
+| Phase 2-6: GitHub Pages workflow | Phase 1のworkflow placeholderを実deploy可能なworkflowへ置き換える。 | [001](../../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../../workbench/cases/002-build-artifacts/) | [計画](./phase-2-6/plan.md)、[引き継ぎ](./phase-2-6/handoff.md) |
 
 ## サブフェーズ境界
 
