@@ -271,9 +271,15 @@ describe("CLI smoke", () => {
     expect(
       readFileSync(resolve(cwd, "public", "hello-world", "assets", "local-asset.txt"), "utf8"),
     ).toBe("local\n");
-    expect(readFileSync(resolve(cwd, "public", "hello-world.js"), "utf8")).not.toContain(
-      "togostanza/stanza",
-    );
+    const script = readFileSync(resolve(cwd, "public", "hello-world.js"), "utf8");
+    expect(script).not.toContain("togostanza/stanza");
+    expect(script).not.toContain("__togostanzaBuildEntries");
+    expect(script).toContain('"@id"');
+    expect(script).toContain("hello-world");
+    expect(script).toContain("customElements.define");
+    expect(readJson(resolve(cwd, "public", "hello-world", "metadata.json"))).toMatchObject({
+      "@id": "hello-world",
+    });
     expect(existsSync(resolve(cwd, "public", "index.html"))).toBe(false);
     expect(existsSync(resolve(cwd, "public", "-togostanza"))).toBe(false);
   });

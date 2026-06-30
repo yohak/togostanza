@@ -29,6 +29,7 @@ type StanzaDefinition = {
   entrypointPath: string;
   id: string;
   label: string;
+  metadata: Record<string, unknown>;
   metadataPath: string;
 };
 
@@ -235,6 +236,7 @@ function readStanzaDefinition(input: {
       entrypointPath: entrypointResult.entrypointPath,
       id,
       label,
+      metadata,
       metadataPath: input.metadataPath,
     }),
   };
@@ -370,10 +372,19 @@ function formatEntrypointWrapper(stanza: StanzaDefinition): string {
   const importPath = pathToFileURL(stanza.entrypointPath).href;
 
   return [
+    'import { registerStanza } from "togostanza/stanza";',
     `import StanzaClass from ${JSON.stringify(importPath)};`,
     "",
-    "const registry = (globalThis.__togostanzaBuildEntries ??= {});",
-    `registry[${JSON.stringify(stanza.id)}] = StanzaClass;`,
+    `const metadata = ${JSON.stringify(stanza.metadata, null, 2)};`,
+    "",
+    "registerStanza({",
+    `  id: ${JSON.stringify(stanza.id)},`,
+    `  tagName: ${JSON.stringify(`togostanza-${stanza.id}`)},`,
+    `  cssUrl: new URL(${JSON.stringify(`./${stanza.id}.css`)}, import.meta.url),`,
+    `  aboutUrl: new URL(${JSON.stringify(`./${stanza.id}.html`)}, import.meta.url),`,
+    "  metadata,",
+    "  StanzaClass,",
+    "});",
     "",
     "export default StanzaClass;",
     "",
@@ -512,6 +523,7 @@ function withOptionalDefinition(input: {
   entrypointPath: string;
   id: string;
   label: string;
+  metadata: Record<string, unknown>;
   metadataPath: string;
 }): StanzaDefinition {
   return {
@@ -519,6 +531,7 @@ function withOptionalDefinition(input: {
     entrypointPath: input.entrypointPath,
     id: input.id,
     label: input.label,
+    metadata: input.metadata,
     metadataPath: input.metadataPath,
     ...(input.definition ? { definition: input.definition } : {}),
   };

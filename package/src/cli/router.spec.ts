@@ -601,7 +601,12 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "dist", "build-probe.css.map"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe.html"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe", "metadata.json"))).toBe(true);
-    expect(readText(join(cwd, "dist", "build-probe.js"))).not.toContain("togostanza/stanza");
+    const script = readText(join(cwd, "dist", "build-probe.js"));
+    expect(script).not.toContain("togostanza/stanza");
+    expect(script).not.toContain("__togostanzaBuildEntries");
+    expect(script).toContain('"@id"');
+    expect(script).toContain("build-probe");
+    expect(script).toContain("customElements.define");
     expect(readText(join(cwd, "dist", "build-probe.html"))).toContain("./build-probe.js");
   });
 
