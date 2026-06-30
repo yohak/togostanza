@@ -105,7 +105,7 @@ export async function handleBuild(
     copyBuildAssets(stanzaResult.stanzas, outputDirectoryResult.outputDirectory, rootDirectory);
     writeHtmlFiles(stanzaResult.stanzas, outputDirectoryResult.outputDirectory);
   } catch (error) {
-    return failure(formatBuildError(error));
+    return failure(formatBuildError(error, rootDirectory));
   }
 
   return {
@@ -685,8 +685,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function formatBuildError(error: unknown): string {
-  return `Build failed: ${errorMessage(error)}`;
+function formatBuildError(error: unknown, rootDirectory: string): string {
+  const message = errorMessage(error);
+  const hint =
+    isUnresolvedImportError(message) && tsconfigLikelyDefinesPaths(rootDirectory)
+      ? " If this import relies on tsconfig compilerOptions.paths, configure the equivalent alias in togostanza.config.ts via vite.resolve.alias. Phase 2-4 does not resolve tsconfig paths directly."
+      : "";
+
+  return `Build failed: ${message}${hint}`;
 }
 
 function errorMessage(error: unknown): string {
@@ -714,4 +720,24 @@ function escapeHtml(value: string): string {
 
 function isFileNotFound(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+}
+
+function isUnresolvedImportError(message: string): boolean {
+  return (
+    message.includes("failed to resolve import") ||
+    message.includes("Could not resolve") ||
+    message.includes("Could not load")
+  );
+}
+
+function tsconfigLikelyDefinesPaths(rootDirectory: string): boolean {
+  try {
+    return /"paths"\s*:/.test(readFileSync(join(rootDirectory, "tsconfig.json"), "utf8"));
+  } catch (error) {
+    if (isFileNotFound(error)) {
+      return false;
+    }
+
+    return false;
+  }
 }

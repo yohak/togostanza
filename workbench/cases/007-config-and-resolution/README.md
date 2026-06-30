@@ -261,6 +261,8 @@ dist/
 - `defineTogoStanzaConfig()` は `import { defineTogoStanzaConfig } from "togostanza/config"` でimportできる。
 - `togostanza.config.ts` の `vite.define` と `vite.resolve.alias` はbuildへ反映される。
 - `togostanza.config.ts` の読み込みに失敗した場合は、対象pathと原因を含む診断でbuildを失敗させる。
+- `tsconfig.json` の `compilerOptions.paths` だけに依存するimportは、Phase 2-4時点では直接解決しない。この場合は `togostanza.config.ts` の `vite.resolve.alias` へ同等のaliasを移す。
+- 未解決importの原因が `tsconfig.json` の `paths` と考えられる場合、診断には `togostanza.config.ts` と `vite.resolve.alias` への移行先を含める。
 
 Phase 2-4では、npm公開向けの `exports` / `files` 全体整理は扱わない。ただし `togostanza/config` subpathは設定ファイルの最小契約として有効にした。
 
@@ -268,6 +270,7 @@ Phase 2-4では、npm公開向けの `exports` / `files` 全体整理は扱わ�
 
 - Stanza entrypointからのstanza外共有ソースimportは、import graph基準でbundleされる。
 - `tsconfig.json` はVite / esbuildの解決入力として尊重する。
+- `tsconfig.json` の `compilerOptions.paths` は、Phase 2-4時点ではViteへ自動合成しない。必要なaliasは `togostanza.config.ts` の `vite.resolve.alias` で明示する。
 - リメイク版は現行版の `tsc` 駆動ではないため、JSソースだけのケースで `allowJs` が無いと `TS18003` になる現行版の失敗条件は再現しない。
 - Sass `@use "@/common.scss"` は、Sass限定のリポジトリルートaliasとして解決される。
 - JavaScriptからの `./assets/...` importはViteのasset処理に乗る。
@@ -294,6 +297,7 @@ Phase 2-4では、npm公開向けの `exports` / `files` 全体整理は扱わ�
 - 現行版では `style.scss` 内の `url("./assets/local-marker.svg")` がそのまま出力され、CSS基準で `dist/assets/local-marker.svg` を見に行く。リメイク版ではstanza別assetの位置に合わせて `./{id}/assets/local-marker.svg` 相当へ書き換える。
 - Stanzaソース内でroot assetを `./assets/...` と書く場合の推奨APIまたはhelperは、Phase 2-4では未解決の既知制約として残す。
 - JS/TSの `@/` import aliasは、Sass `@/` aliasとは別扱いである。必要な場合は `togostanza.config.ts` のVite aliasで明示する。
+- `tsconfig.json` の `compilerOptions.paths` は自動解決しない。必要な場合は `togostanza.config.ts` の `vite.resolve.alias` へ移す。
 
 ## 合格条件
 

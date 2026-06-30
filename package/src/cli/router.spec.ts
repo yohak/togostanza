@@ -891,6 +891,54 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "dist", "allow-js-probe.js"))).toBe(true);
   });
 
+  it("explains the togostanza.config.ts migration path when tsconfig paths are unresolved", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "tsconfigPathsProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "lib"));
+    writeFileSync(join(cwd, "lib", "label.js"), 'export const label = "tsconfig-paths";\n', "utf8");
+    writeFileSync(
+      join(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            baseUrl: ".",
+            paths: {
+              "@lib/*": ["lib/*"],
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+    writeFileSync(
+      join(cwd, "stanzas", "tsconfig-paths-probe", "index.js"),
+      [
+        'import Stanza from "togostanza/stanza";',
+        'import { label } from "@lib/label.js";',
+        "",
+        "export default class TsconfigPathsProbe extends Stanza {",
+        "  render() {",
+        '    const main = this.root.querySelector("main");',
+        "    if (main) {",
+        "      main.textContent = label;",
+        "    }",
+        "  }",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("tsconfig compilerOptions.paths");
+    expect(result.stderr).toContain("togostanza.config.ts");
+    expect(result.stderr).toContain("vite.resolve.alias");
+  });
+
   it("rejects unsafe build output paths before cleaning", async () => {
     const cwd = makeStanzaRepoRoot();
     const results = await Promise.all(
