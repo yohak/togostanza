@@ -365,6 +365,7 @@ async function buildEntrypoints(
     }),
   );
   const internalConfig: InlineConfig = {
+    base: "./",
     build: {
       emptyOutDir: false,
       outDir: outputDirectory,

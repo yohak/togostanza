@@ -717,7 +717,10 @@ describe("CLI router", () => {
     const result = await routeCliAsync(["build"], { cwd });
 
     expect(result.exitCode).toBe(0);
-    expect(readText(join(cwd, "dist", "asset-import-probe.js"))).toContain("_assets/");
+    const js = readText(join(cwd, "dist", "asset-import-probe.js"));
+    expect(js).toContain("_assets/");
+    expect(js).not.toContain('"/_assets/');
+    expect(js).not.toContain("'/_assets/");
     expect(existsSync(join(cwd, "dist", "assets", "root-asset.txt"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "asset-import-probe", "assets", "local-marker.svg"))).toBe(
       true,
