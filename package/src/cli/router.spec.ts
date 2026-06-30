@@ -648,6 +648,74 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "public", "-togostanza"))).toBe(false);
   });
 
+  it("warns about legacy build config files without executing them", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "legacyConfigProbe"], { cwd, currentDate });
+    writeFileSync(
+      join(cwd, "togostanza-build.mjs"),
+      'throw new Error("togostanza-build.mjs was executed");\n',
+      "utf8",
+    );
+    writeFileSync(
+      join(cwd, "togostanza-build.js"),
+      'throw new Error("togostanza-build.js was executed");\n',
+      "utf8",
+    );
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe("Built Stanza repository: repo (output: dist).");
+    expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.mjs");
+    expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.js");
+    expect(result.stderr).toContain("togostanza.config.ts");
+  });
+
+  it("loads togostanza.config.ts through the togostanza/config import path", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "configProbe"], { cwd, currentDate });
+    writeConfigImportFixture(cwd);
+    writeFileSync(
+      join(cwd, "togostanza.config.ts"),
+      [
+        'import { defineTogoStanzaConfig } from "togostanza/config";',
+        "",
+        "export default defineTogoStanzaConfig({",
+        "  vite: {",
+        "    define: {",
+        '      __TOGOSTANZA_CONFIG_PROBE__: JSON.stringify("ok"),',
+        "    },",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toBeUndefined();
+    expect(existsSync(join(cwd, "dist", "config-probe.js"))).toBe(true);
+  });
+
+  it("returns a diagnostic when togostanza.config.ts cannot be loaded", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "badConfigProbe"], { cwd, currentDate });
+    writeFileSync(
+      join(cwd, "togostanza.config.ts"),
+      'throw new Error("config probe failure");\n',
+      "utf8",
+    );
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Invalid TogoStanza config: failed to load");
+    expect(result.stderr).toContain(join(cwd, "togostanza.config.ts"));
+    expect(result.stderr).toContain("config probe failure");
+  });
+
   it("rejects unsafe build output paths before cleaning", async () => {
     const cwd = makeStanzaRepoRoot();
     const results = await Promise.all(
@@ -729,6 +797,32 @@ describe("CLI router", () => {
     return JSON.parse(readText(path));
   }
 });
+
+function writeConfigImportFixture(rootDirectory: string): void {
+  const packageDirectory = join(rootDirectory, "node_modules", "togostanza");
+  mkdirSync(packageDirectory, { recursive: true });
+  writeFileSync(
+    join(packageDirectory, "package.json"),
+    `${JSON.stringify(
+      {
+        exports: {
+          "./config": "./config.js",
+        },
+        name: "togostanza",
+        type: "module",
+        version: "0.0.0-fixture",
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    join(packageDirectory, "config.js"),
+    "export function defineTogoStanzaConfig(config) { return config; }\n",
+    "utf8",
+  );
+}
 
 function readText(path: string): string {
   return readFileSync(path, "utf8");

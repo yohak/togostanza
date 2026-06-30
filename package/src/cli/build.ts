@@ -16,6 +16,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import Handlebars from "handlebars";
 import { compile, type FileImporter } from "sass";
 import { build as viteBuild, type InlineConfig } from "vite";
+import { loadTogoStanzaBuildConfig } from "./build-config.js";
 import { getStringOption, parseOptions } from "./options.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure, type CliResult } from "./result.js";
@@ -85,6 +86,12 @@ export async function handleBuild(
     return failure(stanzaResult.error);
   }
 
+  const buildConfigResult = await loadTogoStanzaBuildConfig(rootDirectory);
+
+  if ("error" in buildConfigResult) {
+    return failure(buildConfigResult.error);
+  }
+
   try {
     prepareOutputDirectory(outputDirectoryResult.outputDirectory, rootDirectory);
     writeOutputMarker(outputDirectoryResult.outputDirectory);
@@ -98,6 +105,9 @@ export async function handleBuild(
 
   return {
     exitCode: 0,
+    ...(buildConfigResult.warnings.length > 0
+      ? { stderr: buildConfigResult.warnings.join("\n") }
+      : {}),
     stdout: `Built Stanza repository: ${repoContextResult.context.packageName} (output: ${outputPath}).`,
   };
 }
