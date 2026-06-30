@@ -49,6 +49,7 @@
 - 配信されたURLとHTTP status。
 - 変更したファイルとinvalidate対象。
 - ビルド失敗時の画面、HTTP status、復帰手順。
+- Phase 3初期実装で、1つのstanzaのビルドエラーにより健全なstanzaを含む全URLがHTTP 500になる場合は、その差分。
 
 ## 未決定事項
 
@@ -59,4 +60,5 @@
 
 - Phase 3では、`serve` の生成物を一時出力ディレクトリに作り、`dist/` を書き換えないことを確認する。
 - Phase 3の初期実装では、変更分類を記録しつつ、再ビルド処理は全体rebuildを許容する。
+- Phase 3の初期実装では、ビルド失敗中のエラー状態をserver全体で扱ってよい。stanza単位の部分成功や部分HTTP 500は後続判断とする。
 - Stanzaごとの部分build最適化、HMR、自動ブラウザreload、host指定optionはPhase 3の対象外または後続判断とする。

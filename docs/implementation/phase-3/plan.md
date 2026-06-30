@@ -102,7 +102,8 @@ Phase 3では、ViteやSassをメモリ出力へ置き換えない。既存のfi
 - `/{id}.html` は一時出力ディレクトリ内のHTMLを返す。
 - build相当ファイル、asset、metadata、共有チャンクは一時出力ディレクトリから配信する。
 - path traversalを拒否する。
-- MIME typeは、HTML、JavaScript、CSS、JSON、SVG、PNG、JPEG、WebP、textを最小対応にする。
+- MIME typeは、HTML、JavaScript、CSS、JSON、SVG、PNG、JPEG、WebP、text、fontを最小対応にする。
+- 実在するファイルは、未知拡張子でもHTTP 404や拒否にせず、`application/octet-stream` で配信する。
 - server shutdown時にHTTP serverを閉じ、一時出力ディレクトリを削除する。
 
 `serve` のCLIは長時間動く。実装では、CLI entryからserverが参照され続ける形にする。testでは、server instanceまたはclose callbackを取得できる注入点を用意し、終了時に `closeAllConnections()` 相当の後始末を行う。
@@ -176,7 +177,7 @@ stanza固有入力の変更は対象stanzaのinvalidateとして記録する。�
 
 `/` と `/{id}.html` は、Stanza開発者がブラウザで確認できる最小UIにする。ヘルププレビューUIの完全復元やカスタマイズUIはPhase 3の対象にしない。
 
-静的配信では、path traversalを拒否する。見つからないURLはHTTP 404を返す。ビルド失敗中は、build相当URLとプレビューURLでHTTP 500を返す。
+静的配信では、path traversalを拒否する。見つからないURLはHTTP 404を返す。実在するファイルは、MIME typeの固定リスト外の拡張子でも拒否せず、`application/octet-stream` で返す。これはPhase 2で任意assetをbuild / copyできるため、`serve` だけが未知拡張子を理由に壊れないようにするためである。ビルド失敗中は、build相当URLとプレビューURLでHTTP 500を返す。
 
 ## 検証計画
 
@@ -188,6 +189,7 @@ Unit test:
 - root外実行の診断。
 - path traversal拒否。
 - MIME typeの最小判定。
+- 未知拡張子の実在ファイルを `application/octet-stream` として配信するfallback。
 - error page formatting。
 - watch変更分類。
 
