@@ -64,3 +64,31 @@
 - Phase 3では、stanza固有入力の変更は対象stanzaだけを再ビルドする。
 - 共有ソース、設定、安全に特定できない変更では全体rebuildを許容する。
 - 共有ソース変更時の精密な影響stanza特定、HMR、自動ブラウザreload、host指定optionはPhase 3の対象外または後続判断とする。
+
+## リメイク版観測: Phase 3
+
+確認方法:
+
+- `cd package && mise exec -- pnpm run test:unit`
+- `cd package && mise exec -- pnpm run test:integration`
+- `cd package && mise exec -- pnpm run test:browser`
+
+確認したこと:
+
+- bin entry経由で `togostanza serve --port <port>` が起動し、stdoutに `http://127.0.0.1:<port>/` が出る。
+- `togostanza s --port <port>` でも同じserve実装へ到達する。
+- `/` はStanza一覧を返し、対象stanzaの `/{id}.html` へ辿れる。
+- `/{id}.html` はserve用の最小プレビューとして、`./{id}.js` と `<togostanza-{id}>` を含むHTMLを返す。
+- `/{id}.js`、`/{id}.css`、`/{id}/metadata.json`、stanza別assetがHTTP 200で読める。
+- 未知拡張子の実在assetは、`application/octet-stream` でHTTP 200として配信される。
+- `serve` はStanzaリポジトリの `dist/` を作成しない。
+- stanza固有入力である `style.scss` の変更後、対象stanzaのCSSが再ビルドされ、ページ再読み込みで反映される。
+- stanza固有入力の再ビルドに失敗した場合、対象stanzaのbuild相当URLはHTTP 500になり、エラーページに `Sass compile failed` が含まれる。
+- 修正後の再ビルド成功で、対象stanzaのbuild相当URLはHTTP 200へ復帰する。
+- Playwrightで `/{id}.html` を開き、custom elementがupgradeされ、Shadow DOM内の `main` とstylesheet適用を確認した。
+
+現行版との差分:
+
+- リメイク版Phase 3の `/{id}.html` は、ヘルププレビューの完全復元ではなく、custom elementを確認するための最小プレビューである。
+- リメイク版Phase 3は `dist/` を書き換えず、一時出力ディレクトリ上のbuild相当生成物を配信する。
+- 共有ソース変更時の精密な影響stanza特定、HMR、自動ブラウザreloadは未実装である。

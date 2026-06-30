@@ -4,6 +4,7 @@ import { findCommand, listCommandUsages, type CommandDefinition } from "./comman
 import { handleGenerateStanza } from "./generate-stanza.js";
 import { handleInit, type CommandRunner } from "./init.js";
 import { failure, success, type CliResult } from "./result.js";
+import { handleServe, type ServeSession } from "./serve.js";
 
 export type MaybePromise<T> = Promise<T> | T;
 
@@ -12,6 +13,8 @@ export type CliRouteOptions = {
   currentDate?: Date;
   gitRunner?: CommandRunner;
   installRunner?: CommandRunner;
+  onServeSession?: (session: ServeSession) => void;
+  serveWatch?: boolean;
 };
 
 export function routeCli(
@@ -60,7 +63,19 @@ function routeCommand(
     return handleBuild(args, options);
   }
 
+  if (command.canonicalName === "serve") {
+    return handleServe(args, withServeOptions(options));
+  }
+
   return failure(`Command is not implemented yet: ${command.canonicalName}`);
+}
+
+function withServeOptions(options: CliRouteOptions): Parameters<typeof handleServe>[1] {
+  return {
+    ...(options.cwd ? { cwd: options.cwd } : {}),
+    ...(options.onServeSession ? { onServeSession: options.onServeSession } : {}),
+    ...(typeof options.serveWatch === "boolean" ? { watch: options.serveWatch } : {}),
+  };
 }
 
 function formatHelpText(): string {

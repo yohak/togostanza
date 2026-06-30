@@ -28,7 +28,7 @@ export type BuildOptions = {
   cwd?: string;
 };
 
-type StanzaDefinition = {
+export type StanzaDefinition = {
   definition?: string;
   directory: string;
   entrypointPath: string;
@@ -38,6 +38,23 @@ type StanzaDefinition = {
   metadataPath: string;
   templates: Record<string, string>;
 };
+
+export type BuildStanzaArtifactsInput = {
+  outputDirectory: string;
+  prepareOutputDirectory?: boolean;
+  rootDirectory: string;
+  stanzaIds?: readonly string[];
+};
+
+export type BuildStanzaArtifactsResult =
+  | {
+      allStanzas: StanzaDefinition[];
+      builtStanzas: StanzaDefinition[];
+      warnings: string[];
+    }
+  | {
+      error: string;
+    };
 
 const outputMarkerFileName = ".togostanza-build-output";
 const knownSourceOrControlDirectories = new Set([
@@ -80,40 +97,71 @@ export async function handleBuild(
     return failure(outputDirectoryResult.error);
   }
 
-  const stanzaResult = discoverStanzas(rootDirectory);
+  const buildResult = await buildStanzaArtifacts({
+    outputDirectory: outputDirectoryResult.outputDirectory,
+    prepareOutputDirectory: true,
+    rootDirectory,
+  });
 
-  if ("error" in stanzaResult) {
-    return failure(stanzaResult.error);
-  }
-
-  const buildConfigResult = await loadTogoStanzaBuildConfig(rootDirectory);
-
-  if ("error" in buildConfigResult) {
-    return failure(buildConfigResult.error);
-  }
-
-  try {
-    prepareOutputDirectory(outputDirectoryResult.outputDirectory, rootDirectory);
-    writeOutputMarker(outputDirectoryResult.outputDirectory);
-    await buildEntrypoints(
-      stanzaResult.stanzas,
-      outputDirectoryResult.outputDirectory,
-      rootDirectory,
-      buildConfigResult.config.vite,
-    );
-    buildStyles(stanzaResult.stanzas, outputDirectoryResult.outputDirectory, rootDirectory);
-    copyBuildAssets(stanzaResult.stanzas, outputDirectoryResult.outputDirectory, rootDirectory);
-    writeHtmlFiles(stanzaResult.stanzas, outputDirectoryResult.outputDirectory);
-  } catch (error) {
-    return failure(formatBuildError(error, rootDirectory));
+  if ("error" in buildResult) {
+    return failure(buildResult.error);
   }
 
   return {
     exitCode: 0,
-    ...(buildConfigResult.warnings.length > 0
-      ? { stderr: buildConfigResult.warnings.join("\n") }
-      : {}),
+    ...(buildResult.warnings.length > 0 ? { stderr: buildResult.warnings.join("\n") } : {}),
     stdout: `Built Stanza repository: ${repoContextResult.context.packageName} (output: ${outputPath}).`,
+  };
+}
+
+export async function buildStanzaArtifacts(
+  input: BuildStanzaArtifactsInput,
+): Promise<BuildStanzaArtifactsResult> {
+  const stanzaResult = discoverStanzas(input.rootDirectory);
+
+  if ("error" in stanzaResult) {
+    return stanzaResult;
+  }
+
+  const selectedStanzaResult = selectStanzas(stanzaResult.stanzas, input.stanzaIds);
+
+  if ("error" in selectedStanzaResult) {
+    return selectedStanzaResult;
+  }
+
+  const buildConfigResult = await loadTogoStanzaBuildConfig(input.rootDirectory);
+
+  if ("error" in buildConfigResult) {
+    return { error: buildConfigResult.error };
+  }
+
+  try {
+    if (input.prepareOutputDirectory) {
+      prepareOutputDirectory(input.outputDirectory, input.rootDirectory);
+      writeOutputMarker(input.outputDirectory);
+    } else {
+      mkdirSync(input.outputDirectory, { recursive: true });
+    }
+
+    await buildEntrypoints(
+      selectedStanzaResult.stanzas,
+      input.outputDirectory,
+      input.rootDirectory,
+      buildConfigResult.config.vite,
+    );
+    buildStyles(selectedStanzaResult.stanzas, input.outputDirectory, input.rootDirectory);
+    copyBuildAssets(selectedStanzaResult.stanzas, input.outputDirectory, input.rootDirectory, {
+      copyRootAssets: !input.stanzaIds,
+    });
+    writeHtmlFiles(selectedStanzaResult.stanzas, input.outputDirectory);
+  } catch (error) {
+    return { error: formatBuildError(error, input.rootDirectory) };
+  }
+
+  return {
+    allStanzas: stanzaResult.stanzas,
+    builtStanzas: selectedStanzaResult.stanzas,
+    warnings: buildConfigResult.warnings,
   };
 }
 
@@ -202,6 +250,32 @@ function discoverStanzas(rootDirectory: string):
   }
 
   return { stanzas };
+}
+
+function selectStanzas(
+  stanzas: readonly StanzaDefinition[],
+  stanzaIds: readonly string[] | undefined,
+):
+  | {
+      stanzas: StanzaDefinition[];
+    }
+  | {
+      error: string;
+    } {
+  if (!stanzaIds) {
+    return { stanzas: [...stanzas] };
+  }
+
+  const selectedIds = new Set(stanzaIds);
+  const selectedStanzas = stanzas.filter((stanza) => selectedIds.has(stanza.id));
+
+  for (const id of selectedIds) {
+    if (!selectedStanzas.some((stanza) => stanza.id === id)) {
+      return { error: `No stanza found for targeted build: ${id}.` };
+    }
+  }
+
+  return { stanzas: selectedStanzas };
 }
 
 function readStanzaDefinition(input: {
@@ -480,8 +554,11 @@ function copyBuildAssets(
   stanzas: readonly StanzaDefinition[],
   outputDirectory: string,
   rootDirectory: string,
+  options: { copyRootAssets?: boolean } = {},
 ): void {
-  copyDirectoryContents(join(rootDirectory, "assets"), join(outputDirectory, "assets"));
+  if (options.copyRootAssets ?? true) {
+    copyDirectoryContents(join(rootDirectory, "assets"), join(outputDirectory, "assets"));
+  }
 
   for (const stanza of stanzas) {
     copyDirectoryContents(

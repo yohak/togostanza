@@ -1,5 +1,6 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -309,6 +310,34 @@ describe("CLI smoke", () => {
     expect(existsSync(resolve(cwd, "public", "index.html"))).toBe(false);
     expect(existsSync(resolve(cwd, "public", "-togostanza"))).toBe(false);
   });
+
+  it("serves generated stanza artifacts through the bin entry", async () => {
+    const cwd = await makeStanzaRepoRoot();
+    const generateResult = await runCli(
+      ["generate", "stanza", "serveProbe", "--timestamp", "2026-06-30"],
+      cwd,
+    );
+    expect(generateResult.code).toBe(0);
+    const port = await findAvailablePort();
+    const child = startCli(["serve", "--port", String(port)], cwd);
+
+    try {
+      await child.waitForStdout(`http://127.0.0.1:${port}/`);
+
+      expect(existsSync(resolve(cwd, "dist"))).toBe(false);
+
+      const index = await fetchText(port, "/");
+      expect(index.status).toBe(200);
+      expect(index.body).toContain("./serve-probe.html");
+
+      const script = await fetchText(port, "/serve-probe.js");
+      expect(script.status).toBe(200);
+      expect(script.contentType).toContain("text/javascript");
+      expect(script.body).toContain("customElements.define");
+    } finally {
+      await child.close();
+    }
+  });
 });
 
 function makeTemporaryDirectory(): string {
@@ -333,6 +362,130 @@ async function makeStanzaRepoRoot(): Promise<string> {
 
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
+}
+
+type RunningCli = {
+  close(): Promise<void>;
+  process: ChildProcess;
+  waitForStdout(text: string): Promise<void>;
+};
+
+type FetchTextResult = {
+  body: string;
+  contentType: string;
+  status: number;
+};
+
+function startCli(args: string[], cwd = packageRoot): RunningCli {
+  const child = spawn(process.execPath, [resolve(packageRoot, "bin/togostanza.mjs"), ...args], {
+    cwd,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let stdout = "";
+  let stderr = "";
+
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk: string) => {
+    stdout += chunk;
+  });
+  child.stderr.on("data", (chunk: string) => {
+    stderr += chunk;
+  });
+
+  return {
+    close: async () => {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        return;
+      }
+
+      const closed = waitForChildClose(child);
+      child.kill("SIGTERM");
+      await closed;
+    },
+    process: child,
+    waitForStdout: async (text: string) => {
+      await waitFor(
+        () => stdout.includes(text),
+        () => {
+          return `Timed out waiting for stdout ${JSON.stringify(text)}. stdout=${JSON.stringify(stdout)} stderr=${JSON.stringify(stderr)}`;
+        },
+      );
+    },
+  };
+}
+
+async function fetchText(port: number, path: string): Promise<FetchTextResult> {
+  const response = await fetch(`http://127.0.0.1:${port}${path}`);
+
+  return {
+    body: await response.text(),
+    contentType: response.headers.get("content-type") ?? "",
+    status: response.status,
+  };
+}
+
+async function findAvailablePort(): Promise<number> {
+  const server = await listenOnEphemeralPort();
+  const address = server.address();
+
+  if (typeof address !== "object" || address === null) {
+    throw new Error("Expected ephemeral server address.");
+  }
+
+  const { port } = address;
+
+  await closeServer(server);
+
+  return port;
+}
+
+function listenOnEphemeralPort(): Promise<Server> {
+  const server = createServer();
+
+  return new Promise((resolveServer, reject) => {
+    server.on("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      resolveServer(server);
+    });
+  });
+}
+
+function closeServer(server: Server): Promise<void> {
+  return new Promise((resolveClose, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolveClose();
+    });
+    server.closeAllConnections();
+  });
+}
+
+function waitForChildClose(child: ChildProcess): Promise<void> {
+  return new Promise((resolveClose) => {
+    child.on("close", () => {
+      resolveClose();
+    });
+  });
+}
+
+async function waitFor(predicate: () => boolean, formatError: () => string): Promise<void> {
+  const timeoutAt = Date.now() + 4_000;
+
+  while (Date.now() < timeoutAt) {
+    if (predicate()) {
+      return;
+    }
+
+    // eslint-disable-next-line no-await-in-loop -- polling intentionally waits between attempts.
+    await new Promise((resolveWait) => setTimeout(resolveWait, 50));
+  }
+
+  throw new Error(formatError());
 }
 
 function expectNpmPagesWorkflow(workflow: string): void {

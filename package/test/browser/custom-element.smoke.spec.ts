@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import {
   createReadStream,
   existsSync,
@@ -644,6 +644,44 @@ test("loads Phase 2-4 CSS and JavaScript asset references from built custom elem
   }
 });
 
+test("serves a built Stanza preview through togostanza serve", async ({ page }) => {
+  test.setTimeout(20_000);
+
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  await runCli(["generate", "stanza", "servePreview", "--timestamp", "2026-06-30"], cwd);
+  writeFileSync(
+    resolve(cwd, "stanzas", "serve-preview", "style.scss"),
+    "main {\n  color: rgb(9, 8, 7);\n}\n",
+    "utf8",
+  );
+  const port = await findAvailablePort();
+  const server = startServeCli(["serve", "--port", String(port)], cwd);
+
+  try {
+    await server.waitForStdout(`http://127.0.0.1:${port}/`);
+    await page.goto(`http://127.0.0.1:${port}/serve-preview.html`);
+    await page.waitForFunction(() => customElements.get("togostanza-serve-preview"));
+
+    const renderedText = await page
+      .locator("togostanza-serve-preview")
+      .evaluate((element) => element.shadowRoot?.querySelector("main")?.textContent ?? "");
+    expect(renderedText).toContain("Hello,");
+
+    await expect
+      .poll(() =>
+        page.locator("togostanza-serve-preview").evaluate((element) => {
+          const main = element.shadowRoot?.querySelector("main");
+          return main ? getComputedStyle(main).color : "";
+        }),
+      )
+      .toBe("rgb(9, 8, 7)");
+    expect(existsSync(resolve(cwd, "dist"))).toBe(false);
+  } finally {
+    await server.close();
+  }
+});
+
 async function expectMenuState(
   page: Page,
   selector: string,
@@ -730,6 +768,79 @@ function runCli(args: string[], cwd: string): Promise<void> {
       reject(new Error(`togostanza ${args.join(" ")} failed with ${code}: ${stderr}`));
     });
   });
+}
+
+type RunningCli = {
+  close(): Promise<void>;
+  waitForStdout(text: string): Promise<void>;
+};
+
+function startServeCli(args: string[], cwd: string): RunningCli {
+  const child = spawn(process.execPath, [resolve(packageRoot, "bin/togostanza.mjs"), ...args], {
+    cwd,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let stdout = "";
+  let stderr = "";
+
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk: string) => {
+    stdout += chunk;
+  });
+  child.stderr.on("data", (chunk: string) => {
+    stderr += chunk;
+  });
+
+  return {
+    close: async () => {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        return;
+      }
+
+      const closed = waitForChildClose(child);
+      child.kill("SIGTERM");
+      await closed;
+    },
+    waitForStdout: async (text: string) => {
+      await waitFor(
+        () => stdout.includes(text),
+        () => {
+          return `Timed out waiting for stdout ${JSON.stringify(text)}. stdout=${JSON.stringify(stdout)} stderr=${JSON.stringify(stderr)}`;
+        },
+      );
+    },
+  };
+}
+
+async function findAvailablePort(): Promise<number> {
+  const server = await startStaticServer(tmpdir(), []);
+  const port = addressPort(server);
+  await closeServer(server);
+  return port;
+}
+
+function waitForChildClose(child: ChildProcess): Promise<void> {
+  return new Promise((resolveClose) => {
+    child.on("close", () => {
+      resolveClose();
+    });
+  });
+}
+
+async function waitFor(predicate: () => boolean, formatError: () => string): Promise<void> {
+  const timeoutAt = Date.now() + 4_000;
+
+  while (Date.now() < timeoutAt) {
+    if (predicate()) {
+      return;
+    }
+
+    // eslint-disable-next-line no-await-in-loop -- polling intentionally waits between attempts.
+    await new Promise((resolveWait) => setTimeout(resolveWait, 50));
+  }
+
+  throw new Error(formatError());
 }
 
 function updateMetadata(path: string, values: Record<string, unknown>): void {

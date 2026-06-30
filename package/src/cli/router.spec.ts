@@ -7,6 +7,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -15,6 +16,7 @@ import { listCommandUsages } from "./commands.js";
 import type { CliResult } from "./result.js";
 import { routeCli as routeCliRaw, type CliRouteOptions } from "./router.js";
 import type { CommandRunner } from "./runner.js";
+import type { ServeSession } from "./serve.js";
 
 const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");
@@ -43,10 +45,12 @@ async function routeCliAsync(
 
 describe("CLI router", () => {
   const temporaryDirectories: string[] = [];
+  const serveSessions: ServeSession[] = [];
   const currentDate = new Date("2026-06-30T00:00:00.000Z");
-  const recognizedCommandExamples: readonly (readonly string[])[] = [["serve"], ["s"]];
 
-  afterEach(() => {
+  afterEach(async () => {
+    await Promise.all(serveSessions.splice(0).map((session) => session.close()));
+
     for (const directory of temporaryDirectories.splice(0)) {
       rmSync(directory, { force: true, recursive: true });
     }
@@ -77,16 +81,6 @@ describe("CLI router", () => {
       expect(result.stdout).toContain(`  ${usage}`);
     }
   });
-
-  for (const args of recognizedCommandExamples) {
-    it(`recognizes ${args.join(" ")} as an unimplemented command`, () => {
-      const result = routeCli(args);
-
-      expect(result.exitCode).toBe(1);
-      expect(result.stdout).toBeUndefined();
-      expect(result.stderr).toContain("Command is not implemented yet:");
-    });
-  }
 
   it("rejects an unknown global option before command routing", () => {
     expect(routeCli(["--bad"])).toEqual({
@@ -597,6 +591,15 @@ describe("CLI router", () => {
     expect(result.stderr).toContain("missing package.json");
   });
 
+  it("rejects serve outside a Stanza repository root", async () => {
+    const cwd = makeTemporaryDirectory();
+
+    const result = await routeCliAsync(["serve"], { cwd });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("missing package.json");
+  });
+
   it("rejects build when package.json is malformed", async () => {
     const cwd = makeNamedTemporaryDirectory("malformed-build-repo");
     writeFileSync(join(cwd, "package.json"), "{ nope\n", "utf8");
@@ -1018,6 +1021,106 @@ describe("CLI router", () => {
     expect(readText(join(cwd, "dist", "recover-probe.css"))).toContain("green");
   });
 
+  it("serves built artifacts without writing dist", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "serveProbe"], { cwd, currentDate });
+    writeFileSync(join(cwd, "stanzas", "serve-probe", "assets", "data.custom"), "custom\n", "utf8");
+    const port = await findAvailablePort();
+
+    const result = await routeCliAsync(["serve", "--port", String(port)], {
+      cwd,
+      onServeSession: (session) => {
+        serveSessions.push(session);
+      },
+      serveWatch: false,
+    });
+
+    expect(result).toEqual({
+      exitCode: 0,
+      stdout: `Serving Stanza repository: repo at http://127.0.0.1:${port}/`,
+    });
+    expect(existsSync(join(cwd, "dist"))).toBe(false);
+
+    const index = await fetchText(port, "/");
+    expect(index.status).toBe(200);
+    expect(index.body).toContain("./serve-probe.html");
+
+    const script = await fetchText(port, "/serve-probe.js");
+    expect(script.status).toBe(200);
+    expect(script.contentType).toContain("text/javascript");
+    expect(script.body).toContain("customElements.define");
+
+    const metadata = await fetchText(port, "/serve-probe/metadata.json");
+    expect(metadata.status).toBe(200);
+    expect(metadata.contentType).toContain("application/json");
+    expect(metadata.body).toContain('"@id"');
+
+    const unknownAsset = await fetchText(port, "/serve-probe/assets/data.custom");
+    expect(unknownAsset.status).toBe(200);
+    expect(unknownAsset.contentType).toContain("application/octet-stream");
+    expect(unknownAsset.body).toBe("custom\n");
+  });
+
+  it("rebuilds a changed stanza while serving", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "watchProbe"], { cwd, currentDate });
+    writeFileSync(
+      join(cwd, "stanzas", "watch-probe", "style.scss"),
+      "main {\n  color: rgb(1, 2, 3);\n}\n",
+      "utf8",
+    );
+    const port = await findAvailablePort();
+
+    await routeCliAsync(["serve", "--port", String(port)], {
+      cwd,
+      onServeSession: (session) => {
+        serveSessions.push(session);
+      },
+    });
+
+    expect((await fetchText(port, "/watch-probe.css")).body).toContain("rgb(1, 2, 3)");
+
+    writeFileSync(
+      join(cwd, "stanzas", "watch-probe", "style.scss"),
+      "main {\n  color: rgb(4, 5, 6);\n}\n",
+      "utf8",
+    );
+
+    await waitFor(async () => {
+      const css = await fetchText(port, "/watch-probe.css");
+      return css.body.includes("rgb(4, 5, 6)");
+    });
+  });
+
+  it("returns HTTP 500 for a failed stanza rebuild and recovers after a fix", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "failureProbe"], { cwd, currentDate });
+    const stylePath = join(cwd, "stanzas", "failure-probe", "style.scss");
+    writeFileSync(stylePath, "main {\n  color: rgb(1, 2, 3);\n}\n", "utf8");
+    const port = await findAvailablePort();
+
+    await routeCliAsync(["s", "--port", String(port)], {
+      cwd,
+      onServeSession: (session) => {
+        serveSessions.push(session);
+      },
+    });
+
+    writeFileSync(stylePath, "main {\n  color: ;\n}\n", "utf8");
+
+    await waitFor(async () => {
+      const css = await fetchText(port, "/failure-probe.css");
+      return css.status === 500 && css.body.includes("Sass compile failed");
+    });
+
+    writeFileSync(stylePath, "main {\n  color: rgb(7, 8, 9);\n}\n", "utf8");
+
+    await waitFor(async () => {
+      const css = await fetchText(port, "/failure-probe.css");
+      return css.status === 200 && css.body.includes("rgb(7, 8, 9)");
+    });
+  });
+
   function makeTemporaryDirectory(): string {
     const directory = mkdtempSync(join(tmpdir(), "togostanza-cli-"));
     temporaryDirectories.push(directory);
@@ -1045,6 +1148,78 @@ describe("CLI router", () => {
     return JSON.parse(readText(path));
   }
 });
+
+type FetchTextResult = {
+  body: string;
+  contentType: string;
+  status: number;
+};
+
+async function fetchText(port: number, path: string): Promise<FetchTextResult> {
+  const response = await fetch(`http://127.0.0.1:${port}${path}`);
+
+  return {
+    body: await response.text(),
+    contentType: response.headers.get("content-type") ?? "",
+    status: response.status,
+  };
+}
+
+async function findAvailablePort(): Promise<number> {
+  const server = await listenOnEphemeralPort();
+  const address = server.address();
+
+  if (typeof address !== "object" || address === null) {
+    throw new Error("Expected ephemeral server address.");
+  }
+
+  const { port } = address;
+
+  await closeServer(server);
+
+  return port;
+}
+
+function listenOnEphemeralPort(): Promise<Server> {
+  const server = createServer();
+
+  return new Promise((resolveServer, reject) => {
+    server.on("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      resolveServer(server);
+    });
+  });
+}
+
+function closeServer(server: Server): Promise<void> {
+  return new Promise((resolveClose, reject) => {
+    server.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolveClose();
+    });
+    server.closeAllConnections();
+  });
+}
+
+async function waitFor(predicate: () => Promise<boolean>): Promise<void> {
+  const timeoutAt = Date.now() + 4_000;
+
+  while (Date.now() < timeoutAt) {
+    // eslint-disable-next-line no-await-in-loop -- polling needs each attempt result before waiting.
+    if (await predicate()) {
+      return;
+    }
+
+    // eslint-disable-next-line no-await-in-loop -- polling intentionally waits between attempts.
+    await new Promise((resolveWait) => setTimeout(resolveWait, 50));
+  }
+
+  throw new Error("Timed out waiting for condition.");
+}
 
 function expectNpmPagesWorkflow(workflow: string): void {
   expectCommonPagesWorkflow(workflow);
