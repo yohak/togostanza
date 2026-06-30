@@ -371,6 +371,7 @@ async function buildEntrypoints(
       rollupOptions: {
         input,
         output: {
+          assetFileNames: "_assets/[name]-[hash][extname]",
           chunkFileNames: "_chunks/[name]-[hash].js",
           entryFileNames: "[name].js",
         },
@@ -449,10 +450,11 @@ function buildStyles(
         sourceMap: true,
         sourceMapIncludeSources: true,
       });
+      const css = rewriteStanzaAssetUrls(result.css, stanza.id);
 
       writeFileSync(
         cssPath,
-        `${result.css.trimEnd()}\n/*# sourceMappingURL=${stanza.id}.css.map */\n`,
+        `${css.trimEnd()}\n/*# sourceMappingURL=${stanza.id}.css.map */\n`,
         "utf8",
       );
       writeFileSync(cssMapPath, `${JSON.stringify(result.sourceMap, null, 2)}\n`, "utf8");
@@ -463,6 +465,14 @@ function buildStyles(
       );
     }
   }
+}
+
+function rewriteStanzaAssetUrls(css: string, stanzaId: string): string {
+  return css.replace(
+    /url\(\s*(["']?)(\.\/assets\/|assets\/)([^"')\s]+)\1\s*\)/g,
+    (_match, quote: string, _prefix: string, assetPath: string) =>
+      `url(${quote}./${stanzaId}/assets/${assetPath}${quote})`,
+  );
 }
 
 function copyBuildAssets(

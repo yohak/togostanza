@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -621,12 +629,22 @@ describe("CLI router", () => {
     writeFileSync(join(cwd, "common.scss"), "$probe-color: rgb(1, 2, 3);\n", "utf8");
     writeFileSync(
       join(cwd, "stanzas", "asset-probe", "style.scss"),
-      "@use '@/common.scss' as common;\n.asset-probe {\n  color: common.$probe-color;\n}\n",
+      [
+        "@use '@/common.scss' as common;",
+        ".asset-probe {",
+        "  color: common.$probe-color;",
+        '  background-image: url("./assets/local-asset.svg");',
+        '  mask-image: url("assets/local-asset.svg");',
+        '  list-style-image: url("data:image/svg+xml,%3Csvg%3E%3C/svg%3E");',
+        '  cursor: url("https://example.test/cursor.svg"), auto;',
+        "}",
+        "",
+      ].join("\n"),
       "utf8",
     );
     writeFileSync(
-      join(cwd, "stanzas", "asset-probe", "assets", "local-asset.txt"),
-      "local\n",
+      join(cwd, "stanzas", "asset-probe", "assets", "local-asset.svg"),
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>\n',
       "utf8",
     );
     mkdirSync(join(cwd, "public"));
@@ -637,15 +655,76 @@ describe("CLI router", () => {
 
     expect(result.exitCode).toBe(0);
     expect(existsSync(join(cwd, "public", "stale.txt"))).toBe(false);
-    expect(readText(join(cwd, "public", "asset-probe.css"))).toContain("rgb(1, 2, 3)");
+    const css = readText(join(cwd, "public", "asset-probe.css"));
+    expect(css).toContain("rgb(1, 2, 3)");
+    expect(css).toContain('url("./asset-probe/assets/local-asset.svg")');
+    expect(css).toContain('url("data:image/svg+xml,%3Csvg%3E%3C/svg%3E")');
+    expect(css).toContain('url("https://example.test/cursor.svg")');
+    expect(css).not.toContain('url("./assets/local-asset.svg")');
+    expect(css).not.toContain('url("assets/local-asset.svg")');
     expect(readText(join(cwd, "public", "assets", "root-asset.txt"))).toBe("root\n");
-    expect(readText(join(cwd, "public", "asset-probe", "assets", "local-asset.txt"))).toBe(
-      "local\n",
+    expect(readText(join(cwd, "public", "asset-probe", "assets", "local-asset.svg"))).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"></svg>\n',
     );
     expect(existsSync(join(cwd, "public", "assets", ".keep"))).toBe(false);
     expect(existsSync(join(cwd, "public", "asset-probe", "assets", ".keep"))).toBe(false);
     expect(existsSync(join(cwd, "public", "index.html"))).toBe(false);
     expect(existsSync(join(cwd, "public", "-togostanza"))).toBe(false);
+  });
+
+  it("emits stanza and package asset imports separately from copied root assets", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "assetImportProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "assets"));
+    writeFileSync(join(cwd, "assets", "root-asset.txt"), "root\n", "utf8");
+    writeFileSync(
+      join(cwd, "stanzas", "asset-import-probe", "assets", "local-marker.svg"),
+      formatLargeSvg("local-marker"),
+      "utf8",
+    );
+    const packageDirectory = join(cwd, "node_modules", "case-asset-package");
+    mkdirSync(packageDirectory, { recursive: true });
+    writeFileSync(
+      join(packageDirectory, "package.json"),
+      `${JSON.stringify({ name: "case-asset-package", type: "module", version: "0.0.0" })}\n`,
+      "utf8",
+    );
+    writeFileSync(
+      join(packageDirectory, "package-marker.svg"),
+      formatLargeSvg("package-marker"),
+      "utf8",
+    );
+    writeFileSync(
+      join(cwd, "stanzas", "asset-import-probe", "index.js"),
+      [
+        'import Stanza from "togostanza/stanza";',
+        'import localMarkerUrl from "./assets/local-marker.svg";',
+        'import packageMarkerUrl from "case-asset-package/package-marker.svg";',
+        "",
+        "export default class AssetImportProbe extends Stanza {",
+        "  render() {",
+        '    const main = this.root.querySelector("main");',
+        "    if (main) {",
+        "      main.dataset.urls = `${localMarkerUrl}|${packageMarkerUrl}`;",
+        "    }",
+        "  }",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(readText(join(cwd, "dist", "asset-import-probe.js"))).toContain("_assets/");
+    expect(existsSync(join(cwd, "dist", "assets", "root-asset.txt"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "asset-import-probe", "assets", "local-marker.svg"))).toBe(
+      true,
+    );
+    const emittedAssets = readdirSync(join(cwd, "dist", "_assets"));
+    expect(emittedAssets.some((entryName) => entryName.startsWith("local-marker-"))).toBe(true);
+    expect(emittedAssets.some((entryName) => entryName.startsWith("package-marker-"))).toBe(true);
   });
 
   it("warns about legacy build config files without executing them", async () => {
@@ -924,6 +1003,16 @@ function writeConfigImportFixture(rootDirectory: string): void {
     "export declare function defineTogoStanzaConfig<T>(config: T): T;\n",
     "utf8",
   );
+}
+
+function formatLargeSvg(label: string): string {
+  return [
+    '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1">',
+    `  <title>${label}</title>`,
+    `  <!-- ${"x".repeat(5000)} -->`,
+    "</svg>",
+    "",
+  ].join("\n");
 }
 
 function readText(path: string): string {
