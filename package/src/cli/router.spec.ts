@@ -716,6 +716,66 @@ describe("CLI router", () => {
     expect(result.stderr).toContain("config probe failure");
   });
 
+  it("bundles shared source imported from outside the stanza directory", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "sharedSourceProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "lib"));
+    writeFileSync(
+      join(cwd, "lib", "shared-label.ts"),
+      'export const sharedLabel: string = "case-2-4b-shared-source";\n',
+      "utf8",
+    );
+    writeFileSync(
+      join(cwd, "stanzas", "shared-source-probe", "index.ts"),
+      [
+        'import Stanza from "togostanza/stanza";',
+        'import { sharedLabel } from "../../lib/shared-label";',
+        "",
+        "export default class SharedSourceProbe extends Stanza {",
+        "  render() {",
+        '    const main = this.root.querySelector("main");',
+        "    if (main) {",
+        "      main.textContent = sharedLabel;",
+        "    }",
+        "  }",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(readText(join(cwd, "dist", "shared-source-probe.js"))).toContain(
+      "case-2-4b-shared-source",
+    );
+  });
+
+  it("does not reproduce current-version TS18003 for JavaScript stanzas with tsconfig.json", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "allowJsProbe"], { cwd, currentDate });
+    writeFileSync(
+      join(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            strict: true,
+          },
+          include: ["src/**/*.ts"],
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(cwd, "dist", "allow-js-probe.js"))).toBe(true);
+  });
+
   it("rejects unsafe build output paths before cleaning", async () => {
     const cwd = makeStanzaRepoRoot();
     const results = await Promise.all(

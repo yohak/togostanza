@@ -95,7 +95,11 @@ export async function handleBuild(
   try {
     prepareOutputDirectory(outputDirectoryResult.outputDirectory, rootDirectory);
     writeOutputMarker(outputDirectoryResult.outputDirectory);
-    await buildEntrypoints(stanzaResult.stanzas, outputDirectoryResult.outputDirectory);
+    await buildEntrypoints(
+      stanzaResult.stanzas,
+      outputDirectoryResult.outputDirectory,
+      rootDirectory,
+    );
     buildStyles(stanzaResult.stanzas, outputDirectoryResult.outputDirectory, rootDirectory);
     copyBuildAssets(stanzaResult.stanzas, outputDirectoryResult.outputDirectory, rootDirectory);
     writeHtmlFiles(stanzaResult.stanzas, outputDirectoryResult.outputDirectory);
@@ -348,6 +352,7 @@ function writeOutputMarker(outputDirectory: string): void {
 async function buildEntrypoints(
   stanzas: readonly StanzaDefinition[],
   outputDirectory: string,
+  rootDirectory: string,
 ): Promise<void> {
   const wrapperDirectory = mkdtempSync(join(tmpdir(), "togostanza-build-"));
   const input = Object.fromEntries(
@@ -381,6 +386,7 @@ async function buildEntrypoints(
         "togostanza/stanza": runtimeStubPath(),
       },
     },
+    root: rootDirectory,
   };
 
   try {
