@@ -9,15 +9,19 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import Handlebars from "handlebars";
 import { compile, type FileImporter } from "sass";
 import { build as viteBuild, type InlineConfig } from "vite";
 import { getStringOption, parseOptions } from "./options.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure, type CliResult } from "./result.js";
 import { isValidStanzaId, titleCaseStanzaId } from "./stanza-id.js";
+
+const require = createRequire(import.meta.url);
 
 export type BuildOptions = {
   cwd?: string;
@@ -31,6 +35,7 @@ type StanzaDefinition = {
   label: string;
   metadata: Record<string, unknown>;
   metadataPath: string;
+  templates: Record<string, string>;
 };
 
 const outputMarkerFileName = ".togostanza-build-output";
@@ -228,6 +233,11 @@ function readStanzaDefinition(input: {
 
   const label = readOptionalString(metadata, "stanza:label") ?? titleCaseStanzaId(id);
   const definition = readOptionalString(metadata, "stanza:definition");
+  const templatesResult = readTemplates(input.directory, id);
+
+  if ("error" in templatesResult) {
+    return templatesResult;
+  }
 
   return {
     stanza: withOptionalDefinition({
@@ -238,6 +248,7 @@ function readStanzaDefinition(input: {
       label,
       metadata,
       metadataPath: input.metadataPath,
+      templates: templatesResult.templates,
     }),
   };
 }
@@ -356,6 +367,7 @@ async function buildEntrypoints(
     publicDir: false,
     resolve: {
       alias: {
+        "handlebars/runtime.js": handlebarsRuntimePath(),
         "togostanza/stanza": runtimeStubPath(),
       },
     },
@@ -370,12 +382,15 @@ async function buildEntrypoints(
 
 function formatEntrypointWrapper(stanza: StanzaDefinition): string {
   const importPath = pathToFileURL(stanza.entrypointPath).href;
+  const templates = formatTemplates(stanza.templates);
 
   return [
+    'import Handlebars from "handlebars/runtime.js";',
     'import { registerStanza } from "togostanza/stanza";',
     `import StanzaClass from ${JSON.stringify(importPath)};`,
     "",
     `const metadata = ${JSON.stringify(stanza.metadata, null, 2)};`,
+    `const templates = ${templates};`,
     "",
     "registerStanza({",
     `  id: ${JSON.stringify(stanza.id)},`,
@@ -384,6 +399,7 @@ function formatEntrypointWrapper(stanza: StanzaDefinition): string {
     `  aboutUrl: new URL(${JSON.stringify(`./${stanza.id}.html`)}, import.meta.url),`,
     "  metadata,",
     "  StanzaClass,",
+    "  templates,",
     "});",
     "",
     "export default StanzaClass;",
@@ -517,6 +533,10 @@ function runtimeStubPath(): string {
   return fileURLToPath(new URL("../runtime/stanza.js", import.meta.url));
 }
 
+function handlebarsRuntimePath(): string {
+  return require.resolve("handlebars/runtime.js");
+}
+
 function withOptionalDefinition(input: {
   definition: string | undefined;
   directory: string;
@@ -525,6 +545,7 @@ function withOptionalDefinition(input: {
   label: string;
   metadata: Record<string, unknown>;
   metadataPath: string;
+  templates: Record<string, string>;
 }): StanzaDefinition {
   return {
     directory: input.directory,
@@ -533,6 +554,7 @@ function withOptionalDefinition(input: {
     label: input.label,
     metadata: input.metadata,
     metadataPath: input.metadataPath,
+    templates: input.templates,
     ...(input.definition ? { definition: input.definition } : {}),
   };
 }
@@ -549,6 +571,59 @@ function emptySourceMap(): Record<string, unknown> {
     sources: [],
     version: 3,
   };
+}
+
+function readTemplates(
+  stanzaDirectory: string,
+  stanzaId: string,
+):
+  | {
+      templates: Record<string, string>;
+    }
+  | {
+      error: string;
+    } {
+  const templatesDirectory = join(stanzaDirectory, "templates");
+
+  if (!pathIsDirectory(templatesDirectory)) {
+    return { templates: {} };
+  }
+
+  const templates: Record<string, string> = {};
+
+  for (const entryName of readdirSync(templatesDirectory).toSorted()) {
+    const templatePath = join(templatesDirectory, entryName);
+
+    if (!entryName.endsWith(".hbs") || !pathIsFile(templatePath)) {
+      continue;
+    }
+
+    try {
+      templates[entryName] = String(Handlebars.precompile(readFileSync(templatePath, "utf8")));
+    } catch (error) {
+      return {
+        error: `Invalid template for ${stanzaId}: failed to precompile ${templatePath}: ${errorMessage(error)}.`,
+      };
+    }
+  }
+
+  return { templates };
+}
+
+function formatTemplates(templates: Record<string, string>): string {
+  const entries = Object.entries(templates);
+
+  if (entries.length === 0) {
+    return "{}";
+  }
+
+  return [
+    "{",
+    ...entries.map(
+      ([name, template]) => `  ${JSON.stringify(name)}: Handlebars.template(${template}),`,
+    ),
+    "}",
+  ].join("\n");
 }
 
 function pathIsDirectory(path: string): boolean {

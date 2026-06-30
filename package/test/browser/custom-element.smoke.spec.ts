@@ -68,7 +68,7 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
   <body>
     <script type="module" src="./public/visible-menu.js"></script>
     <script type="module" src="./public/metadata-none.js"></script>
-    <togostanza-visible-menu id="visible" togostanza-menu_placement="none"></togostanza-visible-menu>
+    <togostanza-visible-menu id="visible" say-to="runtime" togostanza-menu_placement="none"></togostanza-visible-menu>
     <togostanza-visible-menu id="attribute-hidden" togostanza-menu-placement="none"></togostanza-visible-menu>
     <togostanza-metadata-none id="metadata-hidden"></togostanza-metadata-none>
   </body>
@@ -122,6 +122,34 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
       elementConnected: true,
       rootConnected: true,
     });
+
+    await expect
+      .poll(() =>
+        page
+          .locator("#visible")
+          .evaluate((element) => element.shadowRoot?.querySelector("main")?.textContent?.trim()),
+      )
+      .toBe("Hello, runtime!");
+
+    await page.locator("#visible").evaluate((element) => {
+      element.setAttribute("say-to", "updated");
+    });
+
+    await expect
+      .poll(() =>
+        page.locator("#visible").evaluate((element) => {
+          const main = element.shadowRoot?.querySelector("main");
+
+          return {
+            paragraphs: main?.querySelectorAll("p").length,
+            text: main?.textContent?.trim(),
+          };
+        }),
+      )
+      .toEqual({
+        paragraphs: 1,
+        text: "Hello, updated!",
+      });
 
     await expectMenuState(page, "#visible", {
       hidden: false,

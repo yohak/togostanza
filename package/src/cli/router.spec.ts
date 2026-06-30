@@ -607,6 +607,8 @@ describe("CLI router", () => {
     expect(script).toContain('"@id"');
     expect(script).toContain("build-probe");
     expect(script).toContain("customElements.define");
+    expect(script).toContain("stanza.html.hbs");
+    expect(script).toContain("Hello, ");
     expect(readText(join(cwd, "dist", "build-probe.html"))).toContain("./build-probe.js");
   });
 

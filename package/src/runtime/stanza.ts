@@ -1,10 +1,20 @@
 type StanzaRuntimeContext = {
   element: HTMLElement;
   metadata: Record<string, unknown>;
+  requestRender: () => Promise<void>;
   root: ShadowRoot;
+  templates: Record<string, TemplateRenderer>;
 };
 
 type StanzaConstructor = new () => Stanza;
+type TemplateRenderer = (parameters?: Record<string, unknown>) => string;
+type AttributeSource = Pick<HTMLElement, "getAttribute" | "hasAttribute">;
+
+export type RenderTemplateInput = {
+  parameters?: Record<string, unknown>;
+  selector?: string;
+  template: string;
+};
 
 export type StanzaRegistration = {
   aboutUrl: URL;
@@ -13,22 +23,55 @@ export type StanzaRegistration = {
   metadata: Record<string, unknown>;
   StanzaClass: StanzaConstructor;
   tagName: string;
+  templates: Record<string, TemplateRenderer>;
 };
+
+const initializeRuntime = Symbol("togostanza.initializeRuntime");
 
 export default class Stanza {
   element!: HTMLElement;
   metadata: Record<string, unknown> = {};
   params: Record<string, unknown> = {};
   root!: ShadowRoot;
+  #requestRender: (() => Promise<void>) | undefined;
+  #templates: Record<string, TemplateRenderer> = {};
 
-  initializeRuntime(context: StanzaRuntimeContext): void {
+  [initializeRuntime](context: StanzaRuntimeContext): void {
     this.element = context.element;
     this.metadata = context.metadata;
+    this.#requestRender = context.requestRender;
     this.root = context.root;
+    this.#templates = context.templates;
   }
 
-  renderTemplate(_input: unknown): void {
-    // Phase 2-3 fills in template rendering.
+  render(): unknown {
+    return undefined;
+  }
+
+  handleAttributeChange(_name: string, _oldValue: string | null, _newValue: string | null): void {
+    void this.#requestRender?.();
+  }
+
+  handleEvent(_event: Event): void {
+    // Real Stanza-to-Stanza event wiring belongs to Phase 2-5.
+  }
+
+  renderTemplate(input: RenderTemplateInput): void {
+    const renderer = this.#templates[input.template];
+
+    if (!renderer) {
+      throw new Error(`Unknown template: ${input.template}`);
+    }
+
+    const target = input.selector
+      ? this.root.querySelector<HTMLElement>(input.selector)
+      : this.root.querySelector<HTMLElement>("main");
+
+    if (!target) {
+      throw new Error(`Template target not found: ${input.selector ?? "main"}`);
+    }
+
+    target.innerHTML = String(renderer(input.parameters ?? {}));
   }
 }
 
@@ -41,11 +84,15 @@ export function registerStanza(registration: StanzaRegistration): void {
     return;
   }
 
+  const parameterKeys = parameterAttributeKeys(registration.metadata);
+  const observedAttributes = ["togostanza-menu-placement", ...parameterKeys];
+
   class TogoStanzaElement extends HTMLElement {
-    static observedAttributes = ["togostanza-menu-placement"];
+    static observedAttributes = observedAttributes;
 
     stanzaInstance: Stanza;
     #menuShell: HTMLElement;
+    #hasConnected = false;
 
     constructor() {
       super();
@@ -59,18 +106,54 @@ export function registerStanza(registration: StanzaRegistration): void {
       root.append(this.#menuShell);
 
       this.stanzaInstance = new registration.StanzaClass();
-      this.stanzaInstance.initializeRuntime({
+      this.stanzaInstance[initializeRuntime]({
         element: this,
         metadata: registration.metadata,
+        requestRender: () => this.#renderStanzaWithReport(),
         root,
+        templates: registration.templates,
       });
     }
 
     connectedCallback(): void {
+      this.#hasConnected = true;
+      this.#refreshParams();
       this.#updateMenuShell();
+      this.#scheduleRender();
     }
 
-    attributeChangedCallback(): void {
+    attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+      if (oldValue === newValue) {
+        return;
+      }
+
+      this.#refreshParams();
+      this.#updateMenuShell();
+
+      if (this.#hasConnected && parameterKeys.includes(name)) {
+        this.stanzaInstance.handleAttributeChange(name, oldValue, newValue);
+      }
+    }
+
+    #refreshParams(): void {
+      this.stanzaInstance.params = createStanzaParams(this, registration.metadata);
+    }
+
+    #scheduleRender(): void {
+      void this.#renderStanzaWithReport();
+    }
+
+    async #renderStanzaWithReport(): Promise<void> {
+      try {
+        await this.#renderStanza();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`togostanza render failed for ${registration.id}: ${message}`);
+      }
+    }
+
+    async #renderStanza(): Promise<void> {
+      await this.stanzaInstance.render();
       this.#updateMenuShell();
     }
 
@@ -162,6 +245,84 @@ function styleDefaultRules(metadata: Record<string, unknown>): string {
   }
 
   return [":host {", ...declarations, "}"].join("\n");
+}
+
+export function createStanzaParams(
+  element: AttributeSource,
+  metadata: Record<string, unknown>,
+): Record<string, unknown> {
+  const params: Record<string, unknown> = {};
+
+  for (const parameter of parameterDefinitions(metadata)) {
+    if (parameter.type === "boolean") {
+      params[parameter.key] = element.hasAttribute(parameter.key);
+      continue;
+    }
+
+    const attributeValue = element.getAttribute(parameter.key);
+
+    if (attributeValue === null) {
+      continue;
+    }
+
+    params[parameter.key] = parseParameterValue(attributeValue, parameter.type);
+  }
+
+  return params;
+}
+
+function parseParameterValue(value: string, type: string): unknown {
+  switch (type) {
+    case "boolean":
+      return value !== "";
+    case "number":
+      return Number(value);
+    case "json":
+      try {
+        return JSON.parse(value) as unknown;
+      } catch {
+        return value;
+      }
+    case "date":
+    case "datetime":
+      return new Date(value);
+    default:
+      return value;
+  }
+}
+
+function parameterAttributeKeys(metadata: Record<string, unknown>): string[] {
+  return parameterDefinitions(metadata).map((parameter) => parameter.key);
+}
+
+function parameterDefinitions(
+  metadata: Record<string, unknown>,
+): Array<{ key: string; type: string }> {
+  const parameters = metadata["stanza:parameter"];
+
+  if (!Array.isArray(parameters)) {
+    return [];
+  }
+
+  return parameters.flatMap((parameter) => {
+    if (!isRecord(parameter)) {
+      return [];
+    }
+
+    const key = parameter["stanza:key"];
+    const type = parameter["stanza:type"];
+
+    if (typeof key !== "string" || key === "") {
+      return [];
+    }
+
+    return [
+      {
+        key,
+        type: typeof type === "string" ? type : "string",
+      },
+    ];
+  });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
