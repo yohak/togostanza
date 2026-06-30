@@ -26,7 +26,7 @@ Phase 2では、先に全体のサブフェーズ境界を固定する。各サ�
 | ------------ | ------ | -------------- | -------- |
 | Phase 2-0: preflight / repo detection | Phase 1の必須follow-upと、`build` 前提のStanzaリポジトリ検出を整える。 | [001](../../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../../workbench/cases/002-build-artifacts/) | [計画](./phase-2-0/plan.md)、[引き継ぎ](./phase-2-0/handoff.md) |
 | Phase 2-1: build artifact spine | `build` / `b` と、サブパス安全な最小 `dist/` 生成物を成立させる。 | [002](../../../workbench/cases/002-build-artifacts/) | [計画](./phase-2-1/plan.md)、[引き継ぎ](./phase-2-1/handoff.md) |
-| Phase 2-2: minimal runtime embedding | module script、custom element、open Shadow DOM、Shadow DOM内 `main`、menu placement / About導線を成立させる。 | [003](../../../workbench/cases/003-runtime-embedding/) | [計画](./phase-2-2/plan.md) |
+| Phase 2-2: minimal runtime embedding | module script、custom element、open Shadow DOM、Shadow DOM内 `main`、menu placement / About導線を成立させる。 | [003](../../../workbench/cases/003-runtime-embedding/) | [計画](./phase-2-2/plan.md)、[引き継ぎ](./phase-2-2/handoff.md) |
 | Phase 2-3: Stanza source API | `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()` などを段階的に成立させる。 | [004](../../../workbench/cases/004-runtime-parameters/)、[005](../../../workbench/cases/005-stanza-source-api/) | 後続作成 |
 | Phase 2-4: config / resolution / assets | `togostanza.config.ts`、旧設定検出、Sassの高度なmodule解決、`tsconfig.json`、共有ソース、asset解決を扱う。 | [007](../../../workbench/cases/007-config-and-resolution/) | 後続作成 |
 | Phase 2-5: inter-stanza coordination | `togostanza--container`、CustomEvent、incoming / outgoing event、`event-map` / `data-source` の再設計を扱う。 | [006](../../../workbench/cases/006-inter-stanza-coordination/) | 後続作成 |
