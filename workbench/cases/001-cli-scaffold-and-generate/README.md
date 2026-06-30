@@ -40,6 +40,10 @@
 
 - `init` と `generate stanza` が同じ入口として使えること。
 - Phase 1では、`init` がGitHub Pages公開用workflowのplaceholderを生成すること。
+- Phase 2-0では、`init .` が現在のディレクトリをStanzaリポジトリとして初期化できること。
+- Phase 2-0では、`init . --name <name>` が現在のディレクトリへscaffoldし、`package.json.name` に `--name` の値を書くこと。
+- Phase 2-0では、`init .` が許容済みpreflight markerとして既存 `.git/` とlockfileを扱えること。
+- Phase 2-0では、`init .` が既存ファイルをmergeせず、衝突pathを含む診断で失敗すること。
 - Phase 2では、placeholderを実deploy可能なworkflowへ置き換え、`build` 生成物を公開する導線を持つこと。
 - `init` が既定でgit初期化し、`--skip-git` で抑止できること。
 - `generate stanza [id]` が主要optionを受け付け、idをkebab-case化すること。
@@ -51,6 +55,10 @@
 
 - Stanza開発者が、既存の入口名でStanzaリポジトリとStanzaソースを作れる。
 - Phase 1では、生成されたStanzaリポジトリに有効なGitHub Pages workflow placeholderがある。
+- Phase 2-0では、空ディレクトリまたは許容済みpreflight markerだけがあるディレクトリで `init .` が成功する。
+- Phase 2-0では、`init . --name <name>` が現在のディレクトリを生成先にし、`--name` をpackage名として使う。
+- Phase 2-0では、`package-lock.json` と `pnpm-lock.yaml` によるpackage manager推定と矛盾診断が確認できる。
+- Phase 2-0では、`init .` が既存ファイルとのmergeや上書きを行わず、分かりやすく失敗する。
 - Phase 2では、生成されたStanzaリポジトリに依存関係のインストール、`togostanza build`、`dist/` のPages artifact化、deployの流れを確認できるGitHub Pages workflowがある。
 - `--skip-git` を指定しない場合はgit初期化され、`--skip-git` を指定した場合はgit初期化されない。
 - 生成されたStanzaソースが `build` 対象になる。
@@ -64,6 +72,7 @@
 - `package.json` の依存、script、パッケージマネージャー周辺。
 - README、GitHub Pages workflow、git初期化など、開発支援寄りの差分。
 - Phase 1ではGitHub Pages workflow placeholderの内容。
+- Phase 2-0では `init .`、`init . --name <name>`、preflight marker、lockfile矛盾診断、既存path衝突診断。
 - Phase 2ではGitHub Pages workflow内のinstall command、build command、artifact path、deploy action。
 - `generate stanza` の主要optionと生成ファイル一覧。
 - stdout/stderrの代表ログ。
@@ -72,9 +81,7 @@
 
 - リメイク版generatorで `index.ts` / `index.tsx` 生成optionを用意するか。
 - README生成内容をどこまで維持するか。
-- リメイク版 `init` で、子ディレクトリ作成だけでなく現在のディレクトリへscaffoldする入口を用意するか。
-  - 例: `togostanza init .`
-  - 既存ファイルがある場合の衝突検出、merge、上書きoptionの扱いも合わせて検討する。
+- `init .` で既存 `.gitignore`、`README.md`、`LICENSE` などを将来merge対象として許容するか。
 
 ## npm観測メモ (`current-npm/generated-repo/`)
 

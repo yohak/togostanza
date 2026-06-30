@@ -43,7 +43,7 @@ current-pnpm/
 - `current-pnpm/mise.toml` でNode.jsの18系とpnpmの9系を指定する。検証ケース直下には `mise.toml` を置かない。
 - `current-pnpm/generated-repo/package.json` は `togostanza` を `github:togostanza/togostanza` として参照する。tgz化はしない。
 - `parameter-probe` は `metadata.json` に `string`、`number`、`boolean`、`json`、`single-choice`、`text` のパラメーターを持つ。
-- `parameter-probe` は `metadata.json` に `color`、`number`、`text` のstyleを持つ。styleメタデータ由来の値も `this.params` で観測する。
+- `parameter-probe` は `metadata.json` に `color`、`number`、`text` のstyleを持つ。現行版観測では、styleメタデータ由来の値と `this.params` の関係も確認する。
 - `index.js` は `this.params` の値と `typeof` を描画し、`handleAttributeChange()` で最後の属性変更を記録する。
 - `fixtures/runtime-parameters.html` はビルド後の `../dist/parameter-probe.js` を直接読み込み、次の入力を並べて確認する。
   - boolean attributeあり: `flag`
@@ -168,6 +168,7 @@ style属性を `--parameter-probe-gap="16"`、`--parameter-probe-caption="after 
 
 - booleanの公開挙動が一致すること。
 - boolean以外も、現行版の観測結果と同等に扱われること。
+- `stanza:style` はCSS custom propertyの既定値用途として扱い、`this.params` には入れないこと。
 - 不正な値に対する警告/エラーが改善される場合、既存の正しい入力を壊していないこと。
 
 ## 合格条件
@@ -175,6 +176,7 @@ style属性を `--parameter-probe-gap="16"`、`--parameter-probe-caption="after 
 - booleanパラメーターの属性有無による判定が一致する。
 - 主要な `stanza:type` の変換結果が、現行版観測と矛盾しない。
 - 実プロジェクト由来の `single-choice` / `text` パラメーターと `number` / `text` styleメタデータの扱いが説明できる。
+- リメイク版では、styleメタデータが `this.params` ではなくCSS custom propertyの既定値として扱われる。
 - `this.params` がStanzaソースから同じ形で参照できる。
 
 ## 記録する差分
