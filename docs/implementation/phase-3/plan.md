@@ -28,7 +28,8 @@ Phase 3は、Stanza開発者がlocalhostで開発中のStanzaを確認し、変�
 - `/{id}.html` が対象stanzaの最小プレビューを返す。
 - `/{id}.js`、`/{id}.css`、`/{id}/metadata.json`、stanza別asset、root asset、Vite emit asset、共有チャンクがHTTPで読める。
 - `/{id}.html` からcustom elementがupgradeされ、Phase 2のruntime表示がブラウザで確認できる。
-- Stanza entrypoint、metadata、template、stylesheet、stanza別asset、root asset、設定、共有ソースの変更後に再ビルドされる。
+- Stanza entrypoint、metadata、template、stylesheet、stanza別assetの変更後に、対象stanzaだけが再ビルドされる。
+- root asset、設定、共有ソース、安全に特定できない変更では全体rebuildされる。
 - 再ビルド後の内容は、ページ再読み込みで反映される。
 - 初回ビルド失敗時もserver processは起動し、対象URLでHTTP 500エラーページを返す。
 - 再ビルド失敗時もserver processは終了せず、HTTP 500エラーページを返す。
@@ -65,7 +66,7 @@ Phase 3は、Stanza開発者がlocalhostで開発中のStanzaを確認し、変�
 - npm公開metadata、tarball install、live deploy確認。
 - React、Vue固有のcompatibility。
 - `togostanza-utils` compatibility。
-- watch性能や差分ビルド最適化の外部互換固定。
+- watch性能最適化の外部互換固定。
 - ヘルププレビューUIの完全復元。
 - `index.html` や `-togostanza/` を公開用build生成物として復活させること。
 
@@ -81,6 +82,8 @@ Phase 3は、Stanza開発者がlocalhostで開発中のStanzaを確認し、変�
 - 通常の `build` は、これまでどおり `--output-path` の安全ガードとoutput markerを使う。
 - `serve` は、Stanzaリポジトリ外の一時出力ディレクトリを明示的に渡してbuild相当生成物を作る。
 - 一時出力ディレクトリは `dist/` と同じファイル構造を持つ。
+- `serve` 用build serviceは、全体buildと対象stanzaだけのbuildを呼び分けられるようにする。
+- 対象stanzaだけを再ビルドする場合は、直前に成功した一時出力ディレクトリを新しい一時出力ディレクトリへコピーし、その上に対象stanzaの生成物を更新してから切り替える。
 - `serve` 用buildでは、公開用 `dist/` のoutput markerやclean安全ガードを外部契約にしない。
 - build失敗時は、stack traceではなく既存の `Build failed: ...` 形式に寄せた診断をserver stateへ保持する。
 
@@ -106,7 +109,9 @@ Phase 3では、ViteやSassをメモリ出力へ置き換えない。既存のfi
 - 実在するファイルは、未知拡張子でもHTTP 404や拒否にせず、`application/octet-stream` で配信する。
 - server shutdown時にHTTP serverを閉じ、一時出力ディレクトリを削除する。
 
-`serve` のCLIは長時間動く。実装では、CLI entryからserverが参照され続ける形にする。testでは、server instanceまたはclose callbackを取得できる注入点を用意し、終了時に `closeAllConnections()` 相当の後始末を行う。
+`serve` のCLIは長時間動く。`handleServe()` はlisten完了後に成功の `CliResult` を返し、既存entrypointがlisten URLをstdoutへ出力する。HTTP serverとwatcherのhandleがevent loopを保持するため、CLI processは終了しない。listen前のpreflightやlisten失敗はnon-zeroの `CliResult` として返す。
+
+testでは、server instanceまたはclose callbackを取得できる注入点を用意する。testはlisten後にHTTP確認を行い、終了時に `closeAllConnections()` 相当の後始末と一時出力ディレクトリ削除を明示的に確認する。
 
 ### 3-2 watch / invalidate
 
@@ -118,9 +123,9 @@ Phase 3では、ViteやSassをメモリ出力へ置き換えない。既存のfi
 - Stanzaリポジトリrootを再帰的に監視する。
 - `.git/`、`node_modules/`、公開用 `dist/`、一時出力ディレクトリ、その他明らかなcontrol directoryはwatch対象から除外する。
 - 短いdebounceを入れ、連続変更を1回の再ビルドへまとめる。
-- metadata、template、stylesheet、entrypoint、stanza別assetの変更は、対象stanzaの変更として記録する。
-- 共有ソース、root asset、設定、package情報、stanza追加削除、安全に特定できない変更は、全体invalidateとして記録する。
-- Phase 3の実装では、まず全体rebuildを許容する。差分invalidateは、どの変更がどの範囲へ影響したかを観測・記録できることを優先し、build性能の最適化は外部互換にしない。
+- metadata、template、stylesheet、entrypoint、stanza別assetの変更は、対象stanzaのinvalidateとして記録し、対象stanzaだけを再ビルドする。
+- 共有ソース、root asset、設定、package情報、stanza追加削除、安全に特定できない変更は、全体invalidateとして記録し、全体rebuildする。
+- 共有ソースの変更で依存グラフ上の影響stanzaを安全に特定できる場合は、そのstanza群だけを再ビルドしてよい。ただしPhase 3では、安全に特定できない場合の全体rebuildを優先してよい。
 - 再ビルド成功後は、新しい一時出力ディレクトリへ切り替える。
 - 古い一時出力ディレクトリは、切り替え後に削除する。
 
@@ -135,11 +140,13 @@ Phase 3では、ViteやSassをメモリ出力へ置き換えない。既存のfi
 - 初回ビルド失敗時もserverをlistenさせる。
 - 初回ビルド失敗中の `/` とbuild相当URLは、HTTP 500エラーページを返す。
 - 再ビルド失敗時は、最後に成功した生成物を開発者へ見せ続けるのではなく、失敗中であることが分かるHTTP 500を返す。
+- 対象stanzaだけの再ビルド失敗では、対象stanzaのプレビューとbuild相当URLをHTTP 500にする。
+- 全体rebuild失敗では、server全体を失敗状態として扱い、全プレビューとbuild相当URLをHTTP 500にする。
 - エラーページには、失敗したcommand種別、対象pathが分かる場合はpath、エラーメッセージを含める。
 - stack traceや絶対pathをどこまで出すかは、localhost開発サーバであることを前提に扱う。Phase 3では詳細診断を優先してよいが、不要な環境情報を増やしすぎない。
 - 修正後に再ビルドが成功した場合、通常の `/`、`/{id}.html`、build相当URLへ復帰する。
 
-エラー状態は、Phase 3ではserver全体の状態として扱ってよい。将来、stanzaごとの部分成功を扱う場合は、watch / invalidateの詳細化と合わせて後続判断にする。
+エラー状態は、対象stanzaが分かる場合はstanza単位で扱う。設定、共有ソース、stanza追加削除、安全に分類できない変更など、影響範囲が広い場合はserver全体の失敗状態として扱う。
 
 ### 3-4 verification / case update
 
@@ -152,6 +159,8 @@ Phase 3では、ViteやSassをメモリ出力へ置き換えない。既存のfi
 - browser testで、`/{id}.html` からcustom elementがupgradeされることを確認する。
 - browser testまたはintegration testで、変更後の再読み込み反映を確認する。
 - browser testまたはintegration testで、ビルド失敗中のHTTP 500と修正後復帰を確認する。
+- stanza固有入力の変更では対象stanzaだけが再ビルド対象になることを確認する。
+- 共有ソースや設定変更では全体rebuildになることを確認する。
 - testでは固定port競合を避けるため、明示portまたはNodeが割り当てたportを観測できる注入点を使う。
 - 011ケースREADMEに、リメイク版の起動コマンド、配信URL、HTTP status、変更反映、失敗復帰、現行版との差分を記録する。
 
@@ -167,9 +176,9 @@ Phase 3では、ViteやSassをメモリ出力へ置き換えない。既存のfi
 
 Phase 3では、watchの正確な最適化よりも、変更後に正しく復帰できることを優先する。
 
-stanza固有入力の変更は対象stanzaのinvalidateとして記録する。共有ソース、root asset、設定、依存関係解決へ影響する変更、stanza追加削除、安全に分類できない変更は全体invalidateとして扱う。
+stanza固有入力の変更は対象stanzaのinvalidateとして記録し、対象stanzaだけを再ビルドする。共有ソース、root asset、設定、依存関係解決へ影響する変更、stanza追加削除、安全に分類できない変更は全体invalidateとして扱い、全体rebuildする。
 
-ただし、Phase 3の初期実装ではrebuild処理は全体rebuildでよい。これは開発サーバの性能最適化を後回しにし、観測契約である「変更が反映される」「失敗しても復帰できる」を先に満たすためである。後続で必要になれば、Phase 2のimport graph情報やViteのwatcher情報を使った部分buildへ広げる。
+対象stanzaだけの再ビルドは性能最適化ではなく、Phase 3で満たす最小契約に含める。共有ソースの依存グラフを使った影響stanzaの精密特定は、Phase 3では必須にしない。後続で必要になれば、Phase 2のimport graph情報やViteのwatcher情報を使い、共有ソース変更でも部分buildできる範囲を広げる。
 
 ## HTTP方針
 
@@ -206,7 +215,8 @@ Browser test:
 
 - `/{id}.html` でcustom elementがupgradeされる。
 - stylesheet、metadata、asset、共有チャンクがserve経由で解決される。
-- Stanza source変更後、ページ再読み込みで表示が変わる。
+- Stanza固有入力の変更後、対象stanzaだけが再ビルドされ、ページ再読み込みで表示が変わる。
+- 共有ソースや設定変更後、全体rebuildされ、ページ再読み込みで表示が変わる。
 - 再ビルド失敗中にHTTP 500エラーページを確認できる。
 - 修正後に通常表示へ復帰する。
 
@@ -222,8 +232,7 @@ Documentation:
 - host指定option。
 - CORS保証。
 - watch性能最適化。
-- stanzaごとの部分build。
-- エラー状態のstanza単位管理。
+- 共有ソース変更時の精密な影響stanza特定。
 - ヘルププレビューUIの完全復元。
 - `index.html` と `-togostanza/` を公開用build生成物として復活させるかどうか。
 - React、Vue、`togostanza-utils` 互換。

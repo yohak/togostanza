@@ -107,8 +107,8 @@ Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計
 - localhostでの配信。
 - build相当URLの提供。
 - stanza一覧と最小プレビュー。
-- watch、依存グラフベースのinvalidate分類、安全に特定できない変更の全体invalidate。
-- Phase 3初期実装ではinvalidate分類を記録し、再ビルド処理は全体rebuildを許容する。stanzaごとの部分buildは後続判断にする。
+- watch、stanza固有入力の対象stanza再ビルド、依存グラフベースのinvalidate分類、安全に特定できない変更の全体invalidate。
+- Phase 3ではstanza固有入力の変更は対象stanzaだけを再ビルドする。共有ソース、設定、安全に特定できない変更では全体rebuildを許容する。
 - 初回ビルド失敗、再ビルド失敗、修正後復帰。
 - ビルド失敗時のHTTP 500エラーページ。
 

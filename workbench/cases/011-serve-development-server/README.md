@@ -30,6 +30,7 @@
 - build相当URLをサーバrootから配信すること。
 - `serve` が `dist/` を書き換えないこと。
 - 変更後にページ再読み込みで反映されること。
+- stanza固有入力の変更では対象stanzaだけが再ビルドされること。
 - 依存グラフ上の変更では影響を受けるstanzaがinvalidateされること。
 - 安全に特定できない変更では全体invalidateされること。
 - ビルド失敗時にHTTP 500エラーページを返し、修正後に復帰すること。
@@ -49,7 +50,8 @@
 - 配信されたURLとHTTP status。
 - 変更したファイルとinvalidate対象。
 - ビルド失敗時の画面、HTTP status、復帰手順。
-- Phase 3初期実装で、1つのstanzaのビルドエラーにより健全なstanzaを含む全URLがHTTP 500になる場合は、その差分。
+- 対象stanzaだけの再ビルド失敗で、対象stanzaのURLだけがHTTP 500になること。
+- 共有ソース、設定、安全に特定できない変更の失敗で、server全体がHTTP 500になる場合は、その差分。
 
 ## 未決定事項
 
@@ -59,6 +61,6 @@
 ## Phase 3計画での扱い
 
 - Phase 3では、`serve` の生成物を一時出力ディレクトリに作り、`dist/` を書き換えないことを確認する。
-- Phase 3の初期実装では、変更分類を記録しつつ、再ビルド処理は全体rebuildを許容する。
-- Phase 3の初期実装では、ビルド失敗中のエラー状態をserver全体で扱ってよい。stanza単位の部分成功や部分HTTP 500は後続判断とする。
-- Stanzaごとの部分build最適化、HMR、自動ブラウザreload、host指定optionはPhase 3の対象外または後続判断とする。
+- Phase 3では、stanza固有入力の変更は対象stanzaだけを再ビルドする。
+- 共有ソース、設定、安全に特定できない変更では全体rebuildを許容する。
+- 共有ソース変更時の精密な影響stanza特定、HMR、自動ブラウザreload、host指定optionはPhase 3の対象外または後続判断とする。
