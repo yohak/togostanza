@@ -1,4 +1,5 @@
 type StanzaRuntimeContext = {
+  assetBaseUrl: URL;
   element: HTMLElement;
   metadata: Record<string, unknown>;
   requestRender: () => Promise<void>;
@@ -10,6 +11,24 @@ type StanzaConstructor = new () => Stanza;
 type TemplateRenderer = (parameters?: Record<string, unknown>) => string;
 type AttributeSource = Pick<HTMLElement, "getAttribute" | "hasAttribute">;
 
+type MenuEntry = MenuDivider | MenuItem;
+
+type MenuDivider = {
+  type: "divider";
+};
+
+type MenuItem = {
+  handler?: () => void;
+  label: string;
+  type: "item";
+};
+
+export type QueryInput = {
+  endpoint: string;
+  parameters?: Record<string, unknown>;
+  template: string;
+};
+
 export type RenderTemplateInput = {
   parameters?: Record<string, unknown>;
   selector?: string;
@@ -18,6 +37,7 @@ export type RenderTemplateInput = {
 
 export type StanzaRegistration = {
   aboutUrl: URL;
+  assetBaseUrl: URL;
   cssUrl: URL;
   id: string;
   metadata: Record<string, unknown>;
@@ -33,10 +53,12 @@ export default class Stanza {
   metadata: Record<string, unknown> = {};
   params: Record<string, unknown> = {};
   root!: ShadowRoot;
+  #assetBaseUrl: URL | undefined;
   #requestRender: (() => Promise<void>) | undefined;
   #templates: Record<string, TemplateRenderer> = {};
 
   [initializeRuntime](context: StanzaRuntimeContext): void {
+    this.#assetBaseUrl = context.assetBaseUrl;
     this.element = context.element;
     this.metadata = context.metadata;
     this.#requestRender = context.requestRender;
@@ -56,13 +78,38 @@ export default class Stanza {
     // Real Stanza-to-Stanza event wiring belongs to Phase 2-5.
   }
 
-  renderTemplate(input: RenderTemplateInput): void {
-    const renderer = this.#templates[input.template];
+  importWebFontCSS(cssUrl: string): void {
+    const link = document.createElement("link");
+    link.href = resolveStanzaAssetUrl(cssUrl, this.#assetBaseUrl).href;
+    link.rel = "stylesheet";
+    this.root.append(link);
+  }
 
-    if (!renderer) {
-      throw new Error(`Unknown template: ${input.template}`);
+  menu(): MenuEntry[] {
+    return [];
+  }
+
+  async query(input: QueryInput): Promise<unknown> {
+    const query = this.renderTemplateString(input.template, input.parameters);
+    const body = new URLSearchParams({ query });
+    const response = await fetch(input.endpoint, {
+      body,
+      headers: {
+        accept: "application/sparql-results+json, application/json",
+      },
+      method: "POST",
+    });
+
+    const contentType = response.headers.get("content-type") ?? "";
+
+    if (contentType.includes("json")) {
+      return await response.json();
     }
 
+    return await response.text();
+  }
+
+  renderTemplate(input: RenderTemplateInput): void {
     const target = input.selector
       ? this.root.querySelector<HTMLElement>(input.selector)
       : this.root.querySelector<HTMLElement>("main");
@@ -71,7 +118,17 @@ export default class Stanza {
       throw new Error(`Template target not found: ${input.selector ?? "main"}`);
     }
 
-    target.innerHTML = String(renderer(input.parameters ?? {}));
+    target.innerHTML = this.renderTemplateString(input.template, input.parameters);
+  }
+
+  protected renderTemplateString(template: string, parameters?: Record<string, unknown>): string {
+    const renderer = this.#templates[template];
+
+    if (!renderer) {
+      throw new Error(`Unknown template: ${template}`);
+    }
+
+    return String(renderer(parameters ?? {}));
   }
 }
 
@@ -107,6 +164,7 @@ export function registerStanza(registration: StanzaRegistration): void {
 
       this.stanzaInstance = new registration.StanzaClass();
       this.stanzaInstance[initializeRuntime]({
+        assetBaseUrl: registration.assetBaseUrl,
         element: this,
         metadata: registration.metadata,
         requestRender: () => this.#renderStanzaWithReport(),
@@ -162,6 +220,7 @@ export function registerStanza(registration: StanzaRegistration): void {
 
       this.#menuShell.dataset.placement = placement;
       this.#menuShell.hidden = placement === "none";
+      renderMenuItems(this.#menuShell, this.stanzaInstance.menu());
     }
   }
 
@@ -191,13 +250,44 @@ function createMenuShell(aboutUrl: URL): HTMLElement {
   const menu = document.createElement("nav");
   menu.dataset.togostanzaMenu = "";
 
+  const items = document.createElement("div");
+  items.dataset.togostanzaMenuItems = "";
+
   const aboutLink = document.createElement("a");
   aboutLink.href = aboutUrl.href;
   aboutLink.textContent = "About";
 
-  menu.append(aboutLink);
+  menu.append(items, aboutLink);
 
   return menu;
+}
+
+function renderMenuItems(menu: HTMLElement, entries: MenuEntry[]): void {
+  const items = menu.querySelector<HTMLElement>("[data-togostanza-menu-items]");
+
+  if (!items) {
+    return;
+  }
+
+  items.replaceChildren(...entries.map((entry) => createMenuEntryElement(entry)));
+}
+
+function createMenuEntryElement(entry: MenuEntry): HTMLElement {
+  if (entry.type === "divider") {
+    const divider = document.createElement("hr");
+    divider.dataset.togostanzaMenuDivider = "";
+    return divider;
+  }
+
+  const button = document.createElement("button");
+  button.dataset.togostanzaMenuItem = "";
+  button.textContent = entry.label;
+
+  if (entry.handler) {
+    button.addEventListener("click", entry.handler);
+  }
+
+  return button;
 }
 
 function resolveMenuPlacement(element: HTMLElement, metadata: Record<string, unknown>): string {
@@ -289,6 +379,20 @@ function parseParameterValue(value: string, type: string): unknown {
     default:
       return value;
   }
+}
+
+function resolveStanzaAssetUrl(cssUrl: string, assetBaseUrl: URL | undefined): URL {
+  const baseUrl = assetBaseUrl ?? new URL(".", document.baseURI);
+
+  if (cssUrl.startsWith("./assets/")) {
+    return new URL(cssUrl.slice("./assets/".length), baseUrl);
+  }
+
+  if (cssUrl.startsWith("assets/")) {
+    return new URL(cssUrl.slice("assets/".length), baseUrl);
+  }
+
+  return new URL(cssUrl, baseUrl);
 }
 
 function parameterAttributeKeys(metadata: Record<string, unknown>): string[] {

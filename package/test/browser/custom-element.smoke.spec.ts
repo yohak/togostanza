@@ -17,6 +17,12 @@ import { expect, test, type Page } from "@playwright/test";
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const temporaryDirectories: string[] = [];
 
+type SparqlRequest = {
+  body: string;
+  contentType: string;
+  method: string;
+};
+
 test.afterEach(async () => {
   for (const directory of temporaryDirectories.splice(0)) {
     rmSync(directory, { force: true, recursive: true });
@@ -300,7 +306,7 @@ test("maps runtime parameters in built Stanza custom elements", async ({ page })
   }
 });
 
-test("supports Phase 2-3a Stanza source APIs in built custom elements", async ({ page }) => {
+test("supports Phase 2-3 Stanza source APIs in built custom elements", async ({ page }) => {
   const cwd = makeTemporaryDirectory();
   await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
   writeSourceApiProbe(cwd);
@@ -317,6 +323,7 @@ test("supports Phase 2-3a Stanza source APIs in built custom elements", async ({
       limit="3"
       enabled
       payload='{"kind":"initial"}'
+      query-endpoint="/sparql"
     ></togostanza-api-probe>
   </body>
 </html>
@@ -324,7 +331,8 @@ test("supports Phase 2-3a Stanza source APIs in built custom elements", async ({
     "utf8",
   );
   const requestLog: string[] = [];
-  const server = await startStaticServer(cwd, requestLog);
+  const sparqlRequests: SparqlRequest[] = [];
+  const server = await startStaticServer(cwd, requestLog, sparqlRequests);
 
   try {
     const port = addressPort(server);
@@ -338,6 +346,7 @@ test("supports Phase 2-3a Stanza source APIs in built custom elements", async ({
     expect(await readProbeValue(page, "#api-probe", "element-tag")).toBe("TOGOSTANZA-API-PROBE");
     expect(await readProbeValue(page, "#api-probe", "root-available")).toBe("true");
     expect(await readProbeValue(page, "#api-probe", "main-available")).toBe("true");
+    await expect.poll(() => readProbeValue(page, "#api-probe", "query-status")).toBe("ok");
 
     const runtimeState = await page.locator("#api-probe").evaluate((element) => {
       const host = element as HTMLElement & {
@@ -363,6 +372,47 @@ test("supports Phase 2-3a Stanza source APIs in built custom elements", async ({
       rootConnected: true,
     });
 
+    const fontLinks = await page.locator("#api-probe").evaluate((element) => {
+      return [...(element.shadowRoot?.querySelectorAll<HTMLLinkElement>("link") ?? [])].map(
+        (link) => link.href,
+      );
+    });
+
+    expect(
+      fontLinks.some((href) => href.endsWith("/public/api-probe/assets/api-probe-font.css")),
+    ).toBe(true);
+
+    await expect
+      .poll(() =>
+        page.locator("#api-probe").evaluate((element) => {
+          const menu = element.shadowRoot?.querySelector<HTMLElement>("[data-togostanza-menu]");
+          const itemLabels = [
+            ...(menu?.querySelectorAll<HTMLElement>("[data-togostanza-menu-item]") ?? []),
+          ].map((item) => item.textContent?.trim());
+
+          return {
+            dividerCount: menu?.querySelectorAll("[data-togostanza-menu-divider]").length,
+            itemLabels,
+          };
+        }),
+      )
+      .toEqual({
+        dividerCount: 1,
+        itemLabels: ["Inspect before-mutation"],
+      });
+
+    await page.locator("#api-probe").evaluate((element) => {
+      element.shadowRoot?.querySelector<HTMLButtonElement>("[data-togostanza-menu-item]")?.click();
+    });
+    expect(await readProbeValue(page, "#api-probe", "menu-click")).toBe("before-mutation");
+
+    expect(sparqlRequests).toHaveLength(1);
+    expect(sparqlRequests[0]).toMatchObject({
+      method: "POST",
+    });
+    expect(sparqlRequests[0]?.contentType).toContain("application/x-www-form-urlencoded");
+    expect(readSparqlQuery(sparqlRequests[0])).toContain("LIMIT 3");
+
     await page.locator("#api-probe").evaluate((element) => {
       element.setAttribute("label", "after-mutation");
     });
@@ -376,6 +426,17 @@ test("supports Phase 2-3a Stanza source APIs in built custom elements", async ({
     });
     await expect.poll(() => readProbeValue(page, "#api-probe", "limit")).toBe("5");
     expect(await readProbeValue(page, "#api-probe", "last-attribute")).toBe("limit:3->5");
+    await expect.poll(() => readSparqlQuery(sparqlRequests.at(-1))).toContain("LIMIT 5");
+    await expect
+      .poll(() =>
+        page.locator("#api-probe").evaluate((element) => {
+          const menu = element.shadowRoot?.querySelector<HTMLElement>("[data-togostanza-menu]");
+          return [
+            ...(menu?.querySelectorAll<HTMLElement>("[data-togostanza-menu-item]") ?? []),
+          ].map((item) => item.textContent?.trim());
+        }),
+      )
+      .toEqual(["Inspect after-mutation"]);
 
     await expect
       .poll(() =>
@@ -445,6 +506,10 @@ function readProbeValue(page: Page, selector: string, probeName: string): Promis
   return page.locator(selector).evaluate((element, name) => {
     return element.shadowRoot?.querySelector(`[data-probe="${name}"]`)?.textContent?.trim() ?? "";
   }, probeName);
+}
+
+function readSparqlQuery(request: SparqlRequest | undefined): string {
+  return new URLSearchParams(request?.body ?? "").get("query") ?? "";
 }
 
 function runCli(args: string[], cwd: string): Promise<void> {
@@ -586,6 +651,7 @@ function formatAttributeChange(change) {
 
 function writeSourceApiProbe(cwd: string): void {
   const stanzaDirectory = resolve(cwd, "stanzas", "api-probe");
+  mkdirSync(resolve(stanzaDirectory, "assets"), { recursive: true });
   mkdirSync(resolve(stanzaDirectory, "templates"), { recursive: true });
   writeFileSync(
     resolve(stanzaDirectory, "metadata.json"),
@@ -599,8 +665,9 @@ function writeSourceApiProbe(cwd: string): void {
           { "stanza:key": "limit", "stanza:type": "number" },
           { "stanza:key": "enabled", "stanza:type": "boolean" },
           { "stanza:key": "payload", "stanza:type": "json" },
+          { "stanza:key": "query-endpoint", "stanza:type": "string" },
         ],
-        "stanza:menu-placement": "none",
+        "stanza:menu-placement": "bottom-right",
       },
       null,
       2,
@@ -613,11 +680,22 @@ function writeSourceApiProbe(cwd: string): void {
 
 export default class ApiProbe extends Stanza {
   renderCount = 0;
+  menuClickLabel = "";
   lastAttributeChange = { name: "", oldValue: "", newValue: "" };
 
-  render() {
+  async render() {
     this.renderCount += 1;
     const mainBeforeRender = this.root?.querySelector("main");
+    this.importWebFontCSS("./assets/api-probe-font.css");
+    const queryResult = this.params["query-endpoint"]
+      ? await this.query({
+          endpoint: String(this.params["query-endpoint"]),
+          template: "query.sparql.hbs",
+          parameters: {
+            limit: this.params.limit,
+          },
+        })
+      : { status: "not-run" };
 
     this.renderTemplate({
       template: "stanza.html.hbs",
@@ -628,7 +706,9 @@ export default class ApiProbe extends Stanza {
         lastAttribute: formatAttributeChange(this.lastAttributeChange),
         limit: String(this.params.limit),
         mainAvailable: String(Boolean(mainBeforeRender)),
+        menuClick: this.menuClickLabel,
         payload: JSON.stringify(this.params.payload),
+        queryStatus: queryResult.status ?? "unknown",
         renderCount: String(this.renderCount),
         rootAvailable: String(Boolean(this.root)),
       },
@@ -639,6 +719,35 @@ export default class ApiProbe extends Stanza {
       mainAfterRender.dataset.apiProbeElement = this.element?.tagName ?? "";
       mainAfterRender.dataset.apiProbeRoot = this.root ? "available" : "missing";
     }
+  }
+
+  menu() {
+    return [
+      {
+        type: "item",
+        label: \`Inspect \${this.params.label}\`,
+        handler: () => {
+          this.menuClickLabel = String(this.params.label);
+          this.renderTemplate({
+            template: "stanza.html.hbs",
+            parameters: {
+              elementTag: this.element?.tagName ?? "",
+              enabled: String(this.params.enabled),
+              label: String(this.params.label),
+              lastAttribute: formatAttributeChange(this.lastAttributeChange),
+              limit: String(this.params.limit),
+              mainAvailable: String(Boolean(this.root?.querySelector("main"))),
+              menuClick: this.menuClickLabel,
+              payload: JSON.stringify(this.params.payload),
+              queryStatus: "menu-click",
+              renderCount: String(this.renderCount),
+              rootAvailable: String(Boolean(this.root)),
+            },
+          });
+        },
+      },
+      { type: "divider" },
+    ];
   }
 
   handleAttributeChange(name, oldValue, newValue) {
@@ -662,6 +771,11 @@ function formatAttributeChange(change) {
     "utf8",
   );
   writeFileSync(
+    resolve(stanzaDirectory, "assets", "api-probe-font.css"),
+    ":host { --api-probe-font-loaded: yes; }\n",
+    "utf8",
+  );
+  writeFileSync(
     resolve(stanzaDirectory, "templates", "stanza.html.hbs"),
     `<dl>
   <dt>label</dt><dd data-probe="label">{{label}}</dd>
@@ -671,10 +785,17 @@ function formatAttributeChange(change) {
   <dt>element tag</dt><dd data-probe="element-tag">{{elementTag}}</dd>
   <dt>root available</dt><dd data-probe="root-available">{{rootAvailable}}</dd>
   <dt>main available</dt><dd data-probe="main-available">{{mainAvailable}}</dd>
+  <dt>query status</dt><dd data-probe="query-status">{{queryStatus}}</dd>
+  <dt>menu click</dt><dd data-probe="menu-click">{{menuClick}}</dd>
   <dt>last attribute</dt><dd data-probe="last-attribute">{{lastAttribute}}</dd>
   <dt>render count</dt><dd data-probe="render-count">{{renderCount}}</dd>
 </dl>
 `,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "templates", "query.sparql.hbs"),
+    "SELECT * WHERE { ?s ?p ?o } LIMIT {{limit}}\n",
     "utf8",
   );
 }
@@ -687,10 +808,33 @@ function makeTemporaryDirectory(): string {
   return directory;
 }
 
-function startStaticServer(rootDirectory: string, requestLog: string[]): Promise<Server> {
+function startStaticServer(
+  rootDirectory: string,
+  requestLog: string[],
+  sparqlRequests: SparqlRequest[] = [],
+): Promise<Server> {
   const server = createServer((request, response) => {
     const requestPath = decodeURIComponent((request.url ?? "/").split("?")[0] ?? "/");
     requestLog.push(requestPath);
+
+    if (requestPath === "/sparql") {
+      let body = "";
+
+      request.setEncoding("utf8");
+      request.on("data", (chunk: string) => {
+        body += chunk;
+      });
+      request.on("end", () => {
+        sparqlRequests.push({
+          body,
+          contentType: request.headers["content-type"] ?? "",
+          method: request.method ?? "",
+        });
+        response.writeHead(200, { "content-type": "application/json; charset=utf-8" });
+        response.end(JSON.stringify({ status: "ok" }));
+      });
+      return;
+    }
 
     if (requestPath.endsWith("/metadata.json")) {
       response.writeHead(500, { "content-type": "text/plain; charset=utf-8" });

@@ -397,6 +397,7 @@ function formatEntrypointWrapper(stanza: StanzaDefinition): string {
     `  tagName: ${JSON.stringify(`togostanza-${stanza.id}`)},`,
     `  cssUrl: new URL(${JSON.stringify(`./${stanza.id}.css`)}, import.meta.url),`,
     `  aboutUrl: new URL(${JSON.stringify(`./${stanza.id}.html`)}, import.meta.url),`,
+    `  assetBaseUrl: new URL(${JSON.stringify(`./${stanza.id}/assets/`)}, import.meta.url),`,
     "  metadata,",
     "  StanzaClass,",
     "  templates,",
