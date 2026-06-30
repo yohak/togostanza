@@ -201,6 +201,100 @@ mise exec -- pnpm run serve:fixture
 - 共有ソースは特定のディレクトリ名ではなくimport graph基準で扱う。
 - aliasが未対応の場合は、失敗させるだけでなく、移行手順または対応可否が分かる診断を出す。
 
+### リメイク版の観測状況
+
+確認済み。
+
+- 確認日: 2026-06-30
+- 作業ディレクトリ: `package/`
+- Node.js / pnpm: `package/mise.toml` に従う
+- 確認方法: 007相当のfixtureを `package/src/cli/router.spec.ts` と `package/test/browser/custom-element.smoke.spec.ts` で確認
+
+この時点では、`workbench/cases/007-config-and-resolution/current-pnpm/generated-repo/` をリメイク版用に直接再利用していない。これは同ディレクトリの `package.json` が現行版 `togostanza` 依存として作られているためである。リメイク版の観測は、同じ観測契約を切り出したpackage test上のfixtureで記録する。
+
+### リメイク版で実行したコマンド
+
+```sh
+cd package
+mise exec -- pnpm run test:unit
+mise exec -- pnpm run build
+mise exec -- pnpm run check-all
+```
+
+`check-all` は承認付き通常実行で確認した。これはbrowser testがローカルのChromium起動を必要とし、Codex sandbox内ではmacOSのMach port権限制約で失敗するためである。
+
+### リメイク版のビルド結果
+
+- `togostanza build` / `togostanza b` は、Phase 2-4相当のStanzaリポジトリをビルドできる。
+- 生成物には `{id}.js`、`{id}.js.map`、`{id}.css`、`{id}.css.map`、`{id}.html`、`{id}/metadata.json` が含まれる。
+- Phase 2-4時点では、現行版が生成する `index.html` と `-togostanza/` は生成しない。この差分はPhase 2の別サブフェーズまたは後続判断で扱う。
+- Viteがemitする非inline assetは `dist/_assets/` に出力される。root `assets/` のコピー先である `dist/assets/` とは分離される。
+- Viteの `base` は `./` とし、JavaScript asset importから生成されるURLは `/_assets/...` のようなドメインroot基準にならない。
+- stanza別assetは `dist/{id}/assets/` にコピーされる。
+- root `assets/` は `dist/assets/` にコピーされる。
+
+代表的な生成物は次の形になる。
+
+```text
+dist/
+  _assets/
+    local-marker-*.svg
+    package-marker-*.svg
+  assets/
+    root-asset.txt
+  asset-import-probe.js
+  asset-import-probe.js.map
+  asset-import-probe.css
+  asset-import-probe.css.map
+  asset-import-probe.html
+  asset-import-probe/
+    metadata.json
+    assets/
+      local-marker.svg
+```
+
+### リメイク版の設定ファイル結果
+
+- `togostanza-build.mjs` / `togostanza-build.js` は検出するが、import、eval、spawnしない。
+- 旧設定ファイルが存在してもbuildは続行し、`togostanza.config.ts` への移行を促すwarningを出す。
+- `togostanza.config.ts` はViteの `loadConfigFromFile()` 経由で読み込む。
+- `defineTogoStanzaConfig()` は `import { defineTogoStanzaConfig } from "togostanza/config"` でimportできる。
+- `togostanza.config.ts` の `vite.define` と `vite.resolve.alias` はbuildへ反映される。
+- `togostanza.config.ts` の読み込みに失敗した場合は、対象pathと原因を含む診断でbuildを失敗させる。
+
+Phase 2-4では、npm公開向けの `exports` / `files` 全体整理は扱わない。ただし `togostanza/config` subpathは設定ファイルの最小契約として有効にした。
+
+### リメイク版の解決結果
+
+- Stanza entrypointからのstanza外共有ソースimportは、import graph基準でbundleされる。
+- `tsconfig.json` はVite / esbuildの解決入力として尊重する。
+- リメイク版は現行版の `tsc` 駆動ではないため、JSソースだけのケースで `allowJs` が無いと `TS18003` になる現行版の失敗条件は再現しない。
+- Sass `@use "@/common.scss"` は、Sass限定のリポジトリルートaliasとして解決される。
+- JavaScriptからの `./assets/...` importはViteのasset処理に乗る。
+- JavaScriptからの依存パッケージ内asset importもViteのasset処理に乗る。
+- asset importが非inline emitになる場合、生成bundle内の参照はサブパス安全な相対URLになる。
+- `style.scss` 内の `url("./assets/...")` と `url("assets/...")` は、生成CSS内で `url("./{id}/assets/...")` 相当に書き換える。
+- `style.scss` 内のdata URL、外部URL、絶対URLは、この書き換え対象にしない。
+- `{id}/metadata.json` fetchへランタイム初期化が依存しない既存契約は維持している。
+
+### リメイク版のbrowser観測
+
+- static fixtureで `{id}.js` をmodule scriptとして読み込める。
+- custom elementはupgradeされ、Shadow DOMを作る。
+- CSSはdocument baseではなく、生成JS / 生成CSS側の相対URLで解決される。
+- CSS由来のstyleは実際に適用される。
+- JavaScript asset import由来の画像とpackage asset import由来の画像は、生成bundleから参照できる。
+- menuのAbout導線は `{id}.html` へ解決される。
+- `metadata.json` をHTTP 500にしても、runtime初期化時にfetchされない。
+
+### リメイク版に残る差分
+
+- 現行版は `index.html` と `-togostanza/` を生成するが、リメイク版Phase 2-4では生成しない。
+- 現行版ではJavaScript asset importが小さいSVGをdata URL inlineにした。リメイク版はassetのinline / emit / hash / thresholdを外部契約として固定しない。
+- 現行版では `style.scss` 内の `url("./assets/local-marker.svg")` がそのまま出力され、CSS基準で `dist/assets/local-marker.svg` を見に行く。リメイク版ではstanza別assetの位置に合わせて `./{id}/assets/local-marker.svg` 相当へ書き換える。
+- Stanzaソース内でroot assetを `./assets/...` と書く場合の推奨APIまたはhelperは、Phase 2-4では未解決の既知制約として残す。
+- JS/TSの `@/` import aliasは、Sass `@/` aliasとは別扱いである。必要な場合は `togostanza.config.ts` のVite aliasで明示する。
+
 ## 合格条件
 
 - 旧設定ファイルを無条件に実行しない。
@@ -238,10 +332,12 @@ mise exec -- pnpm run serve:fixture
 - ブラウザ観測
 - `git diff --check`
 - inline command implementation pattern search
+- `cd package && mise exec -- pnpm run test:unit`
+- `cd package && mise exec -- pnpm run build`
+- `cd package && mise exec -- pnpm run check-all`
 
 ## 未決定事項
 
-- `defineTogoStanzaConfig()` のschema。
 - alias合成順。
 - assetのinline/emit/hash/threshold。
 - Stanzaソース内でルートasset pathをどう表現するか。
