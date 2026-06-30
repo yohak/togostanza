@@ -671,9 +671,35 @@ describe("CLI router", () => {
     expect(result.stderr).toContain("togostanza.config.ts");
   });
 
-  it("loads togostanza.config.ts through the togostanza/config import path", async () => {
+  it("applies togostanza.config.ts Vite settings through the togostanza/config import path", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "configProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "lib"));
+    writeFileSync(
+      join(cwd, "lib", "config-label.js"),
+      'export const configLabel = "config-alias-label";\n',
+      "utf8",
+    );
+    writeFileSync(
+      join(cwd, "stanzas", "config-probe", "index.js"),
+      [
+        'import Stanza from "togostanza/stanza";',
+        'import { configLabel } from "@shared/config-label.js";',
+        "",
+        "const configProbe = __TOGOSTANZA_CONFIG_PROBE__;",
+        "",
+        "export default class ConfigProbe extends Stanza {",
+        "  render() {",
+        '    const main = this.root.querySelector("main");',
+        "    if (main) {",
+        "      main.textContent = `${configLabel}:${configProbe}`;",
+        "    }",
+        "  }",
+        "}",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
     writeConfigImportFixture(cwd);
     writeFileSync(
       join(cwd, "togostanza.config.ts"),
@@ -683,7 +709,12 @@ describe("CLI router", () => {
         "export default defineTogoStanzaConfig({",
         "  vite: {",
         "    define: {",
-        '      __TOGOSTANZA_CONFIG_PROBE__: JSON.stringify("ok"),',
+        '      __TOGOSTANZA_CONFIG_PROBE__: JSON.stringify("config-from-vite"),',
+        "    },",
+        "    resolve: {",
+        "      alias: {",
+        `        "@shared": ${JSON.stringify(join(cwd, "lib"))},`,
+        "      },",
         "    },",
         "  },",
         "});",
@@ -697,6 +728,8 @@ describe("CLI router", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBeUndefined();
     expect(existsSync(join(cwd, "dist", "config-probe.js"))).toBe(true);
+    expect(readText(join(cwd, "dist", "config-probe.js"))).toContain("config-alias-label");
+    expect(readText(join(cwd, "dist", "config-probe.js"))).toContain("config-from-vite");
   });
 
   it("returns a diagnostic when togostanza.config.ts cannot be loaded", async () => {

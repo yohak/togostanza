@@ -15,7 +15,7 @@ import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import Handlebars from "handlebars";
 import { compile, type FileImporter } from "sass";
-import { build as viteBuild, type InlineConfig } from "vite";
+import { build as viteBuild, mergeConfig, type InlineConfig } from "vite";
 import { loadTogoStanzaBuildConfig } from "./build-config.js";
 import { getStringOption, parseOptions } from "./options.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
@@ -99,6 +99,7 @@ export async function handleBuild(
       stanzaResult.stanzas,
       outputDirectoryResult.outputDirectory,
       rootDirectory,
+      buildConfigResult.config.vite,
     );
     buildStyles(stanzaResult.stanzas, outputDirectoryResult.outputDirectory, rootDirectory);
     copyBuildAssets(stanzaResult.stanzas, outputDirectoryResult.outputDirectory, rootDirectory);
@@ -353,6 +354,7 @@ async function buildEntrypoints(
   stanzas: readonly StanzaDefinition[],
   outputDirectory: string,
   rootDirectory: string,
+  userViteConfig: InlineConfig | undefined,
 ): Promise<void> {
   const wrapperDirectory = mkdtempSync(join(tmpdir(), "togostanza-build-"));
   const input = Object.fromEntries(
@@ -362,7 +364,7 @@ async function buildEntrypoints(
       return [stanza.id, wrapperPath];
     }),
   );
-  const config: InlineConfig = {
+  const internalConfig: InlineConfig = {
     build: {
       emptyOutDir: false,
       outDir: outputDirectory,
@@ -388,6 +390,7 @@ async function buildEntrypoints(
     },
     root: rootDirectory,
   };
+  const config = mergeConfig(userViteConfig ?? {}, internalConfig);
 
   try {
     await viteBuild(config);
