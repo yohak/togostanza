@@ -88,7 +88,19 @@ function readPackageJson(packageJsonPath: string):
     throw error;
   }
 
-  const value: unknown = JSON.parse(raw);
+  let value: unknown;
+
+  try {
+    value = JSON.parse(raw);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return {
+        error: `Invalid Stanza repository package.json: malformed JSON at ${packageJsonPath}.`,
+      };
+    }
+
+    throw error;
+  }
 
   if (!isRecord(value)) {
     return {

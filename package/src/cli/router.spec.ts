@@ -525,6 +525,18 @@ describe("CLI router", () => {
     expect(result.stderr).toContain("missing package.json");
   });
 
+  it("rejects generate stanza when package.json is malformed", () => {
+    const cwd = makeNamedTemporaryDirectory("malformed-generate-repo");
+    writeFileSync(join(cwd, "package.json"), "{ nope\n", "utf8");
+
+    const result = routeCli(["generate", "stanza", "malformed"], { cwd });
+
+    expect(result).toEqual({
+      exitCode: 1,
+      stderr: `Invalid Stanza repository package.json: malformed JSON at ${join(cwd, "package.json")}.`,
+    });
+  });
+
   it("rejects build outside a Stanza repository root", () => {
     const cwd = makeTemporaryDirectory();
 
@@ -532,6 +544,18 @@ describe("CLI router", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("missing package.json");
+  });
+
+  it("rejects build when package.json is malformed", () => {
+    const cwd = makeNamedTemporaryDirectory("malformed-build-repo");
+    writeFileSync(join(cwd, "package.json"), "{ nope\n", "utf8");
+
+    const result = routeCli(["build"], { cwd });
+
+    expect(result).toEqual({
+      exitCode: 1,
+      stderr: `Invalid Stanza repository package.json: malformed JSON at ${join(cwd, "package.json")}.`,
+    });
   });
 
   it("runs build preflight in a Stanza repository root before returning an unimplemented diagnostic", () => {
