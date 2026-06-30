@@ -126,8 +126,12 @@ mise exec -- pnpm run serve:fixture
 ## リメイク版で観測すること
 
 - `togostanza--container` の目的が維持されること。
-- event-map/data-sourceを再設計する場合、現行HTMLとの差分、移行メモ、修正手順があること。
-- Sending Eventsを再設計する場合、`stanza:outgoingEvent` / `stanza:incomingEvent` との対応、`event.detail` の扱い、`value-path` の扱いが説明できること。
+- `togostanza--event-map` は、Phase 2-5では現行fixtureの `on` / `receiver` / `value-path` / `target-attribute` を最小互換として受ける。
+- `togostanza--event-map` は、`stanza:outgoingEvent` と `stanza:incomingEvent` に列挙されたイベントだけを扱う。
+- `togostanza--data-source` は、Phase 2-5では現行fixtureの `url` / `receiver` / `target-attribute` を最小互換として受ける。
+- `togostanza--data-source` は、Phase 2-5ではblob URL handoffを維持する。
+- Sending Eventsは `this.element.dispatchEvent(new CustomEvent(...))` と `stanza:outgoingEvent` を入口として観測する。containerへ届けるイベントは `bubbles: true` を付ける。
+- `stanza:outgoingEvent` / `stanza:incomingEvent` との対応、`event.detail` の扱い、`value-path` の扱いが説明できること。
 - `togostanza--data-container` を持ち込まないこと。
 
 ## 合格条件
@@ -149,6 +153,9 @@ mise exec -- pnpm run serve:fixture
 
 ## 未決定事項
 
-- event-mapの新しい送信元指定方法。
-- data-sourceの新しいAPI。
-- blob URL経由を維持するかどうか。
+- event-mapの `sender` selectorを正式APIとして導入するかどうか。
+- 複数receiver、複数event-map、競合更新の優先順。
+- `value-path` の配列index、escape、fallback、型変換。
+- data-sourceのblob URL handoffを長期APIとして維持するかどうか。
+- data-sourceの直接JSON受け渡しAPI。
+- data-sourceのcache、revoke、retry、timeout、abort。
