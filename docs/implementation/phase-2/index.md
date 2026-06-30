@@ -24,7 +24,7 @@ Phase 2では、先に全体のサブフェーズ境界を固定する。各サ�
 
 | サブフェーズ | ゴール | 主な検証ケース | 詳細計画 |
 | ------------ | ------ | -------------- | -------- |
-| Phase 2-0: preflight / repo detection | Phase 1の必須follow-upと、`build` 前提のStanzaリポジトリ検出を整える。 | [001](../../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../../workbench/cases/002-build-artifacts/) | [計画](./phase-2-0/plan.md) |
+| Phase 2-0: preflight / repo detection | Phase 1の必須follow-upと、`build` 前提のStanzaリポジトリ検出を整える。 | [001](../../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../../workbench/cases/002-build-artifacts/) | [計画](./phase-2-0/plan.md)、[引き継ぎ](./phase-2-0/handoff.md) |
 | Phase 2-1: build artifact spine | `build` / `b` と、サブパス安全な最小 `dist/` 生成物を成立させる。 | [002](../../../workbench/cases/002-build-artifacts/) | 後続作成 |
 | Phase 2-2: minimal runtime embedding | module script、custom element、open Shadow DOM、Shadow DOM内 `main`、menu placement / About導線を成立させる。 | [003](../../../workbench/cases/003-runtime-embedding/) | 後続作成 |
 | Phase 2-3: Stanza source API | `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()` などを段階的に成立させる。 | [004](../../../workbench/cases/004-runtime-parameters/)、[005](../../../workbench/cases/005-stanza-source-api/) | 後続作成 |
@@ -103,7 +103,7 @@ Phase 2-6では、Phase 1のGitHub Pages workflow placeholderを、実deploy可�
 
 | 項目 | 回収先 |
 | ---- | ------ |
-| bare `init` をprompt付き入口として追加するかの判断 | Phase 2-0後のhandoff |
+| bare `init` をprompt付き入口として追加するかの判断 | [Phase 2-0引き継ぎ](./phase-2-0/handoff.md) に記録済み。後続判断 |
 | `index.ts` / `index.tsx` 生成option | Phase 2-1以降の必要時 |
 | ヘルププレビューUIの詳細 | Phase 2-1以降の必要時、またはPhase 3 |
 | source mapの扱い | Phase 2-1以降の必要時 |
