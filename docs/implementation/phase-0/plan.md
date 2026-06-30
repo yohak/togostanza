@@ -97,9 +97,9 @@ Phase 0で不正optionとして扱うのは、commandより前に置かれた未
 
 Phase 0完了時は、次を確認する。
 
-- `cd package && mise exec -- pnpm check-all`
+- `cd package && mise exec -- pnpm run check-all`
 - `git diff --check`
 
 個別の失敗を切り分ける場合は、`format:check`、`lint`、`type-check`、`build`、`test:unit`、`test:integration`、`test:browser` を個別に実行してよい。ただし、完了確認は `check-all` を正とする。
 
-Playwrightのbrowser smoke testがsandbox環境で失敗する場合は、既存の開発用ノートに従い、通常手順を承認付き実行で確認する。
+packageの品質確認やbrowser smoke testは、Codex等のsandbox実行環境ではなく、承認付き通常実行でユーザーのローカル環境を優先して確認する。

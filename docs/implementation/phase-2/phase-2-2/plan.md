@@ -318,6 +318,6 @@ Phase 2-2では、runtimeがassetをfetchする挙動や、entrypoint内asset im
 ## 確認コマンド
 
 - `git diff --check`
-- `cd package && pnpm run check-all`
+- `cd package && mise exec -- pnpm run check-all`
 
-browser testがsandbox環境で権限制約に当たる場合は、既存の運用方針に従い、標準コマンドを承認付き通常実行で確認する。
+packageの品質確認やbrowser testは、Codex等のsandbox実行環境ではなく、承認付き通常実行でユーザーのローカル環境を優先して確認する。

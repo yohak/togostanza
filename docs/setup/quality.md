@@ -11,6 +11,7 @@
 ## 実行環境
 
 `package/mise.toml` でNode.jsとpnpmを固定する。
+`package/` 配下のNode.js / pnpmコマンドは、裸の `node` や `pnpm` ではなく `mise exec -- ...` 経由で実行する。
 
 ```sh
 cd package
@@ -39,7 +40,14 @@ mise exec -- pnpm --version
 
 ```sh
 cd package
-mise exec -- pnpm check-all
+mise exec -- pnpm run check-all
+```
+
+エージェントが品質確認を行う場合は、Codex等のsandbox実行環境ではなく、承認付き通常実行でユーザーのローカル環境を優先して確認する。browser testを個別に確認する場合も、同じ実行環境で次を使う。
+
+```sh
+cd package
+mise exec -- pnpm run test:browser
 ```
 
 CLI integration testはbuild後のcompiled JS入口を確認する。`pnpm test:integration` は事前にbuildを実行するため、単独実行でも最新の `dist/` を確認する。

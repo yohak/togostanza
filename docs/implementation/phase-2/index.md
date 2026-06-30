@@ -95,8 +95,8 @@ Phase 2-6では、Phase 1のGitHub Pages workflow placeholderを、実deploy可�
 ## 検証方針
 
 - サブフェーズごとにunit test、integration test、必要なbrowser testを決める。
-- 完了前確認は、原則として `git diff --check` と `cd package && pnpm check-all` とする。
-- browser testがsandbox環境で失敗する場合は、既存の運用方針に従い、標準コマンドを承認付き通常実行で確認する。
+- 完了前確認は、原則として `git diff --check` と `cd package && mise exec -- pnpm run check-all` とする。
+- packageの品質確認やbrowser testは、Codex等のsandbox実行環境ではなく、承認付き通常実行でユーザーのローカル環境を優先して確認する。
 - 検証ケースの `README.md` には、該当サブフェーズで確認したリメイク版の観測結果を記録する。
 
 ## 後続へ送る事項

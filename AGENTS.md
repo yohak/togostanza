@@ -38,6 +38,8 @@
 
 - リポジトリルートに `package.json` を置かない。
 - 実装パッケージは将来 `package/` 配下に置く。
+- `package/` 配下のNode.js / pnpmコマンドは、`package/mise.toml` を正として `cd package && mise exec -- ...` 経由で実行する。
+- `package/` の品質確認やbrowser testは、Codex等のsandbox実行環境ではなく、承認付き通常実行でユーザーのローカル環境を優先して確認する。
 - `references/` はリファレンス、`workbench/` は検証領域、`sandbox/` は一時確認領域として扱う。
 - 仕様変更時は対応する検証ケースの `README.md` も確認する。
 - 文書更新では `git diff --check` を最低限実行する。

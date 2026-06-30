@@ -52,8 +52,7 @@ Phase 0の設計は [plan.md](./plan.md) を正とする。この文書は設計
 ## 確認結果
 
 - `git diff --check` を実行し、問題なし。
-- `cd package && mise exec -- pnpm check-all` を実行し、問題なし。
-- sandbox内ではPlaywrightのChromium起動がmacOS権限で失敗したため、同じ標準コマンドを承認付き通常実行で確認した。
+- `cd package && mise exec -- pnpm run check-all` を承認付き通常実行で確認し、問題なし。
 
 ## 関連commit
 

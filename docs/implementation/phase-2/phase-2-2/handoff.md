@@ -115,8 +115,8 @@ Phase 2-2の設計は [plan.md](./plan.md) を正とする。この文書は設�
 ## 確認結果
 
 - `git diff --check` を実行し、問題なし。
-- `cd package && pnpm run check-all` を承認付き通常実行で確認し、問題なし。
-- `pnpm run check-all` では format、lint、type-check、build、unit test、integration test、browser test が通った。
+- `cd package && mise exec -- pnpm run check-all` を承認付き通常実行で確認し、問題なし。
+- `mise exec -- pnpm run check-all` では format、lint、type-check、build、unit test、integration test、browser test が通った。
 - unit testは50件、integration testは17件、browser testは2件が通った。
 
 ## 関連commit
