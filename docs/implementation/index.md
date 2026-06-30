@@ -11,8 +11,8 @@
 | フェーズ | ゴール | 主な検証・成果物 | 関連文書 |
 | ---- | ---- | ---- | ---- |
 | Phase 0: skeleton | リメイク版パッケージとCLI土台を固める。 | パッケージ内のsmoke test | [設計](./phase-0/plan.md)、[引き継ぎ](./phase-0/handoff.md) |
-| Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/) | `phase-1-scaffold.md` |
-| Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | `phase-2-build-runtime.md` |
+| Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-1/plan.md) |
+| Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | `phase-2-build-runtime.md` |
 | Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | `phase-3-serve.md` |
 | Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | `phase-4-compatibility.md` |
 | Phase 5: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | `phase-5-distribution.md` |
@@ -40,25 +40,30 @@ Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計
 
 ## Phase 1: scaffold生成
 
-ゴールは、Stanza開発者が `init` と `generate stanza` で作業を開始できる状態を作ることである。
+ゴールは、Stanza開発者が `init` と `generate stanza` で作業を開始できる状態を作ることである。Phase 1の設計は [Phase 1: scaffold生成 設計](./phase-1/plan.md) に置く。
 
 含める範囲:
 
 - `togostanza init`。
 - `togostanza generate stanza` / `togostanza g stanza`。
 - npmとpnpmの初期化方針。
-- lockfile同時存在や `--package-manager` 指定矛盾の診断。
+- npmとpnpmのinstall command組み立て確認。
 - `--skip-install`、`--skip-git`。
-- GitHub Pages workflow生成。
+- GitHub Pages workflow placeholder生成。
 - 生成直後に後続フェーズの `build` / `serve` へ進める雛形。
 
 含めない範囲:
 
+- `togostanza init .`。
+- 既存ディレクトリへのmerge、上書き、空ディレクトリ再利用。
+- lockfile同時存在や `--package-manager` 指定矛盾の診断。
+- ローカルtarballを使ったnpm/pnpmの実インストール確認。
+- 実deploy可能なGitHub Pages workflow。
 - 実際の `build` 生成物の完成。
 - ランタイム動作。
 - React、Vue、`togostanza-utils` 互換。
 
-対応する主な検証ケースは [001 CLIの雛形生成とgenerate](../../workbench/cases/001-cli-scaffold-and-generate/) とする。フェーズ開始時に `docs/implementation/phase-1-scaffold.md` を作る。
+対応する主な検証ケースは [001 CLIの雛形生成とgenerate](../../workbench/cases/001-cli-scaffold-and-generate/) とする。
 
 ## Phase 2: build + runtime
 
@@ -73,6 +78,7 @@ Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計
 - Stanza entrypointからimportされる共有ソースと、そのimport graph。
 - `${id}.js`、`${id}.css`、`${id}.html`、metadata、asset、共有チャンク。
 - GitHub Pagesのサブパス配信で壊れない生成物URL。
+- 実deploy可能なGitHub Pages workflow。
 - module scriptとcustom elementによる直接埋め込み。
 - open Shadow DOM、Shadow DOM内 `main`。
 - `stanza:style` からCSS custom propertyの既定値への反映。
@@ -88,7 +94,7 @@ Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計
 - React、Vue固有のcompatibility。
 - `togostanza-utils` compatibility。
 
-対応する主な検証ケースは [002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) とする。`docs/implementation/phase-2-build-runtime.md` では、最小のbuild + runtime契約を先に成立させ、その後に `togostanza--event-map` と `togostanza--data-source` の具体APIを固定して実装する順序を切る。
+対応する主な検証ケースは [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) とする。GitHub Pages workflowの実deploy導線は、`dist/` 生成とサブパス配信を確認できるPhase 2でplaceholderから置き換え、001のPhase 2合格条件として確認する。`docs/implementation/phase-2-build-runtime.md` では、最小のbuild + runtime契約を先に成立させ、その後に `togostanza--event-map` と `togostanza--data-source` の具体APIを固定して実装する順序を切る。
 
 ## Phase 3: serve
 
@@ -145,6 +151,7 @@ serve用検証は、専用検証ケース `workbench/cases/011-serve-development
 
 - npm配布に必要なpackage metadata、`bin`、`exports`、`files`、`engines` の確認項目。
 - `npm exec togostanza@latest init` と `pnpm dlx togostanza@latest init` を公開後に成立させるための前提整理。
+- ローカルtarballを使ったnpm/pnpmの実インストール確認。
 - npm公開前に必要な検証、tag、release、rollback、権限管理の計画。
 - 公開を行う場合に残る未固定事項と判断者の整理。
 

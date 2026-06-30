@@ -39,7 +39,8 @@
 ## リメイク版で観測すること
 
 - `init` と `generate stanza` が同じ入口として使えること。
-- `init` がGitHub Pages公開用workflowを生成し、`build` 生成物を公開する導線を持つこと。
+- Phase 1では、`init` がGitHub Pages公開用workflowのplaceholderを生成すること。
+- Phase 2では、placeholderを実deploy可能なworkflowへ置き換え、`build` 生成物を公開する導線を持つこと。
 - `init` が既定でgit初期化し、`--skip-git` で抑止できること。
 - `generate stanza [id]` が主要optionを受け付け、idをkebab-case化すること。
 - 生成物が既存Stanzaソース互換を大きく外していないこと。
@@ -49,7 +50,8 @@
 ## 合格条件
 
 - Stanza開発者が、既存の入口名でStanzaリポジトリとStanzaソースを作れる。
-- 生成されたStanzaリポジトリにGitHub Pages公開用workflowがあり、依存関係のインストール、`togostanza build`、`dist/` のPages artifact化、deployの流れを確認できる。
+- Phase 1では、生成されたStanzaリポジトリに有効なGitHub Pages workflow placeholderがある。
+- Phase 2では、生成されたStanzaリポジトリに依存関係のインストール、`togostanza build`、`dist/` のPages artifact化、deployの流れを確認できるGitHub Pages workflowがある。
 - `--skip-git` を指定しない場合はgit初期化され、`--skip-git` を指定した場合はgit初期化されない。
 - 生成されたStanzaソースが `build` 対象になる。
 - `stanzas/{id}/metadata.json`、`index.js`、`style.scss`、`templates/stanza.html.hbs` が確認できる。
@@ -61,7 +63,8 @@
 - 生成ファイル一覧。
 - `package.json` の依存、script、パッケージマネージャー周辺。
 - README、GitHub Pages workflow、git初期化など、開発支援寄りの差分。
-- GitHub Pages workflow内のinstall command、build command、artifact path、deploy action。
+- Phase 1ではGitHub Pages workflow placeholderの内容。
+- Phase 2ではGitHub Pages workflow内のinstall command、build command、artifact path、deploy action。
 - `generate stanza` の主要optionと生成ファイル一覧。
 - stdout/stderrの代表ログ。
 

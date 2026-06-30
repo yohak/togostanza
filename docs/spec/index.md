@@ -36,8 +36,8 @@ Stanza開発者側で公式サポートするパッケージマネージャー�
 初回の `init` は、次の起動方法を公式手順とする。
 
 ```sh
-npm exec togostanza@latest init
-pnpm dlx togostanza@latest init
+npm exec togostanza@latest init --name <dir>
+pnpm dlx togostanza@latest init --name <dir>
 ```
 
 Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行する場合は、選択したパッケージマネージャー経由で実行する。たとえば `npm exec togostanza build`、`pnpm exec togostanza build`、または `package.json` のscripts経由で実行する。グローバルインストールされた `togostanza` は前提にしない。
