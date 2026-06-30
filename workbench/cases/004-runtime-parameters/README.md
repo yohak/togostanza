@@ -171,6 +171,50 @@ style属性を `--parameter-probe-gap="16"`、`--parameter-probe-caption="after 
 - `stanza:style` はCSS custom propertyの既定値用途として扱い、`this.params` には入れないこと。
 - 不正な値に対する警告/エラーが改善される場合、既存の正しい入力を壊していないこと。
 
+### リメイク版の観測状況
+
+Phase 2-3で確認済み。
+
+- 確認日: 2026-06-30
+- 確認対象: `package/test/browser/custom-element.smoke.spec.ts`
+- 確認コマンド: `cd package && mise exec -- pnpm run test:browser`
+- 追加確認: `cd package && mise exec -- pnpm run check-all`
+
+リメイク版の観測は、検証ケース配下の独立した `remake/` 環境ではなく、リメイク版パッケージのbrowser test内で一時生成したstanzaリポジトリを使って行った。
+
+確認した入力:
+
+- `label` は `string`。
+- `count` は `number`。
+- `flag` は `boolean`。
+- `payload` は `json`。
+- `mode` は `single-choice`。
+- `note` は `text`。
+- `--parameter-probe-gap` は `stanza:style` 由来のCSS custom property。
+
+初期パラメーター変換:
+
+| 入力 | `this.params.label` | `this.params.count` | `this.params.flag` | `this.params.payload` |
+| ---- | ------------------- | ------------------- | ------------------ | --------------------- |
+| `flag` attributeあり | `flag-present:string` | `42:number` | `true:boolean` | object `{ "kind": "present", "values": [1, 2] }` |
+| `flag` attributeなし | `flag-absent:string` | `0:number` | `false:boolean` | object `{ "kind": "absent", "enabled": false }` |
+| `flag="false"` | `flag-string-false:string` | `7.5:number` | `true:boolean` | array object `["false-string", { "nested": true }]` |
+
+追加で、`mode` は `compact:string` または `comfortable:string`、`note` はstringとして描画されることを確認した。
+
+`stanza:style` 由来の `--parameter-probe-gap` は、`this.params["--parameter-probe-gap"]` では `undefined` だった。一方で、hostのcomputed custom propertyとして `--parameter-probe-gap: 8px` が確認できた。
+
+属性変更:
+
+| 操作 | `lastAttributeChange` | 観測値 |
+| ---- | --------------------- | ------ |
+| `count="9.25"` を設定 | `count`, old `"1"`, new `"9.25"` | `count` は `9.25:number` |
+| `payload` をobject JSONに変更 | `payload`, old initial JSON, new changed JSON | `payload` はobjectとして更新 |
+| `flag=""` を設定 | `flag` の変更として扱う | `flag` は `true:boolean` |
+| `flag` を削除 | `flag` の変更として扱う | `flag` は `false:boolean` |
+
+Phase 2-3では、date/datetimeの変換はunit testで確認した。004のbrowser観測では主要型の表示と属性変更を優先した。
+
 ## 合格条件
 
 - booleanパラメーターの属性有無による判定が一致する。

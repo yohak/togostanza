@@ -25,6 +25,7 @@ type MenuItem = {
 
 export type QueryInput = {
   endpoint: string;
+  method?: "POST";
   parameters?: Record<string, unknown>;
   template: string;
 };
@@ -90,6 +91,12 @@ export default class Stanza {
   }
 
   async query(input: QueryInput): Promise<unknown> {
+    const method = input.method ?? "POST";
+
+    if (method !== "POST") {
+      throw new Error(`Unsupported query method: ${method}`);
+    }
+
     const query = this.renderTemplateString(input.template, input.parameters);
     const body = new URLSearchParams({ query });
     const response = await fetch(input.endpoint, {
@@ -97,7 +104,7 @@ export default class Stanza {
       headers: {
         accept: "application/sparql-results+json, application/json",
       },
-      method: "POST",
+      method,
     });
 
     const contentType = response.headers.get("content-type") ?? "";

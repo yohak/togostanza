@@ -211,7 +211,86 @@ URL: `http://127.0.0.1:4175/fixtures/source-api.html`.
 - その後の各renderで、同じ `dist/assets/api-probe-font.css` linkが追加された。
 - この検証ケースでは重複抑止は観測されなかった。
 
+## リメイク版の観測状況
+
+Phase 2-3で確認済み。
+
+- 確認日: 2026-06-30
+- 確認対象: `package/test/browser/custom-element.smoke.spec.ts`
+- 確認コマンド: `cd package && mise exec -- pnpm run test:browser`
+- 追加確認: `cd package && mise exec -- pnpm run check-all`
+
+リメイク版の観測は、検証ケース配下の独立した `remake/` 環境ではなく、リメイク版パッケージのbrowser test内で一時生成したstanzaリポジトリを使って行った。
+
+確認したStanza source API:
+
+- `import Stanza from "togostanza/stanza"`。
+- `export default class ApiProbe extends Stanza`。
+- `this.params`。
+- `this.root`。
+- `this.element`。
+- `this.renderTemplate()`。
+- `this.handleAttributeChange()`。
+- `this.query()`。
+- `this.importWebFontCSS()`。
+- `this.menu()`。
+
+### リメイク版のブラウザ観測
+
+初期観測状態:
+
+- `<togostanza-api-probe>` はopen shadow rootを持っていた。
+- `this.element` は対象custom elementを指し、template上では `TOGOSTANZA-API-PROBE` として描画された。
+- `this.root` は `true` として描画された。
+- `this.root.querySelector("main")` は `true` として描画された。
+- render後、`main.dataset.apiProbeRoot` は `available` だった。
+- render後、`main.dataset.apiProbeElement` は `TOGOSTANZA-API-PROBE` だった。
+- `this.renderTemplate({ template, parameters })` は `templates/stanza.html.hbs` を描画し、`data-probe` 付き要素へ観測値を出力した。
+- 再描画後も `data-probe="label"` は1件で、本文は追記ではなく置換された。
+
+`this.params` の観測:
+
+- `label` はstringとして描画された。
+- `limit` はnumberパラメーター由来の値として描画された。
+- `enabled` はboolean属性が存在するとき `true` として描画された。
+- `payload` はparse済みJSONを `JSON.stringify` で再描画した値として見えた。
+- `query-endpoint` は `this.query()` のendpointとして使えた。
+
+`this.query()` の観測:
+
+- `this.query({ endpoint, method: "POST", template, parameters })` を呼び出せた。
+- `method` 未指定時の既定値も `POST` として実装している。
+- request methodは `POST` だった。
+- request content typeは `application/x-www-form-urlencoded` だった。
+- request bodyには `query=...` が含まれた。
+- 初期query bodyには `LIMIT 3` が含まれた。
+- `limit` を `5` に変更した後のquery bodyには `LIMIT 5` が含まれた。
+- Phase 2-3では `POST` のみ対応し、GETなどの追加methodは後続判断とする。
+
+`this.importWebFontCSS()` の観測:
+
+- `this.importWebFontCSS("./assets/api-probe-font.css")` はshadow rootにstylesheet linkを追加した。
+- link先はリメイク版の生成物配置に合わせて `public/api-probe/assets/api-probe-font.css` へ解決された。
+- 重複挿入抑止はPhase 2-3の互換必須範囲にしていない。
+
+`this.menu()` の観測:
+
+- `menu()` が返す `{ type: "item", label, handler }` は最小menu shellへ反映された。
+- `menu()` が返す `{ type: "divider" }` はdividerとして反映された。
+- menu itemのlabelは初期状態で `Inspect before-mutation` だった。
+- menu itemをクリックするとhandlerが呼ばれ、template上の `menu-click` が `before-mutation` になった。
+- `label` を `after-mutation` へ変更した後、menu item labelは `Inspect after-mutation` に更新された。
+
+属性変更の観測:
+
+| 操作 | 最後のattribute | 観測値 |
+| ---- | -------------- | ------ |
+| `label="after-mutation"` を設定 | `label`, old `before-mutation`, new `after-mutation` | `label` は `after-mutation` になり、menu item labelも更新された |
+| `limit="5"` を設定 | `limit`, old `3`, new `5` | `limit` は `5` になり、query bodyに `LIMIT 5` が含まれた |
+
 ## 未確認事項
 
 - `importWebFontCSS()` のlink重複挿入を互換必須の詳細とするか、現行実装の詳細に留めるか。
 - boolean属性削除時の `handleAttributeChange()` `oldValue` / `newValue` を厳密に見る必要がある場合は、`null` と空文字を区別して描画するケース入力を追加する。現在のtemplateは `|| ''` を使うため、削除は `booleanParam: false` では見えるが、`newValue` のdistinctな描画値としては見えない。
+- `query()` のGET、追加header、認証、timeout、abort、response変換の詳細。
+- `menu()` のDOM構造や見た目の互換。

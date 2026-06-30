@@ -690,6 +690,7 @@ export default class ApiProbe extends Stanza {
     const queryResult = this.params["query-endpoint"]
       ? await this.query({
           endpoint: String(this.params["query-endpoint"]),
+          method: "POST",
           template: "query.sparql.hbs",
           parameters: {
             limit: this.params.limit,
