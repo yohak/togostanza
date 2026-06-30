@@ -12,6 +12,7 @@ Phase 2-3は、Phase 2-2で作ったcustom elementとShadow DOMの土台に、�
 - `renderTemplate()` と `templates/*.hbs` を使えるようにする。
 - 属性変更時に `this.params` を更新し、`handleAttributeChange()` と再描画へつなげる。
 - `query()`、`importWebFontCSS()`、`menu()` の最小互換を成立させる。
+- `handleEvent()` はStanza間連携の実挙動をPhase 2-5へ送り、Phase 2-3ではbase class上のno-op methodとして置ける範囲に留める。
 - 004ケースと005ケースのリメイク版観測を通せる状態にする。
 
 ## 完了条件
@@ -37,6 +38,7 @@ Phase 2-3は、Phase 2-2で作ったcustom elementとShadow DOMの土台に、�
 - `menu()` が返す `{ type: "item", label, handler }` と `{ type: "divider" }` を最小menu shellへ反映できる。
 - `menu()` は初期表示時と再描画後に再評価され、`this.params` に依存するmenu itemを反映できる。
 - menu itemをクリックすると該当handlerが呼ばれる。
+- `handleEvent()` は呼び出し可能なno-op methodとして存在してよいが、incoming event連携はPhase 2-5の完了条件にする。
 - unit test、integration test、browser testで、004/005相当の挙動を確認できる。
 - 004ケースREADMEと005ケースREADMEに、Phase 2-3で確認したリメイク版の観測範囲を記録する。
 
@@ -59,6 +61,7 @@ Phase 2-3は、Phase 2-2で作ったcustom elementとShadow DOMの土台に、�
 - `query()`。
 - `importWebFontCSS()`。
 - `menu()` item API。
+- `handleEvent()` のno-op method維持。incoming event連携は含めない。
 - 004ケースと005ケースのリメイク版観測更新。
 
 ## 含めないもの
@@ -66,7 +69,7 @@ Phase 2-3は、Phase 2-2で作ったcustom elementとShadow DOMの土台に、�
 - `serve` の実挙動。
 - `togostanza--container`。
 - incoming event / outgoing event。
-- `handleEvent()`。
+- `handleEvent()` のincoming event連携。
 - `togostanza--event-map`。
 - `togostanza--data-source`。
 - Stanza entrypointからのasset import。
@@ -164,6 +167,8 @@ boolean以外で属性が存在しない場合は未指定値として扱う。�
 
 不正値の扱いは、Phase 2-3では詳細互換として固定しない。JSON parse失敗、invalid number、invalid dateなどは、ページ全体を壊さない診断に寄せたいが、詳細なfallback値や警告文言は後続判断にする。
 
+date/datetimeは仕様の変換表に含まれるためunit testで固定する。一方で、004ケースのbrowser観測は現行ケース入力に合わせてboolean、number、json、single-choice、textを主対象にする。date/datetimeを004 browser fixtureへ追加するかは後続判断でよい。
+
 ## render lifecycle方針
 
 Phase 2-3では、custom elementが接続された後にStanza instanceの `render()` を呼ぶ。
@@ -239,6 +244,8 @@ itemのDOM構造や見た目は固定しない。browser testでは、item label
 - 属性変更時に `this.params` が更新されること。
 - `handleAttributeChange()` が呼ばれること。
 - 既定再描画が行われること。
+
+date/datetimeはunit testで変換を固定する。004ケースのbrowser観測では主要型の実表示と属性変更を優先し、date/datetimeのDOM観測追加は必須にしない。
 
 Phase 2-3では、004ケースの現行版観測を踏まえつつ、リメイク版の仕様として確定している範囲を記録する。不正値や細かいfallbackは、未決定事項として残してよい。
 

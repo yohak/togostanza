@@ -60,7 +60,9 @@ menu placement、`togostanza-menu-placement` 属性、`none`、About導線から
 
 ### Phase 2-3: Stanza source API
 
-Phase 2-3では、Stanzaソースが使うAPIを扱う。`this.params`、`renderTemplate()`、`templates/*.hbs`、`query()`、`importWebFontCSS()`、`menu()`、`handleAttributeChange()`、`handleEvent()` を対象にする。
+Phase 2-3では、Stanzaソースが使うAPIを扱う。`this.params`、`renderTemplate()`、`templates/*.hbs`、`query()`、`importWebFontCSS()`、`menu()`、`handleAttributeChange()` を対象にする。
+
+`handleEvent()` はStanza base API名としてno-op methodを置いてよいが、incoming eventと連携した実挙動はPhase 2-5で扱う。
 
 パラメーター変換や外部通信を含むため、検証ケース004と005に分けて観測する。
 
@@ -74,7 +76,7 @@ Phase 2-4では、asset importからemitされた生成物も、GitHub Pagesの�
 
 ### Phase 2-5: inter-stanza coordination
 
-Phase 2-5では、Stanza間連携を扱う。`togostanza--container` は入口として維持する。`togostanza--event-map` と `togostanza--data-source` は目的を維持しつつAPI詳細を再設計する。`togostanza--data-container` は旧ドキュメント内の誤記として持ち込まない。
+Phase 2-5では、Stanza間連携を扱う。`togostanza--container` は入口として維持する。`handleEvent()`、`togostanza--event-map` と `togostanza--data-source` は目的を維持しつつAPI詳細を再設計する。`togostanza--data-container` は旧ドキュメント内の誤記として持ち込まない。
 
 再設計対象は、実装だけでなく差分説明と移行メモを成果物に含める。
 
