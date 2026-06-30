@@ -123,6 +123,32 @@ mise exec -- pnpm run serve:fixture
 - `handled-event-type` には `selectedValue`、`handled-event-detail` には `{"payload":{"label":"from-sender"}}` が表示された。
 - 同じイベントで `togostanza--event-map` も動き、受信側の `selected-label` 属性と表示値が `from-sender` になった。
 
+### リメイク版観測状況
+
+確認済み。
+
+- 確認日: 2026-06-30
+- 作業ディレクトリ: `package/`
+- 確認方法: `test/browser/custom-element.smoke.spec.ts` の `coordinates built Stanza custom elements inside togostanza container`
+- 確認コマンド: `mise exec -- pnpm run test:browser`
+
+### リメイク版ブラウザ観測結果
+
+- `coordination-sender.js` と `coordination-receiver.js` の2本のbundleを同じHTMLで読み込んだ。
+- `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` はcustom elementとして登録された。
+- 複数bundle読み込み時に、連携用custom elementの重複登録例外は発生しなかった。
+- 送信側/受信側にはopen shadow rootが作られた。
+- 初期状態では受信側の表示値は `(none)`。
+- `togostanza--data-source` は `sample-data.json` を取得し、blob URLとして受信側の `data-url` 属性に渡した。
+- 受信側は `data-url` からJSONを取得し、`items[0].label` の `from-data-source` を表示した。
+- 送信側は `this.element.dispatchEvent(new CustomEvent("selectedValue", { detail }))` で、`bubbles` を付けずにイベントを送出した。
+- containerは送信側custom elementへ張ったlistenerで、非bubbling `selectedValue` eventを捕捉した。
+- `togostanza--event-map` は `value-path="payload.label"` で `event.detail.payload.label` を読み、受信側の `selected-label` 属性へ `from-sender` を設定した。
+- 受信側の `selected-label` 表示値は `from-sender` になった。
+- 受信側の `handleEvent()` は `selectedValue` を受け取り、`event.detail` として `{"payload":{"label":"from-sender"}}` を観測した。
+- metadataに列挙していない `undeclaredValue` eventは、`handleEvent()` とevent-mapの対象にならなかった。
+- `togostanza--data-container` は使っていない。
+
 ## リメイク版で観測すること
 
 - `togostanza--container` の目的が維持されること。

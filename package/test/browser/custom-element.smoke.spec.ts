@@ -454,6 +454,100 @@ test("supports Phase 2-3 Stanza source APIs in built custom elements", async ({ 
   }
 });
 
+test("coordinates built Stanza custom elements inside togostanza container", async ({ page }) => {
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  writeInterStanzaCoordinationProbe(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+  writeFileSync(
+    resolve(cwd, "fixture.html"),
+    `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/coordination-sender.js"></script>
+    <script type="module" src="./public/coordination-receiver.js"></script>
+    <togostanza--container id="coordination-case">
+      <togostanza--event-map
+        on="selectedValue"
+        receiver="togostanza-coordination-receiver"
+        value-path="payload.label"
+        target-attribute="selected-label"
+      ></togostanza--event-map>
+      <togostanza--data-source
+        url="./sample-data.json"
+        receiver="togostanza-coordination-receiver"
+        target-attribute="data-url"
+      ></togostanza--data-source>
+      <togostanza-coordination-sender value="from-sender"></togostanza-coordination-sender>
+      <togostanza-coordination-receiver></togostanza-coordination-receiver>
+    </togostanza--container>
+  </body>
+</html>
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(cwd, "sample-data.json"),
+    `${JSON.stringify({ items: [{ label: "from-data-source" }] }, null, 2)}\n`,
+    "utf8",
+  );
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  const requestLog: string[] = [];
+  const server = await startStaticServer(cwd, requestLog);
+
+  try {
+    const port = addressPort(server);
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`);
+    await page.waitForFunction(() => customElements.get("togostanza--container"));
+    await page.waitForFunction(() => customElements.get("togostanza--event-map"));
+    await page.waitForFunction(() => customElements.get("togostanza--data-source"));
+    await page.waitForFunction(() => customElements.get("togostanza-coordination-sender"));
+    await page.waitForFunction(() => customElements.get("togostanza-coordination-receiver"));
+
+    expect(pageErrors).toEqual([]);
+    await expect
+      .poll(() => readProbeValue(page, "togostanza-coordination-receiver", "selected-label"))
+      .toBe("(none)");
+    await expect
+      .poll(() => readProbeValue(page, "togostanza-coordination-receiver", "data-source-label"))
+      .toBe("from-data-source");
+    expect(
+      await readProbeValue(page, "togostanza-coordination-receiver", "handled-event-type"),
+    ).toBe("(none)");
+
+    await page.locator("togostanza-coordination-sender").evaluate((element) => {
+      element.shadowRoot
+        ?.querySelector<HTMLButtonElement>("[data-action='send-undeclared']")
+        ?.click();
+    });
+    expect(await readProbeValue(page, "togostanza-coordination-receiver", "selected-label")).toBe(
+      "(none)",
+    );
+    expect(
+      await readProbeValue(page, "togostanza-coordination-receiver", "handled-event-type"),
+    ).toBe("(none)");
+
+    await page.locator("togostanza-coordination-sender").evaluate((element) => {
+      element.shadowRoot?.querySelector<HTMLButtonElement>("[data-action='send']")?.click();
+    });
+
+    await expect
+      .poll(() => readProbeValue(page, "togostanza-coordination-receiver", "selected-label"))
+      .toBe("from-sender");
+    await expect
+      .poll(() => readProbeValue(page, "togostanza-coordination-receiver", "handled-event-type"))
+      .toBe("selectedValue");
+    expect(
+      await readProbeValue(page, "togostanza-coordination-receiver", "handled-event-detail"),
+    ).toBe('{"payload":{"label":"from-sender"}}');
+    expect(requestLog.some((requestPath) => requestPath === "/sample-data.json")).toBe(true);
+    expect(customElementDuplicateDefinitionErrors(pageErrors)).toEqual([]);
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("loads Phase 2-4 CSS and JavaScript asset references from built custom elements", async ({
   page,
 }) => {
@@ -605,6 +699,12 @@ function readProbeValue(page: Page, selector: string, probeName: string): Promis
 
 function readSparqlQuery(request: SparqlRequest | undefined): string {
   return new URLSearchParams(request?.body ?? "").get("query") ?? "";
+}
+
+function customElementDuplicateDefinitionErrors(pageErrors: string[]): string[] {
+  return pageErrors.filter((message) => {
+    return message.includes("has already been used with this registry");
+  });
 }
 
 function runCli(args: string[], cwd: string): Promise<void> {
@@ -892,6 +992,159 @@ function formatAttributeChange(change) {
   writeFileSync(
     resolve(stanzaDirectory, "templates", "query.sparql.hbs"),
     "SELECT * WHERE { ?s ?p ?o } LIMIT {{limit}}\n",
+    "utf8",
+  );
+}
+
+function writeInterStanzaCoordinationProbe(cwd: string): void {
+  const senderDirectory = resolve(cwd, "stanzas", "coordination-sender");
+  const receiverDirectory = resolve(cwd, "stanzas", "coordination-receiver");
+  mkdirSync(resolve(senderDirectory, "templates"), { recursive: true });
+  mkdirSync(resolve(receiverDirectory, "templates"), { recursive: true });
+  writeFileSync(
+    resolve(senderDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "coordination-sender",
+        "stanza:label": "Coordination Sender",
+        "stanza:menu-placement": "none",
+        "stanza:parameter": [{ "stanza:key": "value", "stanza:type": "string" }],
+        "stanza:incomingEvent": [],
+        "stanza:outgoingEvent": [
+          {
+            "stanza:description": "Selected value payload.",
+            "stanza:key": "selectedValue",
+          },
+        ],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(senderDirectory, "index.js"),
+    `import Stanza from "togostanza/stanza";
+
+export default class CoordinationSender extends Stanza {
+  render() {
+    const value = this.params.value || "from-sender";
+
+    this.renderTemplate({
+      template: "stanza.html.hbs",
+      parameters: { value },
+    });
+
+    this.root.querySelector("[data-action='send']")?.addEventListener("click", () => {
+      this.element.dispatchEvent(
+        new CustomEvent("selectedValue", {
+          detail: {
+            payload: {
+              label: value,
+            },
+          },
+        }),
+      );
+    });
+
+    this.root.querySelector("[data-action='send-undeclared']")?.addEventListener("click", () => {
+      this.element.dispatchEvent(
+        new CustomEvent("undeclaredValue", {
+          detail: {
+            payload: {
+              label: "from-undeclared",
+            },
+          },
+        }),
+      );
+    });
+  }
+}
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(senderDirectory, "templates", "stanza.html.hbs"),
+    `<button type="button" data-action="send">Send {{value}}</button>
+<button type="button" data-action="send-undeclared">Send undeclared</button>
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(receiverDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "coordination-receiver",
+        "stanza:label": "Coordination Receiver",
+        "stanza:menu-placement": "none",
+        "stanza:parameter": [
+          { "stanza:key": "selected-label", "stanza:type": "string" },
+          { "stanza:key": "data-url", "stanza:type": "string" },
+        ],
+        "stanza:incomingEvent": [
+          {
+            "stanza:description": "Selected value event.",
+            "stanza:key": "selectedValue",
+          },
+        ],
+        "stanza:outgoingEvent": [],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(receiverDirectory, "index.js"),
+    `import Stanza from "togostanza/stanza";
+
+export default class CoordinationReceiver extends Stanza {
+  lastHandledEvent = undefined;
+
+  handleEvent(event) {
+    this.lastHandledEvent = {
+      detail: event.detail,
+      type: event.type,
+    };
+    void this.render();
+  }
+
+  async render() {
+    const dataUrl = this.params["data-url"];
+    let dataSourceLabel = "(none)";
+
+    if (dataUrl) {
+      const data = await fetch(dataUrl).then((response) => response.json());
+      dataSourceLabel = data.items?.[0]?.label ?? "(missing label)";
+    }
+
+    this.renderTemplate({
+      template: "stanza.html.hbs",
+      parameters: {
+        dataSourceLabel,
+        handledEventDetail: this.lastHandledEvent
+          ? JSON.stringify(this.lastHandledEvent.detail)
+          : "(none)",
+        handledEventType: this.lastHandledEvent?.type ?? "(none)",
+        selectedLabel: this.params["selected-label"] ?? "(none)",
+      },
+    });
+  }
+}
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(receiverDirectory, "templates", "stanza.html.hbs"),
+    `<dl>
+  <dt>selected label</dt><dd data-probe="selected-label">{{selectedLabel}}</dd>
+  <dt>data-source label</dt><dd data-probe="data-source-label">{{dataSourceLabel}}</dd>
+  <dt>handled event type</dt><dd data-probe="handled-event-type">{{handledEventType}}</dd>
+  <dt>handled event detail</dt><dd data-probe="handled-event-detail">{{handledEventDetail}}</dd>
+</dl>
+`,
     "utf8",
   );
 }
