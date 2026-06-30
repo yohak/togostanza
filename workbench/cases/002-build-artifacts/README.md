@@ -26,16 +26,19 @@
 - `${id}.js`、`${id}.css`、`${id}.html`、`${id}/metadata.json`、`${id}/assets/*`。
 - リポジトリルート `assets/` から `dist/assets/` へのコピー。
 - `${id}.js.map`、`index.html`、`-togostanza/help-app.js` など開発支援寄り生成物。
+- 空の初期scaffoldに対してbuildが成功するかどうか。
 
 ## リメイク版で観測すること
 
 - 同じ入力から、利用契約上必要な生成物が生成されること。
 - Phase 2-1では、ViteでStanza entrypointがbundleされること。
 - Phase 2-1では、`togostanza/stanza` がbuild用runtime stubとしてbundle解決されること。
+- Phase 2-1では、build用runtime stubはCLI package内の同梱物として扱い、生成リポジトリ側 `node_modules/togostanza` をbundle時に実解決しないこと。
 - `{id}.js` と共有チャンク一式が、`dist/` 内で相対importにより自己完結すること。
 - `${id}.html` が存在すること。
 - `${id}.js.map` と `${id}.css.map` が存在し、生成物から相対参照されること。
 - Phase 2-1では、`index.html` と `-togostanza/` を生成しないこと。
+- Phase 2-1では、stanzaが1つもない場合は分かりやすく失敗すること。
 - ヘルププレビュー側生成物が変わる場合、ランタイム生成物との差分が説明できること。
 
 ## 合格条件
@@ -53,6 +56,7 @@
 - sharedチャンクの有無。
 - source mapのpathと相対参照。
 - ヘルププレビュー関連生成物の差分。
+- stanzaがないリポジトリでのbuild挙動差分。
 - ビルド時の警告/エラー。
 
 ## 未決定事項

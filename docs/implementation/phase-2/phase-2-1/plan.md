@@ -65,6 +65,7 @@ Phase 2-1は、Phase 2-0で用意した `build` / `b` のpreflightを、最小�
 - `stanza:style` からCSS custom propertyの既定値への反映。
 - menu placement、About導線、`${id}.html` へのruntime側リンク。
 - `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()` の本格実装。
+- `templates/*.hbs` の読み込みと `renderTemplate()` 連携。
 - `togostanza/stanza` runtimeの完成。
 - `togostanza` dependencyの実利用可能性確認。
 - Stanza entrypointからのasset importの完全対応。
@@ -110,6 +111,8 @@ Phase 2-1では、検出したStanza entrypointを `rollupOptions.input` にま�
 
 `togostanza/stanza` は、Phase 2-1ではbuildを通すための最小runtime stubへaliasする。このstubは、Phase 1生成の `index.js` がbundleできることを目的にする。custom element登録、Shadow DOM、`renderTemplate()` の本格挙動はPhase 2-2以降で実装する。
 
+このruntime stubの正本はCLI package内に置く。Stanzaリポジトリの `dependencies.togostanza` はrepo判定と利用者向け依存宣言として扱い、Phase 2-1のbundle時にはrepo側 `node_modules/togostanza` を実解決しない。Phase 2-2で本格runtimeへ進めるときも、CLI同梱runtimeと生成リポジトリの依存宣言versionがずれる可能性を前提にし、どちらを正本にするかを再確認する。
+
 Vite buildでは `{id}.js.map` と共有チャンクのsource mapを生成する。source mapは存在と相対参照を確認するが、内部構造やbyte-level互換は固定しない。
 
 ## CSS build方針
@@ -132,7 +135,7 @@ Phase 2-1では、生成物作成に必要な最小validationだけを行う。
 - `metadata.json` がJSON objectであること。
 - `@id` がstringであること。
 - `@id` がstanzaディレクトリ名と一致すること。
-- `@id` がcustom element名に使えるkebab-case相当であること。
+- `togostanza-{id}` がvalid custom element名になる `@id` であること。
 
 任意:
 
@@ -179,7 +182,7 @@ custom element preview、snippet生成、menuからのAbout導線、ヘルププ
 
 ## 出力先clean
 
-`build` は出力開始前に出力先ディレクトリを削除して作り直す。
+`build` は出力開始前に出力先ディレクトリを削除して作り直す。ただし、Phase 2-1では「自分が作ったと判断できる出力先」だけをcleanする。
 
 拒否する出力先:
 
@@ -188,8 +191,18 @@ custom element preview、snippet生成、menuからのAbout導線、ヘルププ
 - 空文字。
 - Stanzaリポジトリrootより上のディレクトリ。
 - Stanzaリポジトリroot外のディレクトリ。
+- Stanzaリポジトリroot配下の既知ソース/制御ディレクトリ。
+  - `stanzas/`
+  - `assets/`
+  - `lib/`
+  - `.git/`
+  - `.github/`
+  - `node_modules/`
+- 既存の非空ディレクトリで、TogoStanza buildの出力先であることを示すmarkerを持たないもの。
 
-Phase 2-1では、出力先はStanzaリポジトリroot配下に限定する。危険なpathやclean失敗は、pathが分かる診断で失敗する。
+Phase 2-1では、出力先はStanzaリポジトリroot配下に限定する。出力先が存在しない場合、または空ディレクトリの場合は利用できる。出力後は、次回buildで自分の出力先として識別できるmarkerを置く。marker名は実装詳細でよいが、公開利用者が編集する契約にはしない。
+
+危険なpath、既存ソースの破壊につながるpath、所有権が判断できない非空ディレクトリ、clean失敗は、pathが分かる診断で失敗する。
 
 ## サブパス安全性
 
@@ -207,7 +220,7 @@ Phase 2-1では、runtimeからmetadataやassetを実fetchする挙動までは�
 
 ## 実装メモ
 
-- `package` のdevDependenciesに `vite` と `sass` を追加する。
+- `package` のdependenciesに `vite` と `sass` を追加する。これらはCLIの `build` 実行時依存であり、公開後の `npm exec togostanza@latest build` でも必要になるため、devDependenciesへ置かない。
 - `package/src/runtime/stanza.ts` などに、build用の最小runtime stubを置く。
 - `package/src/cli/build.ts` の未実装診断を、生成処理へ置き換える。
 - Stanza検出、metadata読み込み、entrypoint解決、assetコピーは、build handlerから分離する。
@@ -215,6 +228,7 @@ Phase 2-1では、runtimeからmetadataやassetを実fetchする挙動までは�
 - `build` はrepo contextのdependency specを宣言確認として扱う。`node_modules/` 内の実解決はPhase 2-1では必須にしない。
 - ViteはCLI内部設定で起動し、Stanzaリポジトリ側の設定ファイルを要求しない。
 - `togostanza/stanza` aliasはCLI内部のruntime stubへ向ける。
+- `@id` validationはPhase 1のStanza ID規則と同じにする。既存helperを移動またはexportして再利用し、同じ正規表現や判定を二重定義しない。
 - Viteの出力を一時ディレクトリに出すか、最終出力先へ直接出すかは実装時に決めてよい。ただし最終生成物配置はこの文書に合わせる。
 
 ## 検証計画
@@ -230,7 +244,8 @@ Phase 2-1では、runtimeからmetadataやassetを実fetchする挙動までは�
 - `stanza:label` がない場合に `@id` から表示名を作る。
 - entrypoint優先順が `index.tsx`、`index.ts`、`index.js` であること。
 - entrypointがない場合に失敗する。
-- 出力先がroot、`.`、root外、rootより上の場合に失敗する。
+- 出力先がroot、`.`、root外、rootより上、既知ソース/制御ディレクトリの場合に失敗する。
+- markerを持たない既存の非空出力先では失敗する。
 - assetコピーで `.keep` を除外する。
 - `{id}.html` が相対URLだけを使う。
 
@@ -273,6 +288,8 @@ browser testがsandbox環境で失敗する場合は、既存の運用方針に�
 | `stanza:style` からCSS custom propertyの既定値への反映 | Phase 2-2 |
 | menu placement、About導線、`togostanza-menu-placement` | Phase 2-2 |
 | `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()` | Phase 2-3 |
+| `templates/*.hbs` の読み込み | Phase 2-3 |
+| CLI同梱runtimeと生成リポジトリの依存宣言versionの扱い | Phase 2-2 / Phase 5 |
 | Sass `@/` alias | Phase 2-4 |
 | `togostanza.config.ts` | Phase 2-4 |
 | Stanza entrypointからのasset import | Phase 2-4 |

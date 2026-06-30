@@ -42,7 +42,7 @@ Phase 2-0では、`build` の中身は実装しない。`init .`、既存ディ�
 
 ### Phase 2-1: build artifact spine
 
-Phase 2-1では、最小のビルド生成物を出す。対象は `build` / `b`、`--output-path`、未指定時の `dist`、Stanza検出、metadata検証、entrypoint候補、Viteによるentrypoint bundle、build用runtime stub、stylesheet、template、assetコピー、source map、最小HTML生成までとする。
+Phase 2-1では、最小のビルド生成物を出す。対象は `build` / `b`、`--output-path`、未指定時の `dist`、Stanza検出、metadata検証、entrypoint候補、Viteによるentrypoint bundle、build用runtime stub、stylesheet、assetコピー、source map、最小HTML生成までとする。
 
 GitHub Pagesのサブパス配信で壊れない相対URL生成は、Phase 2-1の所有範囲に含める。`{id}.js`、`{id}.css`、`{id}.html`、metadata、asset、共有チャンクへの参照は、`dist/` を任意のサブパスへ置いても相対URLで解決できる形を目指す。
 
@@ -60,7 +60,7 @@ menu placement、`togostanza-menu-placement` 属性、`none`、About導線から
 
 ### Phase 2-3: Stanza source API
 
-Phase 2-3では、Stanzaソースが使うAPIを扱う。`this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()`、`handleAttributeChange()`、`handleEvent()` を対象にする。
+Phase 2-3では、Stanzaソースが使うAPIを扱う。`this.params`、`renderTemplate()`、`templates/*.hbs`、`query()`、`importWebFontCSS()`、`menu()`、`handleAttributeChange()`、`handleEvent()` を対象にする。
 
 パラメーター変換や外部通信を含むため、検証ケース004と005に分けて観測する。
 
