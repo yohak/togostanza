@@ -1,5 +1,13 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
@@ -319,6 +327,7 @@ describe("CLI smoke", () => {
     );
     expect(generateResult.code).toBe(0);
     const port = await findAvailablePort();
+    const outputDirectoriesBeforeServe = new Set(listServeOutputDirectories());
     const child = startCli(["serve", "--port", String(port)], cwd);
 
     try {
@@ -337,6 +346,11 @@ describe("CLI smoke", () => {
     } finally {
       await child.close();
     }
+
+    const outputDirectoriesAfterClose = listServeOutputDirectories().filter(
+      (directory) => !outputDirectoriesBeforeServe.has(directory),
+    );
+    expect(outputDirectoriesAfterClose).toEqual([]);
   });
 });
 
@@ -438,6 +452,13 @@ async function findAvailablePort(): Promise<number> {
   await closeServer(server);
 
   return port;
+}
+
+function listServeOutputDirectories(): string[] {
+  return readdirSync(tmpdir())
+    .filter((entry) => entry.startsWith("togostanza-serve-"))
+    .map((entry) => resolve(tmpdir(), entry))
+    .toSorted();
 }
 
 function listenOnEphemeralPort(): Promise<Server> {

@@ -83,8 +83,11 @@
 - 未知拡張子の実在assetは、`application/octet-stream` でHTTP 200として配信される。
 - `serve` はStanzaリポジトリの `dist/` を作成しない。
 - stanza固有入力である `style.scss` の変更後、対象stanzaのCSSが再ビルドされ、ページ再読み込みで反映される。
+- 共有ソース変更後、共有ソースを使う複数stanzaのbundleが全体rebuildで更新される。
+- root asset変更後、serve経由のroot asset URLが全体rebuildで更新される。
 - stanza固有入力の再ビルドに失敗した場合、対象stanzaのbuild相当URLはHTTP 500になり、エラーページに `Sass compile failed` が含まれる。
 - 修正後の再ビルド成功で、対象stanzaのbuild相当URLはHTTP 200へ復帰する。
+- bin entry経由の `serve` を `SIGTERM` で終了したあと、一時出力ディレクトリが削除される。
 - Playwrightで `/{id}.html` を開き、custom elementがupgradeされ、Shadow DOM内の `main` とstylesheet適用を確認した。
 
 現行版との差分:

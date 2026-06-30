@@ -1092,6 +1092,73 @@ describe("CLI router", () => {
     });
   });
 
+  it("rebuilds all stanzas after shared source or root asset changes", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "sharedOne"], { cwd, currentDate });
+    routeCli(["generate", "stanza", "sharedTwo"], { cwd, currentDate });
+    mkdirSync(join(cwd, "assets"));
+    mkdirSync(join(cwd, "lib"));
+    const sharedSourcePath = join(cwd, "lib", "shared-message.js");
+    const rootAssetPath = join(cwd, "assets", "root-marker.txt");
+
+    writeFileSync(sharedSourcePath, 'export const sharedMessage = "before-shared";\n', "utf8");
+    writeFileSync(rootAssetPath, "before-asset\n", "utf8");
+
+    for (const [id, className] of [
+      ["shared-one", "SharedOne"],
+      ["shared-two", "SharedTwo"],
+    ] as const) {
+      writeFileSync(
+        join(cwd, "stanzas", id, "index.js"),
+        [
+          'import Stanza from "togostanza/stanza";',
+          'import { sharedMessage } from "../../lib/shared-message.js";',
+          "",
+          `export default class ${className} extends Stanza {`,
+          "  async render() {",
+          "    this.renderTemplate({",
+          '      template: "stanza.html.hbs",',
+          "      parameters: {",
+          "        greeting: sharedMessage,",
+          "      },",
+          "    });",
+          "  }",
+          "}",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+    }
+
+    const port = await findAvailablePort();
+
+    await routeCliAsync(["serve", "--port", String(port)], {
+      cwd,
+      onServeSession: (session) => {
+        serveSessions.push(session);
+      },
+    });
+
+    expect(await fetchEntrypointSharedChunk(port, "shared-one")).toContain("before-shared");
+    expect(await fetchEntrypointSharedChunk(port, "shared-two")).toContain("before-shared");
+    expect((await fetchText(port, "/assets/root-marker.txt")).body).toBe("before-asset\n");
+
+    writeFileSync(sharedSourcePath, 'export const sharedMessage = "after-shared";\n', "utf8");
+    writeFileSync(rootAssetPath, "after-asset\n", "utf8");
+
+    await waitFor(async () => {
+      const firstSharedChunk = await fetchEntrypointSharedChunk(port, "shared-one");
+      const secondSharedChunk = await fetchEntrypointSharedChunk(port, "shared-two");
+      const rootAsset = await fetchText(port, "/assets/root-marker.txt");
+
+      return (
+        firstSharedChunk.includes("after-shared") &&
+        secondSharedChunk.includes("after-shared") &&
+        rootAsset.body === "after-asset\n"
+      );
+    });
+  });
+
   it("returns HTTP 500 for a failed stanza rebuild and recovers after a fix", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "failureProbe"], { cwd, currentDate });
@@ -1163,6 +1230,19 @@ async function fetchText(port: number, path: string): Promise<FetchTextResult> {
     contentType: response.headers.get("content-type") ?? "",
     status: response.status,
   };
+}
+
+async function fetchEntrypointSharedChunk(port: number, stanzaId: string): Promise<string> {
+  const entrypoint = await fetchText(port, `/${stanzaId}.js`);
+  const match = /from"\.\/(_chunks\/[^"]+)"/.exec(entrypoint.body);
+
+  if (!match) {
+    throw new Error(`Expected ${stanzaId}.js to import a shared chunk.`);
+  }
+
+  const chunk = await fetchText(port, `/${match[1]}`);
+
+  return chunk.body;
 }
 
 async function findAvailablePort(): Promise<number> {

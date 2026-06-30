@@ -47,10 +47,13 @@ type InvalidateTarget =
       kind: "stanza";
     };
 
+type ShutdownSignal = "SIGINT" | "SIGTERM";
+
 const defaultPort = 8080;
 const listenHost = "127.0.0.1";
 const watchDebounceMs = 80;
 const ignoredWatchRoots = new Set([".git", "dist", "node_modules"]);
+const shutdownSignals: readonly ShutdownSignal[] = ["SIGINT", "SIGTERM"];
 
 export async function handleServe(
   args: readonly string[],
@@ -90,6 +93,8 @@ export async function handleServe(
   let pendingAll = false;
   const pendingStanzaIds = new Set<string>();
   const watchers: FSWatcher[] = [];
+  let removeSignalHandlers: (() => void) | undefined;
+  let closePromise: Promise<void> | undefined;
 
   const server = createServer((request, response) => {
     const requestPath = safeDecodePath((request.url ?? "/").split("?")[0] ?? "/");
@@ -141,17 +146,13 @@ export async function handleServe(
 
   const session: ServeSession = {
     close: async () => {
-      closed = true;
-
-      if (rebuildTimer) {
-        clearTimeout(rebuildTimer);
-        rebuildTimer = undefined;
-      }
-
-      await cleanupServeResources(server, watchers, outputDirectories);
+      closePromise ??= closeServeSession();
+      await closePromise;
     },
     port: listenResult.port,
   };
+
+  removeSignalHandlers = installSignalHandlers(session);
 
   options.onServeSession?.(session);
 
@@ -159,6 +160,20 @@ export async function handleServe(
     exitCode: 0,
     stdout: `Serving Stanza repository: ${repoContextResult.context.packageName} at http://${listenHost}:${listenResult.port}/`,
   };
+
+  async function closeServeSession(): Promise<void> {
+    closed = true;
+
+    if (rebuildTimer) {
+      clearTimeout(rebuildTimer);
+      rebuildTimer = undefined;
+    }
+
+    removeSignalHandlers?.();
+    removeSignalHandlers = undefined;
+
+    await cleanupServeResources(server, watchers, outputDirectories);
+  }
 
   function scheduleRebuild(): void {
     if (rebuildTimer) {
@@ -206,6 +221,28 @@ export async function handleServe(
       }
     }
   }
+}
+
+function installSignalHandlers(session: ServeSession): () => void {
+  const disposers = shutdownSignals.map((signal) => {
+    const handleSignal = () => {
+      void session.close().finally(() => {
+        process.kill(process.pid, signal);
+      });
+    };
+
+    process.once(signal, handleSignal);
+
+    return () => {
+      process.off(signal, handleSignal);
+    };
+  });
+
+  return () => {
+    for (const dispose of disposers) {
+      dispose();
+    }
+  };
 }
 
 async function buildAll(

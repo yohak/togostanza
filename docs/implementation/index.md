@@ -13,7 +13,7 @@
 | Phase 0: skeleton | リメイク版パッケージとCLI土台を固める。 | パッケージ内のsmoke test | [設計](./phase-0/plan.md)、[引き継ぎ](./phase-0/handoff.md) |
 | Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-1/plan.md)、[引き継ぎ](./phase-1/handoff.md) |
 | Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | [サブフェーズ計画](./phase-2/index.md)、[引き継ぎ](./phase-2/handoff.md) |
-| Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | [設計](./phase-3/plan.md) |
+| Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | [設計](./phase-3/plan.md)、[引き継ぎ](./phase-3/handoff.md) |
 | Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | `phase-4-compatibility.md` |
 | Phase 5: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | `phase-5-distribution.md` |
 
@@ -119,7 +119,7 @@ Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計
 - CORS保証。
 - React、Vue、`togostanza-utils` の追加互換。
 
-serve用検証は、専用検証ケース `workbench/cases/011-serve-development-server/` で扱う。Phase 3の設計は [Phase 3: serve 設計](./phase-3/plan.md) に置く。
+serve用検証は、専用検証ケース `workbench/cases/011-serve-development-server/` で扱う。Phase 3の設計は [Phase 3: serve 設計](./phase-3/plan.md) に置き、完了後の状態とPhase 4への引き継ぎは [Phase 3: serve 引き継ぎ](./phase-3/handoff.md) に置く。
 
 ## Phase 4: compatibility
 
