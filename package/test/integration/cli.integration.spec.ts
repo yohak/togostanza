@@ -1,23 +1,28 @@
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const packageJson = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8")) as {
   name: string;
   version: string;
 };
+const temporaryDirectories: string[] = [];
 
-function runCli(args: string[]): Promise<{
+function runCli(
+  args: string[],
+  cwd = packageRoot,
+): Promise<{
   code: number | null;
   stderr: string;
   stdout: string;
 }> {
   return new Promise((resolveResult, reject) => {
     const child = spawn(process.execPath, [resolve(packageRoot, "bin/togostanza.mjs"), ...args], {
-      cwd: packageRoot,
+      cwd,
       stdio: ["ignore", "pipe", "pipe"],
     });
 
@@ -40,6 +45,12 @@ function runCli(args: string[]): Promise<{
 }
 
 describe("CLI smoke", () => {
+  afterEach(() => {
+    for (const directory of temporaryDirectories.splice(0)) {
+      rmSync(directory, { force: true, recursive: true });
+    }
+  });
+
   it("prints the package identity through the bin entry", async () => {
     const result = await runCli(["--version"]);
 
@@ -56,12 +67,41 @@ describe("CLI smoke", () => {
     expect(result.stdout).toContain("Usage: togostanza [command]");
   });
 
-  it("routes recognized commands to an unimplemented failure", async () => {
-    const result = await runCli(["init", "--bad"]);
+  it("creates an init scaffold through the bin entry", async () => {
+    const cwd = makeTemporaryDirectory();
+    const result = await runCli(
+      ["init", "--name", "generated-repo", "--skip-install", "--skip-git"],
+      cwd,
+    );
 
-    expect(result.code).toBe(1);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toContain("Command is not implemented yet: init");
+    expect(result.code).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toContain("Created Stanza repository: generated-repo");
+    expect(readJson(resolve(cwd, "generated-repo", "package.json"))).toMatchObject({
+      dependencies: {
+        togostanza: `^${packageJson.version}`,
+      },
+      name: "generated-repo",
+    });
+    expect(
+      readFileSync(resolve(cwd, "generated-repo", ".github", "workflows", "publish.yml"), "utf8"),
+    ).toContain("workflow_dispatch");
+  });
+
+  it("creates a stanza through the bin entry", async () => {
+    const cwd = makeTemporaryDirectory();
+    const result = await runCli(
+      ["generate", "stanza", "helloWorld", "--label", "Hello World", "--timestamp", "2026-06-30"],
+      cwd,
+    );
+
+    expect(result.code).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(readJson(resolve(cwd, "stanzas", "hello-world", "metadata.json"))).toMatchObject({
+      "@id": "hello-world",
+      "stanza:label": "Hello World",
+      "stanza:created": "2026-06-30",
+    });
   });
 
   it("rejects unknown commands", async () => {
@@ -72,3 +112,13 @@ describe("CLI smoke", () => {
     expect(result.stderr).toContain("Unknown command: upgrade");
   });
 });
+
+function makeTemporaryDirectory(): string {
+  const directory = mkdtempSync(resolve(tmpdir(), "togostanza-cli-"));
+  temporaryDirectories.push(directory);
+  return directory;
+}
+
+function readJson(path: string): unknown {
+  return JSON.parse(readFileSync(path, "utf8"));
+}

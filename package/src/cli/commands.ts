@@ -3,6 +3,11 @@ export type CommandDefinition = {
   usage: string;
 };
 
+export type CommandMatch = {
+  command: CommandDefinition;
+  matchedLength: number;
+};
+
 export const commandDefinitions: readonly CommandDefinition[] = [
   {
     canonicalName: "init",
@@ -34,11 +39,20 @@ export const commandDefinitions: readonly CommandDefinition[] = [
   },
 ];
 
-export function findCommand(args: readonly string[]): CommandDefinition | undefined {
-  return commandDefinitions.find((command) => {
-    const parts = command.usage.split(" ");
+export function findCommand(args: readonly string[]): CommandMatch | undefined {
+  const command = commandDefinitions.find((definition) => {
+    const parts = definition.usage.split(" ");
     return parts.every((part, index) => args[index] === part);
   });
+
+  if (!command) {
+    return undefined;
+  }
+
+  return {
+    command,
+    matchedLength: command.usage.split(" ").length,
+  };
 }
 
 export function listCommandUsages(): string[] {

@@ -1,4 +1,5 @@
 import { routeCli } from "./router.js";
+import type { CliRouteOptions } from "./router.js";
 
 export type CliOutput = {
   stderr(message: string): void;
@@ -10,8 +11,12 @@ const consoleOutput: CliOutput = {
   stdout: console.log,
 };
 
-export function runCli(args = process.argv.slice(2), output = consoleOutput): number {
-  const result = routeCli(args);
+export function runCli(
+  args = process.argv.slice(2),
+  output = consoleOutput,
+  options: CliRouteOptions = {},
+): number {
+  const result = routeCli(args, options);
 
   if (result.stdout) {
     output.stdout(result.stdout);
