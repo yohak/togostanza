@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { getStringOption, parseOptions } from "./options.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure, success, type CliResult } from "./result.js";
+import { isValidStanzaId, normalizeStanzaId, titleCaseStanzaId } from "./stanza-id.js";
 
 export type GenerateStanzaOptions = {
   cwd?: string;
@@ -55,7 +56,7 @@ export function handleGenerateStanza(
   }
 
   const date = formatDate(options.currentDate ?? new Date());
-  const label = getStringOption(parsed, "--label") ?? titleCase(id);
+  const label = getStringOption(parsed, "--label") ?? titleCaseStanzaId(id);
   const definition = getStringOption(parsed, "--definition") ?? `${label} stanza.`;
   const license = getStringOption(parsed, "--license") ?? "MIT";
   const author = getStringOption(parsed, "--author") ?? "";
@@ -81,15 +82,6 @@ export function handleGenerateStanza(
   }
 
   return success(`Created stanza: ${id}`);
-}
-
-export function normalizeStanzaId(input: string): string {
-  return input
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .replace(/-+/g, "-")
-    .toLowerCase();
 }
 
 function createStanzaSource(input: {
@@ -193,26 +185,14 @@ function formatIndexJs(input: { id: string }): string {
   ].join("\n");
 }
 
-function titleCase(id: string): string {
-  return id
-    .split("-")
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(" ");
-}
-
 function toClassName(id: string): string {
-  const name = titleCase(id).replace(/[^a-zA-Z0-9]/g, "");
+  const name = titleCaseStanzaId(id).replace(/[^a-zA-Z0-9]/g, "");
 
   if (/^[A-Z]/.test(name)) {
     return name;
   }
 
   return `Stanza${name}`;
-}
-
-function isValidStanzaId(id: string): boolean {
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id);
 }
 
 function formatDate(date: Date): string {

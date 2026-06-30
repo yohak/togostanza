@@ -15,16 +15,16 @@ export function runCli(
   args = process.argv.slice(2),
   output = consoleOutput,
   options: CliRouteOptions = {},
-): number {
-  const result = routeCli(args, options);
+): Promise<number> {
+  return Promise.resolve(routeCli(args, options)).then((result) => {
+    if (result.stdout) {
+      output.stdout(result.stdout);
+    }
 
-  if (result.stdout) {
-    output.stdout(result.stdout);
-  }
+    if (result.stderr) {
+      output.stderr(result.stderr);
+    }
 
-  if (result.stderr) {
-    output.stderr(result.stderr);
-  }
-
-  return result.exitCode;
+    return result.exitCode;
+  });
 }

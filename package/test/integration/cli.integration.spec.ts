@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -242,13 +242,40 @@ describe("CLI smoke", () => {
     expect(result.stderr).toContain("missing package.json");
   });
 
-  it("runs build preflight before the Phase 2-0 unimplemented diagnostic", async () => {
+  it("builds generated stanza artifacts through the bin entry", async () => {
     const cwd = await makeStanzaRepoRoot();
-    const result = await runCli(["build"], cwd);
+    const generateResult = await runCli(
+      ["generate", "stanza", "helloWorld", "--timestamp", "2026-06-30"],
+      cwd,
+    );
+    expect(generateResult.code).toBe(0);
+    writeFileSync(resolve(cwd, "assets", "root-asset.txt"), "root\n", "utf8");
+    writeFileSync(
+      resolve(cwd, "stanzas", "hello-world", "assets", "local-asset.txt"),
+      "local\n",
+      "utf8",
+    );
 
-    expect(result.code).toBe(1);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toContain("Build is not implemented yet for Stanza repository: repo");
+    const result = await runCli(["build", "--output-path", "public"], cwd);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stderr).toBe("");
+    expect(existsSync(resolve(cwd, "public", "hello-world.js"))).toBe(true);
+    expect(existsSync(resolve(cwd, "public", "hello-world.js.map"))).toBe(true);
+    expect(existsSync(resolve(cwd, "public", "hello-world.css"))).toBe(true);
+    expect(existsSync(resolve(cwd, "public", "hello-world.css.map"))).toBe(true);
+    expect(existsSync(resolve(cwd, "public", "hello-world.html"))).toBe(true);
+    expect(existsSync(resolve(cwd, "public", "hello-world", "metadata.json"))).toBe(true);
+    expect(readFileSync(resolve(cwd, "public", "assets", "root-asset.txt"), "utf8")).toBe("root\n");
+    expect(
+      readFileSync(resolve(cwd, "public", "hello-world", "assets", "local-asset.txt"), "utf8"),
+    ).toBe("local\n");
+    expect(readFileSync(resolve(cwd, "public", "hello-world.js"), "utf8")).not.toContain(
+      "togostanza/stanza",
+    );
+    expect(existsSync(resolve(cwd, "public", "index.html"))).toBe(false);
+    expect(existsSync(resolve(cwd, "public", "-togostanza"))).toBe(false);
   });
 });
 

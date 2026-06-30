@@ -1,10 +1,11 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { packageMetadata } from "../index.js";
 import { listCommandUsages } from "./commands.js";
-import { routeCli } from "./router.js";
+import type { CliResult } from "./result.js";
+import { routeCli as routeCliRaw, type CliRouteOptions } from "./router.js";
 import type { CommandRunner } from "./runner.js";
 
 const failingInstallRunner: CommandRunner = () => {
@@ -14,6 +15,23 @@ const failingInstallRunner: CommandRunner = () => {
 const failingGitRunner: CommandRunner = () => {
   throw new Error("git runner should not be called for existing .git");
 };
+
+function routeCli(args: readonly string[], options: CliRouteOptions = {}): CliResult {
+  const result = routeCliRaw(args, options);
+
+  if (result instanceof Promise) {
+    throw new Error("Expected routeCli to return a synchronous result.");
+  }
+
+  return result;
+}
+
+async function routeCliAsync(
+  args: readonly string[],
+  options: CliRouteOptions = {},
+): Promise<CliResult> {
+  return await routeCliRaw(args, options);
+}
 
 describe("CLI router", () => {
   const temporaryDirectories: string[] = [];
@@ -537,20 +555,20 @@ describe("CLI router", () => {
     });
   });
 
-  it("rejects build outside a Stanza repository root", () => {
+  it("rejects build outside a Stanza repository root", async () => {
     const cwd = makeTemporaryDirectory();
 
-    const result = routeCli(["build"], { cwd });
+    const result = await routeCliAsync(["build"], { cwd });
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("missing package.json");
   });
 
-  it("rejects build when package.json is malformed", () => {
+  it("rejects build when package.json is malformed", async () => {
     const cwd = makeNamedTemporaryDirectory("malformed-build-repo");
     writeFileSync(join(cwd, "package.json"), "{ nope\n", "utf8");
 
-    const result = routeCli(["build"], { cwd });
+    const result = await routeCliAsync(["build"], { cwd });
 
     expect(result).toEqual({
       exitCode: 1,
@@ -558,22 +576,96 @@ describe("CLI router", () => {
     });
   });
 
-  it("runs build preflight in a Stanza repository root before returning an unimplemented diagnostic", () => {
+  it("rejects build when no stanzas exist", async () => {
     const cwd = makeStanzaRepoRoot();
 
-    expect(routeCli(["build", "--output-path", "public"], { cwd })).toEqual({
-      exitCode: 1,
-      stderr: "Build is not implemented yet for Stanza repository: repo (output: public).",
-    });
+    const result = await routeCliAsync(["build", "--output-path", "public"], { cwd });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("No stanzas found");
   });
 
-  it("supports the b alias for build preflight", () => {
+  it("supports the b alias for build output generation", async () => {
     const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "buildProbe"], { cwd, currentDate });
 
-    expect(routeCli(["b"], { cwd })).toEqual({
-      exitCode: 1,
-      stderr: "Build is not implemented yet for Stanza repository: repo (output: dist).",
+    const result = await routeCliAsync(["b"], { cwd });
+
+    expect(result).toEqual({
+      exitCode: 0,
+      stdout: "Built Stanza repository: repo (output: dist).",
     });
+    expect(existsSync(join(cwd, "dist", "build-probe.js"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "build-probe.js.map"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "build-probe.css"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "build-probe.css.map"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "build-probe.html"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "build-probe", "metadata.json"))).toBe(true);
+    expect(readText(join(cwd, "dist", "build-probe.js"))).not.toContain("togostanza/stanza");
+    expect(readText(join(cwd, "dist", "build-probe.html"))).toContain("./build-probe.js");
+  });
+
+  it("builds custom output assets, sass root alias, and clean output", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "assetProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "assets"));
+    writeFileSync(join(cwd, "assets", ".keep"), "", "utf8");
+    writeFileSync(join(cwd, "assets", "root-asset.txt"), "root\n", "utf8");
+    writeFileSync(join(cwd, "common.scss"), "$probe-color: rgb(1, 2, 3);\n", "utf8");
+    writeFileSync(
+      join(cwd, "stanzas", "asset-probe", "style.scss"),
+      "@use '@/common.scss' as common;\n.asset-probe {\n  color: common.$probe-color;\n}\n",
+      "utf8",
+    );
+    writeFileSync(
+      join(cwd, "stanzas", "asset-probe", "assets", "local-asset.txt"),
+      "local\n",
+      "utf8",
+    );
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", ".togostanza-build-output"), "old\n", "utf8");
+    writeFileSync(join(cwd, "public", "stale.txt"), "stale\n", "utf8");
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(join(cwd, "public", "stale.txt"))).toBe(false);
+    expect(readText(join(cwd, "public", "asset-probe.css"))).toContain("rgb(1, 2, 3)");
+    expect(readText(join(cwd, "public", "assets", "root-asset.txt"))).toBe("root\n");
+    expect(readText(join(cwd, "public", "asset-probe", "assets", "local-asset.txt"))).toBe(
+      "local\n",
+    );
+    expect(existsSync(join(cwd, "public", "assets", ".keep"))).toBe(false);
+    expect(existsSync(join(cwd, "public", "asset-probe", "assets", ".keep"))).toBe(false);
+    expect(existsSync(join(cwd, "public", "index.html"))).toBe(false);
+    expect(existsSync(join(cwd, "public", "-togostanza"))).toBe(false);
+  });
+
+  it("rejects unsafe build output paths before cleaning", async () => {
+    const cwd = makeStanzaRepoRoot();
+    const results = await Promise.all(
+      [".", "..", "stanzas", "assets", ".github", "lib", "node_modules"].map((outputPath) =>
+        routeCliAsync(["build", "--output-path", outputPath], { cwd }),
+      ),
+    );
+
+    for (const result of results) {
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("Invalid output path");
+    }
+  });
+
+  it("refuses to clean a non-owned non-empty output directory", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "ownedProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], { cwd });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Refusing to clean output directory");
+    expect(readText(join(cwd, "public", "manual.txt"))).toBe("manual\n");
   });
 
   function makeTemporaryDirectory(): string {

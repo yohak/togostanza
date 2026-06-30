@@ -5,6 +5,8 @@ import { handleGenerateStanza } from "./generate-stanza.js";
 import { handleInit, type CommandRunner } from "./init.js";
 import { failure, success, type CliResult } from "./result.js";
 
+export type MaybePromise<T> = Promise<T> | T;
+
 export type CliRouteOptions = {
   cwd?: string;
   currentDate?: Date;
@@ -12,7 +14,10 @@ export type CliRouteOptions = {
   installRunner?: CommandRunner;
 };
 
-export function routeCli(args: readonly string[], options: CliRouteOptions = {}): CliResult {
+export function routeCli(
+  args: readonly string[],
+  options: CliRouteOptions = {},
+): MaybePromise<CliResult> {
   const [firstArg] = args;
 
   if (!firstArg || firstArg === "--help") {
@@ -42,7 +47,7 @@ function routeCommand(
   command: CommandDefinition,
   args: readonly string[],
   options: CliRouteOptions,
-): CliResult {
+): MaybePromise<CliResult> {
   if (command.canonicalName === "init") {
     return handleInit(args, options);
   }
