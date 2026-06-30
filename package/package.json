@@ -6,6 +6,13 @@
     "togostanza": "./bin/togostanza.mjs"
   },
   "type": "module",
+  "exports": {
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.js",
+      "default": "./dist/config.js"
+    }
+  },
   "scripts": {
     "clean": "node ./scripts/clean-dist.mjs",
     "dev:cli": "tsx src/cli.ts",

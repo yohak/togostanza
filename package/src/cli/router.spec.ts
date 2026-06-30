@@ -806,7 +806,11 @@ function writeConfigImportFixture(rootDirectory: string): void {
     `${JSON.stringify(
       {
         exports: {
-          "./config": "./config.js",
+          "./config": {
+            default: "./config.js",
+            import: "./config.js",
+            types: "./config.d.ts",
+          },
         },
         name: "togostanza",
         type: "module",
@@ -820,6 +824,11 @@ function writeConfigImportFixture(rootDirectory: string): void {
   writeFileSync(
     join(packageDirectory, "config.js"),
     "export function defineTogoStanzaConfig(config) { return config; }\n",
+    "utf8",
+  );
+  writeFileSync(
+    join(packageDirectory, "config.d.ts"),
+    "export declare function defineTogoStanzaConfig<T>(config: T): T;\n",
     "utf8",
   );
 }
