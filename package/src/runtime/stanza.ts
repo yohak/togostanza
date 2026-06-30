@@ -26,6 +26,8 @@ type MenuItem = {
   type: "item";
 };
 
+const coordinationReadyMaxAttempts = 10;
+
 export type QueryInput = {
   endpoint: string;
   method?: "POST";
@@ -255,11 +257,34 @@ function registerCoordinationElements(): void {
 
       #connectWhenReady(attempt: number): void {
         const stanzaElements = this.#stanzaElements();
+        const readyStanzaElements = stanzaElements.filter(
+          (element) => element.stanzaInstance !== undefined,
+        );
 
-        if (stanzaElements.every((element) => element.stanzaInstance)) {
-          this.#connectStanzaHandlers(stanzaElements);
-          this.#connectEventMaps(stanzaElements);
+        if (readyStanzaElements.length === stanzaElements.length) {
+          this.#connectStanzaHandlers(readyStanzaElements);
+          this.#connectEventMaps(readyStanzaElements);
           void this.#connectDataSources();
+          return;
+        }
+
+        if (attempt >= coordinationReadyMaxAttempts) {
+          const missingElements = stanzaElements
+            .filter((element) => element.stanzaInstance === undefined)
+            .map((element) => element.tagName.toLowerCase());
+
+          console.warn(
+            `togostanza--container timed out waiting for stanza upgrades: ${missingElements.join(
+              ", ",
+            )}`,
+          );
+
+          if (readyStanzaElements.length > 0) {
+            this.#connectStanzaHandlers(readyStanzaElements);
+            this.#connectEventMaps(readyStanzaElements);
+            void this.#connectDataSources();
+          }
+
           return;
         }
 

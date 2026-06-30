@@ -137,6 +137,7 @@ mise exec -- pnpm run serve:fixture
 - `coordination-sender.js` と `coordination-receiver.js` の2本のbundleを同じHTMLで読み込んだ。
 - `togostanza--container`、`togostanza--event-map`、`togostanza--data-source` はcustom elementとして登録された。
 - 複数bundle読み込み時に、連携用custom elementの重複登録例外は発生しなかった。
+- 未ロードの `<togostanza-missing-stanza>` がcontainer内にあっても、待機上限後にupgrade済みの送信側/受信側だけで連携が配線された。
 - 送信側/受信側にはopen shadow rootが作られた。
 - 初期状態では受信側の表示値は `(none)`。
 - `togostanza--data-source` は `sample-data.json` を取得し、blob URLとして受信側の `data-url` 属性に渡した。

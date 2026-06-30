@@ -478,6 +478,7 @@ test("coordinates built Stanza custom elements inside togostanza container", asy
         receiver="togostanza-coordination-receiver"
         target-attribute="data-url"
       ></togostanza--data-source>
+      <togostanza-missing-stanza></togostanza-missing-stanza>
       <togostanza-coordination-sender value="from-sender"></togostanza-coordination-sender>
       <togostanza-coordination-receiver></togostanza-coordination-receiver>
     </togostanza--container>
