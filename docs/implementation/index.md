@@ -20,7 +20,8 @@
 | Phase 7: package runtime readiness | リメイク版パッケージのsubpath export、型解決、dependency分類を整える。 | package automated test、型解決確認 | [設計](./phase-7/plan.md)、[引き継ぎ](./phase-7/handoff.md) |
 | Phase 8: source and config readiness | 既存stanzaリポジトリのsource / config移行とmetadata異常系の扱いを整理する。 | 移行ガイド、[013](../../workbench/cases/013-metadata-validation/) | [設計](./phase-8/plan.md)、[引き継ぎ](./phase-8/handoff.md) |
 | Phase 9: local compatibility baseline | 実プロジェクト群を使ったローカルcompatibility確認を、後続フェーズへ再利用できるbaselineとして整える。 | [012](../../workbench/cases/012-real-project-regression/)、`test:compat:local` | [設計](./phase-9/plan.md)、[引き継ぎ](./phase-9/handoff.md) |
-| Phase 9: local compatibility baseline | 実プロジェクト群のローカル再現手順、全Stanza build check、代表Stanza browser smokeを整える。 | [012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-9/plan.md) |
+| Phase 10: developer experience and internal cleanup | Stanza開発者向けの案内と、外部契約にしない内部面を整理する。 | 生成README、内部面整理、[001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-10/plan.md) |
+| Phase 11: compatibility verification | 全Stanza browser smoke、TogoMedium Webアプリ本体E2E、runtime edge semanticsを検証する。 | [012](../../workbench/cases/012-real-project-regression/)、runtime edge確認 | 未着手 |
 | Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
 ## Phase 0: skeleton
@@ -297,6 +298,38 @@ Phase 9では、`references/` 配下のローカルリファレンスを使い�
 - `tsconfig paths` の自動解決。
 
 Phase 9の設計は [Phase 9: local compatibility baseline 設計](./phase-9/plan.md) に置く。実プロジェクト回帰の観測は [012 Real project regression](../../workbench/cases/012-real-project-regression/) で扱う。完了後の状態とPhase 10以降への引き継ぎは [Phase 9: local compatibility baseline 引き継ぎ](./phase-9/handoff.md) に置く。
+
+## Phase 10: developer experience and internal cleanup
+
+ゴールは、Stanza開発者向けの案内と、外部契約にしない内部実装面を整理することである。
+
+Phase 10では、Phase 6とPhase 7で既に解消済みの事項を再実装しない。生成README、GitHub Pages workflowの運用制約、scaffold / CLI UXの残項目、internal runtime / build surfaceの整理判断を扱う。全Stanza browser smoke、Runtime edge semantics、配布検証は扱わない。
+
+含める範囲:
+
+- `init` が生成するREADME本文の改善。
+- 生成repoの `build` / `serve` script、GitHub Pages workflow、lockfile前提、pnpm 10前提、`--skip-install` 時の注意をStanza開発者向けに説明すること。
+- `index.ts` / `index.tsx` 生成option、bare `init` prompt、CLI library採用、細かいerror code分類を、Phase 10で実装するか後続へ送るかの明示。
+- build wrapper末尾の `export default StanzaClass`、`.togostanza-build-output` marker、menu shell、`metadata.json` のDownload JSON導線など、内部面または未固定面の整理判断。
+- 001 READMEへのPhase 10観測または差分記録。
+
+含めない範囲:
+
+- 全Stanza browser smoke。
+- TogoMedium Webアプリ本体E2E。
+- Runtime edge semanticsの現行版調査と固定。
+- ヘルププレビューUIのリッチ化。
+- pack install smoke。
+- npm package公開面の最終整理。
+- GitHub Actions上でのlive deploy確認。
+
+Phase 10の設計は [Phase 10: developer experience and internal cleanup 設計](./phase-10/plan.md) に置く。
+
+## Phase 11: compatibility verification
+
+ゴールは、Phase 9で作ったlocal compatibility baselineを広げ、互換性確認の残りを実プロジェクトとruntime edge semanticsで回収することである。
+
+Phase 11では、metastanza全10 StanzaとTogoMedium Stanza全15 Stanzaのbrowser smoke、TogoMedium Webアプリ本体E2E、Runtime edge semanticsを扱う。詳細計画はPhase 10完了後に作る。
 
 ## Phase X: distribution
 
