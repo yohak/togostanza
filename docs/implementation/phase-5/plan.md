@@ -4,12 +4,14 @@ Phase 5は、Phase 0からPhase 4までの成果物、仕様、検証、handoff�
 
 このフェーズでは、実装を広げない。目的は、配布準備へ進むことではなく、何を閉じるべきか、何を後続へ送れるか、どの順序で扱うべきかを判断できる状態にすることである。
 
+Phase 5では、棚卸しと再設計を混ぜない。Phase 5の成果は実装判断そのものではなく、後続で判断できる材料である。
+
 ## 目的
 
 - Phase 0からPhase 4までのplan / handoffと、各検証ケースREADMEを読み直し、完了済み事項と残課題を整理する。
 - `docs/spec/`、`docs/investigation/follow-ups.md`、`docs/investigation/open-questions.md`、各workbenchケースREADMEに残る未固定事項を棚卸しする。
 - 残課題を分類し、根拠、影響範囲、提案先フェーズを記録する。
-- Phase 6以降の仮ロードマップを作る。
+- Phase 6以降の仮ロードマップを作る。ただし、詳細なAPI設計や実装順序までは固定しない。
 - DistributionをPhase Xとして無期限延期し、Phase Xへ進む前の判断材料を整理する。
 
 ## 完了条件
@@ -20,10 +22,12 @@ Phase 5は、Phase 0からPhase 4までの成果物、仕様、検証、handoff�
 - Phase 6以降の再編案を提示している。
 - Phase X: distributionに送る事項と、distribution前に閉じる事項を分けている。
 - Phase 5の成果物を、後続フェーズ計画の入力として使える粒度で記録している。
+- 人間判断が必要な項目を、短い一覧として切り出している。
 
 ## 含めるもの
 
 - 完了済みフェーズのhandoff確認。
+- 完了済みフェーズのplan確認。
 - 未固定事項、既知制約、後続判断、ブロッカーの棚卸し。
 - 残課題の分類。
 - Phase 6以降の仮フェーズ案。
@@ -39,6 +43,18 @@ Phase 5は、Phase 0からPhase 4までの成果物、仕様、検証、handoff�
 - npm package公開準備の実作業。
 - `npm publish`、tag作成、GitHub release作成、live deploy確認。
 
+## 進め方
+
+Phase 5では、次の順序で棚卸しする。
+
+1. 入力文書を固定する。
+2. 古いPhase 5送りをすべて拾い直し、現在のPhase 5定義に合わせて再分類する。
+3. `docs/investigation/follow-ups.md` と `docs/investigation/open-questions.md` の項目を、閉じずに状態分類する。
+4. 各workbenchケースREADMEに残る未固定事項、観測未了、リメイク版差分を分類する。
+5. Phase 6以降の仮ロードマップを、項目ごとの提案先フェーズと理由に留めて作る。
+
+Phase 5中に閉じてよいのは、根拠が十分で、すでに実装・検証済みで、仕様またはhandoffに反映済みの項目だけである。それ以外は勝手に確定せず、`needs decision` または後続フェーズ候補として記録する。
+
 ## 分類軸
 
 Phase 5では、棚卸し項目を少なくとも次の分類で扱う。
@@ -52,14 +68,26 @@ Phase 5では、棚卸し項目を少なくとも次の分類で扱う。
 | `proposed phase` | Phase 6以降のどこで扱うかの提案。 |
 | `defer to Phase X` | distribution着手時に扱えばよい。 |
 
+同じ未対応でも、次を混ぜない。
+
+- リメイク版仕様が要求しているが未対応またはdeferしている実ギャップ。
+- 仕様や方針で固定しないことを明記した既知制約。
+- 実プロジェクト由来の制約や移行判断。
+- distribution前にだけ問題になる項目。
+
 ## 棚卸し対象
 
 Phase 5では、少なくとも次を確認する。
 
+- [Phase 0設計](../phase-0/plan.md)
 - [Phase 0引き継ぎ](../phase-0/handoff.md)
+- [Phase 1設計](../phase-1/plan.md)
 - [Phase 1引き継ぎ](../phase-1/handoff.md)
+- [Phase 2サブフェーズ計画](../phase-2/index.md)
 - [Phase 2引き継ぎ](../phase-2/handoff.md)
+- [Phase 3設計](../phase-3/plan.md)
 - [Phase 3引き継ぎ](../phase-3/handoff.md)
+- [Phase 4設計](../phase-4/plan.md)
 - [Phase 4引き継ぎ](../phase-4/handoff.md)
 - [リメイク版仕様](../../spec/index.md)
 - [リメイク方針](../../spec/remake-policy.md)
@@ -71,6 +99,8 @@ Phase 5では、少なくとも次を確認する。
 
 Phase 4完了時点では、次の項目を棚卸し対象の初期候補とする。
 
+- `pack -> install -> 実行` を一度も確認していないことを、単一のdistribution blockerとして扱うか。
+- `togostanza/stanza` のpackage exportと型定義をどう扱うか。
 - TogoMedium Webアプリ本体のbuild / start / end-to-end検証をどのフェーズで扱うか。
 - 実プロジェクト回帰を自動testへさらに寄せるか。
 - `tsconfig.json` の `compilerOptions.paths` 自動解決を実装するか。
@@ -79,8 +109,10 @@ Phase 4完了時点では、次の項目を棚卸し対象の初期候補とす�
 - `stanza:include` とpackage内JSON include解決を扱うか。
 - `togostanza-utils` の未対象APIを追加で扱うか。
 - React / Vue version差分をどこまで互換対象に含めるか。
+- `references/` 依存のbrowser testを、CIや他マシンで再現できる形へ寄せるか。
 - browser test増加に伴う検証時間とCI実行環境をどう扱うか。
 - npm公開に必要なmetadata、`files`、`exports`、dependency分類の最終確認をいつ扱うか。
+- `treeshake: false` を戻さない、CSS source map精度は非契約、Sass `@import` 警告は許容、という既知制約をどう固定するか。
 
 ## 成果物
 
@@ -88,7 +120,9 @@ Phase 5では、次の成果物を作る。
 
 - `docs/implementation/phase-5/inventory.md`
   - 棚卸し表。
-  - 各項目の分類、根拠、影響範囲、提案先フェーズを記録する。
+  - 各項目のitem、source、current status、classification、impact、recommendation、proposed phaseを記録する。
+  - 古いPhase 5送りの再分類、open / follow-up項目、workbenchケースの残課題、distribution blocker、documented constraintを分けて読める形にする。
+  - 人間判断が必要な項目を短い一覧として切り出す。
 - `docs/implementation/phase-5/handoff.md`
   - Phase 5完了後にPhase 6以降へ渡す入口メモ。
 
