@@ -644,6 +644,69 @@ test("loads Phase 2-4 CSS and JavaScript asset references from built custom elem
   }
 });
 
+test("renders a React TSX Stanza from repository dependencies", async ({ page }) => {
+  test.setTimeout(20_000);
+
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  writeReactRuntimeProbe(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+  writeFileSync(
+    resolve(cwd, "fixture.html"),
+    `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/react-runtime-probe.js"></script>
+    <togostanza-react-runtime-probe
+      id="react-runtime"
+      label="initial-react"
+      count="1"
+    ></togostanza-react-runtime-probe>
+  </body>
+</html>
+`,
+    "utf8",
+  );
+  const requestLog: string[] = [];
+  const server = await startStaticServer(cwd, requestLog);
+
+  try {
+    const port = addressPort(server);
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`);
+    await page.waitForFunction(() => customElements.get("togostanza-react-runtime-probe"));
+
+    await expect.poll(() => readProbeValue(page, "#react-runtime", "label")).toBe("initial-react");
+    expect(await readProbeValue(page, "#react-runtime", "count")).toBe("1");
+    expect(await readProbeValue(page, "#react-runtime", "render-count")).toBe("1");
+    await expect
+      .poll(() =>
+        page.locator("#react-runtime").evaluate((element) => {
+          return [...(element.shadowRoot?.querySelectorAll<HTMLLinkElement>("link") ?? [])].some(
+            (link) =>
+              link.href.endsWith("/public/react-runtime-probe/assets/react-runtime-font.css"),
+          );
+        }),
+      )
+      .toBe(true);
+
+    await page.locator("#react-runtime").evaluate((element) => {
+      element.setAttribute("label", "after-react-mutation");
+      element.setAttribute("count", "2");
+    });
+
+    await expect
+      .poll(() => readProbeValue(page, "#react-runtime", "label"))
+      .toBe("after-react-mutation");
+    expect(await readProbeValue(page, "#react-runtime", "count")).toBe("2");
+    expect(await readProbeValue(page, "#react-runtime", "render-count")).toBe("3");
+    expect(requestLog.some((requestPath) => requestPath.includes("react-runtime-probe.js"))).toBe(
+      true,
+    );
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("serves a built Stanza preview through togostanza serve", async ({ page }) => {
   test.setTimeout(20_000);
 
@@ -1173,6 +1236,7 @@ export default class CoordinationSender extends Stanza {
     });
   }
 }
+
 `,
     "utf8",
   );
@@ -1257,6 +1321,202 @@ export default class CoordinationReceiver extends Stanza {
   <dt>handled event detail</dt><dd data-probe="handled-event-detail">{{handledEventDetail}}</dd>
 </dl>
 `,
+    "utf8",
+  );
+}
+
+function writeReactRuntimeProbe(cwd: string): void {
+  writeFakeReactPackages(cwd);
+  writeFileSync(
+    resolve(cwd, "tsconfig.json"),
+    `${JSON.stringify(
+      {
+        compilerOptions: {
+          jsx: "react",
+          module: "ESNext",
+          moduleResolution: "bundler",
+          target: "ES2024",
+        },
+        include: ["stanzas/**/*.tsx"],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
+  const stanzaDirectory = resolve(cwd, "stanzas", "react-runtime-probe");
+  mkdirSync(resolve(stanzaDirectory, "assets"), { recursive: true });
+  writeFileSync(
+    resolve(stanzaDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "react-runtime-probe",
+        "stanza:label": "React Runtime Probe",
+        "stanza:menu-placement": "none",
+        "stanza:parameter": [
+          { "stanza:key": "label", "stanza:type": "string" },
+          { "stanza:key": "count", "stanza:type": "number" },
+        ],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "index.tsx"),
+    [
+      'import React from "react";',
+      'import { createRoot, type Root } from "react-dom/client";',
+      'import Stanza from "togostanza/stanza";',
+      "",
+      "type ProbeProps = {",
+      "  count: unknown;",
+      "  label: unknown;",
+      "  renderCount: number;",
+      "};",
+      "",
+      "function Probe({ count, label, renderCount }: ProbeProps) {",
+      "  return (",
+      '    <section data-probe="react-runtime">',
+      "      <h1>React runtime probe</h1>",
+      "      <dl>",
+      '        <dt>label</dt><dd data-probe="label">{String(label)}</dd>',
+      '        <dt>count</dt><dd data-probe="count">{String(count)}</dd>',
+      '        <dt>render count</dt><dd data-probe="render-count">{renderCount}</dd>',
+      "      </dl>",
+      "    </section>",
+      "  );",
+      "}",
+      "",
+      "export default class ReactRuntimeProbe extends Stanza {",
+      "  private reactRoot?: Root;",
+      "  private renderCount = 0;",
+      "",
+      "  render() {",
+      "    this.renderCount += 1;",
+      '    this.importWebFontCSS("./assets/react-runtime-font.css");',
+      '    const main = this.root.querySelector("main");',
+      "",
+      "    if (!main) {",
+      '      throw new Error("React Runtime Probe expected a main element.");',
+      "    }",
+      "",
+      "    this.reactRoot ??= createRoot(main);",
+      "    this.reactRoot.render(",
+      "      <Probe",
+      "        count={this.params.count}",
+      "        label={this.params.label}",
+      "        renderCount={this.renderCount}",
+      "      />,",
+      "    );",
+      "  }",
+      "",
+      "  handleAttributeChange(name: string, oldValue: string | null, newValue: string | null) {",
+      "    super.handleAttributeChange(name, oldValue, newValue);",
+      "  }",
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "assets", "react-runtime-font.css"),
+    ":host { --react-runtime-font: loaded; }\n",
+    "utf8",
+  );
+}
+
+function writeFakeReactPackages(cwd: string): void {
+  const reactDirectory = resolve(cwd, "node_modules", "react");
+  const reactDomDirectory = resolve(cwd, "node_modules", "react-dom");
+  mkdirSync(reactDirectory, { recursive: true });
+  mkdirSync(resolve(reactDomDirectory, "client"), { recursive: true });
+  writeFileSync(
+    resolve(reactDirectory, "package.json"),
+    `${JSON.stringify({
+      main: "./index.js",
+      name: "react",
+      type: "module",
+      version: "0.0.0-fixture",
+    })}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(reactDirectory, "index.js"),
+    [
+      "export function createElement(type, props, ...children) {",
+      "  if (typeof type === 'function') {",
+      "    return type({ ...(props ?? {}), children });",
+      "  }",
+      "",
+      "  return { children: children.flat(), props: props ?? {}, type };",
+      "}",
+      "",
+      "export default { createElement };",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  writeFileSync(
+    resolve(reactDomDirectory, "package.json"),
+    `${JSON.stringify(
+      {
+        exports: {
+          "./client": "./client/index.js",
+        },
+        name: "react-dom",
+        type: "module",
+        version: "0.0.0-fixture",
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(reactDomDirectory, "client", "index.js"),
+    [
+      "export function createRoot(container) {",
+      "  return {",
+      "    render(tree) {",
+      "      container.replaceChildren(toNode(tree));",
+      "    },",
+      "  };",
+      "}",
+      "",
+      "function toNode(value) {",
+      "  if (Array.isArray(value)) {",
+      "    const fragment = document.createDocumentFragment();",
+      "    fragment.append(...value.map(toNode));",
+      "    return fragment;",
+      "  }",
+      "",
+      "  if (value === null || value === undefined || value === false) {",
+      "    return document.createTextNode('');",
+      "  }",
+      "",
+      "  if (typeof value !== 'object') {",
+      "    return document.createTextNode(String(value));",
+      "  }",
+      "",
+      "  const element = document.createElement(value.type);",
+      "",
+      "  for (const [name, propertyValue] of Object.entries(value.props ?? {})) {",
+      "    if (name === 'children' || propertyValue === undefined || propertyValue === null) {",
+      "      continue;",
+      "    }",
+      "",
+      "    element.setAttribute(name, String(propertyValue));",
+      "  }",
+      "",
+      "  element.append(...(value.children ?? []).map(toNode));",
+      "  return element;",
+      "}",
+      "",
+    ].join("\n"),
     "utf8",
   );
 }

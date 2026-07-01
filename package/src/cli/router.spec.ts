@@ -758,6 +758,24 @@ describe("CLI router", () => {
     expect(emittedAssets.some((entryName) => entryName.startsWith("package-marker-"))).toBe(true);
   });
 
+  it("builds a React TSX stanza using repository dependencies", async () => {
+    const cwd = makeStanzaRepoRoot();
+    writeReactRuntimeFixture(cwd);
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    const js = readText(join(cwd, "dist", "react-runtime-probe.js"));
+    expect(js).toContain("React runtime probe");
+    expect(js).toContain("react-runtime-probe");
+    expect(js).toContain("render-count");
+    expect(js).not.toContain('from"react"');
+    expect(js).not.toContain('from"react-dom/client"');
+    expect(existsSync(join(cwd, "dist", "react-runtime-probe.js.map"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "react-runtime-probe.css"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "react-runtime-probe", "metadata.json"))).toBe(true);
+  });
+
   it("warns about legacy build config files without executing them", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "legacyConfigProbe"], { cwd, currentDate });
@@ -1375,6 +1393,198 @@ function writeConfigImportFixture(rootDirectory: string): void {
   writeFileSync(
     join(packageDirectory, "config.d.ts"),
     "export declare function defineTogoStanzaConfig<T>(config: T): T;\n",
+    "utf8",
+  );
+}
+
+function writeReactRuntimeFixture(rootDirectory: string): void {
+  writeFakeReactPackages(rootDirectory);
+  writeFileSync(
+    join(rootDirectory, "tsconfig.json"),
+    `${JSON.stringify(
+      {
+        compilerOptions: {
+          jsx: "react",
+          module: "ESNext",
+          moduleResolution: "bundler",
+          target: "ES2024",
+        },
+        include: ["stanzas/**/*.tsx"],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
+  const stanzaDirectory = join(rootDirectory, "stanzas", "react-runtime-probe");
+  mkdirSync(join(stanzaDirectory, "assets"), { recursive: true });
+  writeFileSync(
+    join(stanzaDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "react-runtime-probe",
+        "stanza:label": "React Runtime Probe",
+        "stanza:menu-placement": "none",
+        "stanza:parameter": [
+          { "stanza:key": "label", "stanza:type": "string" },
+          { "stanza:key": "count", "stanza:type": "number" },
+        ],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    join(stanzaDirectory, "index.tsx"),
+    [
+      'import React from "react";',
+      'import { createRoot, type Root } from "react-dom/client";',
+      'import Stanza from "togostanza/stanza";',
+      "",
+      "type ProbeProps = {",
+      "  count: unknown;",
+      "  label: unknown;",
+      "  renderCount: number;",
+      "};",
+      "",
+      "function Probe({ count, label, renderCount }: ProbeProps) {",
+      "  return (",
+      '    <section data-probe="react-runtime">',
+      "      <h1>React runtime probe</h1>",
+      "      <dl>",
+      '        <dt>label</dt><dd data-probe="label">{String(label)}</dd>',
+      '        <dt>count</dt><dd data-probe="count">{String(count)}</dd>',
+      '        <dt>render count</dt><dd data-probe="render-count">{renderCount}</dd>',
+      "      </dl>",
+      "    </section>",
+      "  );",
+      "}",
+      "",
+      "export default class ReactRuntimeProbe extends Stanza {",
+      "  private reactRoot?: Root;",
+      "  private renderCount = 0;",
+      "",
+      "  render() {",
+      "    this.renderCount += 1;",
+      '    this.importWebFontCSS("./assets/react-runtime-font.css");',
+      '    const main = this.root.querySelector("main");',
+      "",
+      "    if (!main) {",
+      '      throw new Error("React Runtime Probe expected a main element.");',
+      "    }",
+      "",
+      "    this.reactRoot ??= createRoot(main);",
+      "    this.reactRoot.render(",
+      "      <Probe",
+      "        count={this.params.count}",
+      "        label={this.params.label}",
+      "        renderCount={this.renderCount}",
+      "      />,",
+      "    );",
+      "  }",
+      "",
+      "  handleAttributeChange(name: string, oldValue: string | null, newValue: string | null) {",
+      "    super.handleAttributeChange(name, oldValue, newValue);",
+      "  }",
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  writeFileSync(join(stanzaDirectory, "style.scss"), "main { display: block; }\n", "utf8");
+  writeFileSync(
+    join(stanzaDirectory, "assets", "react-runtime-font.css"),
+    ":host { --react-runtime-font: loaded; }\n",
+    "utf8",
+  );
+}
+
+function writeFakeReactPackages(rootDirectory: string): void {
+  const reactDirectory = join(rootDirectory, "node_modules", "react");
+  const reactDomDirectory = join(rootDirectory, "node_modules", "react-dom");
+  mkdirSync(reactDirectory, { recursive: true });
+  mkdirSync(join(reactDomDirectory, "client"), { recursive: true });
+  writeFileSync(
+    join(reactDirectory, "package.json"),
+    `${JSON.stringify({ main: "./index.js", name: "react", type: "module", version: "0.0.0-fixture" })}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    join(reactDirectory, "index.js"),
+    [
+      "export function createElement(type, props, ...children) {",
+      "  if (typeof type === 'function') {",
+      "    return type({ ...(props ?? {}), children });",
+      "  }",
+      "",
+      "  return { children: children.flat(), props: props ?? {}, type };",
+      "}",
+      "",
+      "export default { createElement };",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  writeFileSync(
+    join(reactDomDirectory, "package.json"),
+    `${JSON.stringify(
+      {
+        exports: {
+          "./client": "./client/index.js",
+        },
+        name: "react-dom",
+        type: "module",
+        version: "0.0.0-fixture",
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    join(reactDomDirectory, "client", "index.js"),
+    [
+      "export function createRoot(container) {",
+      "  return {",
+      "    render(tree) {",
+      "      container.replaceChildren(toNode(tree));",
+      "    },",
+      "  };",
+      "}",
+      "",
+      "function toNode(value) {",
+      "  if (Array.isArray(value)) {",
+      "    const fragment = document.createDocumentFragment();",
+      "    fragment.append(...value.map(toNode));",
+      "    return fragment;",
+      "  }",
+      "",
+      "  if (value === null || value === undefined || value === false) {",
+      "    return document.createTextNode('');",
+      "  }",
+      "",
+      "  if (typeof value !== 'object') {",
+      "    return document.createTextNode(String(value));",
+      "  }",
+      "",
+      "  const element = document.createElement(value.type);",
+      "",
+      "  for (const [name, propertyValue] of Object.entries(value.props ?? {})) {",
+      "    if (name === 'children' || propertyValue === undefined || propertyValue === null) {",
+      "      continue;",
+      "    }",
+      "",
+      "    element.setAttribute(name, String(propertyValue));",
+      "  }",
+      "",
+      "  element.append(...(value.children ?? []).map(toNode));",
+      "  return element;",
+      "}",
+      "",
+    ].join("\n"),
     "utf8",
   );
 }

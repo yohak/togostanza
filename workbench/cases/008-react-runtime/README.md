@@ -35,6 +35,25 @@ TSX/Reactで書かれたStanzaソースが、TogoStanzaランタイムのShadow 
 - Reactランタイムチャンクがdirect embed生成物として静的配信上で解決できること。
 - `main` マウント対象、params、属性変更rerender、font CSS injectionが壊れていないこと。
 
+### リメイク版の観測状況
+
+- 確認日: 2026-07-01
+- 確認範囲: package test内の最小React互換fixture。
+- `package/src/cli/router.spec.ts` で、`index.tsx` entrypointを持つStanzaが `togostanza build` で生成物を作れることを確認した。
+- fixtureの `react` / `react-dom/client` はStanzaリポジトリ側の `node_modules/` に置き、CLI側dependencyにはしない構成で確認した。
+- 生成された `dist/react-runtime-probe.js` にはReact component本文とruntime登録がbundleされ、bare import `react` / `react-dom/client` は残らなかった。
+- `package/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-react-runtime-probe>` がupgradeされ、open Shadow DOM内 `main` へReact component相当のDOMを描画できることを確認した。
+- 初期属性 `label="initial-react"` / `count="1"` が `this.params` を経由して描画へ反映された。
+- 属性変更後に `handleAttributeChange()` 経由で再描画され、`label="after-react-mutation"` / `count="2"` が表示へ反映された。
+- `this.importWebFontCSS("./assets/react-runtime-font.css")` により、shadow root内に `public/react-runtime-probe/assets/react-runtime-font.css` へ向くstylesheet linkが追加された。
+- React rootはStanzaソース側で再利用する前提としてfixture化した。
+- 実React / React DOM package、MUI / Emotion、TogoMedium Stanzaのprovider stackは4-4の実プロジェクト回帰で確認する。
+
+確認コマンド:
+
+- `cd package && mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t "builds a React TSX stanza"`
+- `cd package && mise exec -- pnpm exec playwright test --config playwright.config.ts -g "renders a React TSX Stanza"`
+
 ### 現行版の観測状況
 
 - 確認日: 2026-06-22
@@ -64,6 +83,8 @@ TSX/Reactで書かれたStanzaソースが、TogoStanzaランタイムのShadow 
 - sharedランタイムチャンクの有無。
 - ブラウザコンソール/shadow root/rendered text。
 - 属性変更後の描画結果。
+- リメイク版のpackage fixtureでは `-togostanza/` や `index.html` を生成しない。これはPhase 2-1以降のbuild artifact方針に従う。
+- リメイク版のpackage fixtureは最小React互換packageで確認しているため、実React packageとprovider stackの互換は012ケースへ送る。
 
 ## 未決定事項
 
