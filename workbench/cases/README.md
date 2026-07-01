@@ -62,6 +62,7 @@ workbench/cases/
 | [010-togostanza-utils-compat](./010-togostanza-utils-compat/) | `togostanza-utils` | 開発契約 / 利用契約 | 既存 `togostanza-utils` packageをStanzaソースから無変更で利用できるか確認する。 |
 | [011-serve-development-server](./011-serve-development-server/) | `serve` / watch | 開発契約 | localhost開発サーバーと変更反映を確認する。 |
 | [012-real-project-regression](./012-real-project-regression/) | metastanza / TogoMedium Stanza | 開発契約 / 利用契約 | 実プロジェクト群で重点compatibility対象の回帰を確認する。 |
+| [013-metadata-validation](./013-metadata-validation/) | `metadata.json` 異常系 | 開発契約 | metadata異常系の現行版挙動とリメイク版診断を確認する。 |
 
 ## 検証ケースの書き方
 
@@ -134,6 +135,7 @@ Git管理しないものは次の通り。
 - 007 config and resolution: 設定ファイル、alias、asset importを分けて小さく `current-pnpm/generated-repo/` で確認する。旧設定ファイルは無条件実行しない方針を確認対象に含める。
 - 011 serve development server: 002と003に近い最小Stanzaリポジトリを `current-pnpm/generated-repo/` に置き、`serve` のroot URL、watch、差分invalidate、HTTP 500エラーページ、修正後復帰を確認する。
 - 012 real project regression: `references/metastanza` と `references/togomedium-web` を直接の入力として参照し、リファレンスリポジトリを汚さず、実行コマンド、対象stanza、観測結果、必要な移行メモをREADMEに記録する。
+- 013 metadata validation: metadata異常系を小さく分け、現行版でどの段階で失敗するかを観測する。リメイク版では独自にschemaを強めず、現行版に合わせた扱いと必要な診断改善を確認する。
 
 ## 判断の扱い
 

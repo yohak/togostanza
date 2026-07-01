@@ -18,6 +18,7 @@
 | Phase 5: readiness inventory | Phase 0からPhase 4までの成果物、残課題、未固定事項を棚卸しし、Phase 6以降へ再編する。 | 棚卸し表、Phase 6以降の再編案 | [設計](./phase-5/plan.md)、[棚卸し](./phase-5/inventory.md)、[引き継ぎ](./phase-5/handoff.md) |
 | Phase 6: workbench executability | workbenchの検証ケースを、repo-local CLIで再現できる入力として整える。 | workbench `remake/generated-repo`、repo-local CLI scripts | [設計](./phase-6/plan.md)、[引き継ぎ](./phase-6/handoff.md) |
 | Phase 7: package runtime readiness | リメイク版パッケージのsubpath export、型解決、dependency分類を整える。 | package automated test、型解決確認 | [設計](./phase-7/plan.md)、[引き継ぎ](./phase-7/handoff.md) |
+| Phase 8: source and config readiness | 既存stanzaリポジトリのsource / config移行とmetadata異常系の扱いを整理する。 | 移行ガイド、[013](../../workbench/cases/013-metadata-validation/) | [設計](./phase-8/plan.md) |
 | Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
 ## Phase 0: skeleton
@@ -231,6 +232,35 @@ Phase 7はdistribution準備ではない。ローカルtarballを作ってinstal
 - 既存stanzaリポジトリの `moduleResolution: "node"` からの移行案内や未解決時診断。
 
 Phase 7の設計は [Phase 7: package runtime readiness 設計](./phase-7/plan.md) に置き、完了後の状態とPhase 8への引き継ぎは [Phase 7: package runtime readiness 引き継ぎ](./phase-7/handoff.md) に置く。
+
+## Phase 8: source and config readiness
+
+ゴールは、既存stanzaリポジトリのsource / configをリメイク版へ移行できる状態にすることである。
+
+Phase 8では、`tsconfig.json` の `compilerOptions.paths` を自動でVite aliasへ合成しない。TogoMedium固有aliasも自動吸収しない。必要なaliasは、Stanza開発者が `togostanza.config.ts` の `vite.resolve.alias` へ手動で移す方針とする。
+
+含める範囲:
+
+- `tsconfig paths` から `togostanza.config.ts` への手動移行案内。
+- TogoMedium固有aliasの手動移行案内。
+- `moduleResolution: "bundler"` を推奨する理由の記録。
+- 旧 `togostanza-build.js` / `togostanza-build.mjs` から `togostanza.config.ts` への移行方針。
+- metadata異常系の現行版観測。
+- `013-metadata-validation` 検証ケース。
+- 必要に応じた局所的なbuild診断改善。
+
+含めない範囲:
+
+- `tsconfig paths` の自動解決。
+- TogoMedium固有aliasの自動吸収。
+- 既存workbench全体の `tsconfig.json` 一括更新。
+- `init` 雛形への `tsconfig.json` 追加。
+- 旧設定ファイルの自動実行。
+- 広範なmetadata schema validation。
+- 全体的な診断メッセージ体系の整理。
+- pack install smoke。
+
+Phase 8の設計は [Phase 8: source and config readiness 設計](./phase-8/plan.md) に置く。Stanza開発者向けの移行案内は [source / config移行ガイド](../guides/source-config-migration.md) に置く。metadata異常系の観測は [013 metadata validation](../../workbench/cases/013-metadata-validation/) で扱う。完了後はPhase 8 handoffを作る。
 
 ## Phase X: distribution
 
