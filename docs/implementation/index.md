@@ -278,6 +278,7 @@ Phase 9では、`references/` 配下のローカルリファレンスを使い�
 - TogoMedium Stanza全15 Stanzaのbuild check。
 - 代表Stanza browser smoke。
 - React / Vue / Emotion / MUI / `togostanza-utils` の検証済みversion記録。
+- references依存確認用の専用入口。default `check-all` にはreferences依存確認を含めない。
 - 012 READMEへのPhase 9観測結果追記。
 
 含めない範囲:
@@ -289,6 +290,7 @@ Phase 9では、`references/` 配下のローカルリファレンスを使い�
 - 全Stanza browser smoke。
 - TogoMedium Webアプリ本体E2E。
 - React / Vueの広いversion matrix。
+- default `check-all` へのreferences依存確認の混入。
 - TogoMedium固有aliasの自動吸収。
 - `tsconfig paths` の自動解決。
 

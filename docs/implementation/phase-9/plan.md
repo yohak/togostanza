@@ -22,6 +22,7 @@ Phase 9は、実プロジェクト群を使ったローカルcompatibility確認
 - 代表Stanza browser smokeの対象と理由を記録している。
 - 代表Stanza browser smokeで、custom element upgrade、Shadow DOM、最小描画、fatal console errorなし、CSS / asset loadを確認している。
 - React / Vue / Emotion / MUI / `togostanza-utils` の検証済みversionを記録している。
+- references依存の確認をdefault `check-all` に含めない方針を固定し、ローカルcompatibility確認用の専用入口を用意または明記している。
 - Phase 11へ送る全Stanza browser smoke、TogoMedium Webアプリ本体E2E、Runtime edge semanticsを明示している。
 - Phase 9完了後にhandoffを作る。
 
@@ -34,6 +35,7 @@ Phase 9は、実プロジェクト群を使ったローカルcompatibility確認
 - 全Stanza build checkを再実行できる最小のpackage側テストまたは手順化されたスクリプト。
 - 代表Stanza browser smokeを再実行できるpackage側browser testまたは手順化された確認。
 - React / Vue検証済みversionの記録。
+- references依存確認をdefault `check-all` から分けるための `test:compat:local` 相当の入口整理。
 
 ## 含めないもの
 
@@ -140,6 +142,8 @@ Phase 9では、本開発で検証済みのversionだけを保証対象として
 - package側の `react` / `react-dom` 検証済みversion。
 - package側の `vue` / `@vitejs/plugin-vue` 検証済みversion。
 - references側で実際に使われたReact / Vue / Emotion / MUI関連version。
+- `references/togostanza-utils` のcommitまたはpackage version。
+- metastanzaやTogoMedium Stanzaが参照した `togostanza-utils` が、`references/togostanza-utils` と同一か、各プロジェクトの `node_modules` 内packageか。
 - 広いversion matrixは未確認であり、実利用要求が出た場合だけPhase 11で広げること。
 
 ## 実装方針
@@ -151,11 +155,13 @@ Phase 9では、実プロジェクト回帰を毎回手作業で組み立て直�
 候補:
 
 - package側に、referencesを入力として一時rootを作るtest helperを追加する。
-- build checkはunitまたはintegration testへ寄せる。
-- browser smokeはPlaywright testへ寄せる。
+- build checkは `test:compat:local` 相当の専用scriptへ寄せる。
+- browser smokeもdefault `test:browser` ではなく、references依存のlocal compatibility確認として分ける。
 - ただし、referencesが無い環境では明確にskipまたは前提不足として扱い、CI前提にはしない。
 
 どの方法を採る場合も、referencesを直接変更しないことを守る。
+
+references依存の確認は、default `check-all` に含めない。`check-all` は本リポジトリとGit管理された検証入力だけで通る品質確認入口として維持する。Phase 9実装時に既存のdefault browser testが `references/` を前提にしている場合は、`test:compat:local` 相当の入口へ移すか、default実行では明示skipする。
 
 ### 記録
 
@@ -164,6 +170,8 @@ Phase 9では、実プロジェクト回帰を毎回手作業で組み立て直�
 - 実行日。
 - Node.js / pnpm version。
 - `references/metastanza` と `references/togomedium-web` のcommit。
+- `references/togostanza-utils` のcommitまたはpackage version。
+- metastanza / TogoMedium Stanzaが実際に参照した `togostanza-utils` の出所。
 - 対象Stanza一覧。
 - build check結果。
 - browser smoke対象と結果。
@@ -182,17 +190,19 @@ package実装またはtestに触れた場合:
 - `cd package && mise exec -- pnpm run test:unit`
 - `cd package && mise exec -- pnpm run test:integration`
 - 必要に応じて `cd package && mise exec -- pnpm run test:browser`
+- references依存確認を追加した場合は、専用入口として `cd package && mise exec -- pnpm run test:compat:local` 相当を用意し、承認付き通常実行で確認する。
 
 最終確認:
 
 - `cd package && mise exec -- pnpm run check-all`
+- `check-all` はreferences依存確認を含めない。
 
 package配下のコマンドは、`package/mise.toml` を正として `cd package && mise exec -- ...` 経由で実行する。browser testやserve確認が必要な場合は、サンドボックス環境ではなくユーザーのローカル環境を優先する。
 
 ## 残す論点
 
 - referencesが存在しない環境で、testをskipにするか、明示失敗にするか。
-- 全Stanza build checkをpackage automated testへ入れるか、手順化されたローカル確認に留めるか。
+- `test:compat:local` をpackage scriptとして追加するか、手順化されたローカル確認に留めるか。
 - metastanzaの代表browser smokeを `pagination-table` に固定するか。
 - TogoMedium代表browser smokeを `gmdb-meta-list` に固定するか。
 - React / Vue version記録をどの文書へ置くか。
