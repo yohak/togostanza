@@ -99,7 +99,7 @@ Phase 2-1の設計は [plan.md](./plan.md) を正とする。この文書は設�
 - `stanza:style` はCSS custom propertyの既定値に使う。リメイク版では `this.params` へ入れない契約で進める。
 - `{id}.html` はAbout導線の受け皿として使えるが、ヘルププレビューUIではない。
 - `.togostanza-build-output` markerをruntimeやworkflowの公開assetとして扱う必要はない。
-- CLI同梱runtimeと生成リポジトリの `dependencies.togostanza` versionがずれる可能性は、Phase 2-2またはPhase 5で再確認する。
+- CLI同梱runtimeと生成リポジトリの `dependencies.togostanza` versionがずれる可能性は、Phase 2-2またはPhase 5の棚卸しで再確認する。
 
 ## 後続判断として残すこと
 

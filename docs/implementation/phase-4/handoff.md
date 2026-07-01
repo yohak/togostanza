@@ -1,6 +1,6 @@
 # Phase 4: compatibility 引き継ぎ
 
-この文書では、Phase 4完了後にPhase 5以降へ引き継ぐ事実、境界、注意点を扱う。
+この文書では、Phase 4完了後にPhase 5の棚卸し以降へ引き継ぐ事実、境界、注意点を扱う。
 
 Phase 4の設計は [plan.md](./plan.md) を正とする。この文書は設計ではなく、完了後の状態と後続フェーズへの引き継ぎメモである。
 
@@ -46,10 +46,10 @@ Phase 4の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - 旧 `togostanza-build.js` / `.mjs` の自動実行。
 - npm package公開、tarball install、live deploy確認。
 
-## Phase 5以降で使う前提
+## Phase 5の棚卸し以降で使う前提
 
 - React / React DOM / Vue runtimeは、Stanzaリポジトリ側dependencyとして扱う。CLIは埋め込み先Webサイトへframework runtimeを要求しない。
-- `@vitejs/plugin-vue` と `vue` は、Vue SFC処理のためのCLI build runtime dependencyである。Phase 5で `dependencies` / `files` / `exports` を整理する際、この分類を崩さない。
+- `@vitejs/plugin-vue` と `vue` は、Vue SFC処理のためのCLI build runtime dependencyである。Phase 5で棚卸しし、Phase XまたはPhase 6以降で `dependencies` / `files` / `exports` を整理する際、この分類を崩さない。
 - `togostanza-utils` のdrop-in互換は、Phase 4で受け入れ対象にしたAPIに限る。純粋データ処理API全体を保証したわけではない。
 - `togostanza-utils/apply-filter` はimport path解決と参考観測までを確認した。戻り値の詳細はPhase 4の互換契約にしていない。
 - 実プロジェクト回帰では、`references/` を直接変更せず、一時ディレクトリへsymlinkまたはコピーしたStanzaリポジトリroot相当で確認した。
@@ -58,19 +58,19 @@ Phase 4の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - Emotion / MUI関連で未検証または動かない構成が見つかった場合は、TogoMediumへの直接影響、他用途への波及可能性、対応コストを整理し、人間判断を受けてから扱う。
 - Phase 4以降も、packageの品質確認やbrowser testは `cd package && mise exec -- pnpm run check-all` を承認付き通常実行で確認する。
 
-## Phase 5以降で注意すること
+## Phase 5の棚卸し以降で注意すること
 
-- Phase 5で公開package metadataを整えるとき、`@vitejs/plugin-vue`、`vue`、`vite`、`sass`、`handlebars` などbuild実行時に必要なdependencyが、公開CLI相当で欠けないように確認する。
-- `togostanza/config` はPhase 2-4で最小 `exports` を追加済みである。Phase 5では `exports`、`main`、`bin`、`files`、型定義の整合をまとめて確認する。
+- Phase 5では、`@vitejs/plugin-vue`、`vue`、`vite`、`sass`、`handlebars` などbuild実行時に必要なdependencyを棚卸しし、公開CLI相当で欠けないようにする確認をPhase XまたはPhase 6以降へ分類する。
+- `togostanza/config` はPhase 2-4で最小 `exports` を追加済みである。Phase 5では `exports`、`main`、`bin`、`files`、型定義の整合を棚卸しし、Phase XまたはPhase 6以降のどちらで扱うか分類する。
 - 実プロジェクト回帰で使ったTogoMedium aliasは、自動解決ではなく `togostanza.config.ts` への移行設定として扱っている。公開CLIの互換機能として広げる場合は、別途仕様判断が必要である。
 - `treeshake: false` はMUI関連bundleを壊したため、再導入しない。tree-shakingを明示変更する場合は、TogoMedium direct embed smokeを必ず確認する。
 - Sass `@import` の非推奨警告は現行ソース由来としてPhase 4では許容した。将来のSass version変更でwarningからerrorへ変わる可能性は残る。
-- Phase 4のbrowser testは実ブラウザで13件に増えている。実行時間やfixture dependencyが増えているため、CIや配布前検証での実行環境をPhase 5で意識する。
+- Phase 4のbrowser testは実ブラウザで13件に増えている。実行時間やfixture dependencyが増えているため、CIや配布前検証での実行環境をPhase 5で棚卸しする。
 
 ## 後続判断として残すこと
 
-- npm公開に向けた `package.json` metadata、`private`、`files`、`exports`、型定義、dependency分類の最終確認。
-- tarball install、`npm exec togostanza@...`、`pnpm dlx togostanza@...` の実解決確認。
+- npm公開に向けた `package.json` metadata、`private`、`files`、`exports`、型定義、dependency分類をPhase 5で棚卸しし、Phase XまたはPhase 6以降へ分類すること。
+- tarball install、`npm exec togostanza@...`、`pnpm dlx togostanza@...` の実解決確認をPhase 5で棚卸しし、Phase Xで扱うか判断すること。
 - GitHub Actions上のlive deploy確認。
 - TogoMedium Webアプリ本体のbuild / start / end-to-end検証をどのフェーズまたは配布前検証で扱うか。
 - 実プロジェクト回帰を自動testへさらに寄せる範囲。

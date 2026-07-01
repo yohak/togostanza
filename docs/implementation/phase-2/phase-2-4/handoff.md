@@ -57,7 +57,7 @@ Phase 2-4の設計は [plan.md](./plan.md) を正とする。この文書は設�
 - `importWebFontCSS("./assets/...")` は、Phase 2-3の前提どおり `./{id}/assets/...` へ解決される。
 - runtime初期化は `{id}/metadata.json` fetchに依存しない。
 - `togostanza.config.ts` は読み込めるが、Phase 2-4時点の最小schemaは `vite` configを渡す入口である。
-- `togostanza/config` subpathは使えるが、npm公開向けの `exports` / `files` 全体整理はPhase 5送りである。
+- `togostanza/config` subpathは使えるが、npm公開向けの `exports` / `files` 全体整理はPhase 5で棚卸しし、Phase Xまで着手しない。
 - `tsconfig.json` はVite / esbuildの入力として尊重するが、`compilerOptions.paths` は自動合成しない。
 - `compilerOptions.paths` が必要なプロジェクトは、`togostanza.config.ts` の `vite.resolve.alias` へ移す。
 
@@ -86,7 +86,7 @@ Phase 2-4の設計は [plan.md](./plan.md) を正とする。この文書は設�
 - CSS source mapの書き換え後精度。
 - root assetをStanzaソースから参照する推奨APIまたはhelper。
 - `index.html` と `-togostanza/` のヘルププレビュー生成。
-- npm公開向けの `exports`、`files`、`private` 解除、publish metadata整理。
+- npm公開向けの `exports`、`files`、`private` 解除、publish metadata整理をPhase 5で棚卸しし、Phase Xで扱うか判断すること。
 
 ## 確認結果
 

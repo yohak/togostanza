@@ -50,7 +50,7 @@ Phase 0は、次を満たした時点で完了とする。
 - ビルド生成物、ランタイム、開発サーバーの実装。
 - npm公開に必要な `exports`、`files`、公開用metadataの最終判断。
 
-`package.json` の `private: true` はPhase 0では維持する。npm公開に向けた `private` の解除、`exports`、`files`、公開用metadataの判断はPhase 5で扱う。
+`package.json` の `private: true` はPhase 0では維持する。npm公開に向けた `private` の解除、`exports`、`files`、公開用metadataの判断はPhase 5で棚卸しし、配布作業としてはPhase Xで扱う。
 
 ## CLI方針
 
@@ -58,9 +58,9 @@ Phase 0では、CLI parserはNode.js標準機能を中心にした最小実装�
 
 この判断はPhase 0の範囲に限る。将来、help出力、subcommand定義、option validation、エラー表示の複雑さが増えた場合は、`commander` などのCLIライブラリ採用を再検討してよい。
 
-compiled JSと `bin` 入口をPhase 0に含めるのは、将来の `npm exec togostanza@latest` や `pnpm dlx togostanza@latest` で使う実行経路を早期に確認するためである。ただし、npm公開そのものと配布対象ファイルの最終設計はPhase 5に残す。
+compiled JSと `bin` 入口をPhase 0に含めるのは、将来の `npm exec togostanza@latest` や `pnpm dlx togostanza@latest` で使う実行経路を早期に確認するためである。ただし、npm公開そのものと配布対象ファイルの最終設計はPhase 5で棚卸しし、Phase Xまで着手しない。
 
-Phase 0で確認するCLI入口は、`bin/togostanza.mjs` からcompiled JSへ接続される経路である。手元環境で裸の `togostanza` commandを実行できることは、PATH上の現行版 `togostanza` との衝突、package manager経由の実行、npm公開後の配布確認を含むため、Phase 0の完了条件には含めない。裸の `togostanza` commandとしての実行確認は、Phase 5のdistribution確認で扱う。
+Phase 0で確認するCLI入口は、`bin/togostanza.mjs` からcompiled JSへ接続される経路である。手元環境で裸の `togostanza` commandを実行できることは、PATH上の現行版 `togostanza` との衝突、package manager経由の実行、npm公開後の配布確認を含むため、Phase 0の完了条件には含めない。裸の `togostanza` commandとしての実行確認は、Phase 5で棚卸しし、配布確認としてはPhase Xで扱う。
 
 package buildは、Phase 0では追加のbundlerを使わず、TypeScript compilerで行う。`tsconfig.build.json` を用意し、`src/` から `dist/` へJavaScriptと型定義を出力する。
 

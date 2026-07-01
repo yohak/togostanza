@@ -143,7 +143,7 @@ serve用検証は、専用検証ケース `workbench/cases/011-serve-development
 - SVG/PNG download出力の完全なバイト列一致。
 - npm package公開。
 
-対応する主な検証ケースは [008 React runtime](../../workbench/cases/008-react-runtime/)、[009 Vue runtime](../../workbench/cases/009-vue-runtime/)、[010 togostanza-utils compatibility](../../workbench/cases/010-togostanza-utils-compat/)、[012 Real project regression](../../workbench/cases/012-real-project-regression/) とする。実プロジェクト回帰では `references/metastanza` と `references/togomedium-web` を入力として参照し、観測結果と差分を012ケースへ記録する。Phase 4の設計は [Phase 4: compatibility 設計](./phase-4/plan.md) に置き、完了後の状態とPhase 5への引き継ぎは [Phase 4: compatibility 引き継ぎ](./phase-4/handoff.md) に置く。
+対応する主な検証ケースは [008 React runtime](../../workbench/cases/008-react-runtime/)、[009 Vue runtime](../../workbench/cases/009-vue-runtime/)、[010 togostanza-utils compatibility](../../workbench/cases/010-togostanza-utils-compat/)、[012 Real project regression](../../workbench/cases/012-real-project-regression/) とする。実プロジェクト回帰では `references/metastanza` と `references/togomedium-web` を入力として参照し、観測結果と差分を012ケースへ記録する。Phase 4の設計は [Phase 4: compatibility 設計](./phase-4/plan.md) に置き、完了後の状態とPhase 5のreadiness inventoryへの引き継ぎは [Phase 4: compatibility 引き継ぎ](./phase-4/handoff.md) に置く。
 
 ## Phase 5: readiness inventory
 

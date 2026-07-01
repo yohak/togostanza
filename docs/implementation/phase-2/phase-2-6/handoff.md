@@ -51,12 +51,12 @@ Phase 2-6の設計は [plan.md](./plan.md) を正とする。この文書は設�
 - npm向けworkflowは `package-lock.json` がcommitされている前提で `npm ci` を使う。
 - pnpm向けworkflowは、pnpm 10系で生成した `pnpm-lock.yaml` がcommitされている前提で `pnpm install --frozen-lockfile` を使う。
 - `--skip-install` で初期化した場合、Stanza開発者が後から `npm install` またはpnpm 10系の `pnpm install` を実行し、lockfileをcommitしてからpushする必要がある。
-- live deploy成功は、公開npm package解決が必要になるためPhase 5 distributionまたは配布前検証の責務である。
+- live deploy成功は、公開npm package解決が必要になるためPhase 5で棚卸しし、配布前検証としてはPhase Xの責務である。
 
 ## Phase 3以降で注意すること
 
 - Phase 2-6のworkflowは、公開後のdependency解決を前提にした正しいinstall / build / upload / deploy手順を生成するところまでを完了条件にしている。GitHub Actions上での成功までは確認していない。
-- `dependencies.togostanza` はPhase 2-6時点では `^0.0.0` で生成される。公開npm packageとして解決できる状態はPhase 5で扱う。
+- `dependencies.togostanza` はPhase 2-6時点では `^0.0.0` で生成される。公開npm packageとして解決できる状態はPhase 5で棚卸しし、Phase Xで扱うか判断する。
 - pnpm向けworkflowはpnpm 10系を明示する。別versionのpnpmで生成したlockfileがGitHub Actions上のpnpm 10系で読めるかどうかは、Phase 2-6では互換契約として広げていない。
 - Action major tagは実装時点で確認済みだが、外部互換契約ではない。GitHub Actions側の推奨が変わった場合は保守更新として扱ってよい。
 - GitHub repositoryのPages設定やcustom domainはworkflow生成の範囲外である。後続でREADME案内を追加する場合は、この制約を明記する。
@@ -66,7 +66,7 @@ Phase 2-6の設計は [plan.md](./plan.md) を正とする。この文書は設�
 
 - GitHub Actions上でのlive deploy確認をいつ行うか。
 - 公開npm packageとしての `togostanza` 解決確認。
-- Phase 5でのnpm公開metadata、`exports`、`files`、`private` 解除。
+- npm公開metadata、`exports`、`files`、`private` 解除をPhase 5で棚卸しし、Phase Xで扱うか判断すること。
 - README内のGitHub Pages有効化手順。
 - lockfileが無い状態でpushした場合の案内改善。
 - `package.json` に `scripts.build` を生成するかどうか。

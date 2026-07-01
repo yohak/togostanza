@@ -338,4 +338,4 @@ togostanza init . --skip-install --skip-git
 
 - 現行版workflowは `actions/upload-pages-artifact@v1` と `actions/deploy-pages@v1` を使っていたが、リメイク版では実装時点で確認したAction major tagへ更新した。
 - 現行版の観測ではpnpm向けworkflowは対象外だった。リメイク版ではpnpmを公式サポート対象として扱い、pnpm向けworkflowを生成する。
-- リメイク版では、公開npm packageとしての `dependencies.togostanza` 解決やGitHub Actions上でのlive deploy成功はPhase 5 distributionまたは配布前検証へ送る。Phase 2-6では、生成workflowがinstall、build、artifact upload、deployの流れを持つことまでを確認する。
+- リメイク版では、公開npm packageとしての `dependencies.togostanza` 解決やGitHub Actions上でのlive deploy成功はPhase 5で棚卸しし、配布前検証としてはPhase Xへ送る。Phase 2-6では、生成workflowがinstall、build、artifact upload、deployの流れを持つことまでを確認する。

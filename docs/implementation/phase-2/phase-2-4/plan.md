@@ -149,7 +149,7 @@ root `assets/` の参照記法は注意して扱う。`dist/assets/` への出�
 
 `togostanza.config.ts` は新しい設定入口として扱う。設定APIには `defineTogoStanzaConfig()` を提供する。これは型補助と将来のschema拡張のための薄いhelperであり、Phase 2-4では複雑なvalidationやplugin互換を作り込みすぎない。
 
-`defineTogoStanzaConfig()` の利用経路は、`import { defineTogoStanzaConfig } from "togostanza/config"` をPhase 2-4の最小契約にする。このimport pathが検証fixture内で解決できるところまでをPhase 2-4の対象に含める。npm公開向けの最終的な `exports`、`files`、publish metadataの整理はPhase 5で扱う。
+`defineTogoStanzaConfig()` の利用経路は、`import { defineTogoStanzaConfig } from "togostanza/config"` をPhase 2-4の最小契約にする。このimport pathが検証fixture内で解決できるところまでをPhase 2-4の対象に含める。npm公開向けの最終的な `exports`、`files`、publish metadataの整理はPhase 5で棚卸しし、Phase XまたはPhase 6以降へ分類する。
 
 007ケース入力には `togostanza.config.ts` が含まれていない。そのため、新設定の検出、読み込み、`defineTogoStanzaConfig()` の確認は、007ケースとは別のunit testまたは専用integration fixtureで扱う。
 

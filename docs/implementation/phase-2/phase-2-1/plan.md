@@ -294,7 +294,7 @@ packageの品質確認やbrowser testは、Codex等のsandbox実行環境では�
 | menu placement、About導線、`togostanza-menu-placement` | Phase 2-2 |
 | `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()` | Phase 2-3 |
 | `templates/*.hbs` の読み込み | Phase 2-3 |
-| CLI同梱runtimeと生成リポジトリの依存宣言versionの扱い | Phase 2-2 / Phase 5 |
+| CLI同梱runtimeと生成リポジトリの依存宣言versionの扱い | Phase 2-2 / Phase 5で棚卸し |
 | Sassの高度なmodule解決 | Phase 2-4 |
 | `togostanza.config.ts` | Phase 2-4 |
 | Stanza entrypointからのasset import | Phase 2-4 |
