@@ -780,6 +780,23 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "dist", "react-runtime-probe", "metadata.json"))).toBe(true);
   });
 
+  it("builds a Vue SFC stanza using repository dependencies", async () => {
+    const cwd = makeStanzaRepoRoot();
+    writeVueRuntimeFixture(cwd);
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    const js = readText(join(cwd, "dist", "vue-runtime-probe.js"));
+    expect(js).toContain("Vue runtime probe");
+    expect(js).toContain("vue-runtime-probe");
+    expect(js).not.toContain('from"vue"');
+    expect(js).not.toContain('from"./App.vue"');
+    expect(readText(join(cwd, "dist", "vue-runtime-probe.css"))).toContain(".vue-runtime-probe");
+    expect(existsSync(join(cwd, "dist", "vue-runtime-probe.js.map"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "vue-runtime-probe", "metadata.json"))).toBe(true);
+  });
+
   it("warns about legacy build config files without executing them", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "legacyConfigProbe"], { cwd, currentDate });
@@ -1507,10 +1524,97 @@ function writeReactRuntimeFixture(rootDirectory: string): void {
 }
 
 function linkReactPackages(rootDirectory: string): void {
+  linkNodePackages(rootDirectory, ["react", "react-dom"]);
+}
+
+function writeVueRuntimeFixture(rootDirectory: string): void {
+  linkVuePackages(rootDirectory);
+  const stanzaDirectory = join(rootDirectory, "stanzas", "vue-runtime-probe");
+  mkdirSync(stanzaDirectory, { recursive: true });
+  writeFileSync(
+    join(stanzaDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "vue-runtime-probe",
+        "stanza:label": "Vue Runtime Probe",
+        "stanza:menu-placement": "none",
+        "stanza:parameter": [{ "stanza:key": "label", "stanza:type": "string" }],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    join(stanzaDirectory, "index.js"),
+    [
+      'import Stanza from "togostanza/stanza";',
+      'import { createApp } from "vue";',
+      'import App from "./App.vue";',
+      "",
+      "export default class VueRuntimeProbe extends Stanza {",
+      "  app = undefined;",
+      "",
+      "  render() {",
+      '    const main = this.root.querySelector("main");',
+      "",
+      "    if (!main) {",
+      '      throw new Error("Vue Runtime Probe expected a main element.");',
+      "    }",
+      "",
+      "    this.app?.unmount();",
+      "    this.app = createApp(App, {",
+      '      label: this.params.label || "(missing label)",',
+      "    });",
+      "    this.app.mount(main);",
+      "  }",
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  writeFileSync(
+    join(stanzaDirectory, "App.vue"),
+    [
+      "<template>",
+      '  <section class="vue-runtime-probe" data-probe="vue-runtime">',
+      "    <h1>Vue runtime probe</h1>",
+      '    <p data-probe="label">{{ label }}</p>',
+      "  </section>",
+      "</template>",
+      "",
+      "<script>",
+      "export default {",
+      "  props: {",
+      "    label: {",
+      "      type: String,",
+      "      required: true,",
+      "    },",
+      "  },",
+      "};",
+      "</script>",
+      "",
+      "<style>",
+      ".vue-runtime-probe {",
+      "  color: rgb(12, 34, 56);",
+      "}",
+      "</style>",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+}
+
+function linkVuePackages(rootDirectory: string): void {
+  linkNodePackages(rootDirectory, ["vue"]);
+}
+
+function linkNodePackages(rootDirectory: string, packageNames: readonly string[]): void {
   const nodeModulesDirectory = join(rootDirectory, "node_modules");
   mkdirSync(nodeModulesDirectory, { recursive: true });
 
-  for (const packageName of ["react", "react-dom"]) {
+  for (const packageName of packageNames) {
     symlinkSync(
       join(packageRoot, "node_modules", packageName),
       join(nodeModulesDirectory, packageName),

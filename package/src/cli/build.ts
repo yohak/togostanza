@@ -13,9 +13,10 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import vue from "@vitejs/plugin-vue";
 import Handlebars from "handlebars";
 import { compile, type FileImporter } from "sass";
-import { build as viteBuild, mergeConfig, type InlineConfig } from "vite";
+import { build as viteBuild, mergeConfig, type InlineConfig, type Plugin } from "vite";
 import { loadTogoStanzaBuildConfig } from "./build-config.js";
 import { getStringOption, parseOptions } from "./options.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
@@ -457,6 +458,7 @@ async function buildEntrypoints(
     },
     configFile: false,
     logLevel: "silent",
+    plugins: [vue(), collectEntryCssPlugin(outputDirectory)],
     publicDir: false,
     resolve: {
       alias: {
@@ -473,6 +475,57 @@ async function buildEntrypoints(
   } finally {
     rmSync(wrapperDirectory, { force: true, recursive: true });
   }
+}
+
+function collectEntryCssPlugin(outputDirectory: string): Plugin {
+  const entryCssByName = new Map<string, string>();
+
+  return {
+    generateBundle(_options, bundle): void {
+      for (const output of Object.values(bundle)) {
+        if (output.type !== "chunk" || !output.isEntry) {
+          continue;
+        }
+
+        const importedCss = readViteImportedCss(output);
+        const cssParts = [...importedCss].flatMap((fileName) => {
+          const asset = bundle[fileName];
+
+          if (asset?.type !== "asset") {
+            return [];
+          }
+
+          return [String(asset.source)];
+        });
+
+        if (cssParts.length > 0) {
+          entryCssByName.set(output.name, cssParts.join("\n\n"));
+        }
+      }
+    },
+    name: "togostanza-entry-css-collector",
+    writeBundle(): void {
+      for (const [name, css] of entryCssByName) {
+        writeFileSync(join(outputDirectory, `${name}.css`), `${css.trimEnd()}\n`, "utf8");
+      }
+    },
+  };
+}
+
+function readViteImportedCss(output: unknown): Set<string> {
+  if (!isRecord(output)) {
+    return new Set();
+  }
+
+  const viteMetadata = output["viteMetadata"];
+
+  if (!isRecord(viteMetadata)) {
+    return new Set();
+  }
+
+  const importedCss = viteMetadata["importedCss"];
+
+  return importedCss instanceof Set ? importedCss : new Set();
 }
 
 function formatEntrypointWrapper(stanza: StanzaDefinition): string {
@@ -512,9 +565,10 @@ function buildStyles(
     const stylePath = join(stanza.directory, "style.scss");
     const cssPath = join(outputDirectory, `${stanza.id}.css`);
     const cssMapPath = `${cssPath}.map`;
+    const viteCss = readGeneratedCss(cssPath, stanza.id);
 
     if (!pathIsFile(stylePath)) {
-      writeFileSync(cssPath, `/*# sourceMappingURL=${stanza.id}.css.map */\n`, "utf8");
+      writeFileSync(cssPath, formatGeneratedCss([viteCss], `${stanza.id}.css.map`), "utf8");
       writeFileSync(cssMapPath, `${JSON.stringify(emptySourceMap())}\n`, "utf8");
       continue;
     }
@@ -527,11 +581,7 @@ function buildStyles(
       });
       const css = rewriteStanzaAssetUrls(result.css, stanza.id);
 
-      writeFileSync(
-        cssPath,
-        `${css.trimEnd()}\n/*# sourceMappingURL=${stanza.id}.css.map */\n`,
-        "utf8",
-      );
+      writeFileSync(cssPath, formatGeneratedCss([viteCss, css], `${stanza.id}.css.map`), "utf8");
       writeFileSync(cssMapPath, `${JSON.stringify(result.sourceMap, null, 2)}\n`, "utf8");
     } catch (error) {
       throw new Error(
@@ -548,6 +598,28 @@ function rewriteStanzaAssetUrls(css: string, stanzaId: string): string {
     (_match, quote: string, _prefix: string, assetPath: string) =>
       `url(${quote}./${stanzaId}/assets/${assetPath}${quote})`,
   );
+}
+
+function readGeneratedCss(cssPath: string, stanzaId: string): string {
+  if (!pathIsFile(cssPath)) {
+    return "";
+  }
+
+  return readFileSync(cssPath, "utf8")
+    .replace(
+      new RegExp(String.raw`/\*# sourceMappingURL=${escapeRegExp(stanzaId)}\.css\.map \*/`, "g"),
+      "",
+    )
+    .trim();
+}
+
+function formatGeneratedCss(parts: readonly string[], sourceMapFileName: string): string {
+  const css = parts
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0)
+    .join("\n\n");
+
+  return `${css ? `${css}\n` : ""}/*# sourceMappingURL=${sourceMapFileName} */\n`;
 }
 
 function copyBuildAssets(
@@ -793,6 +865,10 @@ function escapeHtml(value: string): string {
         return character;
     }
   });
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
 function isFileNotFound(error: unknown): boolean {

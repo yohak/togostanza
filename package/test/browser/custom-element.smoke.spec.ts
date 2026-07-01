@@ -708,6 +708,51 @@ test("renders a React TSX Stanza from repository dependencies", async ({ page })
   }
 });
 
+test("renders a Vue SFC Stanza from repository dependencies", async ({ page }) => {
+  test.setTimeout(20_000);
+
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  writeVueRuntimeProbe(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+  writeFileSync(
+    resolve(cwd, "fixture.html"),
+    `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/vue-runtime-probe.js"></script>
+    <togostanza-vue-runtime-probe
+      id="vue-runtime"
+      label="initial-vue"
+    ></togostanza-vue-runtime-probe>
+  </body>
+</html>
+`,
+    "utf8",
+  );
+  const server = await startStaticServer(cwd, []);
+
+  try {
+    const port = addressPort(server);
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`);
+    await page.waitForFunction(() => customElements.get("togostanza-vue-runtime-probe"));
+
+    await expect.poll(() => readProbeValue(page, "#vue-runtime", "label")).toBe("initial-vue");
+    await expect
+      .poll(() =>
+        page.locator("#vue-runtime").evaluate((element) => {
+          const section = element.shadowRoot?.querySelector<HTMLElement>(
+            "[data-probe='vue-runtime']",
+          );
+          return section ? getComputedStyle(section).color : "";
+        }),
+      )
+      .toBe("rgb(12, 34, 56)");
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("serves a built Stanza preview through togostanza serve", async ({ page }) => {
   test.setTimeout(20_000);
 
@@ -1431,10 +1476,97 @@ function writeReactRuntimeProbe(cwd: string): void {
 }
 
 function linkReactPackages(cwd: string): void {
+  linkNodePackages(cwd, ["react", "react-dom"]);
+}
+
+function writeVueRuntimeProbe(cwd: string): void {
+  linkVuePackages(cwd);
+  const stanzaDirectory = resolve(cwd, "stanzas", "vue-runtime-probe");
+  mkdirSync(stanzaDirectory, { recursive: true });
+  writeFileSync(
+    resolve(stanzaDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "vue-runtime-probe",
+        "stanza:label": "Vue Runtime Probe",
+        "stanza:menu-placement": "none",
+        "stanza:parameter": [{ "stanza:key": "label", "stanza:type": "string" }],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "index.js"),
+    [
+      'import Stanza from "togostanza/stanza";',
+      'import { createApp } from "vue";',
+      'import App from "./App.vue";',
+      "",
+      "export default class VueRuntimeProbe extends Stanza {",
+      "  app = undefined;",
+      "",
+      "  render() {",
+      '    const main = this.root.querySelector("main");',
+      "",
+      "    if (!main) {",
+      '      throw new Error("Vue Runtime Probe expected a main element.");',
+      "    }",
+      "",
+      "    this.app?.unmount();",
+      "    this.app = createApp(App, {",
+      '      label: this.params.label || "(missing label)",',
+      "    });",
+      "    this.app.mount(main);",
+      "  }",
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "App.vue"),
+    [
+      "<template>",
+      '  <section class="vue-runtime-probe" data-probe="vue-runtime">',
+      "    <h1>Vue runtime probe</h1>",
+      '    <p data-probe="label">{{ label }}</p>',
+      "  </section>",
+      "</template>",
+      "",
+      "<script>",
+      "export default {",
+      "  props: {",
+      "    label: {",
+      "      type: String,",
+      "      required: true,",
+      "    },",
+      "  },",
+      "};",
+      "</script>",
+      "",
+      "<style>",
+      ".vue-runtime-probe {",
+      "  color: rgb(12, 34, 56);",
+      "}",
+      "</style>",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+}
+
+function linkVuePackages(cwd: string): void {
+  linkNodePackages(cwd, ["vue"]);
+}
+
+function linkNodePackages(cwd: string, packageNames: readonly string[]): void {
   const nodeModulesDirectory = resolve(cwd, "node_modules");
   mkdirSync(nodeModulesDirectory, { recursive: true });
 
-  for (const packageName of ["react", "react-dom"]) {
+  for (const packageName of packageNames) {
     symlinkSync(
       resolve(packageRoot, "node_modules", packageName),
       resolve(nodeModulesDirectory, packageName),

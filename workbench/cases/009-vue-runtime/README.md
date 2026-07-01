@@ -32,6 +32,26 @@ Vue SFCを使う既存Stanzaソースが、TogoStanzaランタイムのShadow DO
 - 同じ入力意図のVue Stanzaソースが動くこと。
 - Vueランタイムチャンクがdirect embed生成物として静的配信上で解決できること。
 - `main` マウント対象とparams propsが壊れていないこと。
+- Vue SFC `<style>` がShadow DOM内の描画へ適用されること。
+- package testでは同じ入力意図の `vue-runtime-probe` fixtureを使う。現行版観測入力の `vue-runtime` という名前そのものへの一致は合格条件にしない。
+
+### リメイク版の観測状況
+
+- 確認日: 2026-07-01
+- 確認範囲: package test内のVue SFC fixture。
+- `package/src/cli/router.spec.ts` で、`.vue` importを持つStanzaが `togostanza build` で生成物を作れることを確認した。
+- Vue SFC処理はCLI側のbuild runtime dependencyである `@vitejs/plugin-vue` で扱う。
+- fixtureの `vue` は、package test用devDependencyの実Vueを一時Stanzaリポジトリ側の `node_modules/` へsymlinkして確認した。CLI側runtime dependencyにはしていない。
+- 生成された `dist/vue-runtime-probe.js` にはVue component本文、Vue runtime、runtime登録がbundleされ、bare import `vue` / `./App.vue` は残らなかった。
+- Vue SFC `<style>` はVite生成CSSを `{id}.css` へ集約する方針にし、`dist/vue-runtime-probe.css` に `.vue-runtime-probe` のstyleが入ることを確認した。
+- `package/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-vue-runtime-probe>` がupgradeされ、open Shadow DOM内 `main` へVue componentを描画できることを確認した。
+- 初期属性 `label="initial-vue"` が `this.params` を経由してVue propsへ渡り、表示へ反映された。
+- Shadow DOM内でVue SFC `<style>` 由来の `color: rgb(12, 34, 56)` が適用された。
+
+確認コマンド:
+
+- `cd package && mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t "builds a Vue SFC stanza"`
+- `cd package && mise exec -- pnpm exec playwright test --config playwright.config.ts -g "renders a Vue SFC Stanza"`
 
 ### 現行版の観測状況
 
@@ -48,9 +68,10 @@ Vue SFCを使う既存Stanzaソースが、TogoStanzaランタイムのShadow DO
 
 ## 合格条件
 
-- direct embed HTML上で `<togostanza-vue-runtime>` にopen shadow rootが作られる。
+- direct embed HTML上でVue runtime用Stanza custom elementにopen shadow rootが作られる。
 - shadow root内の `main` にVue componentが描画される。
 - 初期paramsがVue outputに反映される。
+- Vue SFC `<style>` がshadow root内の描画へ適用される。
 - コンソールに致命的なmodule loadエラーが出ない。
 
 ## 記録する差分
@@ -59,8 +80,12 @@ Vue SFCを使う既存Stanzaソースが、TogoStanzaランタイムのShadow DO
 - 生成物ツリー。
 - sharedランタイムチャンクの有無。
 - ブラウザコンソール/shadow root/rendered text。
+- SFC styleの出力先とShadow DOM内適用結果。
+- リメイク版のpackage fixtureでは `-togostanza/` や `index.html` を生成しない。これはPhase 2-1以降のbuild artifact方針に従う。
+- リメイク版のpackage fixtureは実Vue packageで確認している。metastanza代表StanzaでのVue SFC互換は012ケースへ送る。
 
 ## 未決定事項
 
 - Vue以外のframeworkランタイムを追加の検証ケースにするかどうか。
 - Vue version差分を互換対象に含めるかどうか。
+- Vue SFC compiler / pluginとStanzaリポジトリ側Vue runtimeのversion整合を、metastanza代表Stanzaでどこまで確認するか。
