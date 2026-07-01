@@ -19,6 +19,7 @@
 | Phase 6: workbench executability | workbenchの検証ケースを、repo-local CLIで再現できる入力として整える。 | workbench `remake/generated-repo`、repo-local CLI scripts | [設計](./phase-6/plan.md)、[引き継ぎ](./phase-6/handoff.md) |
 | Phase 7: package runtime readiness | リメイク版パッケージのsubpath export、型解決、dependency分類を整える。 | package automated test、型解決確認 | [設計](./phase-7/plan.md)、[引き継ぎ](./phase-7/handoff.md) |
 | Phase 8: source and config readiness | 既存stanzaリポジトリのsource / config移行とmetadata異常系の扱いを整理する。 | 移行ガイド、[013](../../workbench/cases/013-metadata-validation/) | [設計](./phase-8/plan.md)、[引き継ぎ](./phase-8/handoff.md) |
+| Phase 9: local compatibility baseline | 実プロジェクト群を使ったローカルcompatibility確認を、後続フェーズへ再利用できるbaselineとして整える。 | [012](../../workbench/cases/012-real-project-regression/)、`test:compat:local` | [設計](./phase-9/plan.md)、[引き継ぎ](./phase-9/handoff.md) |
 | Phase 9: local compatibility baseline | 実プロジェクト群のローカル再現手順、全Stanza build check、代表Stanza browser smokeを整える。 | [012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-9/plan.md) |
 | Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
@@ -295,7 +296,7 @@ Phase 9では、`references/` 配下のローカルリファレンスを使い�
 - TogoMedium固有aliasの自動吸収。
 - `tsconfig paths` の自動解決。
 
-Phase 9の設計は [Phase 9: local compatibility baseline 設計](./phase-9/plan.md) に置く。実プロジェクト回帰の観測は [012 Real project regression](../../workbench/cases/012-real-project-regression/) で扱う。完了後は、Phase 10へ進む前にPhase 9 handoffを作る。
+Phase 9の設計は [Phase 9: local compatibility baseline 設計](./phase-9/plan.md) に置く。実プロジェクト回帰の観測は [012 Real project regression](../../workbench/cases/012-real-project-regression/) で扱う。完了後の状態とPhase 10以降への引き継ぎは [Phase 9: local compatibility baseline 引き継ぎ](./phase-9/handoff.md) に置く。
 
 ## Phase X: distribution
 

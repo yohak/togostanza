@@ -30,7 +30,8 @@
     "test": "pnpm run test:unit",
     "test:unit": "vitest run --config vitest.config.ts",
     "test:integration": "pnpm run build && vitest run --config vitest.integration.config.ts",
-    "test:browser": "playwright test --config playwright.config.ts",
+    "test:browser": "playwright test --config playwright.config.ts --grep-invert @compat-local",
+    "test:compat:local": "pnpm run build && TOGOSTANZA_RUN_LOCAL_COMPAT=1 vitest run --config vitest.config.ts --testNamePattern \"local compatibility\" && TOGOSTANZA_RUN_LOCAL_COMPAT=1 playwright test --config playwright.config.ts --grep @compat-local",
     "check-all": "pnpm run format:check && pnpm run lint && pnpm run type-check && pnpm run build && pnpm run test:unit && pnpm run test:integration && pnpm run test:browser"
   },
   "dependencies": {

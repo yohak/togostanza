@@ -111,6 +111,112 @@
 - TogoMedium Webアプリ本体のbuild / start、実APIを使った画面遷移、TanStack Query / Jotai / Reduxを含むアプリ全体のE2EはPhase 4の対象外である。
 - Emotion / MUIについては、TogoMediumソースが `EmotionCacheProvider` でShadow DOM内へstyleを向ける構成を持つこと、buildが通ること、合成browser testでEmotion styleがShadow DOM内に適用されること、実TogoMedium Stanzaのdirect embed smokeでShadow DOM内の視覚スタイルが適用されることを確認した。動かない構成や未検証構成を落とす判断が必要になった場合は、TogoMediumへの影響を整理して人間判断を受ける。
 
+## Phase 9 リメイク版ローカルcompatibility baseline: 2026-07-01
+
+Phase 9では、Phase 4で行った実プロジェクト確認を、ローカルで再実行できる専用入口へ整理した。
+
+実行環境:
+
+- Node.js: `v24.5.0`
+- pnpm: `10.28.2`
+- references/metastanza: `4d4230d3`
+- references/togomedium-web: `79d8f21`
+- references/togostanza-utils: `daaf62c`
+- `references/togostanza-utils` package version: `0.0.0`
+
+確認コマンド:
+
+- `cd package && mise exec -- pnpm run test:compat:local`
+
+この確認は `references/` へ依存するため、default `check-all` には含めない。`check-all` は、Git管理された本リポジトリ内の入力だけで通る入口として維持する。
+
+### version baseline
+
+リメイク版パッケージ側:
+
+- `react`: `19.2.7`
+- `react-dom`: `19.2.7`
+- `vue`: `^3.5.39`
+- `@vitejs/plugin-vue`: `^6.0.7`
+
+references側:
+
+- `references/metastanza` の `vue`: `^3.2.11`
+- `references/metastanza` の `togostanza-utils`: `github:togostanza/togostanza-utils`
+- `references/togomedium-web` の `react`: `^19.2.4`
+- `references/togomedium-web` の `react-dom`: `^19.2.4`
+- `references/togomedium-web` の `@emotion/cache`: `^11.11.0`
+- `references/togomedium-web` の `@emotion/react`: `^11.11.4`
+- `references/togomedium-web` の `@mui/material`: `^7.3.9`
+- `references/togomedium-web` の `@mui/icons-material`: `^7.3.9`
+
+`test:compat:local` の `togostanza-utils` 単体確認では、`references/togostanza-utils` を一時rootの `node_modules/togostanza-utils` へcopyして使った。metastanzaの全Stanza build checkでは、`references/metastanza/node_modules` の依存を使った。TogoMedium Stanza build checkでは、`references/togomedium-web/node_modules` と、必要に応じて `@packages/stanza/node_modules` の依存を `togostanza.config.ts` の `vite.resolve.alias` で参照した。
+
+### Stanza名の再照合
+
+metastanzaは、ローカル `references/metastanza/stanzas` に存在するStanza名がPhase 9計画の10件と一致することをtest内で確認した。
+
+- `barchart`
+- `hash-table`
+- `linechart`
+- `pagination-table`
+- `piechart`
+- `scatterplot`
+- `scorecard`
+- `scroll-table`
+- `text`
+- `tree`
+
+TogoMedium Stanzaは、ローカル `references/togomedium-web/@packages/stanza/stanzas` に存在するStanza名がPhase 9計画の15件と一致することをtest内で確認した。
+
+- `gmdb-component-detail`
+- `gmdb-find-media-by-components`
+- `gmdb-find-media-by-organism-phenotype`
+- `gmdb-find-media-by-taxonomic-tree`
+- `gmdb-gms-by-tid`
+- `gmdb-media-alignment-table-by-components`
+- `gmdb-media-alignment-table-by-strains`
+- `gmdb-medium-builder`
+- `gmdb-medium-detail`
+- `gmdb-meta-list`
+- `gmdb-roundtree`
+- `gmdb-similar-media-node`
+- `gmdb-stats-culturable-species`
+- `gmdb-strain-detail`
+- `gmdb-taxon-detail`
+
+### build check baseline
+
+`test:compat:local` のunit側で、referencesを直接変更せず、一時rootへsymlinkしたStanzaリポジトリroot相当を作って確認した。
+
+- metastanza全10 Stanzaの `build --output-path dist-remake`: 成功。
+- TogoMedium Stanza全15 Stanzaの `build --output-path dist-remake`: 成功。
+- `references/togostanza-utils` をimportする最小Stanzaのbuild: 成功。
+
+metastanzaの `pagination-table` では、Sass `@import` の非推奨警告が出る。これは現行ソース由来の警告であり、Phase 9ではビルド失敗にしない。
+
+TogoMedium Stanza確認では、`%stanza/*`、`%storybook/*`、`%core/*`、`%api/*` に加え、一時rootの依存配置に合わせて `d3`、`d3-drag`、`colord`、`sleep-promise` を `togostanza.config.ts` の `vite.resolve.alias` へ明示した。これはTogoMedium固有aliasを自動吸収する契約ではない。
+
+### browser smoke baseline
+
+`test:compat:local` のbrowser側で、次の4件を直接埋め込みの軽量smokeとして確認した。
+
+- Emotion合成Stanza: `CacheProvider` の `container` をShadow DOMへ向け、Emotion由来styleがcomputed styleへ反映されること。
+- metastanza `scorecard`: custom element upgrade、Shadow DOM、ローカルJSON fixtureの読み込み、`togostanza-utils/load-data`、`renderTemplate()`、CSS反映。
+- TogoMedium `gmdb-meta-list`: React / TSX、TogoMedium provider stack、MUI / Emotion、ローカルJSON fixtureへのAPI通信、Shadow DOM内style反映。
+- `references/togostanza-utils` 最小Stanza: `loadData()`、`appendCustomCss()`、download menu item、`applyFilter()` の代表経路。
+
+Phase 9計画ではmetastanza代表候補を `pagination-table` としていたが、direct embed smokeの試行で、Stanzaソースが `main.parentNode.style` を前提にしている差分が見つかった。リメイク版runtimeでは `main.parentNode` が `ShadowRoot` になるため、この構成は描画前に止まる。Phase 9では、全Stanza build baselineを維持しつつ、通す代表browser smokeは `scorecard` へ変更した。`pagination-table` のruntime互換をどう扱うかは、全Stanza browser smokeを扱うPhase 11で判断する。
+
+### Phase 11へ送るもの
+
+- metastanza全10 Stanzaのbrowser smoke。
+- TogoMedium Stanza全15 Stanzaのbrowser smoke。
+- TogoMedium Webアプリ本体E2E。
+- `pagination-table` / `scroll-table` / `hash-table` など、`main.parentNode.style` に依存するmetastanzaのruntime互換判断。
+- React / Vue / Emotion / MUIの広いversion matrix。
+- Runtime edge semantics。
+
 ## Phase 6 リメイク版workbench入力
 
 Phase 6では、012用の `remake/generated-repo/` は新規作成しない。012は `references/metastanza` と `references/togomedium-web` を使う実プロジェクト回帰であり、Phase 6の目的であるrepo-local workbench入力整備とは分けて扱う。

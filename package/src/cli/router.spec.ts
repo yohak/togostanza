@@ -23,6 +23,36 @@ import type { ServeSession } from "./serve.js";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const repositoryRoot = resolve(packageRoot, "..");
+const localCompatibilityIt = process.env.TOGOSTANZA_RUN_LOCAL_COMPAT === "1" ? it : it.skip;
+const expectedMetastanzaStanzas = [
+  "barchart",
+  "hash-table",
+  "linechart",
+  "pagination-table",
+  "piechart",
+  "scatterplot",
+  "scorecard",
+  "scroll-table",
+  "text",
+  "tree",
+];
+const expectedTogoMediumStanzas = [
+  "gmdb-component-detail",
+  "gmdb-find-media-by-components",
+  "gmdb-find-media-by-organism-phenotype",
+  "gmdb-find-media-by-taxonomic-tree",
+  "gmdb-gms-by-tid",
+  "gmdb-media-alignment-table-by-components",
+  "gmdb-media-alignment-table-by-strains",
+  "gmdb-medium-builder",
+  "gmdb-medium-detail",
+  "gmdb-meta-list",
+  "gmdb-roundtree",
+  "gmdb-similar-media-node",
+  "gmdb-stats-culturable-species",
+  "gmdb-strain-detail",
+  "gmdb-taxon-detail",
+];
 
 const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");
@@ -867,24 +897,54 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "dist", "vue-runtime-probe", "metadata.json"))).toBe(true);
   });
 
-  it("builds a stanza that imports the real togostanza-utils package", async () => {
-    const cwd = makeStanzaRepoRoot();
-    writeUtilsCompatFixture(cwd);
+  localCompatibilityIt(
+    "local compatibility: builds a stanza that imports the real togostanza-utils package",
+    async () => {
+      const cwd = makeStanzaRepoRoot();
+      writeUtilsCompatFixture(cwd);
 
-    const result = await routeCliAsync(["build"], { cwd });
+      const result = await routeCliAsync(["build"], { cwd });
 
-    expect(result.exitCode).toBe(0);
-    const js = readText(join(cwd, "dist", "utils-probe.js"));
-    expect(js).toContain("Download SVG");
-    expect(js).toContain("loadData json");
-    expect(js).toContain("applyFilter");
-    expect(js).not.toContain('from"togostanza-utils"');
-    expect(js).not.toContain('from"togostanza-utils/load-data"');
-    expect(js).not.toContain('from"togostanza-utils/apply-filter"');
-    expect(readText(join(cwd, "dist", "utils-probe.css"))).toContain(".utils-probe");
-    expect(existsSync(join(cwd, "dist", "utils-probe.js.map"))).toBe(true);
-    expect(existsSync(join(cwd, "dist", "utils-probe", "metadata.json"))).toBe(true);
-  });
+      expect(result.exitCode).toBe(0);
+      const js = readText(join(cwd, "dist", "utils-probe.js"));
+      expect(js).toContain("Download SVG");
+      expect(js).toContain("loadData json");
+      expect(js).toContain("applyFilter");
+      expect(js).not.toContain('from"togostanza-utils"');
+      expect(js).not.toContain('from"togostanza-utils/load-data"');
+      expect(js).not.toContain('from"togostanza-utils/apply-filter"');
+      expect(readText(join(cwd, "dist", "utils-probe.css"))).toContain(".utils-probe");
+      expect(existsSync(join(cwd, "dist", "utils-probe.js.map"))).toBe(true);
+      expect(existsSync(join(cwd, "dist", "utils-probe", "metadata.json"))).toBe(true);
+    },
+  );
+
+  localCompatibilityIt(
+    "local compatibility: builds all referenced metastanza and TogoMedium Stanza sources",
+    async () => {
+      expect(
+        listStanzaDirectories(join(repositoryRoot, "references", "metastanza", "stanzas")),
+      ).toEqual(expectedMetastanzaStanzas);
+      expect(
+        listStanzaDirectories(
+          join(repositoryRoot, "references", "togomedium-web", "@packages", "stanza", "stanzas"),
+        ),
+      ).toEqual(expectedTogoMediumStanzas);
+
+      const metastanzaRoot = makeMetastanzaCompatibilityRoot(makeTemporaryDirectory());
+      const metastanzaResult = await routeCliAsync(["build", "--output-path", "dist-remake"], {
+        cwd: metastanzaRoot,
+      });
+      expect(metastanzaResult.exitCode, metastanzaResult.stderr ?? metastanzaResult.stdout).toBe(0);
+
+      const togoMediumRoot = makeTogoMediumCompatibilityRoot(makeTemporaryDirectory());
+      const togoMediumResult = await routeCliAsync(["build", "--output-path", "dist-remake"], {
+        cwd: togoMediumRoot,
+      });
+      expect(togoMediumResult.exitCode, togoMediumResult.stderr ?? togoMediumResult.stdout).toBe(0);
+    },
+    180_000,
+  );
 
   it("warns about legacy build config files without executing them", async () => {
     const cwd = makeStanzaRepoRoot();
@@ -1362,6 +1422,69 @@ function writeMinimalStanza(rootDirectory: string, stanzaId: string, metadata: s
   );
   writeFileSync(join(stanzaDirectory, "style.scss"), "", "utf8");
   writeFileSync(join(stanzaDirectory, "templates", "stanza.html.hbs"), "<main></main>\n", "utf8");
+}
+
+function listStanzaDirectories(stanzasDirectory: string): string[] {
+  return readdirSync(stanzasDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .toSorted();
+}
+
+function makeMetastanzaCompatibilityRoot(rootDirectory: string): string {
+  const referenceRoot = join(repositoryRoot, "references", "metastanza");
+
+  symlinkSync(join(referenceRoot, "package.json"), join(rootDirectory, "package.json"));
+  symlinkSync(join(referenceRoot, "stanzas"), join(rootDirectory, "stanzas"), "dir");
+  symlinkSync(join(referenceRoot, "common.scss"), join(rootDirectory, "common.scss"));
+  symlinkSync(join(referenceRoot, "node_modules"), join(rootDirectory, "node_modules"), "dir");
+
+  if (existsSync(join(referenceRoot, "assets"))) {
+    symlinkSync(join(referenceRoot, "assets"), join(rootDirectory, "assets"), "dir");
+  }
+
+  return rootDirectory;
+}
+
+function makeTogoMediumCompatibilityRoot(rootDirectory: string): string {
+  const referenceRoot = join(repositoryRoot, "references", "togomedium-web");
+  const stanzaPackageRoot = join(referenceRoot, "@packages", "stanza");
+  const stanzaPackageNodeModules = join(stanzaPackageRoot, "node_modules");
+
+  symlinkSync(join(stanzaPackageRoot, "package.json"), join(rootDirectory, "package.json"));
+  symlinkSync(join(referenceRoot, "node_modules"), join(rootDirectory, "node_modules"), "dir");
+  symlinkSync(join(stanzaPackageRoot, "components"), join(rootDirectory, "components"), "dir");
+  symlinkSync(join(stanzaPackageRoot, "stanzas"), join(rootDirectory, "stanzas"), "dir");
+  symlinkSync(join(stanzaPackageRoot, "styles"), join(rootDirectory, "styles"), "dir");
+  symlinkSync(join(stanzaPackageRoot, "tsconfig.json"), join(rootDirectory, "tsconfig.json"));
+  symlinkSync(join(stanzaPackageRoot, "utils"), join(rootDirectory, "utils"), "dir");
+  writeFileSync(
+    join(rootDirectory, "togostanza.config.ts"),
+    [
+      `const referenceRoot = ${JSON.stringify(referenceRoot)};`,
+      "",
+      "export default {",
+      "  vite: {",
+      "    resolve: {",
+      "      alias: [",
+      "        { find: /^%stanza\\//, replacement: `${referenceRoot}/@packages/stanza/` },",
+      "        { find: /^%storybook\\//, replacement: `${referenceRoot}/@packages/storybook/src/` },",
+      "        { find: /^%core\\//, replacement: `${referenceRoot}/@packages/core/src/` },",
+      "        { find: /^%api\\//, replacement: `${referenceRoot}/@packages/api/src/` },",
+      `        { find: "d3", replacement: ${JSON.stringify(join(stanzaPackageNodeModules, "d3"))} },`,
+      `        { find: "d3-drag", replacement: ${JSON.stringify(join(stanzaPackageNodeModules, "d3-drag"))} },`,
+      `        { find: "colord", replacement: ${JSON.stringify(join(stanzaPackageNodeModules, "colord"))} },`,
+      `        { find: "sleep-promise", replacement: ${JSON.stringify(join(stanzaPackageNodeModules, "sleep-promise"))} },`,
+      "      ],",
+      "    },",
+      "  },",
+      "};",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+
+  return rootDirectory;
 }
 
 type FetchTextResult = {

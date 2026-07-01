@@ -763,7 +763,7 @@ test("renders a React TSX Stanza from repository dependencies", async ({ page })
   }
 });
 
-test("applies Emotion styles inside a React Stanza shadow root", async ({ page }) => {
+test("applies Emotion styles inside a React Stanza shadow root @compat-local", async ({ page }) => {
   test.setTimeout(20_000);
 
   const cwd = makeTemporaryDirectory();
@@ -823,7 +823,86 @@ test("applies Emotion styles inside a React Stanza shadow root", async ({ page }
   }
 });
 
-test("directly embeds a real TogoMedium Stanza with visible Shadow DOM styling", async ({
+test("directly embeds a real metastanza scorecard @compat-local", async ({ page }) => {
+  test.setTimeout(90_000);
+
+  const cwd = makeTemporaryDirectory();
+  writeMetastanzaScorecardRegressionRepo(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+
+  const requestLog: string[] = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  const failedRequests: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on("requestfailed", (request) => {
+    failedRequests.push(`${request.url()} ${request.failure()?.errorText ?? ""}`.trim());
+  });
+  const server = await startStaticServer(cwd, requestLog);
+
+  try {
+    const port = addressPort(server);
+    writeFileSync(
+      resolve(cwd, "fixture.html"),
+      `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/scorecard.js"></script>
+    <togostanza-scorecard
+      id="metastanza-scorecard"
+      data-url="http://127.0.0.1:${port}/fixtures/metastanza/scorecard.json"
+      data-type="json"
+      width="240"
+      height="90"
+      padding="12"
+      legend="true"
+    ></togostanza-scorecard>
+  </body>
+</html>
+`,
+      "utf8",
+    );
+
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => customElements.get("togostanza-scorecard"));
+    await expect
+      .poll(() => readShadowText(page, "#metastanza-scorecard", "#key"))
+      .toBe("compatibility_score");
+    await expect.poll(() => readShadowText(page, "#metastanza-scorecard", "#value")).toBe("42");
+    await expect
+      .poll(() =>
+        page.locator("#metastanza-scorecard").evaluate((element) => {
+          const wrapper = element.shadowRoot?.querySelector<HTMLElement>(".chart-wrapper");
+          const value = element.shadowRoot?.querySelector<HTMLElement>("#value");
+
+          return wrapper && value
+            ? {
+                height: getComputedStyle(wrapper).height,
+                valueColor: getComputedStyle(value).fill,
+              }
+            : undefined;
+        }),
+      )
+      .toEqual({
+        height: "90px",
+        valueColor: "rgb(78, 80, 89)",
+      });
+
+    expect(consoleErrors).toEqual([]);
+    expect(failedRequests).toEqual([]);
+    expect(pageErrors).toEqual([]);
+    expect(requestLog).toContain("/fixtures/metastanza/scorecard.json");
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("directly embeds a real TogoMedium Stanza with visible Shadow DOM styling @compat-local", async ({
   page,
 }) => {
   test.setTimeout(120_000);
@@ -966,7 +1045,9 @@ test("renders a Vue SFC Stanza from repository dependencies", async ({ page }) =
   }
 });
 
-test("runs the real togostanza-utils package against the remake runtime", async ({ page }) => {
+test("runs the real togostanza-utils package against the remake runtime @compat-local", async ({
+  page,
+}) => {
   test.setTimeout(25_000);
 
   const cwd = makeTemporaryDirectory();
@@ -1915,6 +1996,27 @@ function symlinkNodePackageFromTogoMediumReference(cwd: string, packageName: str
     resolve(repositoryRoot, "references", "togomedium-web", "node_modules", packageName),
     destination,
     "dir",
+  );
+}
+
+function writeMetastanzaScorecardRegressionRepo(cwd: string): void {
+  const referenceRoot = resolve(repositoryRoot, "references", "metastanza");
+  const stanzasDirectory = resolve(cwd, "stanzas");
+  mkdirSync(stanzasDirectory, { recursive: true });
+
+  symlinkSync(resolve(referenceRoot, "package.json"), resolve(cwd, "package.json"));
+  symlinkSync(resolve(referenceRoot, "node_modules"), resolve(cwd, "node_modules"), "dir");
+  symlinkSync(resolve(referenceRoot, "common.scss"), resolve(cwd, "common.scss"));
+  symlinkSync(
+    resolve(referenceRoot, "stanzas", "scorecard"),
+    resolve(stanzasDirectory, "scorecard"),
+    "dir",
+  );
+  mkdirSync(resolve(cwd, "fixtures", "metastanza"), { recursive: true });
+  writeFileSync(
+    resolve(cwd, "fixtures", "metastanza", "scorecard.json"),
+    `${JSON.stringify({ compatibility_score: 42 }, null, 2)}\n`,
+    "utf8",
   );
 }
 
