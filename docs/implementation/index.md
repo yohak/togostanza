@@ -17,6 +17,7 @@
 | Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-4/plan.md)、[引き継ぎ](./phase-4/handoff.md) |
 | Phase 5: readiness inventory | Phase 0からPhase 4までの成果物、残課題、未固定事項を棚卸しし、Phase 6以降へ再編する。 | 棚卸し表、Phase 6以降の再編案 | [設計](./phase-5/plan.md)、[棚卸し](./phase-5/inventory.md)、[引き継ぎ](./phase-5/handoff.md) |
 | Phase 6: workbench executability | workbenchの検証ケースを、repo-local CLIで再現できる入力として整える。 | workbench `remake/generated-repo`、repo-local CLI scripts | [設計](./phase-6/plan.md)、[引き継ぎ](./phase-6/handoff.md) |
+| Phase 7: package runtime readiness | リメイク版パッケージのsubpath export、型解決、dependency分類を整える。 | package automated test、型解決確認 | [設計](./phase-7/plan.md) |
 | Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
 ## Phase 0: skeleton
@@ -197,6 +198,39 @@ Phase 6はdistribution準備ではない。ローカルtarballを作ってinstal
 - TogoMedium Webアプリ本体E2E。
 
 Phase 6の設計は [Phase 6: workbench executability 設計](./phase-6/plan.md) に置く。完了後は、Phase 7へ進む前にPhase 6 handoffを作る。
+
+## Phase 7: package runtime readiness
+
+ゴールは、Stanza開発者から見た開発契約として、リメイク版パッケージのsubpath export、型解決、dependency分類を整えることである。
+
+Phase 7はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase Xへ送る。Phase 7では、本リポジトリ内で確認できるリメイク版パッケージ内部面を扱う。
+
+含める範囲:
+
+- `togostanza/stanza` の `./stanza` subpath export。
+- `togostanza/stanza` をStanza base classの公開用wrapperに絞り、内部ランタイムAPIを公開しないこと。
+- 既存の `togostanza/config` subpath exportの維持。
+- `exports` が指す `dist` ファイルの実在確認。
+- Stanza開発者から見た開発契約としての `togostanza/stanza` と `togostanza/config` の型解決確認。
+- package側integration testでの一時的なstanzaリポジトリ風入力による `tsc --noEmit` 確認。
+- 型解決確認用の `tsconfig.json` では、`exports` subpathを読む `moduleResolution` を明示すること。
+- build実行時dependencyと開発・検証用dependencyの分類。
+- `private: true` を維持する判断の明記。
+
+含めない範囲:
+
+- pack install smoke。
+- tarball生成。
+- `npm exec togostanza@latest` / `pnpm dlx togostanza@latest` の実解決。
+- npm公開metadataの整理。
+- `private`解除。
+- `files` の最終整理。
+- root export、`main`、top-level `types`。
+- GitHub Actions live deploy。
+- 検証領域への新しい検証ケース追加。
+- 既存stanzaリポジトリの `moduleResolution: "node"` からの移行案内や未解決時診断。
+
+Phase 7の設計は [Phase 7: package runtime readiness 設計](./phase-7/plan.md) に置く。完了後は、Phase 8へ進む前にPhase 7 handoffを作る。
 
 ## Phase X: distribution
 
