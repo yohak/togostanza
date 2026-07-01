@@ -85,6 +85,8 @@ Phase 8では、旧設定に書かれていたaliasやplugin設定を `togostanz
 
 Phase 8では、metadata validationをリメイク版独自に強めない。現行版で通るmetadataは通し、現行版で落ちるmetadataは同等に落としてよい、という方針にする。
 
+ただし、既にリメイク版仕様や過去フェーズで固定済みの最小validationは、現行版観測より優先する。`metadata.json` がvalid JSON objectであること、`@id` がstringであること、`@id` とstanzaディレクトリ名が一致すること、`togostanza-{id}` がvalid custom element名になることは、Phase 8で再オープンしない。
+
 ただし、リメイク版では失敗時に対象ファイルやstanza IDが分かる診断を出せる場合は改善してよい。これは現行版より広いschemaを要求することではなく、既に失敗する入力の原因を分かりやすくするための局所診断改善である。
 
 現行版で未観測のmetadata異常系は、推測でリメイク版仕様にしない。必要なものは `013-metadata-validation` で現行版を観測してから扱う。
@@ -92,7 +94,11 @@ Phase 8では、metadata validationをリメイク版独自に強めない。現
 Phase 8で観測候補にするmetadata異常系:
 
 - 壊れたJSONの `metadata.json`。
+- `metadata.json` がJSON objectでない。
+- `@id` 欠落。
+- `@id` がstringでない。
 - `metadata["@id"]` とstanzaディレクトリ名の不一致。
+- `togostanza-{id}` がvalid custom element名にならない `@id`。
 - `stanza:parameter` 欠落。
 - `stanza:parameter` が配列でない。
 - parameter項目の `stanza:key` 欠落。

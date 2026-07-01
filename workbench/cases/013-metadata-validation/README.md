@@ -7,12 +7,14 @@
 - metadata validationをリメイク版独自に強めない。
 - 現行版で通るmetadataはリメイク版でも通す。
 - 現行版で落ちるmetadataは、リメイク版でも同等に落としてよい。
+- ただし、既にリメイク版仕様で固定済みの最小validationは現行版観測より優先する。
 - リメイク版で失敗させる場合は、対象stanza IDまたはfile pathが分かる診断にできるか確認する。
 - 現行版で未観測のmetadata異常系を、推測でリメイク版仕様にしない。
 
 ## 対応する方針
 
 - `metadata["@id"]` とstanzaディレクトリ名は一致必須とする。
+- `metadata.json` はvalid JSON objectであり、`@id` はstringであり、`togostanza-{id}` がvalid custom element名になる必要がある。
 - 詳細なメタデータschemaとvalidation規則は、リメイク版仕様では固定しない。
 - `stanza:parameter`、`stanza:style`、`stanza:menu-placement` はランタイムと生成物に影響するが、Phase 8では現行版挙動に合わせる。
 - 広範なschema validationではなく、現行版で失敗する入力の観測と、リメイク版の診断改善を扱う。
@@ -33,7 +35,31 @@ generated-repo/
       style.scss
       templates/
         stanza.html.hbs
+    metadata-not-object/
+      metadata.json
+      index.js
+      style.scss
+      templates/
+        stanza.html.hbs
+    missing-id/
+      metadata.json
+      index.js
+      style.scss
+      templates/
+        stanza.html.hbs
+    id-not-string/
+      metadata.json
+      index.js
+      style.scss
+      templates/
+        stanza.html.hbs
     id-mismatch/
+      metadata.json
+      index.js
+      style.scss
+      templates/
+        stanza.html.hbs
+    invalid-custom-element-id/
       metadata.json
       index.js
       style.scss
@@ -76,7 +102,11 @@ generated-repo/
 ## 現行版で観測すること
 
 - 壊れたJSONの `metadata.json` がbuild時にどう失敗するか。
+- `metadata.json` がJSON objectでない場合にどう失敗するか。
+- `@id` が欠落した場合にどう失敗するか。
+- `@id` がstringでない場合にどう失敗するか。
 - `metadata["@id"]` とstanzaディレクトリ名が異なる場合に、build生成物やランタイムがどう振る舞うか。
+- `togostanza-{id}` がvalid custom element名にならない `@id` の場合にどう失敗するか。
 - `stanza:parameter` が欠落した場合に、build時、ヘルプページ生成時、ランタイム時のどこで失敗するか。
 - `stanza:parameter` が配列でない場合に、どこで失敗するか。
 - parameter項目の `stanza:key` が欠落した場合に、buildまたはランタイムがどう振る舞うか。
@@ -89,7 +119,7 @@ generated-repo/
 - 現行版で通ったmetadata異常系を、リメイク版独自の厳格化で失敗させていないこと。
 - 現行版で失敗したmetadata異常系は、リメイク版でも失敗してよいこと。
 - リメイク版で失敗する場合、可能な範囲で `metadata.json` のpathやstanza IDが診断に含まれること。
-- `@id` 不一致は、既に仕様判断済みの想定外入力として分かりやすく失敗すること。
+- valid JSON object、`@id` string、`@id` 不一致、valid custom element名の最小validationは、既に仕様判断済みの想定外入力として分かりやすく失敗すること。
 - `stanza:type` 未知値など、現行版が許容する挙動はリメイク版でも壊さないこと。
 
 ## 合格条件
@@ -97,7 +127,7 @@ generated-repo/
 - 現行版観測結果とリメイク版観測結果がREADMEに分けて記録されている。
 - リメイク版が現行版より広いmetadata schemaを要求する場合は、理由と人間判断が記録されている。
 - リメイク版が現行版より緩くする場合は、影響範囲が記録されている。
-- `@id` 不一致のように既にリメイク版仕様で決めたものは、その仕様に従っている。
+- valid JSON object、`@id` string、`@id` 不一致、valid custom element名のように既にリメイク版仕様で決めたものは、その仕様に従っている。
 - 未観測のedgeを、リメイク版仕様として固定していない。
 
 ## 記録する差分
