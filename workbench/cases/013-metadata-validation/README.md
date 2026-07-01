@@ -131,7 +131,8 @@ pnpm run build:local
 
 ## 合格条件
 
-- 現行版観測結果とリメイク版観測結果がREADMEに分けて記録されている。ただし、固定済み最小validationだけを扱う場合、現行版観測は差分説明用でありPhase 8完了条件ではない。
+- spec-fixedな最小validation scenarioは、リメイク版観測結果と、現行版観測を要しない理由がREADMEに記録されている。
+- parameter / style系の現行版観測はPhase 11で扱う。013全体としては継続するが、Phase 8では未完了扱いにしない。
 - リメイク版が現行版より広いmetadata schemaを要求する場合は、理由と人間判断が記録されている。
 - リメイク版が現行版より緩くする場合は、影響範囲が記録されている。
 - valid JSON object、`@id` string、`@id` 不一致、Stanza ID規則のように既にリメイク版仕様で決めたものは、その仕様に従っている。
