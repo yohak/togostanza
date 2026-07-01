@@ -37,6 +37,77 @@
 - 仕様で再設計または破棄した挙動は、差分、理由、移行メモが記録されている。
 - 失敗が残る場合は、仕様違反、未実装、実プロジェクト側の移行対象、未固定事項のどれかに分類されている。
 
+## リメイク版観測: 2026-07-01
+
+実行環境:
+
+- Node.js: `v24.5.0`
+- pnpm: `10.28.2`
+- references/metastanza: `4d4230d3`
+- references/togomedium-web: `79d8f21`
+
+確認手順:
+
+- `cd package && mise exec -- pnpm run build`
+- references配下は直接変更せず、一時ディレクトリへStanzaリポジトリroot相当のsymlinkを作成して確認した。
+- 一時ディレクトリでは、リメイク版のcompiled CLIを `node /Volumes/DATA/repositories/togostanza-remake/package/bin/togostanza.mjs build --output-path dist-remake` で実行した。
+
+### metastanza
+
+対象:
+
+- `references/metastanza/package.json`
+- `references/metastanza/stanzas`
+- `references/metastanza/common.scss`
+- `references/metastanza/node_modules`
+
+観測結果:
+
+- `barchart`、`hash-table`、`linechart`、`pagination-table`、`piechart`、`scatterplot`、`scorecard`、`scroll-table`、`text`、`tree` の全Stanzaで `build` が成功した。
+- `dist-remake/` には各Stanzaの `{id}.js`、`{id}.css`、`{id}.html`、`{id}/metadata.json` と、共有チャンク、package assetが生成された。
+- Vue SFC、`togostanza-utils`、`@/common.scss`、root / package assetの基本経路は、合成ケースで確認済みのPhase 4機能を使って解決された。
+
+差分と対応:
+
+- `pagination-table/style.scss` は `@import "./@vueform/slider/themes/default";` でpackage内Sassを参照する。Sassの通常解決ではこの相対pathがStanzaディレクトリ基準になり失敗したため、リメイク版では `./@scope/...` 形式のSass package style importをroot `node_modules/` へ解決する互換処理を追加した。
+- Sassから `@import` の非推奨警告が出る。これは現行ソース由来の警告であり、Phase 4ではビルド失敗にしない。
+- 上記回帰は、packageのunit testに最小fixtureとして切り出した。
+
+### TogoMedium Stanza
+
+対象:
+
+- `references/togomedium-web/@packages/stanza/package.json`
+- `references/togomedium-web/@packages/stanza/stanzas`
+- `references/togomedium-web/@packages/stanza/components`
+- `references/togomedium-web/@packages/stanza/styles`
+- `references/togomedium-web/@packages/stanza/utils`
+- `references/togomedium-web/@packages/stanza/tsconfig.json`
+- `references/togomedium-web/node_modules`
+
+一時設定:
+
+- `togostanza.config.ts` で `%stanza/*`、`%storybook/*`、`%core/*`、`%api/*` をreferences配下の実pathへ移した。
+- 一時rootでは、`d3`、`d3-drag`、`colord`、`sleep-promise` を `@packages/stanza/node_modules/` 側から解決するaliasを追加した。これは一時rootのnode_modules構成による確認用設定であり、Phase 4では自動吸収の契約にしない。
+
+観測結果:
+
+- `gmdb-component-detail`、`gmdb-find-media-by-components`、`gmdb-find-media-by-organism-phenotype`、`gmdb-find-media-by-taxonomic-tree`、`gmdb-gms-by-tid`、`gmdb-media-alignment-table-by-components`、`gmdb-media-alignment-table-by-strains`、`gmdb-medium-builder`、`gmdb-medium-detail`、`gmdb-meta-list`、`gmdb-roundtree`、`gmdb-similar-media-node`、`gmdb-stats-culturable-species`、`gmdb-strain-detail`、`gmdb-taxon-detail` の全Stanzaで `build` が成功した。
+- React / TSX、TogoMedium provider stack、MUI / Emotion関連chunk、共有チャンク、metadata、CSS、HTMLの生成まで確認した。
+- `TogoMediumReactStanza` はclass field initializerで `this.root.querySelector("main")` と `createRoot()` を実行する。従来のリメイク版runtimeでは、subclass field initializer実行時に `this.root` が未設定になるため、この構成は壊れる可能性があった。
+- リメイク版runtimeでは、Stanza subclassのconstructor / field initializerから `this.root` と `this.element` を参照できるようにした。この回帰はpackageのbrowser testに最小fixtureとして切り出した。
+
+差分と移行メモ:
+
+- 旧 `togostanza-build.js` / `.mjs` は自動実行しない。TogoMediumのaliasは、`togostanza.config.ts` の `vite.resolve.alias` へ移す。
+- `%stanza/*`、`%storybook/*`、`%core/*`、`%api/*` の自動解決はPhase 4の契約にしない。実プロジェクト側の移行設定で扱う。
+- 一時rootのdependency配置では、一部dependencyを `@packages/stanza/node_modules/` 側へ向けるaliasが必要だった。実プロジェクトの通常install済みworkspaceでの解決と、切り出しfixture上の解決は分けて扱う。
+
+未確認または後続判断:
+
+- TogoMediumの実ブラウザ表示、API通信、TanStack Query / Jotai / Reduxを含むprovider stack全体のE2EはPhase 4の対象外である。
+- Emotion / MUIについては、TogoMediumソースが `EmotionCacheProvider` でShadow DOM内へstyleを向ける構成を持つこと、およびbuildが通ることを確認した。実プロジェクトStanzaの視覚的なShadow DOM適用までは、この観測では完了扱いにしない。動かない構成や未検証構成を落とす判断が必要になった場合は、TogoMediumへの影響を整理して人間判断を受ける。
+
 ## 記録する差分
 
 - 対象リポジトリ、commit、package manager、Node.jsバージョン。

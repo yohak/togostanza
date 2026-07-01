@@ -706,6 +706,27 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "public", "-togostanza"))).toBe(false);
   });
 
+  it("builds Sass that imports scoped package styles through node_modules", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "packageStyleProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "node_modules", "@case", "slider", "themes"), { recursive: true });
+    writeFileSync(
+      join(cwd, "node_modules", "@case", "slider", "themes", "default.scss"),
+      ".package-style { color: rgb(3, 4, 5); }\n",
+      "utf8",
+    );
+    writeFileSync(
+      join(cwd, "stanzas", "package-style-probe", "style.scss"),
+      '@use "./@case/slider/themes/default";\n',
+      "utf8",
+    );
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(readText(join(cwd, "dist", "package-style-probe.css"))).toContain(".package-style");
+  });
+
   it("emits stanza and package asset imports separately from copied root assets", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "assetImportProbe"], { cwd, currentDate });

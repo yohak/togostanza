@@ -27,6 +27,7 @@ type MenuItem = {
 };
 
 const coordinationReadyMaxAttempts = 10;
+let pendingRuntimeContext: StanzaRuntimeContext | undefined;
 
 export type QueryInput = {
   endpoint: string;
@@ -62,6 +63,12 @@ export default class Stanza {
   #assetBaseUrl: URL | undefined;
   #requestRender: (() => Promise<void>) | undefined;
   #templates: Record<string, TemplateRenderer> = {};
+
+  constructor() {
+    if (pendingRuntimeContext) {
+      this[initializeRuntime](pendingRuntimeContext);
+    }
+  }
 
   [initializeRuntime](context: StanzaRuntimeContext): void {
     this.#assetBaseUrl = context.assetBaseUrl;
@@ -176,15 +183,17 @@ export function registerStanza(registration: StanzaRegistration): void {
       this.#menuShell = createMenuShell(registration.aboutUrl);
       root.append(this.#menuShell);
 
-      this.stanzaInstance = new registration.StanzaClass();
-      this.stanzaInstance[initializeRuntime]({
+      const context = {
         assetBaseUrl: registration.assetBaseUrl,
         element: this,
         metadata: registration.metadata,
         requestRender: () => this.#renderStanzaWithReport(),
         root,
         templates: registration.templates,
-      });
+      };
+
+      this.stanzaInstance = createStanzaInstance(registration.StanzaClass, context);
+      this.stanzaInstance[initializeRuntime](context);
     }
 
     connectedCallback(): void {
@@ -239,6 +248,19 @@ export function registerStanza(registration: StanzaRegistration): void {
   }
 
   customElements.define(registration.tagName, TogoStanzaElement);
+}
+
+function createStanzaInstance(
+  StanzaClass: StanzaConstructor,
+  context: StanzaRuntimeContext,
+): Stanza {
+  pendingRuntimeContext = context;
+
+  try {
+    return new StanzaClass();
+  } finally {
+    pendingRuntimeContext = undefined;
+  }
 }
 
 function registerCoordinationElements(): void {

@@ -182,6 +182,59 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
   }
 });
 
+test("provides runtime fields before derived Stanza field initializers run", async ({ page }) => {
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  await runCli(["generate", "stanza", "fieldRuntimeProbe", "--timestamp", "2026-06-30"], cwd);
+  writeFileSync(
+    resolve(cwd, "stanzas", "field-runtime-probe", "index.js"),
+    [
+      'import Stanza from "togostanza/stanza";',
+      "",
+      "export default class FieldRuntimeProbe extends Stanza {",
+      '  main = this.root.querySelector("main");',
+      "  hostTagName = this.element.tagName;",
+      "",
+      "  render() {",
+      "    this.main.textContent = `${this.hostTagName}:${this.root.host === this.element}`;",
+      "  }",
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  await runCli(["build", "--output-path", "public"], cwd);
+  writeFileSync(
+    resolve(cwd, "fixture.html"),
+    `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/field-runtime-probe.js"></script>
+    <togostanza-field-runtime-probe id="field-runtime"></togostanza-field-runtime-probe>
+  </body>
+</html>
+`,
+    "utf8",
+  );
+  const server = await startStaticServer(cwd, []);
+
+  try {
+    const port = addressPort(server);
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`);
+    await page.waitForFunction(() => customElements.get("togostanza-field-runtime-probe"));
+
+    await expect
+      .poll(() =>
+        page.locator("#field-runtime").evaluate((element) => {
+          return element.shadowRoot?.querySelector("main")?.textContent ?? "";
+        }),
+      )
+      .toBe("TOGOSTANZA-FIELD-RUNTIME-PROBE:true");
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("maps runtime parameters in built Stanza custom elements", async ({ page }) => {
   const cwd = makeTemporaryDirectory();
   await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);

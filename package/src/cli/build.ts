@@ -11,11 +11,11 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import vue from "@vitejs/plugin-vue";
 import Handlebars from "handlebars";
-import { compile, type FileImporter } from "sass";
+import { compileString, type Importer } from "sass";
 import { build as viteBuild, mergeConfig, type InlineConfig, type Plugin } from "vite";
 import { loadTogoStanzaBuildConfig } from "./build-config.js";
 import { getStringOption, parseOptions } from "./options.js";
@@ -574,11 +574,15 @@ function buildStyles(
     }
 
     try {
-      const result = compile(stylePath, {
-        importers: [createRootAliasImporter(rootDirectory)],
-        sourceMap: true,
-        sourceMapIncludeSources: true,
-      });
+      const result = compileString(
+        preprocessSassSource(readFileSync(stylePath, "utf8"), rootDirectory),
+        {
+          importers: [createSassImporter(rootDirectory)],
+          sourceMap: true,
+          sourceMapIncludeSources: true,
+          url: pathToFileURL(stylePath),
+        },
+      );
       const css = rewriteStanzaAssetUrls(result.css, stanza.id);
 
       writeFileSync(cssPath, formatGeneratedCss([viteCss, css], `${stanza.id}.css.map`), "utf8");
@@ -597,6 +601,16 @@ function rewriteStanzaAssetUrls(css: string, stanzaId: string): string {
     /url\(\s*(["']?)(\.\/assets\/|assets\/)([^"')\s]+)\1\s*\)/g,
     (_match, quote: string, _prefix: string, assetPath: string) =>
       `url(${quote}./${stanzaId}/assets/${assetPath}${quote})`,
+  );
+}
+
+function preprocessSassSource(source: string, rootDirectory: string): string {
+  return source.replace(
+    /(@(?:import|use|forward)\s+)(["'])\.\/(@[^"']+)\2/g,
+    (_match, directive: string, quote: string, packagePath: string) => {
+      const resolvedPath = join(rootDirectory, "node_modules", packagePath);
+      return `${directive}${quote}${resolvedPath}${quote}`;
+    },
   );
 }
 
@@ -691,16 +705,47 @@ function copyDirectoryContents(sourceDirectory: string, destinationDirectory: st
   }
 }
 
-function createRootAliasImporter(rootDirectory: string): FileImporter<"sync"> {
+function createSassImporter(rootDirectory: string): Importer<"sync"> {
   return {
-    findFileUrl(url) {
-      if (!url.startsWith("@/")) {
+    canonicalize(url) {
+      if (url.startsWith("@/")) {
+        return pathToFileURL(resolveSassImportPath(join(rootDirectory, url.slice(2))));
+      }
+
+      if (url.startsWith("./@")) {
+        return pathToFileURL(
+          resolveSassImportPath(join(rootDirectory, "node_modules", url.slice(2))),
+        );
+      }
+
+      return null;
+    },
+    load(canonicalUrl) {
+      if (canonicalUrl.protocol !== "file:") {
         return null;
       }
 
-      return pathToFileURL(join(rootDirectory, url.slice(2)));
+      return {
+        contents: readFileSync(fileURLToPath(canonicalUrl), "utf8"),
+        sourceMapUrl: canonicalUrl,
+        syntax: "scss",
+      };
     },
   };
+}
+
+function resolveSassImportPath(pathWithoutExtension: string): string {
+  const candidates = [
+    pathWithoutExtension,
+    `${pathWithoutExtension}.scss`,
+    `${pathWithoutExtension}.sass`,
+    `${pathWithoutExtension}.css`,
+    join(dirname(pathWithoutExtension), `_${basename(pathWithoutExtension)}.scss`),
+    join(dirname(pathWithoutExtension), `_${basename(pathWithoutExtension)}.sass`),
+    join(dirname(pathWithoutExtension), `_${basename(pathWithoutExtension)}.css`),
+  ];
+
+  return candidates.find((candidate) => existsSync(candidate)) ?? pathWithoutExtension;
 }
 
 function runtimeStubPath(): string {
