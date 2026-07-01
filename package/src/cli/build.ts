@@ -462,7 +462,8 @@ async function buildEntrypoints(
     resolve: {
       alias: {
         "handlebars/runtime.js": handlebarsRuntimePath(),
-        "togostanza/stanza": runtimeStubPath(),
+        "togostanza/internal/runtime": internalRuntimePath(),
+        "togostanza/stanza": publicStanzaPath(),
       },
     },
     root: rootDirectory,
@@ -533,7 +534,7 @@ function formatEntrypointWrapper(stanza: StanzaDefinition): string {
 
   return [
     'import Handlebars from "handlebars/runtime.js";',
-    'import { registerStanza } from "togostanza/stanza";',
+    'import { registerStanza } from "togostanza/internal/runtime";',
     `import StanzaClass from ${JSON.stringify(importPath)};`,
     "",
     `const metadata = ${JSON.stringify(stanza.metadata, null, 2)};`,
@@ -747,7 +748,17 @@ function resolveSassImportPath(pathWithoutExtension: string): string {
   return candidates.find((candidate) => existsSync(candidate)) ?? pathWithoutExtension;
 }
 
-function runtimeStubPath(): string {
+function publicStanzaPath(): string {
+  const sourcePath = fileURLToPath(new URL("../stanza.ts", import.meta.url));
+
+  if (existsSync(sourcePath)) {
+    return sourcePath;
+  }
+
+  return fileURLToPath(new URL("../stanza.js", import.meta.url));
+}
+
+function internalRuntimePath(): string {
   const sourcePath = fileURLToPath(new URL("../runtime/stanza.ts", import.meta.url));
 
   if (existsSync(sourcePath)) {

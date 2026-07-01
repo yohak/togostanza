@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import {
   existsSync,
   mkdirSync,
@@ -6,6 +6,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createServer, type Server } from "node:http";
@@ -74,6 +75,97 @@ describe("CLI smoke", () => {
     expect(result.code).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toContain("Usage: togostanza [command]");
+  });
+
+  it("keeps package subpath exports aligned with built files", () => {
+    const manifest = readJson(resolve(packageRoot, "package.json")) as {
+      exports: Record<string, Record<string, string>>;
+    };
+
+    expectExportTarget(manifest, "./config", "types", "./dist/config.d.ts");
+    expectExportTarget(manifest, "./config", "import", "./dist/config.js");
+    expectExportTarget(manifest, "./stanza", "types", "./dist/stanza.d.ts");
+    expectExportTarget(manifest, "./stanza", "import", "./dist/stanza.js");
+
+    const stanzaDeclaration = readFileSync(resolve(packageRoot, "dist/stanza.d.ts"), "utf8");
+    expect(stanzaDeclaration).not.toContain("registerStanza");
+    expect(stanzaDeclaration).not.toContain("createStanzaParams");
+  });
+
+  it("resolves Stanza developer imports through package subpath exports", () => {
+    const cwd = makeTemporaryDirectory();
+    mkdirSync(resolve(cwd, "node_modules"), { recursive: true });
+    symlinkSync(packageRoot, resolve(cwd, "node_modules", "togostanza"), "dir");
+    writeFileSync(
+      resolve(cwd, "package.json"),
+      `${JSON.stringify(
+        {
+          dependencies: {
+            togostanza: "link:./node_modules/togostanza",
+          },
+          name: "stanza-type-probe",
+          type: "module",
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+    writeFileSync(
+      resolve(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            lib: ["ES2024", "DOM"],
+            module: "ESNext",
+            moduleResolution: "bundler",
+            noEmit: true,
+            strict: true,
+            target: "ES2024",
+          },
+          include: ["index.ts"],
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+    writeFileSync(
+      resolve(cwd, "index.ts"),
+      [
+        'import { defineTogoStanzaConfig } from "togostanza/config";',
+        'import Stanza from "togostanza/stanza";',
+        "",
+        "class Probe extends Stanza {",
+        "  render(): void {",
+        '    this.root.querySelector("main");',
+        "    this.params.label;",
+        "  }",
+        "}",
+        "",
+        "void Probe;",
+        "defineTogoStanzaConfig({",
+        "  vite: {",
+        "    define: {",
+        "      __PROBE__: JSON.stringify(true),",
+        "    },",
+        "  },",
+        "});",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+
+    execFileSync(
+      process.execPath,
+      [
+        resolve(packageRoot, "node_modules", "typescript", "bin", "tsc"),
+        "--noEmit",
+        "--project",
+        cwd,
+      ],
+      { cwd },
+    );
   });
 
   it("creates an init scaffold through the bin entry", async () => {
@@ -380,6 +472,18 @@ async function makeStanzaRepoRoot(): Promise<string> {
 
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8"));
+}
+
+function expectExportTarget(
+  manifest: { exports: Record<string, Record<string, string>> },
+  subpath: string,
+  condition: "import" | "types",
+  expectedPath: string,
+): void {
+  const actualPath = manifest.exports[subpath]?.[condition];
+
+  expect(actualPath).toBe(expectedPath);
+  expect(existsSync(resolve(packageRoot, expectedPath))).toBe(true);
 }
 
 type RunningCli = {
