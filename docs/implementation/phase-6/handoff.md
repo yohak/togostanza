@@ -15,6 +15,8 @@ Phase 6の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - 008のReact、009のVue、010の `togostanza-utils` は、workbench入力として必要なlocal dependencyを `package.json` に明示した。
 - 010は `references/togostanza-utils` をlocal linkとして使い、`d3`、`date-fns`、`csv-stringify` は `togostanza.config.ts` のVite aliasで `package/node_modules` へ向けた。
 - 各ケースREADMEに、Phase 6のリメイク版workbench入力、基本手順、repo-local scriptと利用者向けscriptの違いを追記した。
+- 003から010までの `serve:fixture` ブラウザ確認を再実行できる `workbench/scripts/verify-remake-fixtures.mjs` を追加した。
+- 010のfixture HTMLは、data URLとcustom CSS URLを相対URLで持つ形へ寄せた。`togostanza-utils/load-data` と `appendCustomCss()` は絶対URLを要求するため、Stanzaソース側でdocument基準の絶対URLへ正規化してから渡す。
 - 011はPhase 6では `remake/generated-repo/` を作らず、Phase 3のpackage automated testを確認入口として扱うことをREADMEに記録した。
 - 012はPhase 6では `remake/generated-repo/` を作らず、Phase 9の実プロジェクト回帰へ送ることをREADMEに記録した。
 - `workbench/cases/**/remake/generated-repo/pnpm-lock.yaml` は、Phase 6のコミット対象にしない生成物として `.gitignore` に追加した。
@@ -39,6 +41,7 @@ Phase 6の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - クリーンチェックアウトからworkbench入力を動かす基本手順は、`cd package && mise exec -- pnpm run build`、対象ケースで `pnpm install`、対象ケースで `pnpm run build:local` の順である。
 - `dependencies.togostanza` は `link:../../../../../package` としているが、これはpack install確認ではない。
 - 001から010の `build:local` は通っている。007では旧 `togostanza-build.mjs` / `.js` 検出警告が出るが、旧設定を自動実行しないことを確認するための期待差分である。
+- 003から010の `serve:fixture` は、`workbench/scripts/verify-remake-fixtures.mjs` でbuild、fixture server起動、Chromium確認まで通っている。
 - 010は `references/togostanza-utils` と `package/node_modules` に依存する。これはローカルworkbench確認用であり、公開packageのdependency分類や配布時の再現性を保証しない。
 - 011のserve挙動は、watcher、HTTP server、一時ディレクトリcleanupを含むため、Phase 6時点ではpackage automated testを正本の確認入口とする。
 - 012の実プロジェクト回帰は、Phase 9で改めてローカル再現手順と対象範囲を整理する。
@@ -57,6 +60,7 @@ Phase 6の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - `cd package && mise exec -- pnpm run check-all` を承認付き通常実行で確認し、format、lint、type-check、build、unit test、integration test、browser testが通った。
 - browser testは13件が通った。
 - 001から010までの `remake/generated-repo` で `pnpm run build:local` を実行し、すべて通った。
+- `node workbench/scripts/verify-remake-fixtures.mjs` を承認付き通常実行で確認し、003から010までの `serve:fixture` とChromium確認が通った。
 
 ## 関連文書
 
