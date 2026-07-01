@@ -45,4 +45,3 @@ Phase 9では、`references/` に依存する実プロジェクト確認を、de
 ## 次の候補
 
 Phase 10へ進む前に、Phase 9のレビューで `test:compat:local` の粒度と、Phase 11へ送ったbrowser smoke範囲が妥当か確認する。
-
