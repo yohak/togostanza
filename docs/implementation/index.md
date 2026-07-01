@@ -245,7 +245,7 @@ Phase 8では、`tsconfig.json` の `compilerOptions.paths` を自動でVite ali
 - TogoMedium固有aliasの手動移行案内。
 - `moduleResolution: "bundler"` を推奨する理由の記録。
 - 旧 `togostanza-build.js` / `togostanza-build.mjs` から `togostanza.config.ts` への移行方針。
-- metadata異常系の現行版観測。
+- metadata異常系の観測。固定済み最小validationについては、現行版観測は差分説明用でありPhase 8完了条件にしない。
 - `013-metadata-validation` 検証ケース。
 - 必要に応じた局所的なbuild診断改善。
 

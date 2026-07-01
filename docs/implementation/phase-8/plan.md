@@ -19,7 +19,8 @@ Phase 8は、Stanzaソースとbuild設定の移行可能性を整えるフェ�
 - 手動移行ドキュメントに、TogoMediumの `%stanza/*`、`%core/*`、`%api/*` などのaliasを `vite.resolve.alias` へ移す例がある。
 - 手動移行ドキュメントに、`moduleResolution: "bundler"` を推奨する理由と、既存の `moduleResolution: "node"` の限界を記録している。
 - 旧 `togostanza-build.js` / `togostanza-build.mjs` は自動実行せず、`togostanza.config.ts` へ移す方針を手動移行ドキュメントへ記録している。
-- `013-metadata-validation` 検証ケースを追加し、現行版で観測するmetadata異常系の最小セットを定義している。
+- `013-metadata-validation` 検証ケースを追加し、metadata異常系の最小セットを定義している。
+- 固定済み最小validationについては、現行版観測は差分説明用であり、Phase 8完了条件ではないことを明記している。
 - metadata validationは現行版挙動に合わせ、未観測edgeをリメイク版独自判断で固定しないことを明記している。
 - Phase 8で追加または更新する検証入力の `tsconfig.json` は、必要に応じて `moduleResolution: "bundler"` を明示している。
 - `docs/implementation/index.md` と `workbench/cases/README.md` からPhase 8と013ケースを参照できる。
@@ -85,7 +86,7 @@ Phase 8では、旧設定に書かれていたaliasやplugin設定を `togostanz
 
 Phase 8では、metadata validationをリメイク版独自に強めない。現行版で通るmetadataは通し、現行版で落ちるmetadataは同等に落としてよい、という方針にする。
 
-ただし、既にリメイク版仕様や過去フェーズで固定済みの最小validationは、現行版観測より優先する。`metadata.json` がvalid JSON objectであること、`@id` がstringであること、`@id` とstanzaディレクトリ名が一致すること、`togostanza-{id}` がvalid custom element名になることは、Phase 8で再オープンしない。
+ただし、既にリメイク版仕様や過去フェーズで固定済みの最小validationは、現行版観測より優先する。`metadata.json` がvalid JSON objectであること、`@id` がstringであること、`@id` とstanzaディレクトリ名が一致すること、`@id` がStanza ID規則に従うことは、Phase 8で再オープンしない。
 
 ただし、リメイク版では失敗時に対象ファイルやstanza IDが分かる診断を出せる場合は改善してよい。これは現行版より広いschemaを要求することではなく、既に失敗する入力の原因を分かりやすくするための局所診断改善である。
 
@@ -98,7 +99,7 @@ Phase 8で観測候補にするmetadata異常系:
 - `@id` 欠落。
 - `@id` がstringでない。
 - `metadata["@id"]` とstanzaディレクトリ名の不一致。
-- `togostanza-{id}` がvalid custom element名にならない `@id`。
+- Stanza ID規則に従わない `@id`。
 - `stanza:parameter` 欠落。
 - `stanza:parameter` が配列でない。
 - parameter項目の `stanza:key` 欠落。

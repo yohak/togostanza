@@ -90,7 +90,7 @@ lockfileは、使用するパッケージマネージャーの依存解決結果
 
 `init` は、標準scaffoldにGitHub Pages公開用のGitHub Actions workflowを含める。workflowは、Stanza開発者が生成直後のリポジトリをGitHub Pagesへ公開できる導線として扱う。workflow生成は `--skip-install` やgit初期化の有無とは独立して扱う。
 
-stanzaは `stanzas/{id}/metadata.json` によって検出する。`metadata.json` の `@id` とstanzaディレクトリ名 `{id}` は一致必須とする。不一致は想定外入力として扱い、ビルド時または検出時に分かりやすいエラーにする。
+stanzaは `stanzas/{id}/metadata.json` によって検出する。`metadata.json` の `@id` とstanzaディレクトリ名 `{id}` は一致必須とし、`@id` は `generate stanza` と同じStanza ID規則に従う。不一致や不正なStanza IDは想定外入力として扱い、ビルド時または検出時に分かりやすいエラーにする。
 
 Stanza entrypointは `index.js`、`index.ts`、`index.tsx` を受け付ける。複数存在する場合の優先順は `index.tsx`、`index.ts`、`index.js` とする。
 

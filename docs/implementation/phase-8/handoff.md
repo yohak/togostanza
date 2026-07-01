@@ -24,7 +24,7 @@ Phase 8の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - 手動移行ガイドは、Phase 8の成果物として維持する。
 - metadata validationは、リメイク版独自に広げない。
 - ただし、既にリメイク版仕様や過去フェーズで固定済みの最小validationは、現行版観測より優先する。
-- `metadata.json` がvalid JSON objectであること、`@id` がstringであること、`@id` とstanzaディレクトリ名が一致すること、`togostanza-{id}` がvalid custom element名になることは、再オープンしない。
+- `metadata.json` がvalid JSON objectであること、`@id` がstringであること、`@id` とstanzaディレクトリ名が一致すること、`@id` がStanza ID規則に従うことは、再オープンしない。
 
 ## 013で実体化したscenario
 
@@ -37,11 +37,11 @@ current / remakeの両方に、次のscenario入力を置いた。
 | `missing-id` | `@id` 欠落 |
 | `id-not-string` | `@id` がstringでない |
 | `id-mismatch` | `@id` とstanzaディレクトリ名の不一致 |
-| `invalid-custom-element-id` | `togostanza-{id}` がvalid custom element名にならない `@id` |
+| `invalid-stanza-id` | Stanza ID規則に従わない `@id` |
 
 リメイク版では、各scenarioの `remake/scenarios/<scenario>/generated-repo/` で `pnpm run build:local` を実行し、すべてexit `1` で失敗することを確認した。
 
-現行版用の `current-pnpm/scenarios/` には入力だけを置いた。Phase 8では現行版CLIでの実行結果は未観測である。これは、上記6項目が既にリメイク版仕様で固定済みの最小validationであり、現行版観測によって覆す対象ではないためである。
+現行版用の `current-pnpm/scenarios/` には入力だけを置いた。Phase 8では現行版CLIでの実行結果は未観測である。これは、上記6項目が既にリメイク版仕様で固定済みの最小validationであり、現行版観測によって覆す対象ではないためである。固定済み最小validationだけを扱う場合、現行版観測は差分説明用であり、Phase 8完了条件ではない。
 
 ## 意図的に残したこと
 
