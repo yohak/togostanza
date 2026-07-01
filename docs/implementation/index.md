@@ -19,6 +19,7 @@
 | Phase 6: workbench executability | workbenchの検証ケースを、repo-local CLIで再現できる入力として整える。 | workbench `remake/generated-repo`、repo-local CLI scripts | [設計](./phase-6/plan.md)、[引き継ぎ](./phase-6/handoff.md) |
 | Phase 7: package runtime readiness | リメイク版パッケージのsubpath export、型解決、dependency分類を整える。 | package automated test、型解決確認 | [設計](./phase-7/plan.md)、[引き継ぎ](./phase-7/handoff.md) |
 | Phase 8: source and config readiness | 既存stanzaリポジトリのsource / config移行とmetadata異常系の扱いを整理する。 | 移行ガイド、[013](../../workbench/cases/013-metadata-validation/) | [設計](./phase-8/plan.md)、[引き継ぎ](./phase-8/handoff.md) |
+| Phase 9: local compatibility baseline | 実プロジェクト群のローカル再現手順、全Stanza build check、代表Stanza browser smokeを整える。 | [012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-9/plan.md) |
 | Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
 ## Phase 0: skeleton
@@ -261,6 +262,37 @@ Phase 8では、`tsconfig.json` の `compilerOptions.paths` を自動でVite ali
 - pack install smoke。
 
 Phase 8の設計は [Phase 8: source and config readiness 設計](./phase-8/plan.md) に置く。Stanza開発者向けの移行案内は [source / config移行ガイド](../guides/source-config-migration.md) に置く。metadata異常系の観測は [013 metadata validation](../../workbench/cases/013-metadata-validation/) で扱う。完了後の状態とPhase 9以降への引き継ぎは [Phase 8: source and config readiness 引き継ぎ](./phase-8/handoff.md) に置く。
+
+## Phase 9: local compatibility baseline
+
+ゴールは、**実プロジェクト群**を使ったローカルcompatibility確認を、後続フェーズへ再利用できるbaselineとして整えることである。
+
+Phase 9では、`references/` 配下のローカルリファレンスを使い、metastanzaとTogoMedium Stanzaの全Stanza build check、代表Stanza browser smoke、React / Vue検証済みversionの記録を行う。CI化、配布検証、全Stanza browser smoke、TogoMedium Webアプリ本体E2Eは扱わない。
+
+含める範囲:
+
+- `references/metastanza`、`references/togomedium-web`、`references/togostanza-utils` のローカル再現手順。
+- referencesが存在しない、または依存が未インストールの場合の前提条件記録。
+- referencesを直接変更しない一時rootまたはcopy / symlinkによる確認手順。
+- metastanza全10 Stanzaのbuild check。
+- TogoMedium Stanza全15 Stanzaのbuild check。
+- 代表Stanza browser smoke。
+- React / Vue / Emotion / MUI / `togostanza-utils` の検証済みversion記録。
+- 012 READMEへのPhase 9観測結果追記。
+
+含めない範囲:
+
+- `references/` のCI化。
+- `references/` の自動取得、更新、submodule化。
+- pack install smoke。
+- npm package公開面の最終整理。
+- 全Stanza browser smoke。
+- TogoMedium Webアプリ本体E2E。
+- React / Vueの広いversion matrix。
+- TogoMedium固有aliasの自動吸収。
+- `tsconfig paths` の自動解決。
+
+Phase 9の設計は [Phase 9: local compatibility baseline 設計](./phase-9/plan.md) に置く。実プロジェクト回帰の観測は [012 Real project regression](../../workbench/cases/012-real-project-regression/) で扱う。完了後は、Phase 10へ進む前にPhase 9 handoffを作る。
 
 ## Phase X: distribution
 
