@@ -158,6 +158,11 @@ describe("CLI router", () => {
       packageManager?: string;
       scripts: Record<string, string>;
     };
+    const tsConfig = readJson(join(cwd, "generated-repo", "tsconfig.json")) as {
+      compilerOptions: Record<string, unknown>;
+      include: string[];
+    };
+    const readme = readText(join(cwd, "generated-repo", "README.md"));
 
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.dependencies.togostanza).toBe(`^${packageMetadata.version}`);
@@ -166,6 +171,17 @@ describe("CLI router", () => {
       build: "togostanza build",
       serve: "togostanza serve",
     });
+    expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");
+    expect(tsConfig.compilerOptions.allowJs).toBe(true);
+    expect(tsConfig.compilerOptions.checkJs).toBe(false);
+    expect(tsConfig.include).toContain("stanzas/**/*");
+    expect(readme).toContain("npm run build");
+    expect(readme).toContain("npm run serve");
+    expect(readme).toContain("npm exec togostanza generate stanza hello");
+    expect(readme).toContain("npm ci");
+    expect(readme).toContain("package-lock.json");
+    expect(readme).toContain("--skip-install");
+    expect(readme).not.toContain("Phase");
     expectNpmPagesWorkflow(
       readText(join(cwd, "generated-repo", ".github", "workflows", "publish.yml")),
     );
@@ -200,6 +216,12 @@ describe("CLI router", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBeUndefined();
     expectPnpmPagesWorkflow(readText(join(cwd, ".github", "workflows", "publish.yml")));
+    const readme = readText(join(cwd, "README.md"));
+    expect(readme).toContain("pnpm build");
+    expect(readme).toContain("pnpm serve");
+    expect(readme).toContain("pnpm exec togostanza generate stanza hello");
+    expect(readme).toContain("pnpm install --frozen-lockfile");
+    expect(readme).toContain("pnpm-lock.yaml");
   });
 
   it("uses --name as a package name override for init .", () => {

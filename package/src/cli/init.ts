@@ -161,11 +161,8 @@ function createScaffold(input: {
     formatJson(createPackageJson(input)),
     "utf8",
   );
-  writeFileSync(
-    join(input.destination, "README.md"),
-    `# ${input.name}\n\nA TogoStanza repository.\n`,
-    "utf8",
-  );
+  writeFileSync(join(input.destination, "README.md"), formatReadme(input), "utf8");
+  writeFileSync(join(input.destination, "tsconfig.json"), formatJson(createTsConfig()), "utf8");
   writeFileSync(join(input.destination, ".gitignore"), "node_modules/\ndist/\n", "utf8");
   writeFileSync(
     join(input.destination, "common.scss"),
@@ -179,6 +176,65 @@ function createScaffold(input: {
     formatPagesWorkflow(input.packageManager),
     "utf8",
   );
+}
+
+function formatReadme(input: { name: string; packageManager: PackageManager }): string {
+  const installCommand = input.packageManager === "pnpm" ? "pnpm install" : "npm install";
+  const buildCommand = input.packageManager === "pnpm" ? "pnpm build" : "npm run build";
+  const serveCommand = input.packageManager === "pnpm" ? "pnpm serve" : "npm run serve";
+  const generateCommand =
+    input.packageManager === "pnpm"
+      ? "pnpm exec togostanza generate stanza hello"
+      : "npm exec togostanza generate stanza hello";
+  const lockfile = input.packageManager === "pnpm" ? "pnpm-lock.yaml" : "package-lock.json";
+  const workflowInstall =
+    input.packageManager === "pnpm" ? "pnpm install --frozen-lockfile" : "npm ci";
+  const workflowBuild =
+    input.packageManager === "pnpm" ? "pnpm exec togostanza build" : "npm exec togostanza build";
+
+  return [
+    `# ${input.name}`,
+    "",
+    "A TogoStanza repository.",
+    "",
+    "## Development",
+    "",
+    "Install dependencies before building or serving the repository:",
+    "",
+    "```sh",
+    installCommand,
+    "```",
+    "",
+    "Build the Stanza artifacts into `dist/`:",
+    "",
+    "```sh",
+    buildCommand,
+    "```",
+    "",
+    "Start the local development server:",
+    "",
+    "```sh",
+    serveCommand,
+    "```",
+    "",
+    "Add a new Stanza source:",
+    "",
+    "```sh",
+    generateCommand,
+    "```",
+    "",
+    "The `build` and `serve` package scripts call `togostanza build` and `togostanza serve`.",
+    "",
+    "## GitHub Pages",
+    "",
+    "The generated GitHub Pages workflow installs dependencies, runs `togostanza build`, uploads `dist/` as a Pages artifact, and deploys it.",
+    "",
+    `Commit \`${lockfile}\` so the workflow can run reproducible installs with \`${workflowInstall}\`.`,
+    `The workflow builds with \`${workflowBuild}\`.`,
+    "",
+    "If this repository was initialized with `--skip-install`, run the install command locally and commit the generated lockfile before pushing to `main`.",
+    "",
+  ].join("\n");
 }
 
 function createPackageJson(input: { license: string; name: string }): Record<string, unknown> {
@@ -197,6 +253,22 @@ function createPackageJson(input: { license: string; name: string }): Record<str
     engines: {
       node: ">=24.5.0",
     },
+  };
+}
+
+function createTsConfig(): Record<string, unknown> {
+  return {
+    compilerOptions: {
+      allowJs: true,
+      checkJs: false,
+      module: "ESNext",
+      moduleResolution: "bundler",
+      noEmit: true,
+      skipLibCheck: true,
+      strict: true,
+      target: "ES2022",
+    },
+    include: ["stanzas/**/*", "lib/**/*", "togostanza.config.ts"],
   };
 }
 

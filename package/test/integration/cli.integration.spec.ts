@@ -186,6 +186,10 @@ describe("CLI smoke", () => {
     expect(result.code).toBe(0);
     expect(result.stderr).toBe("");
     expect(result.stdout).toContain("Created Stanza repository: generated-repo");
+    const readme = readFileSync(resolve(cwd, "generated-repo", "README.md"), "utf8");
+    const tsConfig = readJson(resolve(cwd, "generated-repo", "tsconfig.json")) as {
+      compilerOptions: Record<string, unknown>;
+    };
     expect(readJson(resolve(cwd, "generated-repo", "package.json"))).toMatchObject({
       dependencies: {
         togostanza: `^${packageJson.version}`,
@@ -196,6 +200,11 @@ describe("CLI smoke", () => {
         serve: "togostanza serve",
       },
     });
+    expect(readme).toContain("npm run build");
+    expect(readme).toContain("npm run serve");
+    expect(readme).toContain("GitHub Pages");
+    expect(readme).toContain("package-lock.json");
+    expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");
     expectNpmPagesWorkflow(
       readFileSync(resolve(cwd, "generated-repo", ".github", "workflows", "publish.yml"), "utf8"),
     );

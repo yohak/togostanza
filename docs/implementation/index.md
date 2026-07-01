@@ -20,7 +20,7 @@
 | Phase 7: package runtime readiness | リメイク版パッケージのsubpath export、型解決、dependency分類を整える。 | package automated test、型解決確認 | [設計](./phase-7/plan.md)、[引き継ぎ](./phase-7/handoff.md) |
 | Phase 8: source and config readiness | 既存stanzaリポジトリのsource / config移行とmetadata異常系の扱いを整理する。 | 移行ガイド、[013](../../workbench/cases/013-metadata-validation/) | [設計](./phase-8/plan.md)、[引き継ぎ](./phase-8/handoff.md) |
 | Phase 9: local compatibility baseline | 実プロジェクト群を使ったローカルcompatibility確認を、後続フェーズへ再利用できるbaselineとして整える。 | [012](../../workbench/cases/012-real-project-regression/)、`test:compat:local` | [設計](./phase-9/plan.md)、[引き継ぎ](./phase-9/handoff.md) |
-| Phase 10: developer experience and internal cleanup | Stanza開発者向けの案内と、外部契約にしない内部面を整理する。 | 生成README、内部面整理、[001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-10/plan.md) |
+| Phase 10: developer experience and internal cleanup | Stanza開発者向けの案内と、外部契約にしない内部面を整理する。 | 生成README、内部面整理、[001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-10/plan.md)、[引き継ぎ](./phase-10/handoff.md) |
 | Phase 11: compatibility verification | 全Stanza browser smoke、TogoMedium Webアプリ本体E2E、runtime edge semanticsを検証する。 | [012](../../workbench/cases/012-real-project-regression/)、runtime edge確認 | 未着手 |
 | Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
@@ -323,7 +323,7 @@ Phase 10では、Phase 6とPhase 7で既に解消済みの事項を再実装し�
 - npm package公開面の最終整理。
 - GitHub Actions上でのlive deploy確認。
 
-Phase 10の設計は [Phase 10: developer experience and internal cleanup 設計](./phase-10/plan.md) に置く。
+Phase 10の設計は [Phase 10: developer experience and internal cleanup 設計](./phase-10/plan.md) に置く。完了後の状態とPhase 11以降への引き継ぎは [Phase 10: developer experience and internal cleanup 引き継ぎ](./phase-10/handoff.md) に置く。
 
 ## Phase 11: compatibility verification
 

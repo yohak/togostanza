@@ -45,6 +45,8 @@
 - Phase 2-0では、`init .` が許容済みpreflight markerとして既存 `.git/` とlockfileを扱えること。
 - Phase 2-0では、`init .` が既存ファイルをmergeせず、衝突pathを含む診断で失敗すること。
 - Phase 2では、placeholderを実deploy可能なworkflowへ置き換え、`build` 生成物を公開する導線を持つこと。
+- Phase 10では、生成READMEが `build` / `serve` / `generate stanza`、GitHub Pages workflow、lockfile前提、`--skip-install` 時の注意を説明すること。
+- Phase 10では、`init` 雛形が `moduleResolution: "bundler"` を含む `tsconfig.json` を生成すること。
 - `init` が既定でgit初期化し、`--skip-git` で抑止できること。
 - `generate stanza [id]` が主要optionを受け付け、idをkebab-case化すること。
 - 生成物が既存Stanzaソース互換を大きく外していないこと。
@@ -60,6 +62,7 @@
 - Phase 2-0では、`package-lock.json` と `pnpm-lock.yaml` によるpackage manager推定と矛盾診断が確認できる。
 - Phase 2-0では、`init .` が既存ファイルとのmergeや上書きを行わず、分かりやすく失敗する。
 - Phase 2では、生成されたStanzaリポジトリに依存関係のインストール、`togostanza build`、`dist/` のPages artifact化、deployの流れを確認できるGitHub Pages workflowがある。
+- Phase 10では、生成されたStanzaリポジトリに、Stanza開発者向けの基本手順を説明するREADMEと、exports-awareな型解決に使える `tsconfig.json` がある。
 - `--skip-git` を指定しない場合はgit初期化され、`--skip-git` を指定した場合はgit初期化されない。
 - 生成されたStanzaソースが `build` 対象になる。
 - `stanzas/{id}/metadata.json`、`index.js`、`style.scss`、`templates/stanza.html.hbs` が確認できる。
@@ -74,13 +77,14 @@
 - Phase 1ではGitHub Pages workflow placeholderの内容。
 - Phase 2-0では `init .`、`init . --name <name>`、preflight marker、lockfile矛盾診断、既存path衝突診断。
 - Phase 2ではGitHub Pages workflow内のinstall command、build command、artifact path、deploy action。
+- Phase 10では生成README、`tsconfig.json`、workflow operational constraintsの扱い。
 - `generate stanza` の主要optionと生成ファイル一覧。
 - stdout/stderrの代表ログ。
 
 ## 未決定事項
 
 - リメイク版generatorで `index.ts` / `index.tsx` 生成optionを用意するか。
-- README生成内容をどこまで維持するか。
+- ヘルププレビューUIのリッチ化やDownload JSON導線をどのフェーズで扱うか。
 - `init .` で既存 `.gitignore`、`README.md`、`LICENSE` などを将来merge対象として許容するか。
 
 ## npm観測メモ (`current-npm/generated-repo/`)
@@ -355,3 +359,33 @@ pnpm run build:local
 ```
 
 `build` / `serve` は生成repo利用者向けの `togostanza build` / `togostanza serve` scriptとして残し、workbenchでは `build:local` / `serve:local` を使う。`togostanza` dependencyは `link:../../../../../package` で宣言しているが、pack install検証ではない。
+
+## Phase 10 リメイク版観測
+
+- 確認日: 2026-07-01
+- 対象: Phase 10 developer experience and internal cleanup
+- 確認環境: `package/` のunit testとintegration testで、リメイク版CLIの生成README、`tsconfig.json`、package scriptを確認した。
+
+### README観測
+
+- 生成READMEは、`npm run build` / `pnpm build` と `npm run serve` / `pnpm serve` の基本手順を書く。
+- 生成READMEは、`togostanza build` / `togostanza serve` がpackage scriptから呼ばれる関係を書く。
+- 生成READMEは、`generate stanza <id>` に相当する入口を書く。
+- 生成READMEは、GitHub Pages workflowが依存をインストールし、`togostanza build` を実行し、`dist/` をPages artifactとしてdeployする流れを書く。
+- 生成READMEは、npmでは `package-lock.json`、pnpmではpnpm 10系の `pnpm-lock.yaml` をcommitする前提を書く。
+- 生成READMEは、`--skip-install` で初期化した場合は後からinstallし、lockfileをcommitしてからpushする必要があることを書く。
+- 生成READMEには、Phase番号、workbench、repo-local CLI、pack install未検証などの本リポジトリ内部事情を書かない。
+
+### tsconfig観測
+
+- `init` は `tsconfig.json` を生成する。
+- `tsconfig.json` は `compilerOptions.moduleResolution: "bundler"` を含む。
+- `tsconfig.json` は既存JavaScript stanzaを壊さないように `allowJs: true` と `checkJs: false` を含む。
+- `tsconfig.json` は `stanzas/**/*`、`lib/**/*`、`togostanza.config.ts` をinclude対象にする。
+
+### workflow operational constraints
+
+- `dependencies.togostanza` は現時点では `^0.0.0` 由来のversion specとして生成される。`^0.0.0` は実質的に `0.0.0` 固定なので、将来publish versionを上げたpackage解決にはそのまま使えない可能性がある。このdependency specの確定はPhase Xへ送る。
+- 生成workflowのAction major tagは、Phase 2-6で確認済みのtagを使う。Action versionは外部互換契約にはせず、tag更新やlive validationはPhase Xまたは保守更新で扱う。
+- `packageManager` fieldはPhase 10では生成しない。pnpm workflowはpnpm 10系を明示する。
+- 実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開npm package解決を扱うPhase X以降の確認である。

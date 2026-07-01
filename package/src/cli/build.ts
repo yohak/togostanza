@@ -551,8 +551,6 @@ function formatEntrypointWrapper(stanza: StanzaDefinition): string {
     "  templates,",
     "});",
     "",
-    "export default StanzaClass;",
-    "",
   ].join("\n");
 }
 
