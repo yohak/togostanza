@@ -16,6 +16,7 @@
 | Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | [設計](./phase-3/plan.md)、[引き継ぎ](./phase-3/handoff.md) |
 | Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-4/plan.md)、[引き継ぎ](./phase-4/handoff.md) |
 | Phase 5: readiness inventory | Phase 0からPhase 4までの成果物、残課題、未固定事項を棚卸しし、Phase 6以降へ再編する。 | 棚卸し表、Phase 6以降の再編案 | [設計](./phase-5/plan.md)、[棚卸し](./phase-5/inventory.md)、[引き継ぎ](./phase-5/handoff.md) |
+| Phase 6: workbench executability | workbenchの検証ケースを、repo-local CLIで再現できる入力として整える。 | workbench `remake/generated-repo`、repo-local CLI scripts | [設計](./phase-6/plan.md) |
 | Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
 ## Phase 0: skeleton
@@ -171,6 +172,31 @@ Phase 5は実装フェーズではない。既存実装を広げることでは�
 - `latest` として公開されたpackageの実利用確認。
 
 Phase 5の設計は [Phase 5: readiness inventory 設計](./phase-5/plan.md) に置き、棚卸し結果は [Phase 5: readiness inventory 棚卸し](./phase-5/inventory.md)、Phase 6以降への入口メモは [Phase 5: readiness inventory 引き継ぎ](./phase-5/handoff.md) に置く。
+
+## Phase 6: workbench executability
+
+ゴールは、`workbench` の検証ケースを、リメイク版CLIで再現できるケース入力として整えることである。
+
+Phase 6はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase Xへ送る。Phase 6では、repo-localの `package/bin/togostanza.mjs` を `node` で呼ぶscriptsを基本にする。
+
+含める範囲:
+
+- `workbench/cases/*/remake/generated-repo/` の整備。
+- repo-local CLIを呼ぶworkbench用scripts。
+- 対象ケースREADMEのリメイク版実行手順。
+- generated repoの `scripts.build` / `scripts.serve` 追加判断と、必要な実装。
+- package automated testとworkbench入力の役割分担の明記。
+
+含めない範囲:
+
+- pack install smoke。
+- package公開面の `files`、`exports`、`private` 解除、公開metadata整理。
+- `togostanza/stanza` exportと型定義。
+- dependency分類の最終整理。
+- 実プロジェクト全Stanzaのbuild checkやbrowser smoke。
+- TogoMedium Webアプリ本体E2E。
+
+Phase 6の設計は [Phase 6: workbench executability 設計](./phase-6/plan.md) に置く。完了後は、Phase 7へ進む前にPhase 6 handoffを作る。
 
 ## Phase X: distribution
 
