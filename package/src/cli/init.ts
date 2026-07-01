@@ -191,6 +191,14 @@ function formatReadme(input: { name: string; packageManager: PackageManager }): 
     input.packageManager === "pnpm" ? "pnpm install --frozen-lockfile" : "npm ci";
   const workflowBuild =
     input.packageManager === "pnpm" ? "pnpm exec togostanza build" : "npm exec togostanza build";
+  const lockfileGuidance =
+    input.packageManager === "pnpm"
+      ? `Commit \`${lockfile}\` generated with pnpm 10 so the workflow can run reproducible installs with \`${workflowInstall}\`.`
+      : `Commit \`${lockfile}\` so the workflow can run reproducible installs with \`${workflowInstall}\`.`;
+  const skipInstallGuidance =
+    input.packageManager === "pnpm"
+      ? "If this repository was initialized with `--skip-install`, run the install command locally with pnpm 10 and commit the generated lockfile before pushing to `main`."
+      : "If this repository was initialized with `--skip-install`, run the install command locally and commit the generated lockfile before pushing to `main`.";
 
   return [
     `# ${input.name}`,
@@ -229,10 +237,10 @@ function formatReadme(input: { name: string; packageManager: PackageManager }): 
     "",
     "The generated GitHub Pages workflow installs dependencies, runs `togostanza build`, uploads `dist/` as a Pages artifact, and deploys it.",
     "",
-    `Commit \`${lockfile}\` so the workflow can run reproducible installs with \`${workflowInstall}\`.`,
+    lockfileGuidance,
     `The workflow builds with \`${workflowBuild}\`.`,
     "",
-    "If this repository was initialized with `--skip-install`, run the install command locally and commit the generated lockfile before pushing to `main`.",
+    skipInstallGuidance,
     "",
   ].join("\n");
 }

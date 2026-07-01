@@ -222,6 +222,7 @@ describe("CLI router", () => {
     expect(readme).toContain("pnpm exec togostanza generate stanza hello");
     expect(readme).toContain("pnpm install --frozen-lockfile");
     expect(readme).toContain("pnpm-lock.yaml");
+    expect(readme).toContain("pnpm 10");
   });
 
   it("uses --name as a package name override for init .", () => {
