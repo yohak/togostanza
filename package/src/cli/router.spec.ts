@@ -126,11 +126,16 @@ describe("CLI router", () => {
       dependencies: Record<string, string>;
       license: string;
       packageManager?: string;
+      scripts: Record<string, string>;
     };
 
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.dependencies.togostanza).toBe(`^${packageMetadata.version}`);
     expect(packageJson.packageManager).toBeUndefined();
+    expect(packageJson.scripts).toEqual({
+      build: "togostanza build",
+      serve: "togostanza serve",
+    });
     expectNpmPagesWorkflow(
       readText(join(cwd, "generated-repo", ".github", "workflows", "publish.yml")),
     );

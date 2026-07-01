@@ -187,6 +187,10 @@ function createPackageJson(input: { license: string; name: string }): Record<str
     version: "0.0.1",
     private: true,
     license: input.license,
+    scripts: {
+      build: "togostanza build",
+      serve: "togostanza serve",
+    },
     dependencies: {
       togostanza: `^${packageMetadata.version}`,
     },

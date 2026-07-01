@@ -99,6 +99,10 @@ describe("CLI smoke", () => {
         togostanza: `^${packageJson.version}`,
       },
       name: "generated-repo",
+      scripts: {
+        build: "togostanza build",
+        serve: "togostanza serve",
+      },
     });
     expectNpmPagesWorkflow(
       readFileSync(resolve(cwd, "generated-repo", ".github", "workflows", "publish.yml"), "utf8"),
