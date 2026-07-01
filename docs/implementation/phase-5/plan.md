@@ -141,3 +141,4 @@ Phase 5は文書中心のフェーズである。
 
 - [実装計画](../index.md)
 - [Phase 4引き継ぎ](../phase-4/handoff.md)
+- [Phase 5棚卸し](./inventory.md)
