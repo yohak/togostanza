@@ -5,11 +5,13 @@ import {
   readFileSync,
   readdirSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { packageMetadata } from "../index.js";
 import { listCommandUsages } from "./commands.js";
@@ -17,6 +19,8 @@ import type { CliResult } from "./result.js";
 import { routeCli as routeCliRaw, type CliRouteOptions } from "./router.js";
 import type { CommandRunner } from "./runner.js";
 import type { ServeSession } from "./serve.js";
+
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");
@@ -1398,7 +1402,7 @@ function writeConfigImportFixture(rootDirectory: string): void {
 }
 
 function writeReactRuntimeFixture(rootDirectory: string): void {
-  writeFakeReactPackages(rootDirectory);
+  linkReactPackages(rootDirectory);
   writeFileSync(
     join(rootDirectory, "tsconfig.json"),
     `${JSON.stringify(
@@ -1502,91 +1506,17 @@ function writeReactRuntimeFixture(rootDirectory: string): void {
   );
 }
 
-function writeFakeReactPackages(rootDirectory: string): void {
-  const reactDirectory = join(rootDirectory, "node_modules", "react");
-  const reactDomDirectory = join(rootDirectory, "node_modules", "react-dom");
-  mkdirSync(reactDirectory, { recursive: true });
-  mkdirSync(join(reactDomDirectory, "client"), { recursive: true });
-  writeFileSync(
-    join(reactDirectory, "package.json"),
-    `${JSON.stringify({ main: "./index.js", name: "react", type: "module", version: "0.0.0-fixture" })}\n`,
-    "utf8",
-  );
-  writeFileSync(
-    join(reactDirectory, "index.js"),
-    [
-      "export function createElement(type, props, ...children) {",
-      "  if (typeof type === 'function') {",
-      "    return type({ ...(props ?? {}), children });",
-      "  }",
-      "",
-      "  return { children: children.flat(), props: props ?? {}, type };",
-      "}",
-      "",
-      "export default { createElement };",
-      "",
-    ].join("\n"),
-    "utf8",
-  );
-  writeFileSync(
-    join(reactDomDirectory, "package.json"),
-    `${JSON.stringify(
-      {
-        exports: {
-          "./client": "./client/index.js",
-        },
-        name: "react-dom",
-        type: "module",
-        version: "0.0.0-fixture",
-      },
-      null,
-      2,
-    )}\n`,
-    "utf8",
-  );
-  writeFileSync(
-    join(reactDomDirectory, "client", "index.js"),
-    [
-      "export function createRoot(container) {",
-      "  return {",
-      "    render(tree) {",
-      "      container.replaceChildren(toNode(tree));",
-      "    },",
-      "  };",
-      "}",
-      "",
-      "function toNode(value) {",
-      "  if (Array.isArray(value)) {",
-      "    const fragment = document.createDocumentFragment();",
-      "    fragment.append(...value.map(toNode));",
-      "    return fragment;",
-      "  }",
-      "",
-      "  if (value === null || value === undefined || value === false) {",
-      "    return document.createTextNode('');",
-      "  }",
-      "",
-      "  if (typeof value !== 'object') {",
-      "    return document.createTextNode(String(value));",
-      "  }",
-      "",
-      "  const element = document.createElement(value.type);",
-      "",
-      "  for (const [name, propertyValue] of Object.entries(value.props ?? {})) {",
-      "    if (name === 'children' || propertyValue === undefined || propertyValue === null) {",
-      "      continue;",
-      "    }",
-      "",
-      "    element.setAttribute(name, String(propertyValue));",
-      "  }",
-      "",
-      "  element.append(...(value.children ?? []).map(toNode));",
-      "  return element;",
-      "}",
-      "",
-    ].join("\n"),
-    "utf8",
-  );
+function linkReactPackages(rootDirectory: string): void {
+  const nodeModulesDirectory = join(rootDirectory, "node_modules");
+  mkdirSync(nodeModulesDirectory, { recursive: true });
+
+  for (const packageName of ["react", "react-dom"]) {
+    symlinkSync(
+      join(packageRoot, "node_modules", packageName),
+      join(nodeModulesDirectory, packageName),
+      "dir",
+    );
+  }
 }
 
 function formatLargeSvg(label: string): string {

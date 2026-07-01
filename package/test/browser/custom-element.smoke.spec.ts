@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { createServer, type Server } from "node:http";
@@ -1326,7 +1327,7 @@ export default class CoordinationReceiver extends Stanza {
 }
 
 function writeReactRuntimeProbe(cwd: string): void {
-  writeFakeReactPackages(cwd);
+  linkReactPackages(cwd);
   writeFileSync(
     resolve(cwd, "tsconfig.json"),
     `${JSON.stringify(
@@ -1429,96 +1430,17 @@ function writeReactRuntimeProbe(cwd: string): void {
   );
 }
 
-function writeFakeReactPackages(cwd: string): void {
-  const reactDirectory = resolve(cwd, "node_modules", "react");
-  const reactDomDirectory = resolve(cwd, "node_modules", "react-dom");
-  mkdirSync(reactDirectory, { recursive: true });
-  mkdirSync(resolve(reactDomDirectory, "client"), { recursive: true });
-  writeFileSync(
-    resolve(reactDirectory, "package.json"),
-    `${JSON.stringify({
-      main: "./index.js",
-      name: "react",
-      type: "module",
-      version: "0.0.0-fixture",
-    })}\n`,
-    "utf8",
-  );
-  writeFileSync(
-    resolve(reactDirectory, "index.js"),
-    [
-      "export function createElement(type, props, ...children) {",
-      "  if (typeof type === 'function') {",
-      "    return type({ ...(props ?? {}), children });",
-      "  }",
-      "",
-      "  return { children: children.flat(), props: props ?? {}, type };",
-      "}",
-      "",
-      "export default { createElement };",
-      "",
-    ].join("\n"),
-    "utf8",
-  );
-  writeFileSync(
-    resolve(reactDomDirectory, "package.json"),
-    `${JSON.stringify(
-      {
-        exports: {
-          "./client": "./client/index.js",
-        },
-        name: "react-dom",
-        type: "module",
-        version: "0.0.0-fixture",
-      },
-      null,
-      2,
-    )}\n`,
-    "utf8",
-  );
-  writeFileSync(
-    resolve(reactDomDirectory, "client", "index.js"),
-    [
-      "export function createRoot(container) {",
-      "  return {",
-      "    render(tree) {",
-      "      container.replaceChildren(toNode(tree));",
-      "    },",
-      "  };",
-      "}",
-      "",
-      "function toNode(value) {",
-      "  if (Array.isArray(value)) {",
-      "    const fragment = document.createDocumentFragment();",
-      "    fragment.append(...value.map(toNode));",
-      "    return fragment;",
-      "  }",
-      "",
-      "  if (value === null || value === undefined || value === false) {",
-      "    return document.createTextNode('');",
-      "  }",
-      "",
-      "  if (typeof value !== 'object') {",
-      "    return document.createTextNode(String(value));",
-      "  }",
-      "",
-      "  const element = document.createElement(value.type);",
-      "",
-      "  for (const [name, propertyValue] of Object.entries(value.props ?? {})) {",
-      "    if (name === 'children' || propertyValue === undefined || propertyValue === null) {",
-      "      continue;",
-      "    }",
-      "",
-      "    element.setAttribute(name, String(propertyValue));",
-      "  }",
-      "",
-      "  element.append(...(value.children ?? []).map(toNode));",
-      "  return element;",
-      "}",
-      "",
-    ].join("\n"),
-    "utf8",
-  );
+function linkReactPackages(cwd: string): void {
+  const nodeModulesDirectory = resolve(cwd, "node_modules");
+  mkdirSync(nodeModulesDirectory, { recursive: true });
+
+  for (const packageName of ["react", "react-dom"]) {
+    symlinkSync(
+      resolve(packageRoot, "node_modules", packageName),
+      resolve(nodeModulesDirectory, packageName),
+      "dir",
+    );
+  }
 }
 
 function writeAssetResolutionProbe(cwd: string): void {
