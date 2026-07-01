@@ -17,11 +17,12 @@ Phase 9は、実プロジェクト群を使ったローカルcompatibility確認
 - `references/metastanza`、`references/togomedium-web`、`references/togostanza-utils` を使うローカル再現手順を記録している。
 - referencesが存在しない、または依存が未インストールの場合に、何が不足しているか分かる前提条件を記録している。
 - `references/` を直接変更しない確認方法になっている。
+- build check前に、計画で列挙したStanza名と、ローカル `references/` の現在checkoutに存在するStanza名を再照合している。
 - metastanzaの全10 Stanzaでbuild checkを再実行し、対象commit、対象Stanza、結果を012へ記録している。
 - TogoMedium Stanzaの全15 Stanzaでbuild checkを再実行し、対象commit、対象Stanza、結果を012へ記録している。
 - 代表Stanza browser smokeの対象と理由を記録している。
 - 代表Stanza browser smokeで、custom element upgrade、Shadow DOM、最小描画、fatal console errorなし、CSS / asset loadを確認している。
-- React / Vue / Emotion / MUI / `togostanza-utils` の検証済みversionを記録している。
+- React / Vue / Emotion / MUI / `togostanza-utils` の検証済みversionを012 READMEへ記録している。
 - references依存の確認をdefault `check-all` に含めない方針を固定し、ローカルcompatibility確認用の専用入口を用意または明記している。
 - Phase 11へ送る全Stanza browser smoke、TogoMedium Webアプリ本体E2E、Runtime edge semanticsを明示している。
 - Phase 9完了後にhandoffを作る。
@@ -133,11 +134,13 @@ Phase 9でいうbrowser smokeは、軽量な直接埋め込み確認である。
 
 ユーザー操作、全パラメーター組み合わせ、API網羅、TogoMedium Webアプリ全体のroutingや状態管理はPhase 9では扱わない。
 
-## React / Vue version記録
+## version記録
 
 Phase 9では、本開発で検証済みのversionだけを保証対象として記録する。
 
-最低限、次を記録する。
+記録先は [012 Real project regression](../../../workbench/cases/012-real-project-regression/README.md) とする。実プロジェクト回帰の観測結果と同じ文書に置き、後続フェーズで探しやすくする。
+
+最低限、次を012へ記録する。
 
 - package側の `react` / `react-dom` 検証済みversion。
 - package側の `vue` / `@vitejs/plugin-vue` 検証済みversion。
@@ -172,6 +175,7 @@ references依存の確認は、default `check-all` に含めない。`check-all`
 - `references/metastanza` と `references/togomedium-web` のcommit。
 - `references/togostanza-utils` のcommitまたはpackage version。
 - metastanza / TogoMedium Stanzaが実際に参照した `togostanza-utils` の出所。
+- 計画で列挙したStanza名と、ローカル `references/` の現在checkoutに存在するStanza名を再照合した結果。
 - 対象Stanza一覧。
 - build check結果。
 - browser smoke対象と結果。
@@ -205,7 +209,7 @@ package配下のコマンドは、`package/mise.toml` を正として `cd packag
 - `test:compat:local` をpackage scriptとして追加するか、手順化されたローカル確認に留めるか。
 - metastanzaの代表browser smokeを `pagination-table` に固定するか。
 - TogoMedium代表browser smokeを `gmdb-meta-list` に固定するか。
-- React / Vue version記録をどの文書へ置くか。
+- 012 README内のversion記録を、後続で独立文書へ分ける必要が出るか。
 - Phase 11の全Stanza browser smokeで使う合格条件をどこまでPhase 9で前倒しするか。
 
 ## 成果物

@@ -274,10 +274,11 @@ Phase 9では、`references/` 配下のローカルリファレンスを使い�
 - `references/metastanza`、`references/togomedium-web`、`references/togostanza-utils` のローカル再現手順。
 - referencesが存在しない、または依存が未インストールの場合の前提条件記録。
 - referencesを直接変更しない一時rootまたはcopy / symlinkによる確認手順。
+- 計画で列挙したStanza名とローカル `references/` の現在checkoutの再照合。
 - metastanza全10 Stanzaのbuild check。
 - TogoMedium Stanza全15 Stanzaのbuild check。
 - 代表Stanza browser smoke。
-- React / Vue / Emotion / MUI / `togostanza-utils` の検証済みversion記録。
+- React / Vue / Emotion / MUI / `togostanza-utils` の検証済みversionを012 READMEへ記録すること。
 - references依存確認用の専用入口。default `check-all` にはreferences依存確認を含めない。
 - 012 READMEへのPhase 9観測結果追記。
 
