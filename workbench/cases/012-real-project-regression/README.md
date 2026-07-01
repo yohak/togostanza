@@ -96,6 +96,7 @@
 - React / TSX、TogoMedium provider stack、MUI / Emotion関連chunk、共有チャンク、metadata、CSS、HTMLの生成まで確認した。
 - `TogoMediumReactStanza` はclass field initializerで `this.root.querySelector("main")` と `createRoot()` を実行する。従来のリメイク版runtimeでは、subclass field initializer実行時に `this.root` が未設定になるため、この構成は壊れる可能性があった。
 - リメイク版runtimeでは、Stanza subclassのconstructor / field initializerから `this.root` と `this.element` を参照できるようにした。この回帰はpackageのbrowser testに最小fixtureとして切り出した。
+- Emotion / MUIのShadow DOM style到達リスクは、TogoMedium参照側の `@emotion/react` / `@emotion/cache` とReact / React DOMを使った合成browser testへ切り出した。`CacheProvider` の `container` をShadow DOMへ向けたReact Stanzaをdirect embedし、Emotion由来のstyleがShadow DOM内要素のcomputed styleへ反映されることを確認した。
 
 差分と移行メモ:
 
@@ -106,7 +107,7 @@
 未確認または後続判断:
 
 - TogoMediumの実ブラウザ表示、API通信、TanStack Query / Jotai / Reduxを含むprovider stack全体のE2EはPhase 4の対象外である。
-- Emotion / MUIについては、TogoMediumソースが `EmotionCacheProvider` でShadow DOM内へstyleを向ける構成を持つこと、およびbuildが通ることを確認した。実プロジェクトStanzaの視覚的なShadow DOM適用までは、この観測では完了扱いにしない。動かない構成や未検証構成を落とす判断が必要になった場合は、TogoMediumへの影響を整理して人間判断を受ける。
+- Emotion / MUIについては、TogoMediumソースが `EmotionCacheProvider` でShadow DOM内へstyleを向ける構成を持つこと、buildが通ること、合成browser testでEmotion styleがShadow DOM内に適用されることを確認した。TogoMedium実アプリ全体の視覚検証や、provider stack全体のE2Eは後続対象にする。動かない構成や未検証構成を落とす判断が必要になった場合は、TogoMediumへの影響を整理して人間判断を受ける。
 
 ## 記録する差分
 

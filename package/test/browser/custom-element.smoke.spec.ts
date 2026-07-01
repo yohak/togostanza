@@ -763,6 +763,66 @@ test("renders a React TSX Stanza from repository dependencies", async ({ page })
   }
 });
 
+test("applies Emotion styles inside a React Stanza shadow root", async ({ page }) => {
+  test.setTimeout(20_000);
+
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  writeEmotionShadowProbe(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  writeFileSync(
+    resolve(cwd, "fixture.html"),
+    `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/emotion-shadow-probe.js"></script>
+    <togostanza-emotion-shadow-probe id="emotion-shadow"></togostanza-emotion-shadow-probe>
+  </body>
+</html>
+`,
+    "utf8",
+  );
+  const server = await startStaticServer(cwd, []);
+
+  try {
+    const port = addressPort(server);
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`);
+    await page.waitForFunction(() => customElements.get("togostanza-emotion-shadow-probe"));
+    expect(pageErrors).toEqual([]);
+    expect(consoleErrors).toEqual([]);
+    await expect
+      .poll(() =>
+        page.locator("#emotion-shadow").evaluate((element) => {
+          return element.getAttribute("data-rendered") ?? "";
+        }),
+      )
+      .toBe("true");
+
+    await expect.poll(() => readProbeValue(page, "#emotion-shadow", "label")).toBe("emotion ok");
+    await expect
+      .poll(() =>
+        page.locator("#emotion-shadow").evaluate((element) => {
+          const marker = element.shadowRoot?.querySelector<HTMLElement>(
+            "[data-probe='emotion-style']",
+          );
+
+          return marker ? getComputedStyle(marker).color : "";
+        }),
+      )
+      .toBe("rgb(42, 24, 12)");
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("renders a Vue SFC Stanza from repository dependencies", async ({ page }) => {
   test.setTimeout(20_000);
 
@@ -1633,6 +1693,125 @@ function writeReactRuntimeProbe(cwd: string): void {
 
 function linkReactPackages(cwd: string): void {
   linkNodePackages(cwd, ["react", "react-dom"]);
+}
+
+function writeEmotionShadowProbe(cwd: string): void {
+  linkTogoMediumReactPackages(cwd);
+  linkEmotionPackages(cwd);
+  writeFileSync(
+    resolve(cwd, "tsconfig.json"),
+    `${JSON.stringify(
+      {
+        compilerOptions: {
+          jsx: "react-jsx",
+          jsxImportSource: "@emotion/react",
+          module: "ESNext",
+          moduleResolution: "bundler",
+          target: "ES2024",
+        },
+        include: ["stanzas/**/*.tsx"],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
+  const stanzaDirectory = resolve(cwd, "stanzas", "emotion-shadow-probe");
+  mkdirSync(stanzaDirectory, { recursive: true });
+  writeFileSync(
+    resolve(stanzaDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "emotion-shadow-probe",
+        "stanza:label": "Emotion Shadow Probe",
+        "stanza:menu-placement": "none",
+        "stanza:parameter": [],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "index.tsx"),
+    [
+      'import createCache from "@emotion/cache";',
+      'import { CacheProvider } from "@emotion/react";',
+      'import React from "react";',
+      'import { createRoot, type Root } from "react-dom/client";',
+      'import Stanza from "togostanza/stanza";',
+      "",
+      "function Probe() {",
+      "  return (",
+      "    <section>",
+      '      <p data-probe="label">emotion ok</p>',
+      "      <p",
+      '        data-probe="emotion-style"',
+      "        css={{",
+      '          color: "rgb(42, 24, 12)",',
+      "        }}",
+      "      >",
+      "        styled by emotion",
+      "      </p>",
+      "    </section>",
+      "  );",
+      "}",
+      "",
+      "export default class EmotionShadowProbe extends Stanza {",
+      "  private reactRoot?: Root;",
+      "",
+      "  render() {",
+      '    const main = this.root.querySelector("main");',
+      "",
+      "    if (!main) {",
+      '      throw new Error("Emotion Shadow Probe expected a main element.");',
+      "    }",
+      "",
+      '    this.element.setAttribute("data-rendered", "true");',
+      "    this.reactRoot ??= createRoot(main);",
+      "    this.reactRoot.render(",
+      "      <CacheProvider",
+      "        value={createCache({",
+      '          key: "stanza",',
+      "          container: this.root,",
+      "        })}",
+      "      >",
+      "        <Probe />",
+      "      </CacheProvider>,",
+      "    );",
+      "  }",
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+}
+
+function linkTogoMediumReactPackages(cwd: string): void {
+  for (const packageName of ["react", "react-dom"]) {
+    symlinkNodePackageFromTogoMediumReference(cwd, packageName);
+  }
+}
+
+function linkEmotionPackages(cwd: string): void {
+  const scopedDirectory = resolve(cwd, "node_modules", "@emotion");
+  mkdirSync(scopedDirectory, { recursive: true });
+
+  for (const packageName of ["cache", "react"]) {
+    symlinkNodePackageFromTogoMediumReference(cwd, `@emotion/${packageName}`);
+  }
+}
+
+function symlinkNodePackageFromTogoMediumReference(cwd: string, packageName: string): void {
+  const destination = resolve(cwd, "node_modules", packageName);
+  mkdirSync(dirname(destination), { recursive: true });
+  symlinkSync(
+    resolve(repositoryRoot, "references", "togomedium-web", "node_modules", packageName),
+    destination,
+    "dir",
+  );
 }
 
 function writeVueRuntimeProbe(cwd: string): void {
