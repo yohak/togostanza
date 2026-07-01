@@ -95,3 +95,9 @@
 - リメイク版Phase 3の `/{id}.html` は、ヘルププレビューの完全復元ではなく、custom elementを確認するための最小プレビューである。
 - リメイク版Phase 3は `dist/` を書き換えず、一時出力ディレクトリ上のbuild相当生成物を配信する。
 - 共有ソース変更時の精密な影響stanza特定、HMR、自動ブラウザreloadは未実装である。
+
+## Phase 6 リメイク版workbench入力
+
+Phase 6では、011用の `remake/generated-repo/` は新規作成しない。`serve` の実挙動はPhase 3でpackage automated testとして確認済みであり、watcher、HTTP server、一時ディレクトリcleanupを含むため、現時点ではpackage testを正本の確認入口とする。
+
+011をworkbench入力として独立させる場合は、後続で `remake/generated-repo/` に `serve:local` を置き、Stanza entrypoint、metadata、template、stylesheet、asset、設定、共有ソースの変更を人間が再実行できる形へ切り出す。

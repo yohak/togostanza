@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Case 006 inter-stanza coordination</title>
+    <script type="module" src="../dist/coordination-sender.js"></script>
+    <script type="module" src="../dist/coordination-receiver.js"></script>
+  </head>
+  <body>
+    <togostanza--container id="coordination-case">
+      <togostanza--event-map
+        on="selectedValue"
+        receiver="togostanza-coordination-receiver"
+        value-path="payload.label"
+        target-attribute="selected-label"
+      ></togostanza--event-map>
+
+      <togostanza--data-source
+        url="./sample-data.json"
+        receiver="togostanza-coordination-receiver"
+        target-attribute="data-url"
+      ></togostanza--data-source>
+
+      <togostanza-coordination-sender value="from-sender"></togostanza-coordination-sender>
+      <togostanza-coordination-receiver></togostanza-coordination-receiver>
+    </togostanza--container>
+  </body>
+</html>

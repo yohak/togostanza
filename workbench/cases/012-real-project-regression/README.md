@@ -111,6 +111,12 @@
 - TogoMedium Webアプリ本体のbuild / start、実APIを使った画面遷移、TanStack Query / Jotai / Reduxを含むアプリ全体のE2EはPhase 4の対象外である。
 - Emotion / MUIについては、TogoMediumソースが `EmotionCacheProvider` でShadow DOM内へstyleを向ける構成を持つこと、buildが通ること、合成browser testでEmotion styleがShadow DOM内に適用されること、実TogoMedium Stanzaのdirect embed smokeでShadow DOM内の視覚スタイルが適用されることを確認した。動かない構成や未検証構成を落とす判断が必要になった場合は、TogoMediumへの影響を整理して人間判断を受ける。
 
+## Phase 6 リメイク版workbench入力
+
+Phase 6では、012用の `remake/generated-repo/` は新規作成しない。012は `references/metastanza` と `references/togomedium-web` を使う実プロジェクト回帰であり、Phase 6の目的であるrepo-local workbench入力整備とは分けて扱う。
+
+実プロジェクト回帰の次の入口は、Phase 9で扱う。Phase 6では、012の記録を維持し、全Stanza browser確認、TogoMedium Webアプリ本体E2E、referencesローカル再現手順の完成は後続へ送る。
+
 ## 記録する差分
 
 - 対象リポジトリ、commit、package manager、Node.jsバージョン。

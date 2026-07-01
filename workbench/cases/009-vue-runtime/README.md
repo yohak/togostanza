@@ -90,3 +90,20 @@ Vue SFCを使う既存Stanzaソースが、TogoStanzaランタイムのShadow DO
 - Vue以外のframeworkランタイムを追加の検証ケースにするかどうか。
 - Vue version差分を互換対象に含めるかどうか。
 - Vue SFC compiler / pluginとStanzaリポジトリ側Vue runtimeのversion整合を、metastanza代表Stanzaでどこまで確認するか。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、009のVue SFC Stanzaをリメイク版CLIで再実行するための入力である。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/009-vue-runtime/remake/generated-repo
+pnpm install
+pnpm run build:local
+pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4179/fixtures/vue-runtime.html` とする。Phase 6のworkbench入力では、Vueを `package/node_modules` へのlocal linkとして扱い、registry installやpack install確認とは分ける。

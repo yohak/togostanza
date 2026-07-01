@@ -1,0 +1,26 @@
+{
+  "name": "case-010-togostanza-utils-compat-remake",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "",
+  "scripts": {
+    "build": "togostanza build",
+    "serve": "togostanza serve",
+    "togostanza:local": "node ../../../../../package/bin/togostanza.mjs",
+    "build:local": "node ../../../../../package/bin/togostanza.mjs build",
+    "serve:local": "node ../../../../../package/bin/togostanza.mjs serve",
+    "generate:stanza:local": "node ../../../../../package/bin/togostanza.mjs generate stanza",
+    "serve:fixture": "node ../../../../scripts/static-fixture-server.mjs --port 4180 --default /fixtures/utils-compat.html"
+  },
+  "dependencies": {
+    "csv-stringify": "link:../../../../../package/node_modules/csv-stringify",
+    "d3": "link:../../../../../package/node_modules/d3",
+    "date-fns": "link:../../../../../package/node_modules/date-fns",
+    "togostanza": "link:../../../../../package",
+    "togostanza-utils": "link:../../../../../references/togostanza-utils"
+  },
+  "engines": {
+    "node": ">=24.5.0"
+  },
+  "private": true
+}

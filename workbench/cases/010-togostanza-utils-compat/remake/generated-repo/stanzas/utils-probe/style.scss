@@ -1,0 +1,38 @@
+@use "@/common.scss";
+
+.utils-probe {
+  color: #1e2a2f;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.utils-probe__status {
+  border-left: 4px solid var(--case-010-accent);
+  margin: 0 0 12px;
+  padding: 8px 12px;
+}
+
+.utils-probe__table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.utils-probe__table th,
+.utils-probe__table td {
+  border: 1px solid #c8d2d5;
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.utils-probe__table th {
+  background: #eef4f5;
+}
+
+.utils-probe__chart {
+  display: block;
+  height: 48px;
+  margin-top: 12px;
+  width: 180px;
+}

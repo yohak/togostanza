@@ -1,0 +1,31 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "coordination-sender",
+  "stanza:label": "Coordination Sender",
+  "stanza:definition": "Case input stanza that dispatches an outgoing event.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-21",
+  "stanza:updated": "2026-06-21",
+  "stanza:parameter": [
+    {
+      "stanza:key": "value",
+      "stanza:type": "string",
+      "stanza:example": "from-sender",
+      "stanza:description": "Value included in the outgoing event payload.",
+      "stanza:required": false
+    }
+  ],
+  "stanza:menu-placement": "bottom-right",
+  "stanza:style": [],
+  "stanza:incomingEvent": [],
+  "stanza:outgoingEvent": [
+    {
+      "stanza:key": "selectedValue",
+      "stanza:description": "Notifies a selected value. Payload shape: { payload: { label: string } }."
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+<section class="parameter-probe">
+  <h1>Runtime parameter probe</h1>
+  <dl class="probe-summary">
+    <dt>render count</dt>
+    <dd data-probe="render-count">{{renderCount}}</dd>
+    <dt>last attribute name</dt>
+    <dd data-probe="last-attribute-name">{{lastAttributeName}}</dd>
+    <dt>last attribute old value</dt>
+    <dd data-probe="last-attribute-old-value">{{lastAttributeOldValue}}</dd>
+    <dt>last attribute new value</dt>
+    <dd data-probe="last-attribute-new-value">{{lastAttributeNewValue}}</dd>
+  </dl>
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">key</th>
+        <th scope="col">value</th>
+        <th scope="col">typeof</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each rows}}
+        <tr>
+          <th scope="row" data-probe="key">{{key}}</th>
+          <td data-probe="{{key}}-value">{{value}}</td>
+          <td data-probe="{{key}}-type">{{type}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</section>

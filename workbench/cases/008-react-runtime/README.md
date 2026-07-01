@@ -91,3 +91,20 @@ TSX/Reactで書かれたStanzaソースが、TogoStanzaランタイムのShadow 
 
 - MUI/Emotionなどのprovider stackを別の検証ケースにするかどうか。
 - React version差分を互換対象に含めるかどうか。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、008のReact / TSX Stanzaをリメイク版CLIで再実行するための入力である。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/008-react-runtime/remake/generated-repo
+pnpm install
+pnpm run build:local
+pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4178/fixtures/react-runtime.html` とする。Phase 6のworkbench入力では、React / React DOMを `package/node_modules` へのlocal linkとして扱い、registry installやpack install確認とは分ける。

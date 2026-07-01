@@ -229,3 +229,19 @@ public/
 - 空の初期scaffoldに対するbuildは、現行版ではヘルププレビュー生成により成功するが、リメイク版Phase 2-1ではstanzaがないためエラーにする。
 - source mapは生成と相対参照だけを確認する。source map内部のpathや内容互換は固定しない。
 - `.togostanza-build-output` は、TogoStanzaが所有する出力先として次回buildでcleanできることを示すmarkerである。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、002のbuild生成物観測をリメイク版CLIで再実行するための入力である。`current-pnpm/generated-repo/` の観測入力から、生成済み `dist/`、`node_modules/`、lockfileを除いたソースを持つ。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/002-build-artifacts/remake/generated-repo
+pnpm install
+pnpm run build:local
+```
+
+workbench用scriptはrepo-local CLIを呼ぶ `build:local` / `serve:local` として追加している。生成repo利用者向けの `build` / `serve` は、`togostanza build` / `togostanza serve` を呼ぶscriptとして残す。

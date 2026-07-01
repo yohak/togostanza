@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "menuless-hello",
+  "stanza:label": "Menuless Hello",
+  "stanza:definition": "Case input for observing runtime embedding with menu-placement none.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-22",
+  "stanza:updated": "2026-06-22",
+  "stanza:parameter": [
+    {
+      "stanza:key": "say-to",
+      "stanza:type": "string",
+      "stanza:example": "world",
+      "stanza:description": "who to say hello to",
+      "stanza:required": false
+    }
+  ],
+  "stanza:menu-placement": "none",
+  "stanza:style": [],
+  "stanza:incomingEvent": [],
+  "stanza:outgoingEvent": []
+}

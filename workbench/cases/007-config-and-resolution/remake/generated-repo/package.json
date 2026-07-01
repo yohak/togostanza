@@ -1,0 +1,23 @@
+{
+  "name": "case-007-config-and-resolution-remake",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "",
+  "scripts": {
+    "build": "togostanza build",
+    "serve": "togostanza serve",
+    "togostanza:local": "node ../../../../../package/bin/togostanza.mjs",
+    "build:local": "node ../../../../../package/bin/togostanza.mjs build",
+    "serve:local": "node ../../../../../package/bin/togostanza.mjs serve",
+    "generate:stanza:local": "node ../../../../../package/bin/togostanza.mjs generate stanza",
+    "serve:fixture": "node ../../../../scripts/static-fixture-server.mjs --port 4177 --default /fixtures/config-resolution.html"
+  },
+  "dependencies": {
+    "case-007-asset-package": "file:./vendor/case-007-asset-package",
+    "togostanza": "link:../../../../../package"
+  },
+  "engines": {
+    "node": ">=24.5.0"
+  },
+  "private": true
+}

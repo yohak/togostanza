@@ -235,3 +235,20 @@ mise exec -- pnpm run serve:fixture
 
 - SVG/PNG downloadの出力内容まで厳密比較するか、handler実行時のruntime互換確認に留めるか。
 - TogoStanza接点があるAPIのedge caseをどこまで受け入れ検証に含めるか。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、010の `togostanza-utils` 互換観測をリメイク版CLIで再実行するための入力である。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/010-togostanza-utils-compat/remake/generated-repo
+pnpm install
+pnpm run build:local
+pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4180/fixtures/utils-compat.html` とする。Phase 6のworkbench入力では、`togostanza-utils` を `references/togostanza-utils` へのlocal linkとして扱う。`togostanza-utils` 内部依存の `d3`、`date-fns`、`csv-stringify` は `togostanza.config.ts` のVite aliasで `package/node_modules` へ向けている。これはローカルworkbench確認用であり、pack install確認ではない。

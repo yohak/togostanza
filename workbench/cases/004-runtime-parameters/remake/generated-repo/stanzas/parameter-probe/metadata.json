@@ -1,0 +1,84 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "parameter-probe",
+  "stanza:label": "Parameter Probe",
+  "stanza:definition": "Case input stanza for observing runtime parameter conversion.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-21",
+  "stanza:updated": "2026-06-21",
+  "stanza:parameter": [
+    {
+      "stanza:key": "label",
+      "stanza:type": "string",
+      "stanza:example": "runtime",
+      "stanza:description": "String parameter used to identify each embedded probe.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "count",
+      "stanza:type": "number",
+      "stanza:example": "42",
+      "stanza:description": "Number parameter used to observe numeric conversion.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "flag",
+      "stanza:type": "boolean",
+      "stanza:example": "true",
+      "stanza:description": "Boolean parameter used to observe HTML boolean attribute conversion.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "payload",
+      "stanza:type": "json",
+      "stanza:example": "{\"kind\":\"observation\",\"values\":[1,2]}",
+      "stanza:description": "JSON parameter used to observe parsed object or array values.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "mode",
+      "stanza:type": "single-choice",
+      "stanza:choice": [
+        "compact",
+        "comfortable"
+      ],
+      "stanza:example": "compact",
+      "stanza:description": "Single-choice parameter used by real project metadata.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "note",
+      "stanza:type": "text",
+      "stanza:example": "runtime note",
+      "stanza:description": "Text parameter used by real project metadata.",
+      "stanza:required": false
+    }
+  ],
+  "stanza:menu-placement": "bottom-right",
+  "stanza:style": [
+    {
+      "stanza:key": "--parameter-probe-accent",
+      "stanza:type": "color",
+      "stanza:default": "#245c73",
+      "stanza:description": "Accent color for the observation output."
+    },
+    {
+      "stanza:key": "--parameter-probe-gap",
+      "stanza:type": "number",
+      "stanza:default": "8",
+      "stanza:description": "Numeric style value used to observe style metadata in this.params."
+    },
+    {
+      "stanza:key": "--parameter-probe-caption",
+      "stanza:type": "text",
+      "stanza:default": "metadata caption",
+      "stanza:description": "Text style value used to observe style metadata in this.params."
+    }
+  ],
+  "stanza:incomingEvent": [],
+  "stanza:outgoingEvent": []
+}

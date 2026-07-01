@@ -1,0 +1,38 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "coordination-receiver",
+  "stanza:label": "Coordination Receiver",
+  "stanza:definition": "Case input stanza that receives values through attributes.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-21",
+  "stanza:updated": "2026-06-21",
+  "stanza:parameter": [
+    {
+      "stanza:key": "selected-label",
+      "stanza:type": "string",
+      "stanza:example": "from-sender",
+      "stanza:description": "Value assigned by togostanza--event-map.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "data-url",
+      "stanza:type": "string",
+      "stanza:example": "blob:http://127.0.0.1:8100/...",
+      "stanza:description": "Object URL assigned by togostanza--data-source.",
+      "stanza:required": false
+    }
+  ],
+  "stanza:menu-placement": "bottom-right",
+  "stanza:style": [],
+  "stanza:incomingEvent": [
+    {
+      "stanza:key": "selectedValue",
+      "stanza:description": "Incoming event used by the observation helper to document event-map compatibility."
+    }
+  ],
+  "stanza:outgoingEvent": []
+}

@@ -189,3 +189,20 @@ mise exec -- pnpm run serve:fixture
 - data-sourceのblob URL handoffを長期APIとして維持するかどうか。
 - data-sourceの直接JSON受け渡しAPI。
 - data-sourceのcache、revoke、retry、timeout、abort。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、006のStanza間連携観測をリメイク版CLIで再実行するための入力である。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/006-inter-stanza-coordination/remake/generated-repo
+pnpm install
+pnpm run build:local
+pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4176/fixtures/inter-stanza.html` とする。複数bundleを同じHTMLで読み込む観測は、このfixture HTMLで行う。

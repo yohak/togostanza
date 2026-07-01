@@ -1,0 +1,61 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "api-probe",
+  "stanza:label": "API Probe",
+  "stanza:definition": "Case input stanza for observing Stanza source APIs.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-21",
+  "stanza:updated": "2026-06-21",
+  "stanza:parameter": [
+    {
+      "stanza:key": "label",
+      "stanza:type": "string",
+      "stanza:example": "source-api",
+      "stanza:description": "String parameter used to observe this.params.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "limit",
+      "stanza:type": "number",
+      "stanza:example": "3",
+      "stanza:description": "Number parameter used by the optional query template.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "enabled",
+      "stanza:type": "boolean",
+      "stanza:example": "true",
+      "stanza:description": "Boolean parameter used to observe presence-based conversion.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "payload",
+      "stanza:type": "json",
+      "stanza:example": "{\"kind\":\"observation\"}",
+      "stanza:description": "JSON parameter used to observe parsed parameter values.",
+      "stanza:required": false
+    },
+    {
+      "stanza:key": "query-endpoint",
+      "stanza:type": "string",
+      "stanza:example": "http://localhost:8080/sparql",
+      "stanza:description": "Optional endpoint for observing this.query().",
+      "stanza:required": false
+    }
+  ],
+  "stanza:menu-placement": "bottom-right",
+  "stanza:style": [
+    {
+      "stanza:key": "--api-probe-accent",
+      "stanza:type": "color",
+      "stanza:default": "#2266aa",
+      "stanza:description": "Accent color for the observation output."
+    }
+  ],
+  "stanza:incomingEvent": [],
+  "stanza:outgoingEvent": []
+}

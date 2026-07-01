@@ -1,0 +1,18 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "config-resolution",
+  "stanza:label": "Config Resolution",
+  "stanza:definition": "Case input for config, import resolution, and asset reference checks.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-21",
+  "stanza:updated": "2026-06-21",
+  "stanza:parameter": [],
+  "stanza:menu-placement": "bottom-right",
+  "stanza:style": [],
+  "stanza:incomingEvent": [],
+  "stanza:outgoingEvent": []
+}

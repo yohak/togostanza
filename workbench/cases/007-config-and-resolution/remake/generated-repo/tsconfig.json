@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "%core/*": [
+        "lib/*"
+      ],
+      "%stanza/*": [
+        "stanzas/*"
+      ],
+      "@/*": [
+        "*"
+      ]
+    }
+  }
+}

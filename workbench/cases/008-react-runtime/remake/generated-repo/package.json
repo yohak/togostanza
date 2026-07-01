@@ -1,0 +1,24 @@
+{
+  "name": "case-008-react-runtime-remake",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "",
+  "scripts": {
+    "build": "togostanza build",
+    "serve": "togostanza serve",
+    "togostanza:local": "node ../../../../../package/bin/togostanza.mjs",
+    "build:local": "node ../../../../../package/bin/togostanza.mjs build",
+    "serve:local": "node ../../../../../package/bin/togostanza.mjs serve",
+    "generate:stanza:local": "node ../../../../../package/bin/togostanza.mjs generate stanza",
+    "serve:fixture": "node ../../../../scripts/static-fixture-server.mjs --port 4178 --default /fixtures/react-runtime.html"
+  },
+  "dependencies": {
+    "react": "link:../../../../../package/node_modules/react",
+    "react-dom": "link:../../../../../package/node_modules/react-dom",
+    "togostanza": "link:../../../../../package"
+  },
+  "engines": {
+    "node": ">=24.5.0"
+  },
+  "private": true
+}

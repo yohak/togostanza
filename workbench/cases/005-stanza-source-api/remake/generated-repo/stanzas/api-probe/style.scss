@@ -1,0 +1,26 @@
+@use '@/common.scss';
+
+main {
+  display: block;
+  padding: 1rem;
+}
+
+.api-probe {
+  border-left: 4px solid var(--api-probe-accent);
+  font-family: system-ui, sans-serif;
+  padding-left: 1rem;
+}
+
+.api-probe dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 0.75rem;
+}
+
+.api-probe dt {
+  font-weight: 700;
+}
+
+.api-probe dd {
+  margin: 0;
+}

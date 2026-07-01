@@ -1,0 +1,17 @@
+{
+  "head": {
+    "vars": ["label", "value"]
+  },
+  "results": {
+    "bindings": [
+      {
+        "label": { "type": "literal", "value": "alpha" },
+        "value": { "type": "literal", "value": "1" }
+      },
+      {
+        "label": { "type": "literal", "value": "beta" },
+        "value": { "type": "literal", "value": "2" }
+      }
+    ]
+  }
+}

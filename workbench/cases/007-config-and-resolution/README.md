@@ -345,3 +345,20 @@ Phase 2-4では、npm公開向けの `exports` / `files` 全体整理は扱わ�
 - alias合成順。
 - assetのinline/emit/hash/threshold。
 - Stanzaソース内でルートasset pathをどう表現するか。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、007の設定、import解決、asset観測をリメイク版CLIで再実行するための入力である。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/007-config-and-resolution/remake/generated-repo
+pnpm install
+pnpm run build:local
+pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4177/fixtures/config-resolution.html` とする。旧 `togostanza-build.mjs` / `.js` はリメイク版でも検出対象として残し、自動実行しないwarningを観測する。

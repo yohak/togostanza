@@ -235,3 +235,20 @@ Phase 2-3では、date/datetimeの変換はunit testで確認した。004のbrow
 
 - boolean以外の詳細変換規則を、どこまで正式仕様へ移すか。
 - validationエラーとランタイムfallbackの境界。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、004のパラメーター変換観測をリメイク版CLIで再実行するための入力である。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/004-runtime-parameters/remake/generated-repo
+pnpm install
+pnpm run build:local
+pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4174/fixtures/runtime-parameters.html` とする。`build:local` / `serve:local` はrepo-local CLIを呼ぶworkbench用scriptであり、生成repo利用者向けの `build` / `serve` とは分けている。

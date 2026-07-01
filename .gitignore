@@ -41,3 +41,4 @@ test-results/
 /workbench/cases/**/.cache/
 /workbench/cases/**/tmp/
 /workbench/cases/**/logs/
+/workbench/cases/**/remake/generated-repo/pnpm-lock.yaml

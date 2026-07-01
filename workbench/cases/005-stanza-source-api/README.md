@@ -294,3 +294,20 @@ Phase 2-3で確認済み。
 - boolean属性削除時の `handleAttributeChange()` `oldValue` / `newValue` を厳密に見る必要がある場合は、`null` と空文字を区別して描画するケース入力を追加する。現在のtemplateは `|| ''` を使うため、削除は `booleanParam: false` では見えるが、`newValue` のdistinctな描画値としては見えない。
 - `query()` のGET、追加header、認証、timeout、abort、response変換の詳細。
 - `menu()` のDOM構造や見た目の互換。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、005のStanza source API観測をリメイク版CLIで再実行するための入力である。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/005-stanza-source-api/remake/generated-repo
+pnpm install
+pnpm run build:local
+pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4175/fixtures/source-api.html` とする。`serve:fixture` は `/sparql` へのfixture responseも提供する。

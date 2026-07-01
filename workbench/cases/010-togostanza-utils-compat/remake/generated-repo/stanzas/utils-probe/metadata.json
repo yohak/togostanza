@@ -1,0 +1,61 @@
+{
+  "@context": {
+    "stanza": "http://togostanza.org/resource/stanza#"
+  },
+  "@id": "utils-probe",
+  "stanza:label": "Utils Probe",
+  "stanza:definition": "Case input for togostanza-utils drop-in compatibility checks.",
+  "stanza:license": "MIT",
+  "stanza:author": "Codex",
+  "stanza:contributor": [],
+  "stanza:created": "2026-06-23",
+  "stanza:updated": "2026-06-23",
+  "stanza:parameter": [
+    {
+      "stanza:key": "json-url",
+      "stanza:example": "",
+      "stanza:required": true,
+      "stanza:type": "string"
+    },
+    {
+      "stanza:key": "csv-url",
+      "stanza:example": "",
+      "stanza:required": true,
+      "stanza:type": "string"
+    },
+    {
+      "stanza:key": "tsv-url",
+      "stanza:example": "",
+      "stanza:required": true,
+      "stanza:type": "string"
+    },
+    {
+      "stanza:key": "sparql-url",
+      "stanza:example": "",
+      "stanza:required": true,
+      "stanza:type": "string"
+    },
+    {
+      "stanza:key": "error-url",
+      "stanza:example": "",
+      "stanza:required": true,
+      "stanza:type": "string"
+    },
+    {
+      "stanza:key": "custom-css-a-url",
+      "stanza:example": "",
+      "stanza:required": true,
+      "stanza:type": "string"
+    },
+    {
+      "stanza:key": "custom-css-b-url",
+      "stanza:example": "",
+      "stanza:required": true,
+      "stanza:type": "string"
+    }
+  ],
+  "stanza:menu-placement": "bottom-right",
+  "stanza:style": [],
+  "stanza:incomingEvent": [],
+  "stanza:outgoingEvent": []
+}

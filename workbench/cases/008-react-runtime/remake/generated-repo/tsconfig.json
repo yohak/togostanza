@@ -1,0 +1,38 @@
+{
+  "compileOptions": {
+    "check": false,
+    "tsconfigOverride": {
+      "compilerOptions": {
+        "esModuleInterop": true,
+        "jsx": "react",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "noEmit": false,
+        "skipLibCheck": true,
+        "target": "ES2020"
+      },
+      "include": [
+        "stanzas/**/*.ts",
+        "stanzas/**/*.tsx",
+        "index.d.ts"
+      ]
+    }
+  },
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "jsx": "react",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "skipLibCheck": true,
+    "target": "ES2020"
+  },
+  "include": [
+    "stanzas/**/*.ts",
+    "stanzas/**/*.tsx",
+    "index.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

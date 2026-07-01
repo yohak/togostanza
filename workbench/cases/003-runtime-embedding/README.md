@@ -215,3 +215,20 @@ Phase 2-2時点では、Stanza source由来の本文描画は合格条件にし�
 
 - `serve` のCORS、HMR、watch、livereloadの詳細。
 - in-app browser以外のブラウザ検証をどの段階で行うか。
+
+## Phase 6 リメイク版workbench入力
+
+`remake/generated-repo/` は、direct embed用のHTMLとStanzaソースをリメイク版CLIで再実行するための入力である。
+
+基本手順:
+
+```sh
+cd package
+mise exec -- pnpm run build
+cd ../workbench/cases/003-runtime-embedding/remake/generated-repo
+pnpm install
+pnpm run build:local
+pnpm run serve:fixture
+```
+
+確認URLは `http://127.0.0.1:4173/runtime-embed.html` とする。`serve:fixture` は `togostanza serve` ではなく、fixture HTMLと `dist/` を静的配信するworkbench用scriptである。

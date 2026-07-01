@@ -1,0 +1,5 @@
+[
+  { "label": "alpha", "value": 1, "group": "a" },
+  { "label": "beta", "value": 2, "group": "b" },
+  { "label": "alphabet", "value": 3, "group": "a" }
+]
