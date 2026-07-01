@@ -14,8 +14,9 @@
 | Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-1/plan.md)、[引き継ぎ](./phase-1/handoff.md) |
 | Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | [サブフェーズ計画](./phase-2/index.md)、[引き継ぎ](./phase-2/handoff.md) |
 | Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | [設計](./phase-3/plan.md)、[引き継ぎ](./phase-3/handoff.md) |
-| Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-4/plan.md) |
-| Phase 5: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | `phase-5-distribution.md` |
+| Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-4/plan.md)、[引き継ぎ](./phase-4/handoff.md) |
+| Phase 5: readiness inventory | Phase 0からPhase 4までの成果物、残課題、未固定事項を棚卸しし、Phase 6以降へ再編する。 | 棚卸し表、Phase 6以降の再編案 | [設計](./phase-5/plan.md) |
+| Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
 ## Phase 0: skeleton
 
@@ -144,26 +145,54 @@ serve用検証は、専用検証ケース `workbench/cases/011-serve-development
 
 対応する主な検証ケースは [008 React runtime](../../workbench/cases/008-react-runtime/)、[009 Vue runtime](../../workbench/cases/009-vue-runtime/)、[010 togostanza-utils compatibility](../../workbench/cases/010-togostanza-utils-compat/)、[012 Real project regression](../../workbench/cases/012-real-project-regression/) とする。実プロジェクト回帰では `references/metastanza` と `references/togomedium-web` を入力として参照し、観測結果と差分を012ケースへ記録する。Phase 4の設計は [Phase 4: compatibility 設計](./phase-4/plan.md) に置き、完了後の状態とPhase 5への引き継ぎは [Phase 4: compatibility 引き継ぎ](./phase-4/handoff.md) に置く。
 
-## Phase 5: distribution
+## Phase 5: readiness inventory
 
-ゴールは、将来npm packageとして配布する場合に必要な判断、手順、確認項目を整理することである。現時点ではnpm公開そのものを目標にしない。
+ゴールは、Phase 0からPhase 4までの成果物、仕様、検証、handoff、残課題を棚卸しし、Phase 6以降へ再編できる状態を作ることである。
+
+Phase 5は実装フェーズではない。既存実装を広げることではなく、ブロッカー、未固定事項、既知制約、後続判断を分類し、それぞれの扱いと提案先フェーズを明らかにする。
 
 含める範囲:
 
-- npm配布に必要なpackage metadata、`bin`、`exports`、`files`、`engines` の確認項目。
-- `npm exec togostanza@latest init` と `pnpm dlx togostanza@latest init` を公開後に成立させるための前提整理。
+- Phase 0からPhase 4までのplan / handoffの読み直し。
+- `docs/spec/`、`docs/investigation/follow-ups.md`、`docs/investigation/open-questions.md`、各workbenchケースREADMEに残った未固定事項の棚卸し。
+- Phase 4 handoffで後続判断として残した事項の分類。
+- 各項目の分類、根拠、影響範囲、提案先フェーズの記録。
+- Phase 6以降の仮ロードマップ作成。
+- distributionへ進む前に閉じるべき事項と、Phase Xまで送れる事項の切り分け。
+
+含めない範囲:
+
+- 新規機能実装。
+- 既存実装の広範な修正。
+- ローカルtarballを使ったnpm/pnpmの実インストール確認。
+- `npm publish` の実行。
+- tag作成。
+- GitHub release作成。
+- `latest` として公開されたpackageの実利用確認。
+
+Phase 5の設計は [Phase 5: readiness inventory 設計](./phase-5/plan.md) に置く。
+
+## Phase X: distribution
+
+ゴールは、将来npm packageとして配布する場合に必要な判断、手順、確認項目を整理し、公開前検証を行うことである。
+
+Phase Xは無期限延期とする。Phase 5で棚卸しした結果と、Phase 6以降で再編・解消した結果を見て、あらためて着手判断する。
+
+含める範囲:
+
+- npm配布に必要なpackage metadata、`bin`、`exports`、`files`、`engines` の最終確認。
+- `npm exec togostanza@latest init` と `pnpm dlx togostanza@latest init` を公開後に成立させるための確認。
 - ローカルtarballを使ったnpm/pnpmの実インストール確認。
 - npm公開前に必要な検証、tag、release、rollback、権限管理の計画。
 - 公開を行う場合に残る未固定事項と判断者の整理。
 
 含めない範囲:
 
+- Phase 5時点での着手。
 - `npm publish` の実行。
 - tag作成。
 - GitHub release作成。
 - `latest` として公開されたpackageの実利用確認。
-
-フェーズ開始時に `docs/implementation/phase-5-distribution.md` を作る。
 
 ## 詳細計画の扱い
 
