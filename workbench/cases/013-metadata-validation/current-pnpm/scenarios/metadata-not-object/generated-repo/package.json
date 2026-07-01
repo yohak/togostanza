@@ -1,0 +1,16 @@
+{
+  "name": "case-013-metadata-not-object-current",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": "",
+  "scripts": {
+    "build": "togostanza build --output-path dist"
+  },
+  "dependencies": {
+    "togostanza": "github:togostanza/togostanza"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "private": true
+}

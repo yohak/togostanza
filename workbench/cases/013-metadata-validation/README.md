@@ -21,83 +21,51 @@
 
 ## 入力条件
 
-最小のStanzaリポジトリを用意し、異常系ごとに小さなstanzaを分ける。
+最小のStanzaリポジトリを用意し、異常系ごとに小さなscenarioへ分ける。
 
-候補:
+基本構成:
 
 ```text
-generated-repo/
-  package.json
-  stanzas/
-    malformed-json/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    metadata-not-object/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    missing-id/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    id-not-string/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    id-mismatch/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    invalid-custom-element-id/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    missing-parameter/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    parameter-not-array/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    parameter-missing-key/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    unknown-parameter-type/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
-    style-not-array/
-      metadata.json
-      index.js
-      style.scss
-      templates/
-        stanza.html.hbs
+current-pnpm/
+  mise.toml
+  scenarios/
+    <scenario>/
+      generated-repo/
+        package.json
+        stanzas/
+          <stanza-id>/
+            metadata.json
+remake/
+  scenarios/
+    <scenario>/
+      generated-repo/
+        package.json
+        stanzas/
+          <stanza-id>/
+            metadata.json
 ```
 
-ケース入力は、現行版観測に必要な最小数から作る。すべてを最初から実体化する必要はない。
+metadata読み込み段階で失敗するscenarioは、`index.js`、`style.scss`、templateを置かない。後続段階の挙動を観測するscenarioでは、必要になった時点でStanzaソースを追加する。
+
+実体化済みscenario:
+
+| scenario | 目的 | 状態 |
+| ---- | ---- | ---- |
+| `malformed-json` | 壊れたJSONの `metadata.json` | current/remake入力あり |
+| `metadata-not-object` | `metadata.json` がJSON objectでない | current/remake入力あり |
+| `missing-id` | `@id` 欠落 | current/remake入力あり |
+| `id-not-string` | `@id` がstringでない | current/remake入力あり |
+| `id-mismatch` | `@id` とstanzaディレクトリ名の不一致 | current/remake入力あり |
+| `invalid-custom-element-id` | `togostanza-{id}` がvalid custom element名にならない `@id` | current/remake入力あり |
+
+未実体化の候補:
+
+- `stanza:parameter` 欠落。
+- `stanza:parameter` が配列でない。
+- parameter項目の `stanza:key` 欠落。
+- `stanza:type` が未知値。
+- `stanza:style` 欠落。
+- `stanza:style` が配列でない。
 
 ## 現行版で観測すること
 
@@ -114,6 +82,18 @@ generated-repo/
 - `stanza:style` が欠落した場合に、buildまたはランタイムがどう振る舞うか。
 - `stanza:style` が配列でない場合に、どこで失敗するか。
 
+### 現行版観測結果
+
+Phase 8着手時点では、固定済み最小validationの入力だけを `current-pnpm/scenarios/` に用意した。現行版CLIでの実行結果は未観測である。
+
+現行版観測を行う場合は、対象scenarioの `generated-repo/` で依存をインストールし、次を実行する。
+
+```sh
+pnpm run build
+```
+
+現行版観測は、リメイク版で既に仕様固定済みの最小validationを覆すためではなく、現行版との差分説明を残すために行う。
+
 ## リメイク版で観測すること
 
 - 現行版で通ったmetadata異常系を、リメイク版独自の厳格化で失敗させていないこと。
@@ -121,6 +101,33 @@ generated-repo/
 - リメイク版で失敗する場合、可能な範囲で `metadata.json` のpathやstanza IDが診断に含まれること。
 - valid JSON object、`@id` string、`@id` 不一致、valid custom element名の最小validationは、既に仕様判断済みの想定外入力として分かりやすく失敗すること。
 - `stanza:type` 未知値など、現行版が許容する挙動はリメイク版でも壊さないこと。
+
+### リメイク版観測結果
+
+実行前提:
+
+```sh
+cd package && mise exec -- pnpm run build
+```
+
+各scenarioの `remake/scenarios/<scenario>/generated-repo/` で次を実行した。
+
+```sh
+pnpm run build:local
+```
+
+結果:
+
+| scenario | exit | 診断 |
+| ---- | ---- | ---- |
+| `malformed-json` | `1` | `Invalid stanza metadata: malformed JSON at .../stanzas/malformed-json/metadata.json.` |
+| `metadata-not-object` | `1` | `Invalid stanza metadata: expected an object at .../stanzas/metadata-not-object/metadata.json.` |
+| `missing-id` | `1` | `Invalid stanza metadata: @id must be a string at .../stanzas/missing-id/metadata.json.` |
+| `id-not-string` | `1` | `Invalid stanza metadata: @id must be a string at .../stanzas/id-not-string/metadata.json.` |
+| `id-mismatch` | `1` | `Invalid stanza metadata: @id other-id must match directory name id-mismatch at .../stanzas/id-mismatch/metadata.json.` |
+| `invalid-custom-element-id` | `1` | `Invalid stanza metadata: @id is not a valid stanza id at .../stanzas/bad--id/metadata.json.` |
+
+いずれも、リメイク版仕様で固定済みの最小validationとしてbuild時に失敗した。診断には対象 `metadata.json` のpathが含まれる。
 
 ## 合格条件
 

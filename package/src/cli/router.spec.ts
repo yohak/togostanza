@@ -632,6 +632,48 @@ describe("CLI router", () => {
     expect(result.stderr).toContain("No stanzas found");
   });
 
+  it.each([
+    {
+      expected: "Invalid stanza metadata: malformed JSON",
+      metadata: "{",
+      name: "malformed-json",
+    },
+    {
+      expected: "Invalid stanza metadata: expected an object",
+      metadata: "[]",
+      name: "metadata-not-object",
+    },
+    {
+      expected: "Invalid stanza metadata: @id must be a string",
+      metadata: "{}",
+      name: "missing-id",
+    },
+    {
+      expected: "Invalid stanza metadata: @id must be a string",
+      metadata: '{"@id": 42}',
+      name: "id-not-string",
+    },
+    {
+      expected: "Invalid stanza metadata: @id other-id must match directory name id-mismatch",
+      metadata: '{"@id": "other-id"}',
+      name: "id-mismatch",
+    },
+    {
+      expected: "Invalid stanza metadata: @id is not a valid stanza id",
+      metadata: '{"@id": "bad--id"}',
+      name: "bad--id",
+    },
+  ])("rejects invalid build metadata: $name", async ({ expected, metadata, name }) => {
+    const cwd = makeStanzaRepoRoot();
+    writeMinimalStanza(cwd, name, metadata);
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], { cwd });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain(expected);
+    expect(result.stderr).toContain(join(cwd, "stanzas", name, "metadata.json"));
+  });
+
   it("supports the b alias for build output generation", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "buildProbe"], { cwd, currentDate });
@@ -1301,6 +1343,26 @@ describe("CLI router", () => {
     return JSON.parse(readText(path));
   }
 });
+
+function writeMinimalStanza(rootDirectory: string, stanzaId: string, metadata: string): void {
+  const stanzaDirectory = join(rootDirectory, "stanzas", stanzaId);
+  mkdirSync(join(stanzaDirectory, "templates"), { recursive: true });
+  writeFileSync(join(stanzaDirectory, "metadata.json"), `${metadata}\n`, "utf8");
+  writeFileSync(
+    join(stanzaDirectory, "index.js"),
+    [
+      "import Stanza from 'togostanza/stanza';",
+      "",
+      "export default class Probe extends Stanza {",
+      "  render() {}",
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  writeFileSync(join(stanzaDirectory, "style.scss"), "", "utf8");
+  writeFileSync(join(stanzaDirectory, "templates", "stanza.html.hbs"), "<main></main>\n", "utf8");
+}
 
 type FetchTextResult = {
   body: string;
