@@ -14,7 +14,7 @@
 | Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-1/plan.md)、[引き継ぎ](./phase-1/handoff.md) |
 | Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [001](../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../workbench/cases/002-build-artifacts/)、[003](../../workbench/cases/003-runtime-embedding/)、[004](../../workbench/cases/004-runtime-parameters/)、[005](../../workbench/cases/005-stanza-source-api/)、[006](../../workbench/cases/006-inter-stanza-coordination/)、[007](../../workbench/cases/007-config-and-resolution/) | [サブフェーズ計画](./phase-2/index.md)、[引き継ぎ](./phase-2/handoff.md) |
 | Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | [設計](./phase-3/plan.md)、[引き継ぎ](./phase-3/handoff.md) |
-| Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | `phase-4-compatibility.md` |
+| Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-4/plan.md) |
 | Phase 5: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | `phase-5-distribution.md` |
 
 ## Phase 0: skeleton
@@ -142,7 +142,7 @@ serve用検証は、専用検証ケース `workbench/cases/011-serve-development
 - SVG/PNG download出力の完全なバイト列一致。
 - npm package公開。
 
-対応する主な検証ケースは [008 React runtime](../../workbench/cases/008-react-runtime/)、[009 Vue runtime](../../workbench/cases/009-vue-runtime/)、[010 togostanza-utils compatibility](../../workbench/cases/010-togostanza-utils-compat/)、[012 Real project regression](../../workbench/cases/012-real-project-regression/) とする。実プロジェクト回帰では `references/metastanza` と `references/togomedium-web` を入力として参照し、観測結果と差分を012ケースへ記録する。フェーズ開始時に `docs/implementation/phase-4-compatibility.md` を作る。
+対応する主な検証ケースは [008 React runtime](../../workbench/cases/008-react-runtime/)、[009 Vue runtime](../../workbench/cases/009-vue-runtime/)、[010 togostanza-utils compatibility](../../workbench/cases/010-togostanza-utils-compat/)、[012 Real project regression](../../workbench/cases/012-real-project-regression/) とする。実プロジェクト回帰では `references/metastanza` と `references/togomedium-web` を入力として参照し、観測結果と差分を012ケースへ記録する。Phase 4の設計は [Phase 4: compatibility 設計](./phase-4/plan.md) に置く。
 
 ## Phase 5: distribution
 
