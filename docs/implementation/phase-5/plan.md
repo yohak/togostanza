@@ -10,7 +10,7 @@ Phase 5では、棚卸しと再設計を混ぜない。Phase 5の成果は実装
 
 - Phase 0からPhase 4までのplan / handoffと、各検証ケースREADMEを読み直し、完了済み事項と残課題を整理する。
 - `docs/spec/`、`docs/investigation/follow-ups.md`、`docs/investigation/open-questions.md`、各workbenchケースREADMEに残る未固定事項を棚卸しする。
-- 残課題を分類し、根拠、影響範囲、提案先フェーズを記録する。
+- 残課題の状態と扱う候補フェーズを分け、根拠、影響範囲、推奨を記録する。
 - Phase 6以降の仮ロードマップを作る。ただし、詳細なAPI設計や実装順序までは固定しない。
 - DistributionをPhase Xとして無期限延期し、Phase Xへ進む前の判断材料を整理する。
 
@@ -18,7 +18,7 @@ Phase 5では、棚卸しと再設計を混ぜない。Phase 5の成果は実装
 
 - Phase 0からPhase 4までのplan / handoffと、各検証ケースREADMEを確認し、残課題を一覧化している。
 - `docs/spec/`、`docs/investigation/follow-ups.md`、`docs/investigation/open-questions.md`、workbenchケースREADMEの未固定事項を確認している。
-- 各項目に分類、根拠、影響範囲、提案先フェーズを付けている。
+- 各項目に状態、根拠、影響範囲、候補フェーズを付けている。
 - Phase 6以降の再編案を提示している。
 - Phase X: distributionに送る事項と、distribution前に閉じる事項を分けている。
 - Phase 5の成果物を、後続フェーズ計画の入力として使える粒度で記録している。
@@ -29,7 +29,7 @@ Phase 5では、棚卸しと再設計を混ぜない。Phase 5の成果は実装
 - 完了済みフェーズのhandoff確認。
 - 完了済みフェーズのplan確認。
 - 未固定事項、既知制約、後続判断、ブロッカーの棚卸し。
-- 残課題の分類。
+- 残課題の状態分類。
 - Phase 6以降の仮フェーズ案。
 - Phase Xへ送るdistribution関連項目の切り出し。
 - 必要な文書リンクの整備。
@@ -51,22 +51,30 @@ Phase 5では、次の順序で棚卸しする。
 2. 古いPhase 5送りをすべて拾い直し、現在のPhase 5定義に合わせて再分類する。
 3. `docs/investigation/follow-ups.md` と `docs/investigation/open-questions.md` の項目を、閉じずに状態分類する。
 4. 各workbenchケースREADMEに残る未固定事項、観測未了、リメイク版差分を分類する。
-5. Phase 6以降の仮ロードマップを、項目ごとの提案先フェーズと理由に留めて作る。
+5. Phase 6以降の仮ロードマップを、項目ごとの候補フェーズと理由に留めて作る。
 
-Phase 5中に閉じてよいのは、根拠が十分で、すでに実装・検証済みで、仕様またはhandoffに反映済みの項目だけである。それ以外は勝手に確定せず、`needs decision` または後続フェーズ候補として記録する。
+Phase 5中に閉じてよいのは、根拠が十分で、すでに実装・検証済みで、仕様またはhandoffに反映済みの項目だけである。それ以外は勝手に確定せず、`needs decision` または `open` として記録し、候補フェーズを別に示す。
 
-## 分類軸
+## status / phase
 
-Phase 5では、棚卸し項目を少なくとも次の分類で扱う。
+Phase 5では、棚卸し項目の状態を `status`、扱う候補を `phase` として分ける。
 
-| 分類 | 意味 |
+| status | 意味 |
 | ---- | ---- |
 | `done` | Phase 0からPhase 4までで完了済み。後続作業は不要。 |
 | `documented constraint` | 既知制約として記録済み。現時点では修正しない。 |
 | `needs decision` | 人間判断または追加調査が必要。 |
 | `distribution blocker` | Phase Xへ進む前に閉じる必要がある。 |
-| `proposed phase` | Phase 6以降のどこで扱うかの提案。 |
-| `defer to Phase X` | distribution着手時に扱えばよい。 |
+| `open` | 未解決。扱う候補は `phase` 列に記録する。 |
+
+| phase | 意味 |
+| ---- | ---- |
+| `Phase 6 candidate` | Phase 6候補。 |
+| `Phase 7 candidate` | Phase 7候補。 |
+| `Phase 8 candidate` | Phase 8候補。 |
+| `Phase X` | distribution着手時に扱う候補。 |
+| `Future` | 本開発の中核から外し、必要が出た時点で再評価する候補。 |
+| `None` | 後続作業なし。 |
 
 同じ未対応でも、次を混ぜない。
 
@@ -120,7 +128,7 @@ Phase 5では、次の成果物を作る。
 
 - `docs/implementation/phase-5/inventory.md`
   - 棚卸し表。
-  - 各項目のitem、source、current status、classification、impact、recommendation、proposed phaseを記録する。
+  - 各項目のitem、source、current status、status、impact、recommendation、phaseを記録する。
   - 古いPhase 5送りの再分類、open / follow-up項目、workbenchケースの残課題、distribution blocker、documented constraintを分けて読める形にする。
   - 人間判断が必要な項目を短い一覧として切り出す。
 - `docs/implementation/phase-5/handoff.md`
