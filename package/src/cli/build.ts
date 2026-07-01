@@ -451,7 +451,6 @@ async function buildEntrypoints(
           chunkFileNames: "_chunks/[name]-[hash].js",
           entryFileNames: "[name].js",
         },
-        treeshake: false,
       },
       sourcemap: true,
       target: "es2024",

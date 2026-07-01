@@ -823,6 +823,104 @@ test("applies Emotion styles inside a React Stanza shadow root", async ({ page }
   }
 });
 
+test("directly embeds a real TogoMedium Stanza with visible Shadow DOM styling", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+
+  const cwd = makeTemporaryDirectory();
+  writeTogoMediumMetaListRegressionRepo(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+
+  const requestLog: string[] = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  const failedRequests: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on("requestfailed", (request) => {
+    failedRequests.push(`${request.url()} ${request.failure()?.errorText ?? ""}`.trim());
+  });
+  const server = await startStaticServer(cwd, requestLog);
+
+  try {
+    const port = addressPort(server);
+    writeFileSync(
+      resolve(cwd, "fixture.html"),
+      `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/gmdb-meta-list.js"></script>
+    <togostanza-gmdb-meta-list
+      id="togomedium-meta-list"
+      api_url="http://127.0.0.1:${port}/fixtures/togomedium/meta-list.json?kind=media"
+      limit="2"
+      title="TogoMedium smoke"
+      column_names="true"
+      column_sizes="40,60"
+    ></togostanza-gmdb-meta-list>
+  </body>
+</html>
+`,
+      "utf8",
+    );
+
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(5_000);
+    const loadState = await page.evaluate(
+      (diagnostics) => {
+        return {
+          consoleErrors: diagnostics.consoleErrors,
+          defined: Boolean(customElements.get("togostanza-gmdb-meta-list")),
+          failedRequests: diagnostics.failedRequests,
+          pageErrors: diagnostics.pageErrors,
+          recentRequests: diagnostics.requestLog.slice(-12),
+        };
+      },
+      { consoleErrors, failedRequests, pageErrors, requestLog },
+    );
+    expect(loadState.defined, JSON.stringify(loadState, null, 2)).toBe(true);
+    expect(consoleErrors).toEqual([]);
+    expect(failedRequests).toEqual([]);
+    expect(pageErrors).toEqual([]);
+
+    await expect
+      .poll(() => readShadowText(page, "#togomedium-meta-list", "h2"))
+      .toBe("TogoMedium smoke");
+    await expect
+      .poll(() => readShadowText(page, "#togomedium-meta-list", "table"))
+      .toContain("Togo Medium Demo");
+    await expect
+      .poll(() => readShadowText(page, "#togomedium-meta-list", "table"))
+      .toContain("Glucose");
+    await expect
+      .poll(() =>
+        page.locator("#togomedium-meta-list").evaluate((element) => {
+          const table = element.shadowRoot?.querySelector<HTMLElement>("table");
+
+          return table
+            ? {
+                borderCollapse: getComputedStyle(table).borderCollapse,
+                fontSize: getComputedStyle(table).fontSize,
+              }
+            : undefined;
+        }),
+      )
+      .toEqual({
+        borderCollapse: "collapse",
+        fontSize: "16px",
+      });
+
+    expect(requestLog).toContain("/fixtures/togomedium/meta-list.json");
+  } finally {
+    await closeServer(server);
+  }
+});
+
 test("renders a Vue SFC Stanza from repository dependencies", async ({ page }) => {
   test.setTimeout(20_000);
 
@@ -1059,6 +1157,12 @@ function readProbeValue(page: Page, selector: string, probeName: string): Promis
   return page.locator(selector).evaluate((element, name) => {
     return element.shadowRoot?.querySelector(`[data-probe="${name}"]`)?.textContent?.trim() ?? "";
   }, probeName);
+}
+
+function readShadowText(page: Page, hostSelector: string, shadowSelector: string): Promise<string> {
+  return page.locator(hostSelector).evaluate((element, selector) => {
+    return element.shadowRoot?.querySelector(selector)?.textContent?.trim() ?? "";
+  }, shadowSelector);
 }
 
 function readSparqlQuery(request: SparqlRequest | undefined): string {
@@ -1811,6 +1915,70 @@ function symlinkNodePackageFromTogoMediumReference(cwd: string, packageName: str
     resolve(repositoryRoot, "references", "togomedium-web", "node_modules", packageName),
     destination,
     "dir",
+  );
+}
+
+function writeTogoMediumMetaListRegressionRepo(cwd: string): void {
+  const referenceRoot = resolve(repositoryRoot, "references", "togomedium-web");
+  const stanzaPackageRoot = resolve(referenceRoot, "@packages", "stanza");
+  const stanzasDirectory = resolve(cwd, "stanzas");
+  mkdirSync(stanzasDirectory, { recursive: true });
+
+  symlinkSync(resolve(stanzaPackageRoot, "package.json"), resolve(cwd, "package.json"));
+  symlinkSync(resolve(referenceRoot, "node_modules"), resolve(cwd, "node_modules"), "dir");
+  symlinkSync(resolve(stanzaPackageRoot, "components"), resolve(cwd, "components"), "dir");
+  symlinkSync(resolve(stanzaPackageRoot, "styles"), resolve(cwd, "styles"), "dir");
+  symlinkSync(resolve(stanzaPackageRoot, "utils"), resolve(cwd, "utils"), "dir");
+  symlinkSync(resolve(stanzaPackageRoot, "tsconfig.json"), resolve(cwd, "tsconfig.json"));
+  symlinkSync(
+    resolve(stanzaPackageRoot, "stanzas", "gmdb-meta-list"),
+    resolve(stanzasDirectory, "gmdb-meta-list"),
+    "dir",
+  );
+  writeFileSync(
+    resolve(cwd, "togostanza.config.ts"),
+    [
+      `const referenceRoot = ${JSON.stringify(referenceRoot)};`,
+      "",
+      "export default {",
+      "  vite: {",
+      "    resolve: {",
+      "      alias: [",
+      "        { find: /^%stanza\\//, replacement: `${referenceRoot}/@packages/stanza/` },",
+      "        { find: /^%storybook\\//, replacement: `${referenceRoot}/@packages/storybook/src/` },",
+      "        { find: /^%core\\//, replacement: `${referenceRoot}/@packages/core/src/` },",
+      "        { find: /^%api\\//, replacement: `${referenceRoot}/@packages/api/src/` },",
+      "      ],",
+      "    },",
+      "  },",
+      "};",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  mkdirSync(resolve(cwd, "fixtures", "togomedium"), { recursive: true });
+  writeFileSync(
+    resolve(cwd, "fixtures", "togomedium", "meta-list.json"),
+    `${JSON.stringify(
+      {
+        columns: [
+          { key: "name", label: "Medium" },
+          { key: "component", label: "Component" },
+        ],
+        contents: [
+          {
+            component: "Glucose",
+            name: { href: "/medium/M1", label: "Togo Medium Demo" },
+          },
+        ],
+        limit: 2,
+        offset: 0,
+        total: 1,
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
   );
 }
 
