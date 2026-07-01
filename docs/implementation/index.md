@@ -16,7 +16,7 @@
 | Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../workbench/cases/011-serve-development-server/) | [設計](./phase-3/plan.md)、[引き継ぎ](./phase-3/handoff.md) |
 | Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../workbench/cases/008-react-runtime/)、[009](../../workbench/cases/009-vue-runtime/)、[010](../../workbench/cases/010-togostanza-utils-compat/)、[012](../../workbench/cases/012-real-project-regression/) | [設計](./phase-4/plan.md)、[引き継ぎ](./phase-4/handoff.md) |
 | Phase 5: readiness inventory | Phase 0からPhase 4までの成果物、残課題、未固定事項を棚卸しし、Phase 6以降へ再編する。 | 棚卸し表、Phase 6以降の再編案 | [設計](./phase-5/plan.md)、[棚卸し](./phase-5/inventory.md)、[引き継ぎ](./phase-5/handoff.md) |
-| Phase 6: workbench executability | workbenchの検証ケースを、repo-local CLIで再現できる入力として整える。 | workbench `remake/generated-repo`、repo-local CLI scripts | [設計](./phase-6/plan.md) |
+| Phase 6: workbench executability | workbenchの検証ケースを、repo-local CLIで再現できる入力として整える。 | workbench `remake/generated-repo`、repo-local CLI scripts | [設計](./phase-6/plan.md)、[引き継ぎ](./phase-6/handoff.md) |
 | Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
 
 ## Phase 0: skeleton
