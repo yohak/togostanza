@@ -48,8 +48,9 @@ Phase 5は再設計フェーズではない。この文書では、残課題を�
 | internal runtime / build surface cleanup | [Phase 2-1 handoff](../phase-2/phase-2-1/handoff.md), [Phase 2-2 handoff](../phase-2/phase-2-2/handoff.md), [003](../../../workbench/cases/003-runtime-embedding/README.md) | `initializeRuntime()` のpublic method維持、build wrapper末尾の `export default StanzaClass`、menu shellを `togostanza--menu` custom elementにするか、`.togostanza-build-output` marker除外、`metadata.json` のDownload JSON導線は未整理。runtime初期化はinline metadataで成立し、`metadata.json` fetch非依存は確認済み。 | `proposed phase` | 外部仕様ではないが、公開生成物やStanza開発者API面として誤って固定されると後で動かしにくい。 | 外部契約にするものと内部実装に留めるものを分ける。Phase X blockerではなく、runtime/build cleanupとして扱う。 | Phase 7 candidate |
 | `init .` の既存ファイルmergeと上書き | [Phase 2-0 handoff](../phase-2/phase-2-0/handoff.md), [001](../../../workbench/cases/001-cli-scaffold-and-generate/README.md) | `.git/` とlockfileだけは許容。`.gitignore`、`README.md`、`LICENSE` などは衝突として失敗。mergeや上書きoptionは未対応。 | `documented constraint` | 利便性には影響するが、安全側の挙動として成立している。 | 生成体験改善として後続に残す。Phase X blockerではない。 | Future |
 | scaffold / CLI UX follow-ups | [Phase 0 plan](../phase-0/plan.md), [Phase 1 plan](../phase-1/plan.md), [Phase 1 handoff](../phase-1/handoff.md), [001](../../../workbench/cases/001-cli-scaffold-and-generate/README.md), [follow-ups](../../investigation/follow-ups.md) | `init` / `generate stanza` の主要経路は成立。`index.ts` / `index.tsx` 生成option、README本文詳細、bare `init` prompt、CLI parser / help / option validation複雑化時のCLI library採用は未対応。 | `proposed phase` | Stanza開発者体験に効くが、build/runtimeの成立やdistribution前blockerではない。 | `init .` mergeとは別のUX bucketとして扱う。bare `init` promptは安全な非対話入口を崩すため、導入するなら明示判断にする。Phase 6のreadinessではなく、developer experience側へ送る。 | Phase 7 candidate |
-| `package.json` の `scripts.build` / `packageManager` field生成 | [Phase 2-6 handoff](../phase-2/phase-2-6/handoff.md), [Phase 1 handoff](../phase-1/handoff.md) | `packageManager` fieldは生成しない方針を維持。`scripts.build` も生成していない。workflowは `npm exec` / `pnpm exec` でCLIを呼ぶ。 | `needs decision` | 開発者体験とworkflowの見通し、pnpm version固定に影響する。 | Phase Xではなく、scaffold UXまたはworkflow UXとしてPhase 6以降で判断する。 | Phase 6 candidate |
-| generated workflow operational constraints | [Phase 2-6 handoff](../phase-2/phase-2-6/handoff.md), [001](../../../workbench/cases/001-cli-scaffold-and-generate/README.md) | workflow生成は成立。`dependencies.togostanza` は `^0.0.0`、pnpm workflowはpnpm 10系lockfile前提、lockfile無しpush案内、Action major tag運用、`scripts.build` / `packageManager` field生成は後続判断。 | `defer to Phase X` | live deploy以前に、利用者案内と運用ルールが不足すると初回CIで詰まりやすい。 | live deploy未確認とは別に、workflow運用制約としてまとめる。package公開前にREADMEやscaffold UXへ反映するかを判断する。 | Phase X / Phase 7 candidate |
+| generated repo `scripts.build` / `scripts.serve` | [Phase 1 handoff](../phase-1/handoff.md), [001](../../../workbench/cases/001-cli-scaffold-and-generate/README.md) | 現行版もリメイク版も生成repoの `package.json` にbuild / serve scriptは書いていない。workflowは `npm exec` / `pnpm exec` でCLIを直接呼ぶ。 | `proposed phase` | 互換必須ではないが、利用者が `npm run build` / `pnpm build`、`npm run serve` / `pnpm serve` で自然に動かせるため、開発体験に効く。workbench currentのscripts整備とも相性がよい。 | Phase 6前半で `build: "togostanza build"` と `serve: "togostanza serve"` の追加を有力候補として扱う。workflowは引き続き `npm exec` / `pnpm exec` 直接呼びでよい。 | Phase 6 candidate |
+| generated repo `packageManager` field | [Phase 2-6 handoff](../phase-2/phase-2-6/handoff.md), [Phase 1 handoff](../phase-1/handoff.md) | `packageManager` fieldは生成しない方針を維持している。pnpm workflowはworkflow側でpnpm 10系を明示する。 | `documented constraint` | pnpm version固定、Corepack運用、npm利用者との関係に踏み込む。lockfile再現性には効くが、生成repoの運用方針を強く固定する。 | `scripts.build` / `scripts.serve` とは分ける。本開発では不要。後続優先度は低から中として扱う。 | Future |
+| generated workflow operational constraints | [Phase 2-6 handoff](../phase-2/phase-2-6/handoff.md), [001](../../../workbench/cases/001-cli-scaffold-and-generate/README.md) | workflow生成は成立。`dependencies.togostanza` は `^0.0.0`、pnpm workflowはpnpm 10系lockfile前提、lockfile無しpush案内、Action major tag運用、`packageManager` field生成は後続判断。 | `defer to Phase X` | live deploy以前に、利用者案内と運用ルールが不足すると初回CIで詰まりやすい。 | live deploy未確認とは別に、workflow運用制約としてまとめる。package公開前にREADMEやscaffold UXへ反映するかを判断する。 | Phase X / Phase 7 candidate |
 
 ## Real project and compatibility inventory
 
@@ -75,6 +76,29 @@ Phase 5は再設計フェーズではない。この文書では、残課題を�
 | 細かいCLI exit code分類 | [Phase 0 handoff](../phase-0/handoff.md), [Phase 1 handoff](../phase-1/handoff.md), [follow-ups](../../investigation/follow-ups.md) | CLIは成功 `0` / 失敗non-zeroを維持。失敗理由ごとの詳細exit code分類は固定していない。 | `documented constraint` | CIでの細分岐や外部toolingには影響し得るが、現時点の仕様契約ではない。 | 診断メッセージ改善とは分ける。必要な利用シナリオが出るまで細分化しない。 | Future |
 | React / Vue以外のframework support | [Phase 4 handoff](../phase-4/handoff.md), [follow-ups](../../investigation/follow-ups.md) | React、Vue、MUI / Emotionの代表経路は確認済み。Svelteなど他frameworkは実プロジェクト観測も受け入れ検証もない。 | `documented constraint` | 対応範囲を広げるとbuild plugin、style注入、runtime mounting契約が増える。 | 実利用根拠が出るまでFuture扱いにする。React / Vue互換範囲の判断とは混ぜない。 | Future |
 | Codex sandboxではなく通常環境で確認する運用 | [open questions](../../investigation/open-questions.md), [Phase 0 handoff](../phase-0/handoff.md), [Phase 4 handoff](../phase-4/handoff.md) | browser testやwatcherは承認付き通常実行を優先する方針。 | `done` | 環境差を現行版やリメイク版の失敗と誤認するリスクを下げる。 | Phase 5でも検証コマンドを書く場合はこの方針を維持する。 | None |
+
+## 本開発の対象外整理
+
+この表は、Phase 5中の人間判断を記録する。本開発から外すことは、価値が低いことを意味しない。中核のbuild / runtime / compatibility成立と混ぜないために外す項目も含む。
+
+| item | 本開発での扱い | 後続優先度 | 補足 |
+| ---- | ---- | ---- | ---- |
+| source mapのbyte-level / column-level精度 | 不要 | 低 | `.map` 生成と参照の健全性は維持する。既存版とのmapping内容一致や列精度は互換条件にしない。 |
+| asset inline / emit / hash / thresholdの詳細固定 | 不要 | 低 | assetが読み込めることとサブパス安全性を維持する。inline有無、hash名、thresholdは固定しない。 |
+| menu placementの見た目 / DOM完全互換 | 不要 | 高め | `none`、About導線、基本placement属性の解釈は維持する。見た目やDOM互換はUI compatibility / runtime polishで扱う。 |
+| 細かいCLI exit code分類 | 不要 | 中 | 成功 `0` / 失敗non-zeroを維持する。診断メッセージ改善よりは低いが、source map精度やasset hash固定よりは高い。 |
+| React / Vue以外のframework support | 不要 | 低 | Svelteなどは実利用要求が出たら再評価する。React / Vue / MUI / Emotionの確認範囲とは混ぜない。 |
+| `query()` のGET / headers / auth / timeout | 不要 | 中 | POST / urlencodedの成功経路を維持する。外部API利用要求が出たら拡張候補にする。 |
+| Stanza間連携の高度API | 不要 | 中 | 006相当の静的HTML連携を維持する。dynamic rewire、upgrade前queue、複数receiver設計、blob URL revoke、複雑なvalue-pathは後続。 |
+| `serve` の高度化 | 不要 | 中から低 | preview、watch、rebuild、失敗500、復帰を維持する。HMR、自動reload、host指定、CORS、大規模watch性能は後続。 |
+| `url` parameter type | 不要 | 低 | 仕様にあるparameter typeのみ維持する。`date` / `datetime` とは別扱いにする。 |
+| Runtime edge semanticsの高度化 | 一部のみ対象 | 中から高 | params主要型、boolean属性有無、`renderTemplate()` 置換、属性変更再描画、`handleAttributeChange()` 値渡し、`menu()` 基本経路は対象。invalid値fallback、`render()` 例外UI、async再入制御、`importWebFontCSS()` 重複抑止、menu詳細は後続。 |
+| `togostanza-utils` 未対象API | 不要 | 低から中 | 純粋データ処理API、`Data` class、tree / graph helper、`showLoadingIcon()` / `hideLoadingIcon()` 直接importは対象外。実プロジェクト利用が確認されたものは再評価する。 |
+| リッチなプレビュー / ヘルプページ生成 | 不要 | 最優先 | 現行版の `index.html` / `-togostanza/` 相当のリッチUIは本開発から外す。ただし後続DXでは最優先候補にする。 |
+| `init .` の既存ファイルmerge / 上書き | 不要 | 中から高 | 現時点では安全側に衝突失敗する。後続で `.gitignore`、`README.md`、`LICENSE`、既存 `package.json` のmerge方針を決める。 |
+| bare `init` のinteractive prompt化 | 不要 | 中 | 本開発では `init --name <dir>` / `init .` の非対話入口を維持する。TTY / non-TTYの扱いは後続で決める。 |
+| generated repo `scripts.build` / `scripts.serve` | Phase 6前半で入れる | 中 | 本開発の中核条件ではないが、開発負担が小さくDX効果がある。`togostanza build` / `togostanza serve` を候補にする。 |
+| generated repo `packageManager` field | 不要 | 低から中 | pnpm version固定やCorepack運用まで含むため、scriptsとは分ける。 |
 
 ## Already done or closed
 
@@ -109,7 +133,7 @@ Phase 5では、次の項目を人間判断が必要な短い一覧として扱�
 
 | proposed phase | theme | candidate items |
 | ---- | ---- | ---- |
-| Phase 6 candidate | readiness cleanup before distribution | workbench current fixture completeness、dependency分類、`togostanza/stanza` export設計、`tsconfig paths` / alias方針、references再現性、実プロジェクト回帰範囲の判断 |
-| Phase 7 candidate | developer experience and diagnostics | metadata validation、diagnostics整理、旧設定migration診断、internal runtime / build surface cleanup、scaffold / CLI UX、`init .` merge UX、`scripts.build` / `packageManager` field、serve preview改善 |
+| Phase 6 candidate | readiness cleanup before distribution | workbench current fixture completeness、generated repo `scripts.build` / `scripts.serve`、dependency分類、`togostanza/stanza` export設計、`tsconfig paths` / alias方針、references再現性、実プロジェクト回帰範囲の判断 |
+| Phase 7 candidate | developer experience and diagnostics | rich preview / help page、metadata validation、diagnostics整理、旧設定migration診断、internal runtime / build surface cleanup、scaffold / CLI UX、`init .` merge UX、serve preview改善 |
 | Phase 8 candidate | compatibility expansion if needed | Runtime edge semantics、`url` parameter、`stanza:include`、root asset参照API、Stanza間連携高度化、追加 `togostanza-utils` API、React / Vue version範囲 |
 | Phase X | distribution | pack-install smoke、package metadata、`files`、`exports`、`private`解除、tarball install、`npm exec` / `pnpm dlx`、GitHub Actions live deploy |
