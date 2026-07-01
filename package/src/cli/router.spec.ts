@@ -1,4 +1,5 @@
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -21,6 +22,7 @@ import type { CommandRunner } from "./runner.js";
 import type { ServeSession } from "./serve.js";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repositoryRoot = resolve(packageRoot, "..");
 
 const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");
@@ -795,6 +797,25 @@ describe("CLI router", () => {
     expect(readText(join(cwd, "dist", "vue-runtime-probe.css"))).toContain(".vue-runtime-probe");
     expect(existsSync(join(cwd, "dist", "vue-runtime-probe.js.map"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "vue-runtime-probe", "metadata.json"))).toBe(true);
+  });
+
+  it("builds a stanza that imports the real togostanza-utils package", async () => {
+    const cwd = makeStanzaRepoRoot();
+    writeUtilsCompatFixture(cwd);
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    const js = readText(join(cwd, "dist", "utils-probe.js"));
+    expect(js).toContain("Download SVG");
+    expect(js).toContain("loadData json");
+    expect(js).toContain("applyFilter");
+    expect(js).not.toContain('from"togostanza-utils"');
+    expect(js).not.toContain('from"togostanza-utils/load-data"');
+    expect(js).not.toContain('from"togostanza-utils/apply-filter"');
+    expect(readText(join(cwd, "dist", "utils-probe.css"))).toContain(".utils-probe");
+    expect(existsSync(join(cwd, "dist", "utils-probe.js.map"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "utils-probe", "metadata.json"))).toBe(true);
   });
 
   it("warns about legacy build config files without executing them", async () => {
@@ -1610,6 +1631,40 @@ function linkVuePackages(rootDirectory: string): void {
   linkNodePackages(rootDirectory, ["vue"]);
 }
 
+function writeUtilsCompatFixture(rootDirectory: string): void {
+  installTogostanzaUtils(rootDirectory);
+  cpSync(
+    join(
+      repositoryRoot,
+      "workbench/cases/010-togostanza-utils-compat/current-pnpm/generated-repo/stanzas/utils-probe",
+    ),
+    join(rootDirectory, "stanzas", "utils-probe"),
+    { recursive: true },
+  );
+  writeFileSync(
+    join(rootDirectory, "common.scss"),
+    ":host {\n  --case-010-accent: #2f6f73;\n}\n",
+    "utf8",
+  );
+  updateJson(join(rootDirectory, "stanzas", "utils-probe", "metadata.json"), {
+    "stanza:style": [{ "stanza:default": "#2f6f73", "stanza:key": "--case-010-accent" }],
+  });
+}
+
+function installTogostanzaUtils(rootDirectory: string): void {
+  const nodeModulesDirectory = join(rootDirectory, "node_modules");
+  mkdirSync(nodeModulesDirectory, { recursive: true });
+  cpSync(
+    join(repositoryRoot, "references", "togostanza-utils"),
+    join(nodeModulesDirectory, "togostanza-utils"),
+    {
+      filter: (source) => !source.split(/[\\/]/).includes(".git"),
+      recursive: true,
+    },
+  );
+  linkNodePackages(rootDirectory, ["d3", "csv-stringify", "date-fns"]);
+}
+
 function linkNodePackages(rootDirectory: string, packageNames: readonly string[]): void {
   const nodeModulesDirectory = join(rootDirectory, "node_modules");
   mkdirSync(nodeModulesDirectory, { recursive: true });
@@ -1621,6 +1676,11 @@ function linkNodePackages(rootDirectory: string, packageNames: readonly string[]
       "dir",
     );
   }
+}
+
+function updateJson(path: string, values: Record<string, unknown>): void {
+  const current = JSON.parse(readText(path)) as Record<string, unknown>;
+  writeFileSync(path, `${JSON.stringify({ ...current, ...values }, null, 2)}\n`, "utf8");
 }
 
 function formatLargeSvg(label: string): string {

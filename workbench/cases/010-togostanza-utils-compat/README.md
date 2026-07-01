@@ -99,6 +99,27 @@ current-pnpm/
 - `this.element` と `this.root.host.stanzaInstance.element` がhost custom elementを指すこと。
 - runtime menuが `{ type, label, handler }` と `{ type: "divider" }` を扱えること。
 
+### リメイク版の観測状況
+
+- 確認日: 2026-07-01
+- 確認範囲: package test内の `utils-probe` fixture。
+- `references/togostanza-utils` の実packageを、変更せずに一時Stanzaリポジトリの `node_modules/togostanza-utils` へコピーして確認した。手書きshimや再実装fixtureでは代替していない。
+- `togostanza-utils` の実依存である `d3`、`csv-stringify`、`date-fns` は、package test用devDependencyの実packageを一時Stanzaリポジトリ側の `node_modules/` へsymlinkして確認した。
+- `package/src/cli/router.spec.ts` で、`togostanza-utils`、`togostanza-utils/load-data`、`togostanza-utils/apply-filter` をimportするStanzaが `togostanza build` で生成物を作れることを確認した。
+- `package/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-utils-probe>` がupgradeされ、010の受け入れ対象チェックがすべて `ok` になることを確認した。
+- `loadData()` はJSON、CSV、TSV、SPARQL results JSONを読み込み、配列データへ `__togostanza_id__` を付与した。
+- 同一URL / type / limit / offsetの連続 `loadData()` はcacheを返した。
+- missing JSON fetchではerror DOMが出て、loading DOMは完了後に削除された。ブラウザの404 resource console errorは、意図したerror URL由来として扱った。
+- `appendCustomCss()` は `link[data-togostanza-custom-css]` を差し替え、最後の `custom-b.css` だけが残った。
+- `this.root.host.stanzaInstance.element` はhost custom elementを指し、download helpersが参照するshadow root内 `style` と `link[rel="stylesheet"]` も存在した。
+- runtime menuにはDownload SVG / PNG / JSON / CSV / TSV itemとdividerが表示され、各itemのhandlerを呼び出してもruntime構造依存の `pageerror` は出なかった。SVG / PNG / JSON / CSV / TSVの出力内容は比較していない。
+- `applyFilter()` の戻り値は参考観測として確認した。挙動互換契約には含めない。
+
+確認コマンド:
+
+- `cd package && mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t togostanza-utils`
+- `cd package && mise exec -- pnpm exec playwright test --config playwright.config.ts -g togostanza-utils`
+
 ## 合格条件
 
 - `togostanza-utils` packageを変更せずにbuildできる。

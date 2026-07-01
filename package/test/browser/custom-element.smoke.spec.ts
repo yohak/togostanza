@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import {
+  cpSync,
   createReadStream,
   existsSync,
   mkdirSync,
@@ -16,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repositoryRoot = resolve(packageRoot, "..");
 const temporaryDirectories: string[] = [];
 
 type SparqlRequest = {
@@ -748,6 +750,107 @@ test("renders a Vue SFC Stanza from repository dependencies", async ({ page }) =
         }),
       )
       .toBe("rgb(12, 34, 56)");
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("runs the real togostanza-utils package against the remake runtime", async ({ page }) => {
+  test.setTimeout(25_000);
+
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  writeUtilsCompatProbe(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+
+  const requestLog: string[] = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on("download", (download) => {
+    void download.cancel();
+  });
+
+  const server = await startStaticServer(cwd, requestLog);
+
+  try {
+    const port = addressPort(server);
+    writeFileSync(
+      resolve(cwd, "fixture.html"),
+      `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="./public/utils-probe.js"></script>
+    <togostanza-utils-probe
+      id="utils"
+      json-url="http://127.0.0.1:${port}/fixtures/data/records.json"
+      csv-url="http://127.0.0.1:${port}/fixtures/data/records.csv"
+      tsv-url="http://127.0.0.1:${port}/fixtures/data/records.tsv"
+      sparql-url="http://127.0.0.1:${port}/fixtures/data/sparql-results.json"
+      error-url="http://127.0.0.1:${port}/fixtures/data/missing.json"
+      custom-css-a-url="http://127.0.0.1:${port}/fixtures/custom-a.css"
+      custom-css-b-url="http://127.0.0.1:${port}/fixtures/custom-b.css"
+    ></togostanza-utils-probe>
+  </body>
+</html>
+`,
+      "utf8",
+    );
+
+    await page.goto(`http://127.0.0.1:${port}/fixture.html`);
+    await page.waitForFunction(() => customElements.get("togostanza-utils-probe"));
+    await expect.poll(() => readProbeValue(page, "#utils", "overall")).toBe("ok");
+
+    const checkStatuses = await page.locator("#utils").evaluate((element) => {
+      return [...(element.shadowRoot?.querySelectorAll("tr[data-check]") ?? [])].map((row) => {
+        return {
+          name: row.getAttribute("data-check"),
+          status: row.querySelector("[data-status]")?.getAttribute("data-status"),
+        };
+      });
+    });
+    expect(checkStatuses).toEqual(
+      expect.arrayContaining([
+        { name: "loadData json", status: "ok" },
+        { name: "__togostanza_id__", status: "ok" },
+        { name: "loadData cache", status: "ok" },
+        { name: "loadData csv", status: "ok" },
+        { name: "loadData tsv", status: "ok" },
+        { name: "loadData sparql-results-json", status: "ok" },
+        { name: "loadData error ui", status: "ok" },
+        { name: "appendCustomCss replacement", status: "ok" },
+        { name: "download root compat", status: "ok" },
+        { name: "download style compat", status: "ok" },
+        { name: "menu item contract", status: "ok" },
+        { name: "divider menu item", status: "ok" },
+      ]),
+    );
+
+    await page.locator("#utils").evaluate((element) => {
+      const buttons = [
+        ...(element.shadowRoot?.querySelectorAll<HTMLButtonElement>(
+          "[data-togostanza-menu-item]",
+        ) ?? []),
+      ];
+      for (const button of buttons) {
+        button.click();
+      }
+    });
+    await page.waitForTimeout(300);
+
+    expect(pageErrors).toEqual([]);
+    expect(consoleErrors.filter((message) => !message.includes("Failed to load resource"))).toEqual(
+      [],
+    );
+    expect(requestLog).toEqual(expect.arrayContaining(["/fixtures/data/records.json"]));
+    expect(requestLog).toEqual(expect.arrayContaining(["/fixtures/data/records.csv"]));
+    expect(requestLog).toEqual(expect.arrayContaining(["/fixtures/data/records.tsv"]));
+    expect(requestLog).toEqual(expect.arrayContaining(["/fixtures/data/sparql-results.json"]));
   } finally {
     await closeServer(server);
   }
@@ -1560,6 +1663,44 @@ function writeVueRuntimeProbe(cwd: string): void {
 
 function linkVuePackages(cwd: string): void {
   linkNodePackages(cwd, ["vue"]);
+}
+
+function writeUtilsCompatProbe(cwd: string): void {
+  installTogostanzaUtils(cwd);
+  cpSync(
+    resolve(
+      repositoryRoot,
+      "workbench/cases/010-togostanza-utils-compat/current-pnpm/generated-repo/stanzas/utils-probe",
+    ),
+    resolve(cwd, "stanzas", "utils-probe"),
+    { recursive: true },
+  );
+  cpSync(
+    resolve(
+      repositoryRoot,
+      "workbench/cases/010-togostanza-utils-compat/current-pnpm/generated-repo/fixtures",
+    ),
+    resolve(cwd, "fixtures"),
+    { recursive: true },
+  );
+  writeFileSync(resolve(cwd, "common.scss"), ":host {\n  --case-010-accent: #2f6f73;\n}\n", "utf8");
+  updateMetadata(resolve(cwd, "stanzas", "utils-probe", "metadata.json"), {
+    "stanza:style": [{ "stanza:default": "#2f6f73", "stanza:key": "--case-010-accent" }],
+  });
+}
+
+function installTogostanzaUtils(cwd: string): void {
+  const nodeModulesDirectory = resolve(cwd, "node_modules");
+  mkdirSync(nodeModulesDirectory, { recursive: true });
+  cpSync(
+    resolve(repositoryRoot, "references", "togostanza-utils"),
+    resolve(nodeModulesDirectory, "togostanza-utils"),
+    {
+      filter: (source) => !source.split(/[\\/]/).includes(".git"),
+      recursive: true,
+    },
+  );
+  linkNodePackages(cwd, ["d3", "csv-stringify", "date-fns"]);
 }
 
 function linkNodePackages(cwd: string, packageNames: readonly string[]): void {
