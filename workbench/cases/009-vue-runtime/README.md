@@ -41,7 +41,8 @@ Vue SFCを使う既存Stanzaソースが、TogoStanzaランタイムのShadow DO
 - 確認範囲: package test内のVue SFC fixture。
 - `package/src/cli/router.spec.ts` で、`.vue` importを持つStanzaが `togostanza build` で生成物を作れることを確認した。
 - Vue SFC処理はCLI側のbuild runtime dependencyである `@vitejs/plugin-vue` で扱う。
-- fixtureの `vue` は、package test用devDependencyの実Vueを一時Stanzaリポジトリ側の `node_modules/` へsymlinkして確認した。CLI側runtime dependencyにはしていない。
+- `@vitejs/plugin-vue` のpeer dependencyを満たすため、CLI側にも `vue` をbuild runtime dependencyとして置く。
+- fixtureのStanzaソースがimportする `vue` は、一時Stanzaリポジトリ側の `node_modules/` へsymlinkした実Vueで確認した。StanzaソースのVue runtime解決はStanzaリポジトリ側dependenciesで担う。
 - 生成された `dist/vue-runtime-probe.js` にはVue component本文、Vue runtime、runtime登録がbundleされ、bare import `vue` / `./App.vue` は残らなかった。
 - Vue SFC `<style>` はVite生成CSSを `{id}.css` へ集約する方針にし、`dist/vue-runtime-probe.css` に `.vue-runtime-probe` のstyleが入ることを確認した。
 - `package/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-vue-runtime-probe>` がupgradeされ、open Shadow DOM内 `main` へVue componentを描画できることを確認した。

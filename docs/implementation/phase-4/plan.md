@@ -123,6 +123,7 @@ Phase 4は、1つの詳細計画の中でサブフェーズを切って進める
 - Vue SFC処理に必要なVite pluginは、Phase 4で実装方針を固定する。
 - 推奨方針は、リメイク版CLI側のbuild runtime依存としてVue SFC用pluginを持ち、Stanza開発者が旧 `togostanza-build.mjs` でVue pluginを注入しなくても最小Vue SFCをビルドできるようにすることである。
 - ただし、pluginやpeer dependencyの配置で公開CLIの依存分類に影響する場合は、Phase 5へ送らずPhase 4内で `dependencies` / `devDependencies` の扱いを決める。
+- Phase 4-2実装では、`@vitejs/plugin-vue` のpeer dependencyを公開CLI相当でも満たすため、CLI側のbuild runtime dependencyとして `vue` も `dependencies` に置く。Stanzaソース内の `import "vue"` は、引き続きStanzaリポジトリ側dependenciesから解決する。
 - `this.root.querySelector("main")` をVue `createApp()` のマウント対象にする。
 - `this.params` をVue propsへ渡す。
 - Vue runtimeチャンクが相対importで解決できることを確認する。
