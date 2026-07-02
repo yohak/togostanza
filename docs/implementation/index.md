@@ -22,7 +22,7 @@
 | Phase 9: local compatibility baseline | 実プロジェクト群を使ったローカルcompatibility確認を、後続フェーズへ再利用できるbaselineとして整える。 | [012](../../workbench/cases/012-real-project-regression/)、`test:compat:local` | [設計](./phase-9/plan.md)、[引き継ぎ](./phase-9/handoff.md) |
 | Phase 10: developer experience and internal cleanup | Stanza開発者向けの案内と、外部契約にしない内部面を整理する。 | 生成README、内部面整理、[001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-10/plan.md)、[引き継ぎ](./phase-10/handoff.md) |
 | Phase 11: compatibility verification | 全Stanza browser smoke、TogoMedium Webアプリ本体E2E、runtime edge semanticsを検証する。 | [012](../../workbench/cases/012-real-project-regression/)、runtime edge確認 | [設計](./phase-11/plan.md)、[引き継ぎ](./phase-11/handoff.md) |
-| Phase 12: distribution | ローカルtarballによる配布前確認とpackage公開面の最終整理を行う。 | pack-install smoke、配布前チェックリスト | [設計](./phase-12/plan.md)、[引き継ぎ](./phase-12/handoff.md) |
+| Phase 12: GitHub dependency distribution | GitHub dependency installを短期配布経路として成立させる。 | root package layout、GitHub dependency install smoke、release branch / tag運用 | [設計](./phase-12/plan.md)、[引き継ぎ](./phase-12/handoff.md) |
 
 ## Phase 0: skeleton
 
@@ -333,26 +333,33 @@ Phase 11では、metastanza全10 StanzaとTogoMedium Stanza全15 Stanzaのbrowse
 
 Phase 11の設計は [Phase 11: compatibility verification 設計](./phase-11/plan.md) に置き、完了後の状態とPhase 12 / 後続への引き継ぎは [Phase 11: compatibility verification 引き継ぎ](./phase-11/handoff.md) に置く。
 
-## Phase 12: distribution
+## Phase 12: GitHub dependency distribution
 
-ゴールは、将来npm packageとして配布する場合に必要な判断、手順、確認項目を整理し、公開前検証を行うことである。
+ゴールは、Stanza開発者が `package.json` にGitHub dependencyを書き、`npm install` または `pnpm install` で `togostanza` を解決できる短期配布経路を成立させることである。
 
-Phase 12は、Phase 5で棚卸ししたdistribution blockerと、Phase 6からPhase 11までで回収したcompatibility確認を受けて着手する。詳細計画は [Phase 12: distribution 設計](./phase-12/plan.md) に置き、公開前に人間が確認する項目は [Phase 12 release checklist](./phase-12/release-checklist.md) に置く。完了後の状態と外部公開前に残す作業は [Phase 12: distribution 引き継ぎ](./phase-12/handoff.md) に置く。
+Phase 12は、Phase 5で棚卸ししたdistribution blockerと、Phase 6からPhase 11までで回収したcompatibility確認を受けて着手する。Phase 12前半ではローカルtarballによる `pack -> install -> 実行` smokeを確認済みであり、その結果は [Phase 12: distribution 引き継ぎ](./phase-12/handoff.md) に記録している。
+
+Phase 12後半では、短期方針をnpm publishではなくGitHub dependency installへ切り替える。詳細計画は [Phase 12: GitHub dependency distribution 設計](./phase-12/plan.md) に置き、公開前に人間が確認する項目は [Phase 12 release checklist](./phase-12/release-checklist.md) に置く。完了後の状態と外部公開前に残す作業は [Phase 12: distribution 引き継ぎ](./phase-12/handoff.md) に追記する。
 
 含める範囲:
 
-- npm配布に必要なpackage metadata、`bin`、`exports`、`files`、`engines` の最終確認。
-- `npm exec togostanza@latest init` と `pnpm dlx togostanza@latest init` を公開後に成立させるための確認。
-- ローカルtarballを使ったnpm/pnpmの実インストール確認。
-- npm公開前に必要な検証、tag、release、rollback、権限管理の計画。
-- 公開を行う場合に残る未固定事項と判断者の整理。
+- root package layoutへの移行。
+- 実装、test、scriptsの `src/` 配下への集約。
+- root実行の品質確認手順。
+- ローカルtarball smokeの維持。
+- GitHub dependency install smoke。
+- GitHub dependency向けrelease branch / tag運用。
+- generated repoの `dependencies.togostanza` GitHub dependency spec判断。
+- install対象を `files` で最小化するpackage surface確認。
 
 含めない範囲:
 
 - `npm publish` の実行。
-- tag作成。
 - GitHub release作成。
 - `latest` として公開されたpackageの実利用確認。
+- GitHub Packages npm registryへの公開。
+- ワークスペース化。
+- install時build。
 
 ## 詳細計画の扱い
 

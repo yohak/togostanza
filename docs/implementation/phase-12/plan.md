@@ -1,220 +1,314 @@
-# Phase 12: distribution 設計
+# Phase 12: GitHub dependency distribution 設計
 
-Phase 12は、リメイク版パッケージを配布物として扱えるかを確認し、公開前に必要なpackage surface、生成repo、GitHub Pages導線を最終整理するフェーズである。
+Phase 12は、リメイク版パッケージを短期的にGitHub dependencyとしてインストールできる形へ寄せるフェーズである。
 
-このフェーズでは、まずローカルtarballによる `pack -> install -> 実行` smokeを行う。`npm publish`、tag作成、GitHub release作成、`latest` として公開されたpackageの実利用確認は、この計画の実行対象にしない。外部副作用がある操作は、別途人間の明示承認を受けてから扱う。
+このフェーズでは `npm publish` を行わない。Stanza開発者が自分の `package.json` に次のようなdependencyを書き、`npm install` または `pnpm install` で `togostanza` を解決できることを主なゴールにする。
+
+```json
+{
+  "dependencies": {
+    "togostanza": "github:satoshionoda/togostanza-remake#<tag-or-sha>"
+  }
+}
+```
 
 ## 前提
+
+Phase 12の前半では、ローカルtarballによる `pack -> install -> 実行` smokeをすでに確認している。この確認結果は [Phase 12: distribution 引き継ぎ](./handoff.md) に記録している。
+
+ただし、その時点の計画は将来のnpm配布を主な想定にしていた。現在の短期方針では、npm registryへの公開ではなく、GitHub dependency installを先に成立させる。そのため、Phase 12の後半ではpackage layoutとrelease運用を見直す。
 
 Phase 12へ入る前の再確認として、次が完了している。
 
 - `cd package && mise exec -- pnpm run check-all`: pass。
 - `cd package && mise exec -- pnpm run test:compat:local`: pass。
-- git working treeはclean。
+- ローカルtarball install smoke: pass。
 - Phase 11-2で観測された低頻度build flakeは、直近再実行では再現していない。
 - `references/` 依存確認はローカルcompatibility確認であり、CI再現性はPhase 12の前提にしない。
 
 ## 目的
 
-- ローカルtarballで、配布物としてCLIをinstallして実行できることを確認する。
-- `bin`、`exports`、型定義、`files`、runtime path、dependency分類がtarball install後も成立することを確認する。
-- 生成repoの `dependencies.togostanza` version spec、`packageManager` field、GitHub Pages workflowの運用制約を最終判断する。
-- npm公開metadata、`private` の扱い、`engines.node` の下限を公開前の判断材料として整理する。
-- Phase 12後に残す外部操作、release手順、rollback、権限管理を明確にする。
+- 本リポジトリのmain側も、リリースを意識したroot package layoutへ移行する。
+- GitHub dependency install時に、repo rootがそのまま `togostanza` packageとして成立する状態にする。
+- `npm publish` やinstall時buildに依存せず、release branch / tagでbuild済み `dist/` を提供する運用を決める。
+- 通常開発branchでは `dist/` を持たず、release branch / tagだけに `dist/` を含める境界を明確にする。
+- `docs/`、`workbench/`、`references/` は本リポジトリに残しつつ、install対象と通常品質確認対象から外す。
+- Phase 12完了後に、Stanza開発者がGitHub dependencyでインストールして `togostanza` を使える確認結果と手順を残す。
 
 ## 完了条件
 
-- `pnpm pack` で作成したtarballの内容を確認し、不要なtest / docs / workbench / referencesを含めていない。
-- tarballを別ディレクトリのnpm環境へinstallし、`npm exec -- togostanza --version` 相当のCLI起動ができる。
-- tarballを別ディレクトリのpnpm環境へinstallし、`pnpm exec togostanza --version` 相当のCLI起動ができる。
-- tarball install後のCLIで、少なくとも `init`、`generate stanza`、`build` を実行できる。
-- tarball install後のStanzaリポジトリで、`import Stanza from "togostanza/stanza"` と `import { defineTogoStanzaConfig } from "togostanza/config"` の型解決と実行時解決を確認している。
-- 生成repoの `dependencies.togostanza` version specを、公開後の解決に使える形として最終判断している。
-- `private`、`files`、`exports`、root export / `main` / top-level `types`、`engines.node`、npm公開metadataの扱いを記録している。
-- `npm` と `pnpm` のlockfile、pnpm 10系、`packageManager` field、GitHub Pages workflowの運用制約をREADMEまたはhandoffへ記録している。
-- GitHub Actions live deploy確認を実施するか、公開後または別承認作業へ残すかを明記している。
-- Phase 12完了後にhandoffを作る。
+- root package layoutへ移行している。
+  - `package/package.json` はrootの `package.json` へ移っている。
+  - `package/pnpm-lock.yaml` はrootの `pnpm-lock.yaml` へ移っている。
+  - `package/mise.toml` はrootの `mise.toml` へ移っている。
+  - 実装、test、scriptsは `src/` 配下へ集約されている。
+  - `bin/` はroot直下に残り、GitHub dependency install後のCLI入口として機能する。
+- root packageはNode workspaceとして扱わない。
+- 通常の品質確認はrootで `mise exec -- pnpm run check-all` を実行する形へ移っている。
+- 品質確認対象は原則として `src/` と `bin/`、必要な設定ファイルに限定されている。
+- `docs/`、`workbench/`、`references/` は通常の `check-all` に含めない。
+- GitHub dependency install用のrelease branch / tag運用が文書化されている。
+- install時buildは使わない方針が文書化されている。
+- release branch / tagにはbuild済み `dist/` を含める方針が文書化されている。
+- install対象は `package.json.files` で最小化されている。
+- npm / pnpmの一時Stanzaリポジトリから、GitHub dependencyとして `togostanza` をインストールできることを確認している。
+- GitHub dependency install後に、少なくとも `togostanza --version`、`init`、`generate stanza`、`build` を確認している。
+- 生成repoの `dependencies.togostanza` が、GitHub dependency specを扱える形になっている。
+- Phase 12完了後にhandoffを更新する。
 
 ## 含めるもの
 
-- `docs/implementation/phase-12/plan.md` の追加。
-- `docs/implementation/index.md` のPhase 12着手状態への更新。
-- ローカルtarballを使ったnpm / pnpm install smoke。
-- package公開面の最終整理。
-- 生成repo dependency specとworkflow運用制約の判断。
-- 必要に応じた `workbench/cases/014-distribution-smoke/` の追加。
-- 必要に応じたpackage側testまたは手順化されたdistribution smoke scriptの追加。
-- Phase 12完了後の `docs/implementation/phase-12/handoff.md`。
+- root package layout migration。
+- `package/` 直下にあった実パッケージのroot移行。
+- `src/` 配下への実装、test、scripts集約。
+- root実行の品質確認手順。
+- `docs/setup/package-layout.md`、`docs/setup/quality.md`、`docs/UBIQUITOUS_LANGUAGE.md`、`AGENTS.md` の方針更新。
+- GitHub dependency install smoke。
+- release branch / tag運用の文書化。
+- 生成repoの `dependencies.togostanza` spec方針の更新。
+- 必要に応じた `test:distribution:local` のGitHub dependency対応。
 
 ## 含めないもの
 
 - `npm publish` の実行。
-- tag作成。
-- GitHub release作成。
 - npm registry上の `latest` packageを使った確認。
+- GitHub Packages npm registryへの公開。
 - CI化。
 - `references/` の自動取得、更新、submodule化。
 - ヘルププレビューUIのリッチ化。
 - CLI status / result messagesの全面整理。
+- root package化に合わせたワークスペース化。
 
 CLI status / result messagesは、Phase 12で通常利用の観測として不足が見つかった場合だけ、配布前に必要な最小修正を行う。全体の文言体系や診断スタイルの整理はFuture扱いにする。
 
+## 基本方針
+
+### root package layout
+
+Phase 12-0以降、本リポジトリのrootをインストール可能な `togostanza` packageとして扱う。
+
+想定レイアウト:
+
+```text
+package.json
+pnpm-lock.yaml
+mise.toml
+tsconfig.json
+tsconfig.build.json
+playwright.config.ts
+bin/
+src/
+  cli/
+  runtime/
+  test/
+  scripts/
+docs/
+workbench/
+references/
+```
+
+`docs/`、`workbench/`、`references/` は本リポジトリに残す。ただし、root packageはworkspace化しない。これらの配下にある `package.json` は、リファレンスまたは検証環境の入力として扱い、root packageの管理対象に含めない。
+
+### 品質確認対象
+
+root package化後の標準確認はrootで実行する。
+
+```sh
+mise exec -- pnpm run check-all
+mise exec -- pnpm run test:compat:local
+```
+
+ただし、対象範囲は原則として `src/`、`bin/`、設定ファイルに限定する。`docs/`、`workbench/`、`references/` は通常の `check-all` には含めない。
+
+### GitHub dependency release
+
+短期的な配布経路はGitHub dependencyとする。
+
+```json
+{
+  "dependencies": {
+    "togostanza": "github:satoshionoda/togostanza-remake#<tag-or-sha>"
+  }
+}
+```
+
+GitHub dependency install時にbuildを行わない。`prepare` やinstall scriptで `dist/` を作る設計は採用しない。
+
+通常開発branchでは `dist/` をcommitしない。GitHub dependency向けのrelease branch / tagにだけ、build済み `dist/` を含める。
+
+### install対象
+
+install対象は最小化する。
+
+```json
+{
+  "files": [
+    "bin/",
+    "dist/"
+  ]
+}
+```
+
+`docs/`、`workbench/`、`references/`、`src/`、test、scripts、設定ファイルは通常のinstall対象に含めない。ただし、GitHub repository dependencyでは取得元repo自体にこれらのファイルが存在するため、package managerが実際にどの範囲をpack/installするかはPhase 12-1のsmokeで確認する。
+
 ## サブフェーズ
 
-### Phase 12-0: distribution preflight
+### Phase 12-0: root package layout migration
 
-目的は、Phase 12の入力状態を固定することである。
+目的は、本リポジトリのmain側をreleaseを意識したroot package layoutへ移行することである。
+
+実施すること:
+
+- `package/package.json` をrootの `package.json` へ移す。
+- `package/pnpm-lock.yaml` をrootの `pnpm-lock.yaml` へ移す。
+- `package/mise.toml` をrootの `mise.toml` へ移す。
+- `package/bin/` をrootの `bin/` へ移す。
+- `package/src/` 配下の実装をrootの `src/` へ移す。
+- `package/test/` と `package/scripts/` は、品質確認対象を明確にするため `src/test/` と `src/scripts/` へ集約する。
+- `tsconfig`、Playwright、Vitest、formatter、lint設定のパスを更新する。
+- `tsconfig.build.json` は、配布物にtest helperや開発用scriptをemitしないようにする。
+  - `src/test/**` はbuild出力から除外する。
+  - `src/scripts/**` はinstall対象に含める必要がない限りbuild出力から除外する。
+  - `*.spec.ts` の除外だけに依存しない。
+- `bin/togostanza.mjs` から `dist/cli.js` への参照がroot基準で成立するようにする。
+- `check-all` と個別scriptをroot実行に切り替える。
+- `docs/setup/package-layout.md` と `docs/setup/quality.md` を新しい前提へ更新する。
+- `AGENTS.md` の `package/` 前提をroot package前提へ更新する。
+- `test:distribution:local` はtarball smokeとして残し、root移行後も通るようにする。
+  - tarball smokeでは、`dist/test/` やtest supportがpack/install対象に混入していないことを確認する。
+
+完了確認:
+
+```sh
+mise exec -- pnpm run check-all
+mise exec -- pnpm run test:compat:local
+mise exec -- pnpm run test:distribution:local
+git diff --check
+```
+
+このサブフェーズでは、GitHub dependency install smokeには踏み込まない。ファイル移動と品質確認経路の再配線だけを扱う。
+
+### Phase 12-1: GitHub dependency install smoke
+
+目的は、Stanza開発者の `package.json` からGitHub dependencyとして `togostanza` をインストールできることを確認することである。
 
 確認すること:
 
-- `package/package.json` の現状。
-- `package/bin/togostanza.mjs` のshebangと `dist/cli.js` 参照。
-- `package/dist/` がclean buildで生成されること。
-- `exports["./config"]` と `exports["./stanza"]` が公開用wrapperへ向いていること。
-- dependencies / devDependenciesの分類。
-- `private: true`、`version: 0.0.0`、`engines.node >=24.5.0` の現状。
+- GitHub dependencyとして参照するspec。
+  - 例: `github:satoshionoda/togostanza-remake#<tag-or-sha>`
+  - `main` 直指定ではなく、tagまたはcommit SHAを優先する。
+- npm環境でGitHub dependencyをinstallし、CLIが起動すること。
+- pnpm環境でGitHub dependencyをinstallし、CLIが起動すること。
+- GitHub dependency install後のCLIで、少なくとも次を確認する。
+  - `togostanza --version`
+  - `togostanza init`
+  - `togostanza generate stanza`
+  - `togostanza build`
+- `import Stanza from "togostanza/stanza"` と `import { defineTogoStanzaConfig } from "togostanza/config"` が、GitHub dependency install後に解決できること。
 
-この段階では公開metadataを先に直し切らない。まずtarball smokeで、何が実際に不足するかを見る。
+必要に応じて、既存の `test:distribution:local` をGitHub dependency smokeへ拡張する。ただし、外部GitHubへpushやtag作成が必要な確認は、人間の明示承認を受けてから扱う。
 
-### Phase 12-1: minimal pack-install smoke
+`test:distribution:local` はGitHub dependency smokeへ置き換えない。tarball smokeはpush不要でpackage surface、`files`、`exports`、型解決、実行時解決をローカルで守れるため、Phase 12後も維持する。GitHub dependency smokeは別の確認として追加する。
 
-目的は、`pack -> install -> 実行` 未検証を閉じることである。
+push済みGitHub refを使う前に、必要であれば `git+file://<local-clone>#<ref>` 形式でGitHub dependencyに近い経路をローカル確認する。真の `github:...#<tag-or-sha>` 解決、release branch push、tag作成は外部副作用を伴うため、人間の明示承認を受けてから扱う。
 
-確認すること:
+### Phase 12-2: release branch / tag operation
 
-- `cd package && mise exec -- pnpm run build`
-- `cd package && mise exec -- pnpm pack --pack-destination <tmp>`
-- tarball内に、少なくとも次が含まれること:
-  - `bin/togostanza.mjs`
-  - `dist/cli.js`
-  - `dist/config.js` / `dist/config.d.ts`
-  - `dist/stanza.js` / `dist/stanza.d.ts`
-  - build実行時に必要なruntime files
-  - `package.json`
-- tarball内に、不要な `src/`、`test/`、`workbench/`、`references/` を含めないこと。
-- npm環境でtarballをinstallし、CLIを起動すること。
-- pnpm環境でtarballをinstallし、CLIを起動すること。
-- tarball install後のCLIで `init --name <dir>`、`generate stanza <id>`、`build` を実行すること。
+目的は、通常開発branchとGitHub dependency向けrelease refの違いを手順として固定することである。
 
-ローカルtarball smokeでは、生成repoの `dependencies.togostanza` が公開npm registryを見に行く問題がある。Phase 12-1では、次の2つを分けて確認する。
+方針:
 
-- 公開後の生成repoが書くversion specとして正しいか。
-- ローカルtarball smokeで同じ生成repoを動かすために、一時的にtarball pathへ差し替える必要があるか。
+- 通常開発branchでは `dist/` をcommitしない。
+- GitHub dependency向けのrelease branch / tagにはbuild済み `dist/` を含める。
+- install時buildは行わない。
+- Stanza開発者にはtagまたはcommit SHA固定を推奨する。
+- root移行後も `.gitignore` は通常開発branchの `dist/` を無視する。
+- release branch / tagに `dist/` を含める具体機構を固定する。
+  - 候補は `git add -f dist/`、release branch用 `.gitignore`、orphan release branchのいずれかとする。
+  - 採用した機構で、参照先refに `dist/` が実際に含まれることをGitHub dependency smokeで確認する。
 
-一時差し替えを行う場合は、その差分を検証手順として明記し、生成repoの通常仕様として扱わない。
+文書化すること:
 
-### Phase 12-2: package surface and metadata
+- release branchを作る手順。
+- `dist/` を生成してrelease branchへ含める手順。
+- `.gitignore` と `dist/` 同梱の関係。
+- tagを作る場合の命名方針。
+- tag / SHAを生成repoの `dependencies.togostanza` へ反映する方法。
+- release branch / tag作成後のnpm / pnpm install確認。
+- rollbackまたは差し替えが必要な場合の手順。
 
-目的は、公開packageとして読まれる面を整理することである。
+### Phase 12-3: generated repo dependency readiness
 
-判断すること:
-
-- `private` をいつ `false` にするか。
-  - accidental publish防止を優先する場合、実際のpublish直前まで `private: true` を維持する。
-  - Phase 12中に `private` を外す場合は、publishしないことを検証手順で担保する。
-- `files` に含める範囲。
-- `exports` の最終形。
-  - `./config`
-  - `./stanza`
-  - root exportを提供するか。
-- `main` とtop-level `types` を提供するか。
-- npm公開metadata。
-  - `description`
-  - `license`
-  - `repository`
-  - `keywords`
-  - `homepage`
-  - `bugs`
-- `engines.node >=24.5.0` を維持するか。
-- dependencies / devDependenciesの最終分類。
-
-`togostanza/stanza` はStanzaソースの開発契約であるため、型解決と実行時解決の両方をpack-install smokeで確認する。
-
-### Phase 12-3: generated repo dependency and workflow readiness
-
-目的は、`init` が生成するStanzaリポジトリが公開後に自然に使える状態を確認することである。
+目的は、`init` が生成するStanzaリポジトリがGitHub dependency運用に乗れる状態にすることである。
 
 判断すること:
 
-- `dependencies.togostanza` のversion spec。
-  - 現状は `^0.0.0` 由来であり、publish後の通常解決には不適切な可能性がある。
-  - `0.0.0` のまま公開前検証だけを進めるか、公開前にversionを上げるかを決める。
-  - `^<version>`、exact version、tag付きpre-releaseのどれを使うかを決める。
-- generated repoに `packageManager` fieldを書くか。
-- pnpm workflowのpnpm 10系前提を維持するか。
-- `--skip-install` で生成したrepoをpushした場合、lockfileなしでworkflowが失敗することをREADMEで十分案内しているか。
-- GitHub Actions workflowのAction major tagをこの時点で更新するか。
+- generated repoの `dependencies.togostanza` をどのspecにするか。
+  - 固定tag。
+  - commit SHA。
+  - 人間が後から差し替えるplaceholder。
+- `TOGOSTANZA_DEPENDENCY_SPEC` のような検証用overrideを通常機能として扱うか。
+- READMEにGitHub dependency specの差し替え方法を書くか。
+- GitHub Pages workflowがGitHub dependency installで通る前提をどう説明するか。
+- pnpm 10系lockfile前提と、GitHub dependency specのlockfile再現性をどう案内するか。
 
-GitHub Actions live deploy確認は、外部状態を変更する可能性がある。Phase 12で実行する場合は、対象repository、権限、公開先、cleanup方針を別途確認する。実行しない場合は、公開後またはrelease前手順としてhandoffに残す。
+### Phase 12-4: final verification and handoff
 
-### Phase 12-4: distribution documentation and release checklist
-
-目的は、公開直前の人間判断に必要な手順を残すことである。
-
-作成または更新すること:
-
-- package公開前チェックリスト。
-- local tarball smoke手順。
-- npm publish前に確認するmetadata一覧。
-- GitHub Pages live deploy確認手順。
-- rollback方針。
-- tag / releaseを作る場合の順序。
-- Phase 12で実行しなかった外部操作の一覧。
-
-### Phase 12-5: final verification and handoff
-
-目的は、Phase 12の実装・文書・検証結果を閉じることである。
+目的は、Phase 12のGitHub dependency distributionとしての結果を閉じることである。
 
 確認すること:
 
 ```sh
-cd package && mise exec -- pnpm run check-all
-cd package && mise exec -- pnpm run test:compat:local
+mise exec -- pnpm run check-all
+mise exec -- pnpm run test:compat:local
 ```
 
-加えて、Phase 12で追加したpack-install smokeを実行する。
+加えて、Phase 12-1で決めたGitHub dependency install smokeを実行する。
 
 handoffには次を記録する。
 
-- pack-install smokeの結果。
+- root package layout migrationの結果。
+- GitHub dependency install smokeの結果。
 - npm / pnpmそれぞれの確認結果。
-- package surfaceの最終判断。
-- version specの最終判断。
-- live deployを実行したかどうか。
+- release branch / tag運用。
+- generated repoの `dependencies.togostanza` 判断。
 - 実行しなかった外部操作と、その理由。
-- publishする場合に人間が行う最後の手順。
+- 次に人間が行うrelease操作。
 
 ## 検証コマンド
 
-package配下のコマンドは、`package/mise.toml` を正として `cd package && mise exec -- ...` 経由で実行する。
+Phase 12-0以降、Node.js / pnpmコマンドはrootの `mise.toml` を正として実行する。
 
 基本確認:
 
 ```sh
-cd package && mise exec -- pnpm run check-all
-cd package && mise exec -- pnpm run test:compat:local
+mise exec -- pnpm run check-all
+mise exec -- pnpm run test:compat:local
+git diff --check
 ```
 
-pack smokeの具体コマンドは、Phase 12-1で実装する手順またはscriptを正とする。sandbox環境ではなく、ユーザーのローカル環境で承認付き通常実行を優先する。
+GitHub dependency install smokeの具体コマンドは、Phase 12-1で実装する手順またはscriptを正とする。sandbox環境ではなく、ユーザーのローカル環境で承認付き通常実行を優先する。
 
-Phase 12-1で追加したpack smoke:
+## 決定済み事項
 
-```sh
-cd package && mise exec -- pnpm run test:distribution:local
-```
-
-配布前チェックリストは [Phase 12 release checklist](./release-checklist.md) に置く。
-
-## Phase 12で決めたこと
-
-- `private: true` はpublish直前まで維持する。
-- `version: 0.0.0` はlocal pack smokeでは維持し、公開前に実versionへ更新する。
-- generated repoの `dependencies.togostanza` は `^<package version>` を維持する。
-- generated repoの `packageManager` fieldは生成しない。pnpm workflow側でpnpm 10系を明示する。
-- root export、`main`、top-level `types` はPhase 12時点では追加しない。
+- `npm publish` は短期対象外。
+- GitHub Packages npm registryは使わない。
+- Stanza開発者向けの短期配布経路はGitHub dependencyとする。
+- main側もroot package layoutへ移行する。
+- root packageはworkspace化しない。
+- 実装、test、scriptsは `src/` 配下へ集約する。
+- `bin/` はroot直下に残す。
+- 通常の品質確認対象は原則として `src/` と `bin/`、必要な設定ファイルに限定する。
+- `docs/`、`workbench/`、`references/` は本リポジトリに残すが、通常の `check-all` とinstall対象には含めない。
+- GitHub dependency install時のbuildは行わない。
+- 通常開発branchでは `dist/` をcommitしない。
+- GitHub dependency向けrelease branch / tagにはbuild済み `dist/` を含める。
+- install対象は `files` で最小化する。
 
 ## 残す論点
 
-- repository、homepage、bugsのURLを、実際の公開リポジトリに合わせて設定すること。
-- GitHub Actions live deployをPhase 12中に実行するか、release前手順として残すか。
-- `engines.node >=24.5.0` を維持するか、公開直前に利用者環境と照合して調整するか。
+- release branch名とtag名。
+- generated repoの `dependencies.togostanza` を固定tag、commit SHA、placeholderのどれにするか。
+- GitHub dependency smokeを完全自動scriptにするか、手順化に留めるか。
+- `private: true` をGitHub dependency運用で維持するか。npm publishしない限りaccidental publish防止としては維持できるが、GitHub dependency installへの影響は確認する。
+- `engines.node >=24.5.0` を維持するか。

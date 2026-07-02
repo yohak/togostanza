@@ -2,6 +2,8 @@
 
 この文書では、Phase 12で確認した配布前状態と、外部公開前に残す作業を記録する。
 
+この文書の主な内容は、Phase 12前半で実施したローカルtarballによる `pack -> install -> 実行` smokeの完了記録である。Phase 12後半では短期方針をnpm publishではなくGitHub dependency distributionへ切り替える。その再計画は [Phase 12: GitHub dependency distribution 設計](./plan.md) を正とする。
+
 ## 完了したこと
 
 - ローカルtarballを使った `pack -> install -> 実行` smokeを追加した。
