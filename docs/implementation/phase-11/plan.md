@@ -75,6 +75,8 @@ Phase 11は、Phase 9で作ったlocal compatibility baselineを広げ、実プ�
 
 Phase 11-0では、全Stanzaを通すことよりも、失敗を分類できるharnessにすることを優先する。
 
+ただし、browser console収集の共通化とper-Stanzaの失敗診断bundleは、全Stanza smoke-runnerの形が見えてから実装する。Phase 11-0ではreferences診断、対象名再照合、fixture data規約を先に固定し、console / pageerror / failed requestの収集と「どのStanzaのどの前提が壊れたか」の診断はPhase 11-1 / 11-2でsmoke-runnerと一緒に作る。
+
 現行版running観測は、Phase 11-0で全項目に用意しない。Phase 11-4では `references/togostanza` のソース読解を既定の現行版観測手段にし、ソースだけで判断できないruntime/browser相互作用に限ってrunning観測経路を足す。
 
 ### Phase 11-1: metastanza full browser smoke
@@ -104,6 +106,8 @@ Phase 11-0では、全Stanzaを通すことよりも、失敗を分類できるh
 
 `pagination-table`、`scroll-table`、`hash-table` などで見つかっている `main.parentNode.style` 依存は、Phase 11で分類する。リメイク版runtimeを変更して吸収する、実プロジェクト側の移行対象にする、または互換対象外にする、のいずれかを人間判断できる形にする。
 
+Phase 11-1のsmoke-runnerでは、対象Stanza ID、生成物path、fixture path、browser console error、pageerror、failed requestをまとめて失敗時に参照できるようにする。`main.parentNode.style` 判断などでruntimeを変更した場合は、影響するmetastanza Stanzaを再smokeする。
+
 ### Phase 11-2: TogoMedium Stanza full browser smoke
 
 対象:
@@ -132,6 +136,8 @@ Phase 11-0では、全Stanzaを通すことよりも、失敗を分類できるh
 - aliasは `togostanza.config.ts` の `vite.resolve.alias` へ明示する。TogoMedium固有aliasの自動吸収はしない。
 
 全Stanzaで同じ深さのUI確認を要求しない。Phase 11-2のbrowser smokeは、direct embedでの致命的なruntime崩れを拾うための確認であり、TogoMedium Webアプリ本体E2Eではない。
+
+Phase 11-2のsmoke-runnerでも、対象Stanza ID、生成物path、fixture path、browser console error、pageerror、failed requestをまとめて失敗時に参照できるようにする。Phase 11-1で作った失敗診断bundleを流用できる場合は、同じ形に揃える。
 
 ### Phase 11-3: TogoMedium Web application E2E
 

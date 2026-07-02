@@ -220,7 +220,7 @@ Phase 11-0では、Phase 11-1以降の全Stanza browser smokeへ進む前に、l
 - per-Stanza fixture dataの一時配置を `fixtures/<project>/<stanza>/...` へ寄せた。
 - 既存の代表browser smokeは、metastanza `scorecard` とTogoMedium `gmdb-meta-list` のまま維持した。
 
-この段階では、metastanza全10 StanzaとTogoMedium Stanza全15 Stanzaのbrowser smokeはまだ実行しない。Phase 11-0は、失敗時にどのreferences入力、対象Stanza、fixture dataが問題かを分類しやすくする土台である。
+この段階では、metastanza全10 StanzaとTogoMedium Stanza全15 Stanzaのbrowser smokeはまだ実行しない。Phase 11-0は、失敗時にどのreferences入力、対象Stanza、fixture dataが問題かを分類しやすくする土台である。browser console / pageerror / failed requestの共通収集と、対象Stanza ID、生成物path、fixture pathを含む失敗診断bundleは、Phase 11-1 / 11-2で全Stanza smoke-runnerと一緒に実装する。
 
 ### Phase 11へ送るもの
 
