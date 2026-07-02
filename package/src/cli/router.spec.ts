@@ -28,6 +28,8 @@ import type { ServeSession } from "./serve.js";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const repositoryRoot = resolve(packageRoot, "..");
+const localCorsOrigin = "http://127.0.0.1:5173";
+const localhostCorsOrigin = "http://localhost:5173";
 const localCompatibilityIt = process.env.TOGOSTANZA_RUN_LOCAL_COMPAT === "1" ? it : it.skip;
 
 const failingInstallRunner: CommandRunner = () => {
@@ -1243,12 +1245,24 @@ describe("CLI router", () => {
 
     const index = await fetchText(port, "/");
     expect(index.status).toBe(200);
+    expect(index.accessControlAllowOrigin).toBe(localCorsOrigin);
     expect(index.body).toContain("./serve-probe.html");
 
     const script = await fetchText(port, "/serve-probe.js");
     expect(script.status).toBe(200);
+    expect(script.accessControlAllowOrigin).toBe(localCorsOrigin);
     expect(script.contentType).toContain("text/javascript");
     expect(script.body).toContain("customElements.define");
+
+    const preflight = await fetchOptions(port, "/serve-probe.js");
+    expect(preflight.status).toBe(204);
+    expect(preflight.accessControlAllowOrigin).toBe(localCorsOrigin);
+    expect(preflight.accessControlAllowMethods).toContain("GET");
+    expect(preflight.accessControlAllowMethods).toContain("OPTIONS");
+
+    const localhostPreflight = await fetchOptions(port, "/serve-probe.js", localhostCorsOrigin);
+    expect(localhostPreflight.status).toBe(204);
+    expect(localhostPreflight.accessControlAllowOrigin).toBe(localhostCorsOrigin);
 
     const metadata = await fetchText(port, "/serve-probe/metadata.json");
     expect(metadata.status).toBe(200);
@@ -1497,17 +1511,49 @@ function makeTogoMediumCompatibilityRoot(rootDirectory: string): string {
 }
 
 type FetchTextResult = {
+  accessControlAllowOrigin: string;
   body: string;
   contentType: string;
   status: number;
 };
 
 async function fetchText(port: number, path: string): Promise<FetchTextResult> {
-  const response = await fetch(`http://127.0.0.1:${port}${path}`);
+  const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+    headers: {
+      origin: localCorsOrigin,
+    },
+  });
 
   return {
+    accessControlAllowOrigin: response.headers.get("access-control-allow-origin") ?? "",
     body: await response.text(),
     contentType: response.headers.get("content-type") ?? "",
+    status: response.status,
+  };
+}
+
+type FetchOptionsResult = {
+  accessControlAllowMethods: string;
+  accessControlAllowOrigin: string;
+  status: number;
+};
+
+async function fetchOptions(
+  port: number,
+  path: string,
+  origin = localCorsOrigin,
+): Promise<FetchOptionsResult> {
+  const response = await fetch(`http://127.0.0.1:${port}${path}`, {
+    headers: {
+      "access-control-request-method": "GET",
+      origin,
+    },
+    method: "OPTIONS",
+  });
+
+  return {
+    accessControlAllowMethods: response.headers.get("access-control-allow-methods") ?? "",
+    accessControlAllowOrigin: response.headers.get("access-control-allow-origin") ?? "",
     status: response.status,
   };
 }

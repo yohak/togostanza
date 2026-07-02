@@ -163,7 +163,7 @@ GitHub Pages公開導線は、Stanzaリポジトリそのものを公開する�
 
 `serve` は、開発中のStanzaリポジトリを監視し、変更に応じてbuild相当の生成物を更新しながらHTTPで配信する。`serve` は `dist/` を書き換えない。ファイルとして公開用生成物を作る場合は `build` を使う。
 
-`serve` はlocalhostのみでlistenする。外部originからのmodule script読み込みは想定せず、CORSは利用契約として保証しない。
+`serve` はlocalhostのみでlistenする。TogoMedium Webのような別のlocalhost開発サーバーからmodule scriptを読み込んで確認できるように、loopback originからの開発用CORSは許可する。ただし、外部Webアプリ向けの汎用配信サーバーとしては扱わない。
 
 `serve` はbuild相当生成物をサーバrootから配信する。少なくとも次のURLを提供する。
 

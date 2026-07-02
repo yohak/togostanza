@@ -112,6 +112,7 @@ Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計
 - `togostanza serve` / `togostanza s`。
 - `serve --port <port>` と未指定時のport `8080`。
 - localhostでの配信。
+- loopback originからの開発用CORS。
 - build相当URLの提供。
 - stanza一覧と最小プレビュー。
 - watch、stanza固有入力の対象stanza再ビルド、依存グラフベースのinvalidate分類、安全に特定できない変更の全体invalidate。
@@ -123,7 +124,6 @@ Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計
 
 - 外部Webアプリ向け配信サーバーとしての利用契約。
 - HMR。
-- CORS保証。
 - React、Vue、`togostanza-utils` の追加互換。
 
 serve用検証は、専用検証ケース `workbench/cases/011-serve-development-server/` で扱う。Phase 3の設計は [Phase 3: serve 設計](./phase-3/plan.md) に置き、完了後の状態とPhase 4への引き継ぎは [Phase 3: serve 引き継ぎ](./phase-3/handoff.md) に置く。

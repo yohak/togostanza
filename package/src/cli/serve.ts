@@ -97,6 +97,18 @@ export async function handleServe(
   let closePromise: Promise<void> | undefined;
 
   const server = createServer((request, response) => {
+    applyCorsHeaders(
+      response,
+      request.headers.origin,
+      request.headers["access-control-request-headers"],
+    );
+
+    if (request.method === "OPTIONS") {
+      response.writeHead(204);
+      response.end();
+      return;
+    }
+
     const requestPath = safeDecodePath((request.url ?? "/").split("?")[0] ?? "/");
 
     if (!requestPath) {
@@ -618,6 +630,49 @@ function writeHtml(response: ServerResponse, status: number, body: string): void
 function writePlainText(response: ServerResponse, status: number, body: string): void {
   response.writeHead(status, { "content-type": "text/plain; charset=utf-8" });
   response.end(body);
+}
+
+function applyCorsHeaders(
+  response: ServerResponse,
+  origin: string | string[] | undefined,
+  requestedHeaders: string | string[] | undefined,
+): void {
+  const allowedOrigin = allowedCorsOrigin(origin);
+
+  if (!allowedOrigin) {
+    return;
+  }
+
+  response.setHeader("access-control-allow-origin", allowedOrigin);
+  response.setHeader("access-control-allow-methods", "GET, HEAD, OPTIONS");
+  response.setHeader(
+    "access-control-allow-headers",
+    typeof requestedHeaders === "string" ? requestedHeaders : "content-type",
+  );
+  response.setHeader("access-control-max-age", "600");
+  response.setHeader("vary", "Origin");
+}
+
+function allowedCorsOrigin(origin: string | string[] | undefined): string | undefined {
+  if (typeof origin !== "string") {
+    return undefined;
+  }
+
+  try {
+    const { hostname, protocol } = new URL(origin);
+
+    if (protocol !== "http:" && protocol !== "https:") {
+      return undefined;
+    }
+
+    return isLoopbackHostname(hostname) ? origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function isLoopbackHostname(hostname: string): boolean {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
 }
 
 function contentType(path: string): string {

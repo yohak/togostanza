@@ -24,6 +24,7 @@ Phase 3は、Stanza開発者がlocalhostで開発中のStanzaを確認し、変�
 - `serve` は `127.0.0.1` にlistenし、外部公開用の `0.0.0.0` listenを行わない。
 - 起動時にbuild相当生成物を作り、HTTPで配信する。
 - build相当生成物は一時出力ディレクトリに作り、Stanzaリポジトリの `dist/` を作成・削除・更新しない。
+- loopback originからの開発用CORSを許可する。
 - `/` がStanza一覧または対象stanzaへ辿れる最小ページを返す。
 - `/{id}.html` が対象stanzaの最小プレビューを返す。
 - `/{id}.js`、`/{id}.css`、`/{id}/metadata.json`、stanza別asset、root asset、Vite emit asset、共有チャンクがHTTPで読める。
@@ -59,8 +60,7 @@ Phase 3は、Stanza開発者がlocalhostで開発中のStanzaを確認し、変�
 
 - HMR。
 - 自動ブラウザreload。
-- 外部originからのmodule script読み込み保証。
-- CORS保証。
+- 外部Webアプリ向けの汎用module script読み込み保証。
 - 外部Webアプリ向けの汎用静的ファイルサーバ契約。
 - GitHub Pages workflowの変更。
 - npm公開metadata、tarball install、live deploy確認。
@@ -182,7 +182,7 @@ stanza固有入力の変更は対象stanzaのinvalidateとして記録し、対�
 
 ## HTTP方針
 
-`serve` はlocalhost開発サーバである。`127.0.0.1` にlistenし、外部公開用のhost指定optionはPhase 3では追加しない。
+`serve` はlocalhost開発サーバである。`127.0.0.1` にlistenし、外部公開用のhost指定optionはPhase 3では追加しない。TogoMedium Webのような別localhost開発サーバーから確認できるように、loopback originからの開発用CORSは許可する。
 
 `/` と `/{id}.html` は、Stanza開発者がブラウザで確認できる最小UIにする。ヘルププレビューUIの完全復元やカスタマイズUIはPhase 3の対象にしない。
 
@@ -199,6 +199,7 @@ Unit test:
 - path traversal拒否。
 - MIME typeの最小判定。
 - 未知拡張子の実在ファイルを `application/octet-stream` として配信するfallback。
+- loopback originからのCORS headerと `OPTIONS` preflight。
 - error page formatting。
 - watch変更分類。
 
@@ -230,7 +231,6 @@ Documentation:
 - HMR。
 - 自動ブラウザreload。
 - host指定option。
-- CORS保証。
 - watch性能最適化。
 - 共有ソース変更時の精密な影響stanza特定。
 - ヘルププレビューUIの完全復元。

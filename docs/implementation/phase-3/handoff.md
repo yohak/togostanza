@@ -14,6 +14,7 @@ Phase 3の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - `/` でStanza一覧を返し、対象stanzaの `/{id}.html` へ辿れるようにした。
 - `/{id}.html` で、`./{id}.js` と `<togostanza-{id}>` を含む最小プレビューを返すようにした。
 - `/{id}.js`、`/{id}.css`、`/{id}/metadata.json`、stanza別asset、root asset、Vite emit asset、共有チャンクをHTTPで配信できるようにした。
+- TogoMedium Webのような別localhost開発サーバーから確認できるように、loopback originからの開発用CORSと `OPTIONS` preflightを許可した。
 - 実在する未知拡張子のファイルは、HTTP 404や拒否ではなく `application/octet-stream` で配信するようにした。
 - path traversalを拒否するようにした。
 - `fs.watch` とdebounceを使い、変更後に再ビルドするようにした。
@@ -32,7 +33,6 @@ Phase 3の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - HMR。
 - 自動ブラウザreload。
 - host指定option。
-- CORS保証。
 - 外部Webアプリ向けの汎用静的ファイルサーバー契約。
 - ヘルププレビューUIの完全復元。
 - 公開用build生成物としての `index.html` と `-togostanza/` の復活。
@@ -49,7 +49,7 @@ Phase 3の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - `serve` のURL解決はPhase 2の生成物URL契約を再利用する。Phase 4のReact、Vue、`togostanza-utils` 確認でも、まず `build` で成立する生成物が `serve` でも読める前提で扱う。
 - `/{id}.html` はcustom elementを確認するための最小プレビューであり、現行版のヘルププレビュー完全互換ではない。
 - `serve` はHMRを提供しない。変更後の反映確認はブラウザのページ再読み込みを前提にする。
-- `serve` はlocalhost開発サーバーであり、外部originからのmodule script読み込みやCORSは利用契約にしない。
+- `serve` はlocalhost開発サーバーであり、loopback originからの開発用CORSを許可する。外部Webアプリ向けの汎用配信サーバーとしての利用契約にはしない。
 - `SIGINT` / `SIGTERM` 終了時は一時出力ディレクトリを削除する。強制終了やprocess crashで残った一時ディレクトリの次回清掃は、Phase 3では外部互換にしていない。
 - `test:browser` を含む完了前確認は、引き続き `cd package && mise exec -- pnpm run check-all` を承認付き通常実行で確認する。
 
@@ -66,7 +66,7 @@ Phase 3の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - HMRを入れるかどうか。
 - 自動ブラウザreloadを入れるかどうか。
 - host指定optionを追加するかどうか。
-- CORS保証を広げるかどうか。
+- CORS保証をloopback origin以外へ広げるかどうか。
 - ヘルププレビューUI、`index.html`、`-togostanza/` をどの範囲で復活させるか。
 - 共有ソース変更時の精密な影響stanza特定を実装するかどうか。
 - watch基盤をNode.js標準 `fs.watch` からVite watcherやchokidarへ寄せるかどうか。

@@ -81,7 +81,7 @@ Phase 5は再設計フェーズではない。この文書では、残課題を�
 | `references/` 依存検証のCI化 | 不要 | 低から中 | 本開発ではローカルcompatibility検証として扱う。CI fetch、pinning、更新運用は扱わず、Phase 9ではローカル再現手順と前提だけを記録する。 |
 | `query()` のGET / headers / auth / timeout | 不要 | 中 | POST / urlencodedの成功経路を維持する。外部API利用要求が出たら再評価する。 |
 | Stanza間連携の高度API | 不要 | 中 | 006相当の静的HTML連携を維持する。dynamic rewire、upgrade前queue、複数receiver設計、blob URL revoke、複雑なvalue-pathは後続。 |
-| `serve` の高度化 | 不要 | 中から低 | preview、watch、rebuild、失敗500、復帰を維持する。HMR、自動reload、host指定、CORS、大規模watch性能は後続。 |
+| `serve` の高度化 | 不要 | 中から低 | preview、watch、rebuild、失敗500、復帰、loopback originからの開発用CORSを維持する。HMR、自動reload、host指定、loopback外CORS、大規模watch性能は後続。 |
 | `url` parameter type | 不要 | 低 | 仕様にあるparameter typeのみ維持する。`date` / `datetime` とは別扱いにする。 |
 | 診断メッセージ体系の整理 | 不要 | 中 | 各フェーズで必要な局所診断改善は行ってよい。全体の診断体系、文言、修正案、スタイル統一は本開発ではまとめて扱わない。 |
 | `togostanza-utils` 未対象API | 不要 | 低から中 | 純粋データ処理API、`Data` class、tree / graph helper、`showLoadingIcon()` / `hideLoadingIcon()` 直接importは対象外。実プロジェクト利用が確認されたものは再評価する。 |

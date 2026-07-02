@@ -8,6 +8,7 @@
 
 - `serve` は `dist/` を書き換えず、build相当生成物をHTTPで配信する。
 - `serve` はlocalhostでlistenし、未指定時のportは `8080` とする。
+- `serve` は別localhost開発サーバーからの確認用に、loopback originからのCORSを許可する。
 - `serve` は変更された入力と依存関係に基づき、可能な範囲で影響を受けるstanzaだけを再ビルドする。
 - `serve` はビルド失敗時も終了せず、対象URLへHTTP 500エラーページを返し、修正後に復帰する。
 
@@ -28,6 +29,7 @@
 
 - `serve` がlocalhost開発サーバとして起動すること。
 - build相当URLをサーバrootから配信すること。
+- loopback originからの `GET` と `OPTIONS` preflightにCORS headerを返すこと。
 - `serve` が `dist/` を書き換えないこと。
 - 変更後にページ再読み込みで反映されること。
 - stanza固有入力の変更では対象stanzaだけが再ビルドされること。
@@ -39,6 +41,7 @@
 
 - `serve --port <port>` と未指定時のport `8080` を確認できる。
 - 必須URLが配信される。
+- loopback originからのCORS確認ができる。
 - Stanza entrypoint、metadata、template、stylesheet、asset、設定、共有ソースの変更が反映される。
 - 再ビルド失敗時にプロセスが終了しない。
 - ビルド失敗中の対象URLでエラー内容が分かる。
@@ -48,6 +51,7 @@
 
 - 起動コマンドとport。
 - 配信されたURLとHTTP status。
+- CORS headerと `OPTIONS` preflightのHTTP status。
 - 変更したファイルとinvalidate対象。
 - ビルド失敗時の画面、HTTP status、復帰手順。
 - 対象stanzaだけの再ビルド失敗で、対象stanzaのURLだけがHTTP 500になること。
@@ -80,6 +84,7 @@
 - `/` はStanza一覧を返し、対象stanzaの `/{id}.html` へ辿れる。
 - `/{id}.html` はserve用の最小プレビューとして、`./{id}.js` と `<togostanza-{id}>` を含むHTMLを返す。
 - `/{id}.js`、`/{id}.css`、`/{id}/metadata.json`、stanza別assetがHTTP 200で読める。
+- loopback originからの `GET /{id}.js` で `Access-Control-Allow-Origin` が返り、`OPTIONS /{id}.js` がHTTP 204で返る。
 - 未知拡張子の実在assetは、`application/octet-stream` でHTTP 200として配信される。
 - `serve` はStanzaリポジトリの `dist/` を作成しない。
 - stanza固有入力である `style.scss` の変更後、対象stanzaのCSSが再ビルドされ、ページ再読み込みで反映される。
