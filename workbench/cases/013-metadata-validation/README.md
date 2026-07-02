@@ -119,7 +119,7 @@ pnpm run build
 実行前提:
 
 ```sh
-cd package && mise exec -- pnpm run build
+mise exec -- pnpm run build
 ```
 
 各scenarioの `remake/scenarios/<scenario>/generated-repo/` で次を実行した。

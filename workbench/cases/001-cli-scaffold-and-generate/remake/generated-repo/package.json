@@ -6,13 +6,13 @@
   "scripts": {
     "build": "togostanza build",
     "serve": "togostanza serve",
-    "togostanza:local": "node ../../../../../package/bin/togostanza.mjs",
-    "build:local": "node ../../../../../package/bin/togostanza.mjs build",
-    "serve:local": "node ../../../../../package/bin/togostanza.mjs serve",
-    "generate:stanza:local": "node ../../../../../package/bin/togostanza.mjs generate stanza"
+    "togostanza:local": "node ../../../../../bin/togostanza.mjs",
+    "build:local": "node ../../../../../bin/togostanza.mjs build",
+    "serve:local": "node ../../../../../bin/togostanza.mjs serve",
+    "generate:stanza:local": "node ../../../../../bin/togostanza.mjs generate stanza"
   },
   "dependencies": {
-    "togostanza": "link:../../../../../package"
+    "togostanza": "link:../../../../.."
   },
   "engines": {
     "node": ">=24.5.0"

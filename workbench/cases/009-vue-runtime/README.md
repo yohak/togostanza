@@ -39,20 +39,20 @@ Vue SFCを使う既存Stanzaソースが、TogoStanzaランタイムのShadow DO
 
 - 確認日: 2026-07-01
 - 確認範囲: package test内のVue SFC fixture。
-- `package/src/cli/router.spec.ts` で、`.vue` importを持つStanzaが `togostanza build` で生成物を作れることを確認した。
+- `src/cli/router.spec.ts` で、`.vue` importを持つStanzaが `togostanza build` で生成物を作れることを確認した。
 - Vue SFC処理はCLI側のbuild runtime dependencyである `@vitejs/plugin-vue` で扱う。
 - `@vitejs/plugin-vue` のpeer dependencyを満たすため、CLI側にも `vue` をbuild runtime dependencyとして置く。
 - fixtureのStanzaソースがimportする `vue` は、一時Stanzaリポジトリ側の `node_modules/` へsymlinkした実Vueで確認した。StanzaソースのVue runtime解決はStanzaリポジトリ側dependenciesで担う。
 - 生成された `dist/vue-runtime-probe.js` にはVue component本文、Vue runtime、runtime登録がbundleされ、bare import `vue` / `./App.vue` は残らなかった。
 - Vue SFC `<style>` はVite生成CSSを `{id}.css` へ集約する方針にし、`dist/vue-runtime-probe.css` に `.vue-runtime-probe` のstyleが入ることを確認した。
-- `package/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-vue-runtime-probe>` がupgradeされ、open Shadow DOM内 `main` へVue componentを描画できることを確認した。
+- `src/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-vue-runtime-probe>` がupgradeされ、open Shadow DOM内 `main` へVue componentを描画できることを確認した。
 - 初期属性 `label="initial-vue"` が `this.params` を経由してVue propsへ渡り、表示へ反映された。
 - Shadow DOM内でVue SFC `<style>` 由来の `color: rgb(12, 34, 56)` が適用された。
 
 確認コマンド:
 
-- `cd package && mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t "builds a Vue SFC stanza"`
-- `cd package && mise exec -- pnpm exec playwright test --config playwright.config.ts -g "renders a Vue SFC Stanza"`
+- `mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t "builds a Vue SFC stanza"`
+- `mise exec -- pnpm exec playwright test --config playwright.config.ts -g "renders a Vue SFC Stanza"`
 
 ### 現行版の観測状況
 
@@ -106,4 +106,4 @@ pnpm run build:local
 pnpm run serve:fixture
 ```
 
-確認URLは `http://127.0.0.1:4179/fixtures/vue-runtime.html` とする。Phase 6のworkbench入力では、Vueを `package/node_modules` へのlocal linkとして扱い、registry installやpack install確認とは分ける。
+確認URLは `http://127.0.0.1:4179/fixtures/vue-runtime.html` とする。Phase 6のworkbench入力では、Vueを `node_modules` へのlocal linkとして扱い、registry installやpack install確認とは分ける。

@@ -31,7 +31,7 @@
     }
   },
   "scripts": {
-    "clean": "node ./scripts/clean-dist.mjs",
+    "clean": "node ./src/scripts/clean-dist.mjs",
     "dev:cli": "tsx src/cli.ts",
     "build": "pnpm run clean && tsc -p tsconfig.build.json",
     "format": "oxfmt -c oxfmt.config.ts .",
@@ -44,7 +44,7 @@
     "test:integration": "pnpm run build && vitest run --config vitest.integration.config.ts",
     "test:browser": "playwright test --config playwright.config.ts --grep-invert @compat-local",
     "test:compat:local": "pnpm run build && TOGOSTANZA_RUN_LOCAL_COMPAT=1 vitest run --config vitest.config.ts --testNamePattern \"local compatibility\" && TOGOSTANZA_RUN_LOCAL_COMPAT=1 playwright test --config playwright.config.ts --grep @compat-local",
-    "test:distribution:local": "node ./scripts/distribution-smoke.mjs",
+    "test:distribution:local": "node ./src/scripts/distribution-smoke.mjs",
     "check-all": "pnpm run format:check && pnpm run lint && pnpm run type-check && pnpm run build && pnpm run test:unit && pnpm run test:integration && pnpm run test:browser"
   },
   "dependencies": {

@@ -48,9 +48,9 @@
 
 確認手順:
 
-- `cd package && mise exec -- pnpm run build`
+- `mise exec -- pnpm run build`
 - references配下は直接変更せず、一時ディレクトリへStanzaリポジトリroot相当のsymlinkを作成して確認した。
-- 一時ディレクトリでは、リメイク版のcompiled CLIを `node /Volumes/DATA/repositories/togostanza-remake/package/bin/togostanza.mjs build --output-path dist-remake` で実行した。
+- 一時ディレクトリでは、リメイク版のcompiled CLIを `node /Volumes/DATA/repositories/togostanza-remake/bin/togostanza.mjs build --output-path dist-remake` で実行した。
 
 ### metastanza
 
@@ -126,7 +126,7 @@ Phase 9では、Phase 4で行った実プロジェクト確認を、ローカル
 
 確認コマンド:
 
-- `cd package && mise exec -- pnpm run test:compat:local`
+- `mise exec -- pnpm run test:compat:local`
 
 この確認は `references/` へ依存するため、default `check-all` には含めない。`check-all` は、Git管理された本リポジトリ内の入力だけで通る入口として維持する。
 
@@ -228,7 +228,7 @@ Phase 11-1では、metastanza全10 Stanzaをひとつの一時Stanzaリポジト
 
 確認コマンド:
 
-- `cd package && mise exec -- pnpm run test:compat:local`
+- `mise exec -- pnpm run test:compat:local`
 
 確認した対象:
 
@@ -270,7 +270,7 @@ Phase 11-2では、TogoMedium Stanza全15件をひとつの一時Stanzaリポジ
 
 確認コマンド:
 
-- `cd package && mise exec -- pnpm run test:compat:local`
+- `mise exec -- pnpm run test:compat:local`
 
 確認した対象:
 
@@ -318,7 +318,7 @@ Phase 11-3では、TogoMedium Webアプリ本体をVite dev serverで起動し�
 
 確認コマンド:
 
-- `cd package && mise exec -- pnpm run test:compat:local`
+- `mise exec -- pnpm run test:compat:local`
 
 確認した経路:
 

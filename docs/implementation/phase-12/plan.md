@@ -20,8 +20,8 @@ Phase 12の前半では、ローカルtarballによる `pack -> install -> 実�
 
 Phase 12へ入る前の再確認として、次が完了している。
 
-- `cd package && mise exec -- pnpm run check-all`: pass。
-- `cd package && mise exec -- pnpm run test:compat:local`: pass。
+- `mise exec -- pnpm run check-all`: pass。
+- `mise exec -- pnpm run test:compat:local`: pass。
 - ローカルtarball install smoke: pass。
 - Phase 11-2で観測された低頻度build flakeは、直近再実行では再現していない。
 - `references/` 依存確認はローカルcompatibility確認であり、CI再現性はPhase 12の前提にしない。
@@ -67,6 +67,11 @@ Phase 12へ入る前の再確認として、次が完了している。
 - release branch / tag運用の文書化。
 - 生成repoの `dependencies.togostanza` spec方針の更新。
 - 必要に応じた `test:distribution:local` のGitHub dependency対応。
+
+## 12-0実装上の注意
+
+Phase 12-0は、Phase 12の中で最も破壊的なファイル移動を含む。
+このサブフェーズは単独コミット、単独レビュー対象として扱い、GitHub dependency smokeやrelease branch/tag運用には進まない。
 
 ## 含めないもの
 

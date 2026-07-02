@@ -182,7 +182,7 @@ Phase 5の設計は [Phase 5: readiness inventory 設計](./phase-5/plan.md) に
 
 ゴールは、`workbench` の検証ケースを、リメイク版CLIで再現できるケース入力として整えることである。
 
-Phase 6はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase 12へ送る。Phase 6では、repo-localの `package/bin/togostanza.mjs` を `node` で呼ぶscriptsを基本にする。
+Phase 6はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase 12へ送る。Phase 6では、repo-localの `bin/togostanza.mjs` を `node` で呼ぶscriptsを基本にする。
 
 含める範囲:
 

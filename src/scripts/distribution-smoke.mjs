@@ -14,7 +14,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-const packageDirectory = resolve(scriptDirectory, "..");
+const packageDirectory = resolve(scriptDirectory, "../..");
 const packageJson = JSON.parse(readFileSync(join(packageDirectory, "package.json"), "utf8"));
 const tscBinary = join(packageDirectory, "node_modules", ".bin", "tsc");
 const temporaryRoot = mkdtempSync(join(tmpdir(), "togostanza-distribution-smoke-"));
@@ -214,6 +214,7 @@ function assertTarballContents(tarballPath) {
 
   const forbiddenPrefixes = [
     "package/src/",
+    "package/dist/test/",
     "package/test/",
     "package/test-results/",
     "package/playwright.config.ts",

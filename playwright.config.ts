@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./test/browser",
+  testDir: "./src/test/browser",
   timeout: 10_000,
   reporter: [["list"]],
   use: {

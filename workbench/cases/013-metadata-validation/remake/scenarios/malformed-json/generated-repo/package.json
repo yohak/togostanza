@@ -5,11 +5,11 @@
   "repository": "",
   "scripts": {
     "build": "togostanza build --output-path dist",
-    "togostanza:local": "node ../../../../../../../package/bin/togostanza.mjs",
-    "build:local": "node ../../../../../../../package/bin/togostanza.mjs build --output-path dist"
+    "togostanza:local": "node ../../../../../../../bin/togostanza.mjs",
+    "build:local": "node ../../../../../../../bin/togostanza.mjs build --output-path dist"
   },
   "dependencies": {
-    "togostanza": "link:../../../../../../../package"
+    "togostanza": "link:../../../../../.."
   },
   "engines": {
     "node": ">=24.5.0"

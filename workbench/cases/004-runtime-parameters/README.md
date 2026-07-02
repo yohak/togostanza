@@ -176,9 +176,9 @@ style属性を `--parameter-probe-gap="16"`、`--parameter-probe-caption="after 
 Phase 2-3で確認済み。
 
 - 確認日: 2026-06-30
-- 確認対象: `package/test/browser/custom-element.smoke.spec.ts`
-- 確認コマンド: `cd package && mise exec -- pnpm run test:browser`
-- 追加確認: `cd package && mise exec -- pnpm run check-all`
+- 確認対象: `src/test/browser/custom-element.smoke.spec.ts`
+- 確認コマンド: `mise exec -- pnpm run test:browser`
+- 追加確認: `mise exec -- pnpm run check-all`
 
 リメイク版の観測は、検証ケース配下の独立した `remake/` 環境ではなく、リメイク版パッケージのbrowser test内で一時生成したstanzaリポジトリを使って行った。
 

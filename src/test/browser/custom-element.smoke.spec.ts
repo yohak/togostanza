@@ -24,8 +24,8 @@ import {
   expectedTogoMediumStanzas,
 } from "../support/compat-local.js";
 
-const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const repositoryRoot = resolve(packageRoot, "..");
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const repositoryRoot = packageRoot;
 const temporaryDirectories: string[] = [];
 
 type SparqlRequest = {

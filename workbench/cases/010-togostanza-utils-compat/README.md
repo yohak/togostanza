@@ -105,8 +105,8 @@ current-pnpm/
 - 確認範囲: package test内の `utils-probe` fixture。
 - `references/togostanza-utils` の実packageを、変更せずに一時Stanzaリポジトリの `node_modules/togostanza-utils` へコピーして確認した。手書きshimや再実装fixtureでは代替していない。
 - `togostanza-utils` の実依存である `d3`、`csv-stringify`、`date-fns` は、package test用devDependencyの実packageを一時Stanzaリポジトリ側の `node_modules/` へsymlinkして確認した。
-- `package/src/cli/router.spec.ts` で、`togostanza-utils`、`togostanza-utils/load-data`、`togostanza-utils/apply-filter` をimportするStanzaが `togostanza build` で生成物を作れることを確認した。
-- `package/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-utils-probe>` がupgradeされ、010の受け入れ対象チェックがすべて `ok` になることを確認した。
+- `src/cli/router.spec.ts` で、`togostanza-utils`、`togostanza-utils/load-data`、`togostanza-utils/apply-filter` をimportするStanzaが `togostanza build` で生成物を作れることを確認した。
+- `src/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-utils-probe>` がupgradeされ、010の受け入れ対象チェックがすべて `ok` になることを確認した。
 - `loadData()` はJSON、CSV、TSV、SPARQL results JSONを読み込み、配列データへ `__togostanza_id__` を付与した。
 - 同一URL / type / limit / offsetの連続 `loadData()` はcacheを返した。
 - missing JSON fetchではerror DOMが出て、loading DOMは完了後に削除された。ブラウザの404 resource console errorは、意図したerror URL由来として扱った。
@@ -117,8 +117,8 @@ current-pnpm/
 
 確認コマンド:
 
-- `cd package && mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t togostanza-utils`
-- `cd package && mise exec -- pnpm exec playwright test --config playwright.config.ts -g togostanza-utils`
+- `mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t togostanza-utils`
+- `mise exec -- pnpm exec playwright test --config playwright.config.ts -g togostanza-utils`
 
 ## 合格条件
 
@@ -251,4 +251,4 @@ pnpm run build:local
 pnpm run serve:fixture
 ```
 
-確認URLは `http://127.0.0.1:4180/fixtures/utils-compat.html` とする。Phase 6のworkbench入力では、`togostanza-utils` を `references/togostanza-utils` へのlocal linkとして扱う。`togostanza-utils` 内部依存の `d3`、`date-fns`、`csv-stringify` は `togostanza.config.ts` のVite aliasで `package/node_modules` へ向けている。これはローカルworkbench確認用であり、pack install確認ではない。
+確認URLは `http://127.0.0.1:4180/fixtures/utils-compat.html` とする。Phase 6のworkbench入力では、`togostanza-utils` を `references/togostanza-utils` へのlocal linkとして扱う。`togostanza-utils` 内部依存の `d3`、`date-fns`、`csv-stringify` は `togostanza.config.ts` のVite aliasで `node_modules` へ向けている。これはローカルworkbench確認用であり、pack install確認ではない。

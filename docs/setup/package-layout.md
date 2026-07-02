@@ -6,29 +6,36 @@
 
 ## 方針
 
-- ルートの `package.json` は置かない。
-- リメイク版は、`package/` 直下の単一パッケージとして作る。
-- リメイク版の `package.json` は `package/package.json` に置く。
+- リメイク版は、リポジトリルートの単一Nodeパッケージとして扱う。
+- リメイク版の `package.json`、`pnpm-lock.yaml`、`mise.toml` はリポジトリルートに置く。
 - 本リポジトリ全体をNodeワークスペースとして扱わない。
 - `references/*/package.json` はリファレンスリポジトリ側のものとして扱う。
 - `workbench/cases/<case>/<env>/package.json` や `workbench/cases/<case>/<env>/<generated-repo>/package.json` は検証環境側のものとして扱う。
 
-この方針により、リポジトリルートは調査・計画・検証・実装をまとめる場所として扱い、Nodeパッケージとしての関心は `package/` に閉じる。
+この方針は、GitHub dependencyとして本リポジトリを直接installする短期配布経路を成立させるためのものとする。
+`references/`、`workbench/`、`sandbox/` は、ルートパッケージの一部ではなく、調査・検証用の周辺領域として扱う。
 
 ## 想定レイアウト
 
 ```text
+package.json
+pnpm-lock.yaml
+mise.toml
+bin/
+src/
 docs/
 references/
 workbench/
-package/
-  package.json
-  src/
-  test/
 ```
+
+`src/` にはCLI、runtime、test、検証用scriptを置く。
+`bin/` には配布時に使うCLI入口を置く。
+`dist/` は通常の開発branchではgitignore対象とし、build済み成果物として生成する。
+install時buildを行わないrelease branch/tagでは、必要に応じて `dist/` を明示的に含める。
 
 ## 将来の分割
 
 現段階では、現行版の仕様踏襲を優先し、リメイク版は単一パッケージとして扱う。
 
-将来、CLI、ランタイム、テンプレート、互換レイヤーなどを別パッケージとして分ける必要が出た場合は、ワークスペース化を検討する。その場合は `package/` から `packages/togostanza/` への移行も含めて、あらためて配置方針を決める。
+将来、CLI、ランタイム、テンプレート、互換レイヤーなどを別パッケージとして分ける必要が出た場合は、ワークスペース化を検討する。
+その場合は、`packages/togostanza/` などへの分割も含めて、あらためて配置方針を決める。

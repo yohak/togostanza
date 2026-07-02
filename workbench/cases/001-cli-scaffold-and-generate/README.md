@@ -358,7 +358,7 @@ pnpm install
 pnpm run build:local
 ```
 
-`build` / `serve` は生成repo利用者向けの `togostanza build` / `togostanza serve` scriptとして残し、workbenchでは `build:local` / `serve:local` を使う。`togostanza` dependencyは `link:../../../../../package` で宣言しているが、pack install検証ではない。
+`build` / `serve` は生成repo利用者向けの `togostanza build` / `togostanza serve` scriptとして残し、workbenchでは `build:local` / `serve:local` を使う。`togostanza` dependencyは `link:../../../../..` で宣言しているが、pack install検証ではない。
 
 ## Phase 10 リメイク版観測
 

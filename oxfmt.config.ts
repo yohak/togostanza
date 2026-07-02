@@ -4,9 +4,13 @@ export default defineConfig({
   ignorePatterns: [
     "coverage",
     "dist",
+    "docs",
     "node_modules",
     "playwright-report",
+    "references",
+    "sandbox",
     "test-results",
+    "workbench",
     "**/*.hbs",
     "**/*.md",
   ],

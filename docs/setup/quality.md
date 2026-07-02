@@ -4,24 +4,23 @@
 
 ## 対象範囲
 
-品質確認の対象は `package/` 配下のリメイク版実装パッケージに閉じる。
+品質確認の対象は、リポジトリルートのリメイク版実装パッケージに閉じる。
 
-リポジトリルートには `package.json` を置かない。`docs/`、`references/`、`workbench/` は、この品質確認scriptの対象にしない。
+`docs/`、`references/`、`workbench/` は、この品質確認scriptの通常対象にしない。
 
 ## 実行環境
 
-`package/mise.toml` でNode.jsとpnpmを固定する。
-`package/` 配下のNode.js / pnpmコマンドは、裸の `node` や `pnpm` ではなく `mise exec -- ...` 経由で実行する。
+ルートの `mise.toml` でNode.jsとpnpmを固定する。
+Node.js / pnpmコマンドは、裸の `node` や `pnpm` ではなく `mise exec -- ...` 経由で実行する。
 
 ```sh
-cd package
 mise exec -- node -v
 mise exec -- pnpm --version
 ```
 
 ## 標準script
 
-`package/` で次のscriptを使う。
+リポジトリルートで次のscriptを使う。
 
 | script | 目的 |
 | ------ | ---- |
@@ -40,14 +39,12 @@ mise exec -- pnpm --version
 コード変更を含む作業では、原則として次を完了前確認に使う。
 
 ```sh
-cd package
 mise exec -- pnpm run check-all
 ```
 
 エージェントが品質確認を行う場合は、Codex等のsandbox実行環境ではなく、承認付き通常実行でユーザーのローカル環境を優先して確認する。browser testを個別に確認する場合も、同じ実行環境で次を使う。
 
 ```sh
-cd package
 mise exec -- pnpm run test:browser
 ```
 
@@ -58,7 +55,6 @@ CLI integration testはbuild後のcompiled JS入口を確認する。`pnpm test:
 リメイク版CLIを手元で確認する場合は、裸の `togostanza` commandではなく、package内の `bin` 入口を明示して実行する。裸の `togostanza` commandは、PATH上にある現行版を起動する可能性がある。
 
 ```sh
-cd package
 mise exec -- pnpm build
 mise exec -- node ./bin/togostanza.mjs --version
 mise exec -- node ./bin/togostanza.mjs --help
@@ -71,7 +67,6 @@ mise exec -- node ./bin/togostanza.mjs --help
 配布物としての最小確認は、ローカルtarballを一時ディレクトリへpackし、npm / pnpmそれぞれへインストールして行う。
 
 ```sh
-cd package
 mise exec -- pnpm run test:distribution:local
 ```
 

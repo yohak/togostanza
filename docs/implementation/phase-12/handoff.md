@@ -7,7 +7,7 @@
 ## 完了したこと
 
 - ローカルtarballを使った `pack -> install -> 実行` smokeを追加した。
-  - script: `cd package && mise exec -- pnpm run test:distribution:local`
+  - script: `mise exec -- pnpm run test:distribution:local`
   - npm環境とpnpm環境の両方へtarballをインストールする。
   - install後のCLIで `--version`、`init --name`、`generate stanza`、`build` を確認する。
   - tarball install後に `togostanza/stanza` と `togostanza/config` の実行時解決と型解決を確認する。
@@ -41,9 +41,9 @@
 確認日: 2026-07-02
 
 ```sh
-cd package && mise exec -- pnpm run check-all
-cd package && mise exec -- pnpm run test:distribution:local
-cd package && mise exec -- pnpm run test:compat:local
+mise exec -- pnpm run check-all
+mise exec -- pnpm run test:distribution:local
+mise exec -- pnpm run test:compat:local
 ```
 
 結果:

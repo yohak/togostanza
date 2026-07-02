@@ -14,12 +14,12 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import { packageMetadata } from "../index.js";
 import {
   assertCompatLocalReferencesReady,
   assertExpectedCompatLocalStanzaDirectories,
   compatFixturePath,
-} from "../../test/support/compat-local.js";
-import { packageMetadata } from "../index.js";
+} from "../test/support/compat-local.js";
 import { listCommandUsages } from "./commands.js";
 import type { CliResult } from "./result.js";
 import { routeCli as routeCliRaw, type CliRouteOptions } from "./router.js";
@@ -27,7 +27,7 @@ import type { CommandRunner } from "./runner.js";
 import type { ServeSession } from "./serve.js";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const repositoryRoot = resolve(packageRoot, "..");
+const repositoryRoot = packageRoot;
 const localCorsOrigin = "http://127.0.0.1:5173";
 const localhostCorsOrigin = "http://localhost:5173";
 const localCompatibilityIt = process.env.TOGOSTANZA_RUN_LOCAL_COMPAT === "1" ? it : it.skip;

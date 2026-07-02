@@ -15,7 +15,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
-const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const packageJson = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8")) as {
   name: string;
   version: string;

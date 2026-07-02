@@ -207,8 +207,8 @@ mise exec -- pnpm run serve:fixture
 
 - 確認日: 2026-06-30
 - 作業ディレクトリ: `package/`
-- Node.js / pnpm: `package/mise.toml` に従う
-- 確認方法: 007相当のfixtureを `package/src/cli/router.spec.ts` と `package/test/browser/custom-element.smoke.spec.ts` で確認
+- Node.js / pnpm: `mise.toml` に従う
+- 確認方法: 007相当のfixtureを `src/cli/router.spec.ts` と `src/test/browser/custom-element.smoke.spec.ts` で確認
 
 この時点では、`workbench/cases/007-config-and-resolution/current-pnpm/generated-repo/` をリメイク版用に直接再利用していない。これは同ディレクトリの `package.json` が現行版 `togostanza` 依存として作られているためである。リメイク版の観測は、同じ観測契約を切り出したpackage test上のfixtureで記録する。
 
@@ -336,9 +336,9 @@ Phase 2-4では、npm公開向けの `exports` / `files` 全体整理は扱わ�
 - ブラウザ観測
 - `git diff --check`
 - inline command implementation pattern search
-- `cd package && mise exec -- pnpm run test:unit`
-- `cd package && mise exec -- pnpm run build`
-- `cd package && mise exec -- pnpm run check-all`
+- `mise exec -- pnpm run test:unit`
+- `mise exec -- pnpm run build`
+- `mise exec -- pnpm run check-all`
 
 ## 未決定事項
 

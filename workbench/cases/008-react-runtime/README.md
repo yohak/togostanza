@@ -40,10 +40,10 @@ TSX/Reactで書かれたStanzaソースが、TogoStanzaランタイムのShadow 
 
 - 確認日: 2026-07-01
 - 確認範囲: package test内のReact TSX fixture。
-- `package/src/cli/router.spec.ts` で、`index.tsx` entrypointを持つStanzaが `togostanza build` で生成物を作れることを確認した。
+- `src/cli/router.spec.ts` で、`index.tsx` entrypointを持つStanzaが `togostanza build` で生成物を作れることを確認した。
 - fixtureの `react` / `react-dom/client` は、package test用devDependencyの実React / React DOMを一時Stanzaリポジトリ側の `node_modules/` へsymlinkして確認した。CLI側runtime dependencyにはしていない。
 - 生成された `dist/react-runtime-probe.js` にはReact component本文、React runtime、React DOM runtime、runtime登録がbundleされ、bare import `react` / `react-dom/client` は残らなかった。
-- `package/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-react-runtime-probe>` がupgradeされ、open Shadow DOM内 `main` へReact componentを描画できることを確認した。
+- `src/test/browser/custom-element.smoke.spec.ts` で、direct embedから `<togostanza-react-runtime-probe>` がupgradeされ、open Shadow DOM内 `main` へReact componentを描画できることを確認した。
 - 初期属性 `label="initial-react"` / `count="1"` が `this.params` を経由して描画へ反映された。
 - 属性変更後に `handleAttributeChange()` 経由で再描画され、`label="after-react-mutation"` / `count="2"` が表示へ反映された。
 - `this.importWebFontCSS("./assets/react-runtime-font.css")` により、shadow root内に `public/react-runtime-probe/assets/react-runtime-font.css` へ向くstylesheet linkが追加された。
@@ -52,8 +52,8 @@ TSX/Reactで書かれたStanzaソースが、TogoStanzaランタイムのShadow 
 
 確認コマンド:
 
-- `cd package && mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t "builds a React TSX stanza"`
-- `cd package && mise exec -- pnpm exec playwright test --config playwright.config.ts -g "renders a React TSX Stanza"`
+- `mise exec -- pnpm exec vitest run --config vitest.config.ts src/cli/router.spec.ts -t "builds a React TSX stanza"`
+- `mise exec -- pnpm exec playwright test --config playwright.config.ts -g "renders a React TSX Stanza"`
 
 ### 現行版の観測状況
 
@@ -107,4 +107,4 @@ pnpm run build:local
 pnpm run serve:fixture
 ```
 
-確認URLは `http://127.0.0.1:4178/fixtures/react-runtime.html` とする。Phase 6のworkbench入力では、React / React DOMを `package/node_modules` へのlocal linkとして扱い、registry installやpack install確認とは分ける。
+確認URLは `http://127.0.0.1:4178/fixtures/react-runtime.html` とする。Phase 6のworkbench入力では、React / React DOMを `node_modules` へのlocal linkとして扱い、registry installやpack install確認とは分ける。

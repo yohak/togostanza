@@ -73,9 +73,9 @@
 
 確認方法:
 
-- `cd package && mise exec -- pnpm run test:unit`
-- `cd package && mise exec -- pnpm run test:integration`
-- `cd package && mise exec -- pnpm run test:browser`
+- `mise exec -- pnpm run test:unit`
+- `mise exec -- pnpm run test:integration`
+- `mise exec -- pnpm run test:browser`
 
 確認したこと:
 
