@@ -310,12 +310,14 @@ fixture data:
 
 - TogoMediumの一時rootでは、`references/togomedium-web/node_modules` と `references/togomedium-web/@packages/stanza/node_modules` の依存を集約して使った。これはreferencesを汚さずにStanza package root相当を作るための検証用配置であり、TogoMedium固有のdependency配置をリメイク版が自動吸収する契約ではない。
 - この確認は生成されたStanza artifact単体のdirect embed smokeであり、TogoMedium Webアプリ本体のE2E、実API接続、画面遷移、ユーザー操作網羅、pixel-level比較は含めない。
+- `check-all` のhermetic browser suiteで、低頻度の `togostanza build` 失敗が観測された。再実行では解消し、Phase 11-2のTogoMedium smoke由来ではない。次に再現した場合は、Vite / esbuildが出すエラー全文、対象fixture、一時出力先を捕捉し、Phase XまたはCI化前の調査項目として扱う。
 
 ### Phase 11へ送るもの
 
 - TogoMedium Webアプリ本体E2E。
 - React / Vue / Emotion / MUIの広いversion matrix。
 - Runtime edge semantics。
+- hermetic browser suiteの低頻度build flakeが再現した場合の原因調査。
 
 ## Phase 6 リメイク版workbench入力
 
