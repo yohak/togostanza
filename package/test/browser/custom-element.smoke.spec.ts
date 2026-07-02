@@ -14,8 +14,13 @@ import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, test, type Page } from "@playwright/test";
-import { assertCompatLocalReferencesReady, compatFixturePath } from "../support/compat-local.js";
+import { expect, test, type ConsoleMessage, type Page, type Request } from "@playwright/test";
+import {
+  assertCompatLocalReferencesReady,
+  assertExpectedCompatLocalStanzaDirectories,
+  compatFixturePath,
+  expectedMetastanzaStanzas,
+} from "../support/compat-local.js";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const repositoryRoot = resolve(packageRoot, "..");
@@ -26,6 +31,101 @@ type SparqlRequest = {
   contentType: string;
   method: string;
 };
+
+type BrowserDiagnostics = {
+  consoleErrors: string[];
+  dispose(): void;
+  failedRequests: string[];
+  pageErrors: string[];
+};
+
+type MetastanzaSmokeCase = {
+  assertRendered(page: Page, selector: string): Promise<void>;
+  fixtureFile: string;
+  id: string;
+  overrides?: Record<string, string>;
+};
+
+const metastanzaSmokeCases: readonly MetastanzaSmokeCase[] = [
+  {
+    assertRendered: assertSvgRendered,
+    fixtureFile: "chart-data.json",
+    id: "barchart",
+    overrides: {
+      legend: "false",
+      style: "--togostanza-grid-dash-length: 1;",
+      xgrid: "false",
+      ygrid: "false",
+    },
+  },
+  {
+    assertRendered: assertHashTableRendered,
+    fixtureFile: "hash-table.json",
+    id: "hash-table",
+  },
+  {
+    assertRendered: assertSvgRendered,
+    fixtureFile: "chart-data.json",
+    id: "linechart",
+    overrides: {
+      legend: "false",
+      style: "--togostanza-grid-dash-length: 1;",
+      xgrid: "false",
+      ygrid: "false",
+    },
+  },
+  {
+    assertRendered: assertTableRendered,
+    fixtureFile: "table-data.json",
+    id: "pagination-table",
+  },
+  {
+    assertRendered: assertSvgRendered,
+    fixtureFile: "pie-data.json",
+    id: "piechart",
+    overrides: {
+      legend: "false",
+    },
+  },
+  {
+    assertRendered: assertSvgRendered,
+    fixtureFile: "scatter-data.json",
+    id: "scatterplot",
+    overrides: {
+      legend: "false",
+      style: "--togostanza-grid-dash-length: 1;",
+      xgrid: "false",
+      ygrid: "false",
+    },
+  },
+  {
+    assertRendered: assertScorecardRendered,
+    fixtureFile: "scorecard.json",
+    id: "scorecard",
+    overrides: {
+      height: "90",
+    },
+  },
+  {
+    assertRendered: assertTableRendered,
+    fixtureFile: "table-data.json",
+    id: "scroll-table",
+  },
+  {
+    assertRendered: assertTextRendered,
+    fixtureFile: "text.txt",
+    id: "text",
+    overrides: {
+      "highlight-css-url": "",
+      mode: "text",
+    },
+  },
+  {
+    assertRendered: assertSvgRendered,
+    fixtureFile: "tree-data.json",
+    id: "tree",
+  },
+];
 
 test.afterEach(async () => {
   for (const directory of temporaryDirectories.splice(0)) {
@@ -825,83 +925,30 @@ test("applies Emotion styles inside a React Stanza shadow root @compat-local", a
   }
 });
 
-test("directly embeds a real metastanza scorecard @compat-local", async ({ page }) => {
-  test.setTimeout(90_000);
+test("directly embeds all real metastanza Stanzas @compat-local", async ({ page }) => {
+  test.setTimeout(180_000);
   assertCompatLocalReferencesReady(repositoryRoot);
+  assertExpectedCompatLocalStanzaDirectories(repositoryRoot);
 
   const cwd = makeTemporaryDirectory();
-  writeMetastanzaScorecardRegressionRepo(cwd);
+  writeMetastanzaRegressionRepo(cwd);
   await runCli(["build", "--output-path", "public"], cwd);
 
   const requestLog: string[] = [];
-  const pageErrors: string[] = [];
-  const consoleErrors: string[] = [];
-  const failedRequests: string[] = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") {
-      consoleErrors.push(message.text());
-    }
-  });
-  page.on("requestfailed", (request) => {
-    failedRequests.push(`${request.url()} ${request.failure()?.errorText ?? ""}`.trim());
-  });
   const server = await startStaticServer(cwd, requestLog);
 
   try {
     const port = addressPort(server);
-    writeFileSync(
-      resolve(cwd, "fixture.html"),
-      `<!doctype html>
-<html>
-  <body>
-    <script type="module" src="./public/scorecard.js"></script>
-    <togostanza-scorecard
-      id="metastanza-scorecard"
-      data-url="http://127.0.0.1:${port}/${compatFixturePath("metastanza", "scorecard", "scorecard.json")}"
-      data-type="json"
-      width="240"
-      height="90"
-      padding="12"
-      legend="true"
-    ></togostanza-scorecard>
-  </body>
-</html>
-`,
-      "utf8",
-    );
-
-    await page.goto(`http://127.0.0.1:${port}/fixture.html`, { waitUntil: "domcontentloaded" });
-    await page.waitForFunction(() => customElements.get("togostanza-scorecard"));
-    await expect
-      .poll(() => readShadowText(page, "#metastanza-scorecard", "#key"))
-      .toBe("compatibility_score");
-    await expect.poll(() => readShadowText(page, "#metastanza-scorecard", "#value")).toBe("42");
-    await expect
-      .poll(() =>
-        page.locator("#metastanza-scorecard").evaluate((element) => {
-          const wrapper = element.shadowRoot?.querySelector<HTMLElement>(".chart-wrapper");
-          const value = element.shadowRoot?.querySelector<HTMLElement>("#value");
-
-          return wrapper && value
-            ? {
-                height: getComputedStyle(wrapper).height,
-                valueColor: getComputedStyle(value).fill,
-              }
-            : undefined;
-        }),
-      )
-      .toEqual({
-        height: "90px",
-        valueColor: "rgb(78, 80, 89)",
+    for (const smokeCase of metastanzaSmokeCases) {
+      // eslint-disable-next-line no-await-in-loop -- each Stanza gets an isolated page navigation.
+      await runMetastanzaSmokeCase({
+        cwd,
+        page,
+        port,
+        requestLog,
+        smokeCase,
       });
-
-    expect(consoleErrors).toEqual([]);
-    expect(failedRequests).toEqual([]);
-    expect(pageErrors).toEqual([]);
-    expect(requestLog).toContain(
-      `/${compatFixturePath("metastanza", "scorecard", "scorecard.json")}`,
-    );
+    }
   } finally {
     await closeServer(server);
   }
@@ -1263,6 +1310,263 @@ function customElementDuplicateDefinitionErrors(pageErrors: string[]): string[] 
   return pageErrors.filter((message) => {
     return message.includes("has already been used with this registry");
   });
+}
+
+async function runMetastanzaSmokeCase(input: {
+  cwd: string;
+  page: Page;
+  port: number;
+  requestLog: string[];
+  smokeCase: MetastanzaSmokeCase;
+}): Promise<void> {
+  const { cwd, page, port, requestLog, smokeCase } = input;
+  const selector = `#metastanza-${smokeCase.id}`;
+  const tagName = `togostanza-${smokeCase.id}`;
+  const fixturePath = compatFixturePath("metastanza", smokeCase.id, "fixture.html");
+  const dataPath = compatFixturePath("metastanza", smokeCase.id, smokeCase.fixtureFile);
+  const generatedScriptPath = `public/${smokeCase.id}.js`;
+  const attributes = metadataExampleAttributes(cwd, smokeCase.id, {
+    ...smokeCase.overrides,
+    "data-url": `http://127.0.0.1:${port}/${dataPath}`,
+  });
+  const diagnostics = collectBrowserDiagnostics(page);
+  const requestStart = requestLog.length;
+
+  writeFileSync(
+    resolve(cwd, fixturePath),
+    `<!doctype html>
+<html>
+  <body>
+    <script type="module" src="/${generatedScriptPath}"></script>
+    <${tagName}
+      id="metastanza-${smokeCase.id}"
+      ${formatHtmlAttributes(attributes)}
+    ></${tagName}>
+  </body>
+</html>
+`,
+    "utf8",
+  );
+
+  try {
+    await page.goto(`http://127.0.0.1:${port}/${fixturePath}`, {
+      waitUntil: "domcontentloaded",
+    });
+    await page.waitForFunction((name) => customElements.get(name), tagName);
+    await expectMetastanzaHostReady(page, selector);
+    await smokeCase.assertRendered(page, selector);
+
+    const requests = requestLog.slice(requestStart);
+    expect(requests).toContain(`/${dataPath}`);
+    expect(diagnostics.consoleErrors).toEqual([]);
+    expect(filterFatalFailedRequests(diagnostics.failedRequests)).toEqual([]);
+    expect(customElementDuplicateDefinitionErrors(diagnostics.pageErrors)).toEqual([]);
+    expect(diagnostics.pageErrors).toEqual([]);
+  } catch (error) {
+    throw new Error(
+      formatMetastanzaSmokeFailure({
+        dataPath,
+        diagnostics,
+        error,
+        fixturePath,
+        generatedScriptPath,
+        requests: requestLog.slice(requestStart),
+        stanzaId: smokeCase.id,
+      }),
+      { cause: error },
+    );
+  } finally {
+    diagnostics.dispose();
+  }
+}
+
+function collectBrowserDiagnostics(page: Page): BrowserDiagnostics {
+  const consoleErrors: string[] = [];
+  const failedRequests: string[] = [];
+  const pageErrors: string[] = [];
+
+  const onConsole = (message: ConsoleMessage) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  };
+  const onPageError = (error: Error) => pageErrors.push(error.message);
+  const onRequestFailed = (request: Request) => {
+    failedRequests.push(`${request.url()} ${request.failure()?.errorText ?? ""}`.trim());
+  };
+
+  page.on("console", onConsole);
+  page.on("pageerror", onPageError);
+  page.on("requestfailed", onRequestFailed);
+
+  return {
+    consoleErrors,
+    dispose: () => {
+      page.off("console", onConsole);
+      page.off("pageerror", onPageError);
+      page.off("requestfailed", onRequestFailed);
+    },
+    failedRequests,
+    pageErrors,
+  };
+}
+
+function filterFatalFailedRequests(failedRequests: readonly string[]): string[] {
+  return failedRequests.filter(
+    (request) => !request.startsWith("https://cdn.jsdelivr.net/npm/katex@"),
+  );
+}
+
+async function expectMetastanzaHostReady(page: Page, selector: string): Promise<void> {
+  await expect
+    .poll(() =>
+      page.locator(selector).evaluate((element) => {
+        const main = element.shadowRoot?.querySelector("main");
+
+        return {
+          hasMain: Boolean(main),
+          hasShadowRoot: Boolean(element.shadowRoot),
+          mainParentIsElement: main?.parentNode instanceof HTMLElement,
+          upgraded: element.constructor !== HTMLElement,
+        };
+      }),
+    )
+    .toEqual({
+      hasMain: true,
+      hasShadowRoot: true,
+      mainParentIsElement: true,
+      upgraded: true,
+    });
+}
+
+async function assertSvgRendered(page: Page, selector: string): Promise<void> {
+  await expect
+    .poll(() =>
+      page.locator(selector).evaluate((element) => {
+        return Boolean(element.shadowRoot?.querySelector("main svg"));
+      }),
+    )
+    .toBe(true);
+}
+
+async function assertHashTableRendered(page: Page, selector: string): Promise<void> {
+  await expect
+    .poll(() => readShadowText(page, selector, "main"))
+    .toContain("Compatibility dataset");
+}
+
+async function assertTableRendered(page: Page, selector: string): Promise<void> {
+  await expect.poll(() => readShadowText(page, selector, "main")).toContain("Demo Alpha");
+}
+
+async function assertScorecardRendered(page: Page, selector: string): Promise<void> {
+  await expect.poll(() => readShadowText(page, selector, "#key")).toBe("compatibility_score");
+  await expect.poll(() => readShadowText(page, selector, "#value")).toBe("42");
+  await expect
+    .poll(() =>
+      page.locator(selector).evaluate((element) => {
+        const wrapper = element.shadowRoot?.querySelector<HTMLElement>(".chart-wrapper");
+        const value = element.shadowRoot?.querySelector<HTMLElement>("#value");
+
+        return wrapper && value
+          ? {
+              height: getComputedStyle(wrapper).height,
+              valueColor: getComputedStyle(value).fill,
+            }
+          : undefined;
+      }),
+    )
+    .toEqual({
+      height: "90px",
+      valueColor: "rgb(78, 80, 89)",
+    });
+}
+
+async function assertTextRendered(page: Page, selector: string): Promise<void> {
+  await expect
+    .poll(() => readShadowText(page, selector, "main"))
+    .toContain("Metastanza compatibility text");
+}
+
+function metadataExampleAttributes(
+  cwd: string,
+  stanzaId: string,
+  overrides: Record<string, string>,
+): Record<string, string> {
+  const metadata = JSON.parse(
+    readFileSync(resolve(cwd, "stanzas", stanzaId, "metadata.json"), "utf8"),
+  ) as Record<string, unknown>;
+  const parameters = Array.isArray(metadata["stanza:parameter"])
+    ? metadata["stanza:parameter"]
+    : [];
+  const attributes: Record<string, string> = {};
+
+  for (const parameter of parameters) {
+    if (!isRecord(parameter)) {
+      continue;
+    }
+
+    const key = parameter["stanza:key"];
+    const example = parameter["stanza:example"];
+
+    if (typeof key !== "string" || example === undefined) {
+      continue;
+    }
+
+    attributes[key] = typeof example === "string" ? example : JSON.stringify(example);
+  }
+
+  return { ...attributes, ...overrides };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function formatHtmlAttributes(attributes: Record<string, string>): string {
+  return Object.entries(attributes)
+    .map(([key, value]) => `${key}="${escapeHtmlAttribute(value)}"`)
+    .join("\n      ");
+}
+
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function formatMetastanzaSmokeFailure(input: {
+  dataPath: string;
+  diagnostics: BrowserDiagnostics;
+  error: unknown;
+  fixturePath: string;
+  generatedScriptPath: string;
+  requests: string[];
+  stanzaId: string;
+}): string {
+  const message = input.error instanceof Error ? input.error.message : String(input.error);
+
+  return [
+    `metastanza smoke failed for ${input.stanzaId}`,
+    `generated: ${input.generatedScriptPath}`,
+    `fixture: ${input.fixturePath}`,
+    `data: ${input.dataPath}`,
+    `error: ${message}`,
+    formatDiagnosticList("console errors", input.diagnostics.consoleErrors),
+    formatDiagnosticList("page errors", input.diagnostics.pageErrors),
+    formatDiagnosticList("failed requests", input.diagnostics.failedRequests),
+    formatDiagnosticList("recent requests", input.requests),
+  ].join("\n");
+}
+
+function formatDiagnosticList(label: string, values: readonly string[]): string {
+  if (values.length === 0) {
+    return `${label}: (none)`;
+  }
+
+  return [`${label}:`, ...values.map((value) => `- ${value}`)].join("\n");
 }
 
 function runCli(args: string[], cwd: string): Promise<void> {
@@ -2012,7 +2316,7 @@ function symlinkNodePackageFromTogoMediumReference(cwd: string, packageName: str
   );
 }
 
-function writeMetastanzaScorecardRegressionRepo(cwd: string): void {
+function writeMetastanzaRegressionRepo(cwd: string): void {
   assertCompatLocalReferencesReady(repositoryRoot);
 
   const referenceRoot = resolve(repositoryRoot, "references", "metastanza");
@@ -2022,19 +2326,99 @@ function writeMetastanzaScorecardRegressionRepo(cwd: string): void {
   symlinkSync(resolve(referenceRoot, "package.json"), resolve(cwd, "package.json"));
   symlinkSync(resolve(referenceRoot, "node_modules"), resolve(cwd, "node_modules"), "dir");
   symlinkSync(resolve(referenceRoot, "common.scss"), resolve(cwd, "common.scss"));
-  symlinkSync(
-    resolve(referenceRoot, "stanzas", "scorecard"),
-    resolve(stanzasDirectory, "scorecard"),
-    "dir",
-  );
-  mkdirSync(dirname(resolve(cwd, compatFixturePath("metastanza", "scorecard", "scorecard.json"))), {
-    recursive: true,
-  });
-  writeFileSync(
-    resolve(cwd, compatFixturePath("metastanza", "scorecard", "scorecard.json")),
-    `${JSON.stringify({ compatibility_score: 42 }, null, 2)}\n`,
-    "utf8",
-  );
+  for (const stanzaId of expectedMetastanzaStanzas) {
+    symlinkSync(
+      resolve(referenceRoot, "stanzas", stanzaId),
+      resolve(stanzasDirectory, stanzaId),
+      "dir",
+    );
+  }
+
+  writeMetastanzaFixtureData(cwd);
+}
+
+function writeMetastanzaFixtureData(cwd: string): void {
+  const chartData = [
+    { category: "alpha", chromosome: "chr1", count: 3, group: "A" },
+    { category: "beta", chromosome: "chr2", count: 5, group: "B" },
+  ];
+
+  writeJsonFixture(cwd, "barchart", "chart-data.json", chartData);
+  writeJsonFixture(cwd, "linechart", "chart-data.json", chartData);
+  writeJsonFixture(cwd, "piechart", "pie-data.json", [
+    { category: "alpha", count: 3 },
+    { category: "beta", count: 5 },
+  ]);
+  writeJsonFixture(cwd, "scatterplot", "scatter-data.json", [
+    { area: 1.5, density: 2, population: "alpha" },
+    { area: 3.5, density: 4, population: "beta" },
+  ]);
+  writeJsonFixture(cwd, "tree", "tree-data.json", [
+    { id: "root", name: "Root", parent: null },
+    { id: "child", name: "Child", parent: "root" },
+  ]);
+  writeJsonFixture(cwd, "hash-table", "hash-table.json", [
+    {
+      dataset_uri: "https://example.org/dataset/compatibility",
+      description: "Compatibility dataset",
+      number_of_protein: 42,
+      species: "Homo sapiens",
+      title: "Compatibility dataset",
+    },
+  ]);
+  writeJsonFixture(cwd, "pagination-table", "table-data.json", formatMetastanzaTableData());
+  writeJsonFixture(cwd, "scroll-table", "table-data.json", formatMetastanzaTableData());
+  writeJsonFixture(cwd, "scorecard", "scorecard.json", { compatibility_score: 42 });
+  writeTextFixture(cwd, "text", "text.txt", "Metastanza compatibility text\n");
+}
+
+function writeJsonFixture(cwd: string, stanzaId: string, fileName: string, value: unknown): void {
+  const filePath = resolve(cwd, compatFixturePath("metastanza", stanzaId, fileName));
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function writeTextFixture(cwd: string, stanzaId: string, fileName: string, value: string): void {
+  const filePath = resolve(cwd, compatFixturePath("metastanza", stanzaId, fileName));
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, value, "utf8");
+}
+
+function formatMetastanzaTableData(): Array<Record<string, string | number>> {
+  return [
+    {
+      beta: 0.1,
+      beta_unit: "unit",
+      ci_text: "0.1-0.2",
+      initial_sample_size: "Demo initial sample",
+      mapped_trait: "Demo Alpha",
+      odds_ratio: 1.2,
+      p_value: 0.001,
+      pubmed_id: "123456",
+      pubmed_uri: "https://example.org/pubmed/123456",
+      raf: 0.5,
+      replication_sample_size: "Demo replication sample",
+      study: "https://example.org/study/demo",
+      study_detail: "Demo study",
+      variant_and_risk_allele: "rs-demo-A",
+    },
+    {
+      beta: 0.2,
+      beta_unit: "unit",
+      ci_text: "0.2-0.3",
+      initial_sample_size: "Demo initial sample B",
+      mapped_trait: "Demo Beta",
+      odds_ratio: 1.4,
+      p_value: 0.002,
+      pubmed_id: "789012",
+      pubmed_uri: "https://example.org/pubmed/789012",
+      raf: 0.7,
+      replication_sample_size: "Demo replication sample B",
+      study: "https://example.org/study/demo-b",
+      study_detail: "Demo study B",
+      variant_and_risk_allele: "rs-demo-B",
+    },
+  ];
 }
 
 function writeTogoMediumMetaListRegressionRepo(cwd: string): void {

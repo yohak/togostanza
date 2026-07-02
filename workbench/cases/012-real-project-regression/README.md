@@ -222,12 +222,52 @@ Phase 11-0では、Phase 11-1以降の全Stanza browser smokeへ進む前に、l
 
 この段階では、metastanza全10 StanzaとTogoMedium Stanza全15 Stanzaのbrowser smokeはまだ実行しない。Phase 11-0は、失敗時にどのreferences入力、対象Stanza、fixture dataが問題かを分類しやすくする土台である。browser console / pageerror / failed requestの共通収集と、対象Stanza ID、生成物path、fixture pathを含む失敗診断bundleは、Phase 11-1 / 11-2で全Stanza smoke-runnerと一緒に実装する。
 
+## Phase 11-1 リメイク版metastanza full browser smoke: 2026-07-02
+
+Phase 11-1では、metastanza全10 Stanzaをひとつの一時Stanzaリポジトリrootへsymlinkし、リメイク版CLIでbuildした生成物をブラウザで直接埋め込んで確認した。
+
+確認コマンド:
+
+- `cd package && mise exec -- pnpm run test:compat:local`
+
+確認した対象:
+
+- `barchart`
+- `hash-table`
+- `linechart`
+- `pagination-table`
+- `piechart`
+- `scatterplot`
+- `scorecard`
+- `scroll-table`
+- `text`
+- `tree`
+
+観測結果:
+
+- 全10 Stanzaで module scriptの読み込み、custom element upgrade、open Shadow DOM、`main` の生成、ローカルfixture dataの読み込み、最小描画が成功した。
+- グラフ系Stanzaでは、Vega / vega-embed によるSVG生成を確認した。
+- `hash-table`、`pagination-table`、`scroll-table`、`scorecard`、`text` では、fixture data由来の表示内容を確認した。
+- smoke-runnerは、失敗時に対象Stanza ID、生成物path、fixture path、data path、browser console error、pageerror、failed request、直近requestをまとめて出す。
+- `pagination-table`、`scroll-table`、`hash-table` が依存する `main.parentNode.style` は、リメイク版runtimeで `main` をHTMLElement containerの内側に置くことで吸収した。`this.root` は引き続きShadowRootであり、`this.root.querySelector("main")` の経路も維持している。
+- `text` はconstructorでKaTeXのCDN stylesheetを追加する。local compatibility smokeでは、この任意外部stylesheetの読み込み失敗はStanza本体のfatal failureとして扱わない。
+
+fixture data:
+
+- per-Stanza fixture dataは、一時root内の `fixtures/metastanza/<stanza-id>/...` に置いた。
+- metadataの `stanza:example` を基本入力に使い、`data-url` はローカルfixtureへ差し替えた。
+- `barchart`、`linechart`、`scatterplot` はgridとlegendを最小表示向けに明示的に無効化した。
+- `piechart` はmetadata parameterにない `symbol-shape` をlegend側で参照するため、最小表示ではlegendを無効化した。
+
+残る注意点:
+
+- metastanzaのSass `@import` 非推奨警告は引き続き出る。現行ソース由来の警告であり、Phase 11-1でもbuild失敗にはしない。
+- Phase 11-1のbrowser smokeは直接埋め込みの軽量確認であり、現行版とのpixel-level比較やUI操作網羅ではない。
+
 ### Phase 11へ送るもの
 
-- metastanza全10 Stanzaのbrowser smoke。
 - TogoMedium Stanza全15 Stanzaのbrowser smoke。
 - TogoMedium Webアプリ本体E2E。
-- `pagination-table` / `scroll-table` / `hash-table` など、`main.parentNode.style` に依存するmetastanzaのruntime互換判断。
 - React / Vue / Emotion / MUIの広いversion matrix。
 - Runtime edge semantics。
 

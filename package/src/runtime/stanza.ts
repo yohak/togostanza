@@ -178,7 +178,7 @@ export function registerStanza(registration: StanzaRegistration): void {
       const root = this.attachShadow({ mode: "open" });
       root.append(createStyleDefaults(registration.metadata));
       root.append(createStylesheetLink(registration.cssUrl));
-      root.append(document.createElement("main"));
+      root.append(createMainContainer());
 
       this.#menuShell = createMenuShell(registration.aboutUrl);
       root.append(this.#menuShell);
@@ -261,6 +261,14 @@ function createStanzaInstance(
   } finally {
     pendingRuntimeContext = undefined;
   }
+}
+
+function createMainContainer(): HTMLElement {
+  const container = document.createElement("div");
+  container.dataset.togostanzaMainContainer = "";
+  container.append(document.createElement("main"));
+
+  return container;
 }
 
 function registerCoordinationElements(): void {
