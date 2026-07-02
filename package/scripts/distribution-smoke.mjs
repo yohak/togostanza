@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const packageDirectory = resolve(scriptDirectory, "..");
 const packageJson = JSON.parse(readFileSync(join(packageDirectory, "package.json"), "utf8"));
+const tscBinary = join(packageDirectory, "node_modules", ".bin", "tsc");
 const temporaryRoot = mkdtempSync(join(tmpdir(), "togostanza-distribution-smoke-"));
 const keepTemporaryRoot = process.env["TOGOSTANZA_KEEP_DISTRIBUTION_SMOKE"] === "1";
 
@@ -80,6 +81,7 @@ function runInstallSmoke(input) {
 
   const binaryPath = join(input.projectDirectory, "node_modules", ".bin", input.binaryName);
   run(binaryPath, ["--version"], { cwd: input.projectDirectory });
+  assertPublicSubpaths(input.projectDirectory);
 
   const stanzaRepoName = `${input.packageManager}-stanza`;
   run(
@@ -110,6 +112,70 @@ function runInstallSmoke(input) {
       throw new Error(`Expected build output was not created: ${outputPath}`);
     }
   }
+}
+
+function assertPublicSubpaths(projectDirectory) {
+  writeFileSync(
+    join(projectDirectory, "runtime-probe.mjs"),
+    [
+      'import Stanza from "togostanza/stanza";',
+      'import { defineTogoStanzaConfig } from "togostanza/config";',
+      "",
+      'if (typeof Stanza !== "function") {',
+      '  throw new Error("togostanza/stanza did not export a class");',
+      "}",
+      "",
+      "if (defineTogoStanzaConfig({ marker: true }).marker !== true) {",
+      '  throw new Error("togostanza/config did not export defineTogoStanzaConfig");',
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  run("node", ["runtime-probe.mjs"], { cwd: projectDirectory });
+
+  writeFileSync(
+    join(projectDirectory, "type-probe.ts"),
+    [
+      'import Stanza from "togostanza/stanza";',
+      'import { defineTogoStanzaConfig } from "togostanza/config";',
+      "",
+      "class Probe extends Stanza {",
+      "  render(): void {",
+      "    this.renderTemplate({",
+      '      template: "stanza.html.hbs",',
+      "      parameters: this.params,",
+      "    });",
+      "  }",
+      "}",
+      "",
+      "const config = defineTogoStanzaConfig({ vite: { define: { __PROBE__: true } } });",
+      "void Probe;",
+      "void config;",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  writeFileSync(
+    join(projectDirectory, "tsconfig.json"),
+    `${JSON.stringify(
+      {
+        compilerOptions: {
+          module: "ESNext",
+          moduleResolution: "bundler",
+          noEmit: true,
+          skipLibCheck: true,
+          strict: true,
+          target: "ES2022",
+        },
+        include: ["type-probe.ts"],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  run(tscBinary, ["--project", "tsconfig.json"], { cwd: projectDirectory });
 }
 
 function findSingleTarball(packDirectory) {

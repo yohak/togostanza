@@ -2,6 +2,14 @@
   "name": "togostanza",
   "version": "0.0.0",
   "private": true,
+  "description": "CLI and runtime for building TogoStanza repositories.",
+  "keywords": [
+    "stanza",
+    "togostanza",
+    "visualization",
+    "web-components"
+  ],
+  "license": "MIT",
   "bin": {
     "togostanza": "./bin/togostanza.mjs"
   },

@@ -203,11 +203,18 @@ Phase 12-1で追加したpack smoke:
 cd package && mise exec -- pnpm run test:distribution:local
 ```
 
+配布前チェックリストは [Phase 12 release checklist](./release-checklist.md) に置く。
+
+## Phase 12で決めたこと
+
+- `private: true` はpublish直前まで維持する。
+- `version: 0.0.0` はlocal pack smokeでは維持し、公開前に実versionへ更新する。
+- generated repoの `dependencies.togostanza` は `^<package version>` を維持する。
+- generated repoの `packageManager` fieldは生成しない。pnpm workflow側でpnpm 10系を明示する。
+- root export、`main`、top-level `types` はPhase 12時点では追加しない。
+
 ## 残す論点
 
-- `private` をPhase 12中に外すか、publish直前まで維持するか。
-- `version` を `0.0.0` のままpack smokeだけ行うか、公開前提のversionへ更新するか。
-- generated repoの `dependencies.togostanza` を `^<version>` のままにするか、pre-releaseやexact versionを使うか。
-- root export、`main`、top-level `types` を提供するか。
+- repository、homepage、bugsのURLを、実際の公開リポジトリに合わせて設定すること。
 - GitHub Actions live deployをPhase 12中に実行するか、release前手順として残すか。
-- `engines.node >=24.5.0` を維持するか。
+- `engines.node >=24.5.0` を維持するか、公開直前に利用者環境と照合して調整するか。

@@ -34,6 +34,7 @@ mise exec -- pnpm --version
 | `pnpm test:unit` | Vitestのunit testを実行する。 |
 | `pnpm test:integration` | CLI integration testを実行する。 |
 | `pnpm test:browser` | Playwrightのbrowser smoke testを実行する。 |
+| `pnpm test:distribution:local` | ローカルtarballをnpm / pnpmへインストールし、配布物としての最小動作を確認する。 |
 | `pnpm check-all` | 上記の主要確認をまとめて実行する。 |
 
 コード変更を含む作業では、原則として次を完了前確認に使う。
@@ -64,6 +65,17 @@ mise exec -- node ./bin/togostanza.mjs --help
 ```
 
 この確認は、`bin/togostanza.mjs` からbuild後のcompiled JSへ接続される経路を確認するためのものとする。PATH上の `togostanza` command名解決や、package manager経由の実行確認は配布確認の範囲で扱う。
+
+## 配布手元確認
+
+配布物としての最小確認は、ローカルtarballを一時ディレクトリへpackし、npm / pnpmそれぞれへインストールして行う。
+
+```sh
+cd package
+mise exec -- pnpm run test:distribution:local
+```
+
+この確認は外部公開を行わない。`npm publish`、tag作成、GitHub release作成、公開npm registry上の `latest` 確認は、別途明示承認を受けてから扱う。
 
 ## 整形対象
 

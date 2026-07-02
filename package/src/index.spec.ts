@@ -5,6 +5,7 @@ import { formatPackageIdentity, packageMetadata, packageName } from "./index.js"
 const packageJson = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
 ) as {
+  description?: string;
   exports?: {
     "./config"?: {
       default?: string;
@@ -18,7 +19,10 @@ const packageJson = JSON.parse(
     };
   };
   files?: string[];
+  keywords?: string[];
+  license?: string;
   name: string;
+  private?: boolean;
   version: string;
 };
 
@@ -53,5 +57,15 @@ describe("package identity", () => {
 
   it("limits packed files to the executable and compiled distribution", () => {
     expect(packageJson.files).toEqual(["bin/", "dist/"]);
+  });
+
+  it("declares the minimal npm metadata that can be fixed before publishing", () => {
+    expect(packageJson).toMatchObject({
+      description: "CLI and runtime for building TogoStanza repositories.",
+      license: "MIT",
+      private: true,
+    });
+    expect(packageJson.keywords).toContain("togostanza");
+    expect(packageJson.keywords).toContain("stanza");
   });
 });

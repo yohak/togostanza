@@ -1,0 +1,86 @@
+# Phase 12: distribution 引き継ぎ
+
+この文書では、Phase 12で確認した配布前状態と、外部公開前に残す作業を記録する。
+
+## 完了したこと
+
+- ローカルtarballを使った `pack -> install -> 実行` smokeを追加した。
+  - script: `cd package && mise exec -- pnpm run test:distribution:local`
+  - npm環境とpnpm環境の両方へtarballをインストールする。
+  - install後のCLIで `--version`、`init --name`、`generate stanza`、`build` を確認する。
+  - tarball install後に `togostanza/stanza` と `togostanza/config` の実行時解決と型解決を確認する。
+- `package.json.files` を `bin/` と `dist/` に絞った。
+  - `src/`、test、設定ファイル、workbench、referencesはtarballに含めない。
+- 最小のnpm package metadataを追加した。
+  - `description`
+  - `license: MIT`
+  - `keywords`
+- `./config` と `./stanza` subpath exportを維持し、package metadata testで固定した。
+- 配布前チェックリストを追加した。
+  - [Phase 12 release checklist](./release-checklist.md)
+- 品質確認手順に `test:distribution:local` を追加した。
+
+## package surface判断
+
+| 項目 | 判断 |
+| ---- | ---- |
+| `private` | `true` を維持する。publish直前まで外さない。 |
+| `version` | `0.0.0` はlocal pack smoke用として維持する。公開前に実versionへ更新する。 |
+| `files` | `bin/` と `dist/` のみ。 |
+| `exports` | `./config` と `./stanza` を維持する。 |
+| root export | 追加しない。 |
+| `main` / top-level `types` | 追加しない。 |
+| generated repo `dependencies.togostanza` | `^<package version>` を維持する。`0.0.0` のまま公開しない。 |
+| generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 10系を明示する。 |
+| `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
+
+## 確認結果
+
+確認日: 2026-07-02
+
+```sh
+cd package && mise exec -- pnpm run check-all
+cd package && mise exec -- pnpm run test:distribution:local
+cd package && mise exec -- pnpm run test:compat:local
+```
+
+結果:
+
+- `check-all`: pass
+  - format
+  - lint
+  - type-check
+  - build
+  - unit test: 79 passed, 2 skipped
+  - integration test: 21 passed
+  - browser test: 10 passed
+- `test:distribution:local`: pass
+  - npm tarball install smoke: pass
+  - pnpm tarball install smoke: pass
+- `test:compat:local`: pass
+  - local compatibility unit: 3 passed
+  - local compatibility browser: 5 passed
+
+## 実行しなかったこと
+
+次は外部副作用または公開後環境に関わるため、Phase 12通常作業では実行していない。
+
+- `npm publish`
+- tag作成
+- GitHub release作成
+- npm registry上の `latest` packageを使った確認
+- 公開GitHub Pages環境へのlive deploy
+
+## 公開前に残すこと
+
+- `version` を公開する値へ更新する。
+- `private` を外すタイミングを人間が確認する。
+- repository、homepage、bugsのURLを実際の公開リポジトリに合わせて設定する。
+- `npm publish --dry-run` 相当でtarball内容を再確認する。
+- GitHub Actions live deployを行う場合は、対象リポジトリ、公開先、権限、cleanup方針を確認する。
+
+## 注意点
+
+- `references/` 依存確認はローカルcompatibility確認であり、CI再現性は保証しない。
+- Sass `@import` 非推奨警告は既知制約であり、Phase 12では失敗扱いにしない。
+- `engines.node >=24.5.0` は現状維持だが、公開前にStanza開発者の実環境と照合する。
