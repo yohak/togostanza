@@ -711,10 +711,10 @@ describe("CLI router", () => {
 
     const result = await routeCliAsync(["b"], { cwd });
 
-    expect(result).toEqual({
-      exitCode: 0,
-      stdout: "Built Stanza repository: repo (output: dist).",
-    });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toMatch(
+      /^Built Stanza repository: repo \(output: dist, duration: \d+ ms\)\.$/,
+    );
     expect(existsSync(join(cwd, "dist", "build-probe.js"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe.js.map"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe.css"))).toBe(true);
@@ -977,7 +977,9 @@ describe("CLI router", () => {
     const result = await routeCliAsync(["build"], { cwd });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toBe("Built Stanza repository: repo (output: dist).");
+    expect(result.stdout).toMatch(
+      /^Built Stanza repository: repo \(output: dist, duration: \d+ ms\)\.$/,
+    );
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.mjs");
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.js");
     expect(result.stderr).toContain("togostanza.config.ts");

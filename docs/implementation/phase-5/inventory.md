@@ -27,6 +27,7 @@ Phase 5は再設計フェーズではない。この文書では、残課題を�
 | `togostanza/stanza` exportと型定義 | [Phase 2-1 handoff](../phase-2/phase-2-1/handoff.md), [Phase 2-2 handoff](../phase-2/phase-2-2/handoff.md), [リメイク版仕様](../../spec/index.md), [005](../../../workbench/cases/005-stanza-source-api/README.md) | build時はVite aliasでCLI内部runtimeへ解決し、生成JSにbare importは残らない。公開packageとしての `togostanza/stanza` subpath exportと型定義は未整理。 | `distribution blocker` | Stanza開発者のsourceは `import Stanza from "togostanza/stanza"` に依存する。配布後のtsc、IDE、外部toolingで解決できない可能性がある。 | `pack -> install -> 実行` blockerの中で最優先確認項目にする。実装自体はPhase X寄りだが、Phase 7で型・export方針だけ先に設計してよい。 | Phase X / Phase 7 |
 | 公開CLI相当のdependency分類 | [Phase 2-1 handoff](../phase-2/phase-2-1/handoff.md), [Phase 4 handoff](../phase-4/handoff.md) | `vite`、`sass`、`handlebars`、`@vitejs/plugin-vue`、`vue` などはbuild実行時に必要。Phase 4では `vue` もCLI build runtime dependencyとして扱う方針にした。 | `open` | devDependencyに置くべきものとruntime dependencyに置くべきものがずれると、公開CLIやpack-install smokeで失敗する。 | Phase 5 decision: distributionだけの問題としてPhase Xへ逃がさず、現在の開発検証を壊す分類不整合としてPhase 7で扱う。具体的なdependency分類はPhase 7詳細計画で再確認する。 | Phase 7 |
 | GitHub Actions live deploy未確認 | [Phase 2-6 handoff](../phase-2/phase-2-6/handoff.md), [001](../../../workbench/cases/001-cli-scaffold-and-generate/README.md) | workflowは実deploy flowを持つが、GitHub Actions上のlive deployと公開npm package解決は未確認。 | `open` | package公開前はGitHub Actions上で `dependencies.togostanza` が解決できないため、完全確認できない。 | Phase Xでpack-install smoke後にlive deploy smokeを置く。Phase 6で行う必要はない。 | Phase X |
+| CLI status / result messages | [リメイク版仕様](../../spec/index.md), [Phase 2-1 handoff](../phase-2/phase-2-1/handoff.md), [Phase 3 handoff](../phase-3/handoff.md) | `build` / `serve` の成功時stdoutは実装とtestで確認している。`build` 成功時は簡易duration msを表示する。Stanza開発者向けのstatus、progress、result messageとしてのUXは独立して設計していない。CLI出力文言そのものは互換対象外としている。 | `open` | `pack -> install -> 実行` やTogoMediumローカル確認時に、何が起きたか、どこを開くか、どこへ出力したかが分かりにくいと開発体験に影響する。 | 診断メッセージ体系とは分け、Phase Xの配布前確認で通常利用時の `build` / `serve` 実行結果メッセージを整理する。詳細文言を互換契約にするかはPhase Xで判断する。 | Phase X |
 
 ## Spec gaps and implementation follow-ups
 
@@ -119,6 +120,7 @@ Phase 5は再設計フェーズではない。この文書では、残課題を�
 11. scaffold / CLI UXはPhase 10で扱う。ただしPhase 6ではworkbenchと生成repoの実行性に必要な最小scriptsだけ先に扱う。
 12. 診断メッセージ体系の整理は本開発ではまとめて扱わず、Futureへ送る。各フェーズで必要な局所診断改善は行ってよい。
 13. dependency分類はPhase 7で扱う。公開CLI相当の実行に必要なbuild runtime dependencyをPhase Xまで放置しない。
+14. CLI status / result messagesはPhase Xで扱う。診断メッセージ体系とは分け、配布前の通常利用確認で `build` / `serve` の成功時・進捗・完了メッセージを整理する。
 
 ## 後続フェーズで再確認すること
 
@@ -148,4 +150,4 @@ Phase 5は再設計フェーズではない。この文書では、残課題を�
 | Phase 9 | local compatibility baseline | referencesローカル再現手順、全Stanza build check、代表Stanza browser smoke、React / Vue検証済みversion記録 |
 | Phase 10 | developer experience and internal cleanup | internal runtime / build surface cleanup、scaffold / CLI UX、generated workflow operational constraints |
 | Phase 11 | compatibility verification | 全Stanza browser smoke、TogoMedium Webアプリ本体E2E、Runtime edge semantics |
-| Phase X | distribution | pack-install smoke、package metadata、`files`、`exports`、`private`解除、tarball install、`npm exec` / `pnpm dlx`、GitHub Actions live deploy、Phase 11 browser smoke / E2E再実行 |
+| Phase X | distribution | pack-install smoke、package metadata、`files`、`exports`、`private`解除、tarball install、`npm exec` / `pnpm dlx`、CLI status / result messages、GitHub Actions live deploy、Phase 11 browser smoke / E2E再実行 |

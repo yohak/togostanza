@@ -12,6 +12,7 @@ import {
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { performance } from "node:perf_hooks";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import vue from "@vitejs/plugin-vue";
 import Handlebars from "handlebars";
@@ -98,6 +99,7 @@ export async function handleBuild(
     return failure(outputDirectoryResult.error);
   }
 
+  const startedAt = performance.now();
   const buildResult = await buildStanzaArtifacts({
     outputDirectory: outputDirectoryResult.outputDirectory,
     prepareOutputDirectory: true,
@@ -108,10 +110,12 @@ export async function handleBuild(
     return failure(buildResult.error);
   }
 
+  const durationMs = Math.max(0, Math.round(performance.now() - startedAt));
+
   return {
     exitCode: 0,
     ...(buildResult.warnings.length > 0 ? { stderr: buildResult.warnings.join("\n") } : {}),
-    stdout: `Built Stanza repository: ${repoContextResult.context.packageName} (output: ${outputPath}).`,
+    stdout: `Built Stanza repository: ${repoContextResult.context.packageName} (output: ${outputPath}, duration: ${durationMs} ms).`,
   };
 }
 

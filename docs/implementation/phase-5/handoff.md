@@ -58,6 +58,7 @@ Phase 5の設計は [plan.md](./plan.md) を正とする。棚卸し結果は [i
 
 - `pack -> install -> 実行` 未検証は、Phase Xの最初のblockerとして扱う。
 - `files`、`exports`、`bin`、shebang、dependency分類、`private`、version、runtime path解決は、pack-install smokeでまとめて露出する可能性がある。
+- CLI status / result messagesは、診断メッセージ体系とは分け、Phase Xの配布前通常利用確認で扱う。
 - GitHub Actions live deployは、pack-install smoke後に確認する。
 - Phase X前には、Phase 11のbrowser smoke / E2Eを再実行する。
 
