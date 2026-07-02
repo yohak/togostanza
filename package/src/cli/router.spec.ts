@@ -14,6 +14,11 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
+import {
+  assertCompatLocalReferencesReady,
+  assertExpectedCompatLocalStanzaDirectories,
+  compatFixturePath,
+} from "../../test/support/compat-local.js";
 import { packageMetadata } from "../index.js";
 import { listCommandUsages } from "./commands.js";
 import type { CliResult } from "./result.js";
@@ -24,35 +29,6 @@ import type { ServeSession } from "./serve.js";
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const repositoryRoot = resolve(packageRoot, "..");
 const localCompatibilityIt = process.env.TOGOSTANZA_RUN_LOCAL_COMPAT === "1" ? it : it.skip;
-const expectedMetastanzaStanzas = [
-  "barchart",
-  "hash-table",
-  "linechart",
-  "pagination-table",
-  "piechart",
-  "scatterplot",
-  "scorecard",
-  "scroll-table",
-  "text",
-  "tree",
-];
-const expectedTogoMediumStanzas = [
-  "gmdb-component-detail",
-  "gmdb-find-media-by-components",
-  "gmdb-find-media-by-organism-phenotype",
-  "gmdb-find-media-by-taxonomic-tree",
-  "gmdb-gms-by-tid",
-  "gmdb-media-alignment-table-by-components",
-  "gmdb-media-alignment-table-by-strains",
-  "gmdb-medium-builder",
-  "gmdb-medium-detail",
-  "gmdb-meta-list",
-  "gmdb-roundtree",
-  "gmdb-similar-media-node",
-  "gmdb-stats-culturable-species",
-  "gmdb-strain-detail",
-  "gmdb-taxon-detail",
-];
 
 const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");
@@ -920,9 +896,28 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "dist", "vue-runtime-probe", "metadata.json"))).toBe(true);
   });
 
+  it("reports missing local compatibility reference inputs with actionable paths", () => {
+    const cwd = makeTemporaryDirectory();
+
+    expect(() => assertCompatLocalReferencesReady(cwd)).toThrowError(
+      /references\/metastanza\/package\.json/,
+    );
+    expect(() => assertCompatLocalReferencesReady(cwd)).toThrowError(
+      /Prepare references\/ before running test:compat:local\./,
+    );
+    expect(compatFixturePath("metastanza", "scorecard", "scorecard.json")).toBe(
+      "fixtures/metastanza/scorecard/scorecard.json",
+    );
+    expect(compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json")).toBe(
+      "fixtures/togomedium/gmdb-meta-list/meta-list.json",
+    );
+  });
+
   localCompatibilityIt(
     "local compatibility: builds a stanza that imports the real togostanza-utils package",
     async () => {
+      assertCompatLocalReferencesReady(repositoryRoot);
+
       const cwd = makeStanzaRepoRoot();
       writeUtilsCompatFixture(cwd);
 
@@ -945,14 +940,8 @@ describe("CLI router", () => {
   localCompatibilityIt(
     "local compatibility: builds all referenced metastanza and TogoMedium Stanza sources",
     async () => {
-      expect(
-        listStanzaDirectories(join(repositoryRoot, "references", "metastanza", "stanzas")),
-      ).toEqual(expectedMetastanzaStanzas);
-      expect(
-        listStanzaDirectories(
-          join(repositoryRoot, "references", "togomedium-web", "@packages", "stanza", "stanzas"),
-        ),
-      ).toEqual(expectedTogoMediumStanzas);
+      assertCompatLocalReferencesReady(repositoryRoot);
+      assertExpectedCompatLocalStanzaDirectories(repositoryRoot);
 
       const metastanzaRoot = makeMetastanzaCompatibilityRoot(makeTemporaryDirectory());
       const metastanzaResult = await routeCliAsync(["build", "--output-path", "dist-remake"], {
@@ -1447,14 +1436,9 @@ function writeMinimalStanza(rootDirectory: string, stanzaId: string, metadata: s
   writeFileSync(join(stanzaDirectory, "templates", "stanza.html.hbs"), "<main></main>\n", "utf8");
 }
 
-function listStanzaDirectories(stanzasDirectory: string): string[] {
-  return readdirSync(stanzasDirectory, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .toSorted();
-}
-
 function makeMetastanzaCompatibilityRoot(rootDirectory: string): string {
+  assertCompatLocalReferencesReady(repositoryRoot);
+
   const referenceRoot = join(repositoryRoot, "references", "metastanza");
 
   symlinkSync(join(referenceRoot, "package.json"), join(rootDirectory, "package.json"));
@@ -1470,6 +1454,8 @@ function makeMetastanzaCompatibilityRoot(rootDirectory: string): string {
 }
 
 function makeTogoMediumCompatibilityRoot(rootDirectory: string): string {
+  assertCompatLocalReferencesReady(repositoryRoot);
+
   const referenceRoot = join(repositoryRoot, "references", "togomedium-web");
   const stanzaPackageRoot = join(referenceRoot, "@packages", "stanza");
   const stanzaPackageNodeModules = join(stanzaPackageRoot, "node_modules");

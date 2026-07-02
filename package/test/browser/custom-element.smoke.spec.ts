@@ -15,6 +15,7 @@ import { tmpdir } from "node:os";
 import { dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
+import { assertCompatLocalReferencesReady, compatFixturePath } from "../support/compat-local.js";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const repositoryRoot = resolve(packageRoot, "..");
@@ -765,6 +766,7 @@ test("renders a React TSX Stanza from repository dependencies", async ({ page })
 
 test("applies Emotion styles inside a React Stanza shadow root @compat-local", async ({ page }) => {
   test.setTimeout(20_000);
+  assertCompatLocalReferencesReady(repositoryRoot);
 
   const cwd = makeTemporaryDirectory();
   await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
@@ -825,6 +827,7 @@ test("applies Emotion styles inside a React Stanza shadow root @compat-local", a
 
 test("directly embeds a real metastanza scorecard @compat-local", async ({ page }) => {
   test.setTimeout(90_000);
+  assertCompatLocalReferencesReady(repositoryRoot);
 
   const cwd = makeTemporaryDirectory();
   writeMetastanzaScorecardRegressionRepo(cwd);
@@ -855,7 +858,7 @@ test("directly embeds a real metastanza scorecard @compat-local", async ({ page 
     <script type="module" src="./public/scorecard.js"></script>
     <togostanza-scorecard
       id="metastanza-scorecard"
-      data-url="http://127.0.0.1:${port}/fixtures/metastanza/scorecard.json"
+      data-url="http://127.0.0.1:${port}/${compatFixturePath("metastanza", "scorecard", "scorecard.json")}"
       data-type="json"
       width="240"
       height="90"
@@ -896,7 +899,9 @@ test("directly embeds a real metastanza scorecard @compat-local", async ({ page 
     expect(consoleErrors).toEqual([]);
     expect(failedRequests).toEqual([]);
     expect(pageErrors).toEqual([]);
-    expect(requestLog).toContain("/fixtures/metastanza/scorecard.json");
+    expect(requestLog).toContain(
+      `/${compatFixturePath("metastanza", "scorecard", "scorecard.json")}`,
+    );
   } finally {
     await closeServer(server);
   }
@@ -906,6 +911,7 @@ test("directly embeds a real TogoMedium Stanza with visible Shadow DOM styling @
   page,
 }) => {
   test.setTimeout(120_000);
+  assertCompatLocalReferencesReady(repositoryRoot);
 
   const cwd = makeTemporaryDirectory();
   writeTogoMediumMetaListRegressionRepo(cwd);
@@ -936,7 +942,7 @@ test("directly embeds a real TogoMedium Stanza with visible Shadow DOM styling @
     <script type="module" src="./public/gmdb-meta-list.js"></script>
     <togostanza-gmdb-meta-list
       id="togomedium-meta-list"
-      api_url="http://127.0.0.1:${port}/fixtures/togomedium/meta-list.json?kind=media"
+      api_url="http://127.0.0.1:${port}/${compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json")}?kind=media"
       limit="2"
       title="TogoMedium smoke"
       column_names="true"
@@ -994,7 +1000,9 @@ test("directly embeds a real TogoMedium Stanza with visible Shadow DOM styling @
         fontSize: "16px",
       });
 
-    expect(requestLog).toContain("/fixtures/togomedium/meta-list.json");
+    expect(requestLog).toContain(
+      `/${compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json")}`,
+    );
   } finally {
     await closeServer(server);
   }
@@ -1049,6 +1057,7 @@ test("runs the real togostanza-utils package against the remake runtime @compat-
   page,
 }) => {
   test.setTimeout(25_000);
+  assertCompatLocalReferencesReady(repositoryRoot);
 
   const cwd = makeTemporaryDirectory();
   await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
@@ -1975,12 +1984,16 @@ function writeEmotionShadowProbe(cwd: string): void {
 }
 
 function linkTogoMediumReactPackages(cwd: string): void {
+  assertCompatLocalReferencesReady(repositoryRoot);
+
   for (const packageName of ["react", "react-dom"]) {
     symlinkNodePackageFromTogoMediumReference(cwd, packageName);
   }
 }
 
 function linkEmotionPackages(cwd: string): void {
+  assertCompatLocalReferencesReady(repositoryRoot);
+
   const scopedDirectory = resolve(cwd, "node_modules", "@emotion");
   mkdirSync(scopedDirectory, { recursive: true });
 
@@ -2000,6 +2013,8 @@ function symlinkNodePackageFromTogoMediumReference(cwd: string, packageName: str
 }
 
 function writeMetastanzaScorecardRegressionRepo(cwd: string): void {
+  assertCompatLocalReferencesReady(repositoryRoot);
+
   const referenceRoot = resolve(repositoryRoot, "references", "metastanza");
   const stanzasDirectory = resolve(cwd, "stanzas");
   mkdirSync(stanzasDirectory, { recursive: true });
@@ -2012,15 +2027,19 @@ function writeMetastanzaScorecardRegressionRepo(cwd: string): void {
     resolve(stanzasDirectory, "scorecard"),
     "dir",
   );
-  mkdirSync(resolve(cwd, "fixtures", "metastanza"), { recursive: true });
+  mkdirSync(dirname(resolve(cwd, compatFixturePath("metastanza", "scorecard", "scorecard.json"))), {
+    recursive: true,
+  });
   writeFileSync(
-    resolve(cwd, "fixtures", "metastanza", "scorecard.json"),
+    resolve(cwd, compatFixturePath("metastanza", "scorecard", "scorecard.json")),
     `${JSON.stringify({ compatibility_score: 42 }, null, 2)}\n`,
     "utf8",
   );
 }
 
 function writeTogoMediumMetaListRegressionRepo(cwd: string): void {
+  assertCompatLocalReferencesReady(repositoryRoot);
+
   const referenceRoot = resolve(repositoryRoot, "references", "togomedium-web");
   const stanzaPackageRoot = resolve(referenceRoot, "@packages", "stanza");
   const stanzasDirectory = resolve(cwd, "stanzas");
@@ -2058,9 +2077,12 @@ function writeTogoMediumMetaListRegressionRepo(cwd: string): void {
     ].join("\n"),
     "utf8",
   );
-  mkdirSync(resolve(cwd, "fixtures", "togomedium"), { recursive: true });
+  mkdirSync(
+    dirname(resolve(cwd, compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json"))),
+    { recursive: true },
+  );
   writeFileSync(
-    resolve(cwd, "fixtures", "togomedium", "meta-list.json"),
+    resolve(cwd, compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json")),
     `${JSON.stringify(
       {
         columns: [

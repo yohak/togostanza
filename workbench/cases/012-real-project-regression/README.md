@@ -208,6 +208,20 @@ TogoMedium Stanza確認では、`%stanza/*`、`%storybook/*`、`%core/*`、`%api
 
 Phase 9計画ではmetastanza代表候補を `pagination-table` としていたが、direct embed smokeの試行で、Stanzaソースが `main.parentNode.style` を前提にしている差分が見つかった。リメイク版runtimeでは `main.parentNode` が `ShadowRoot` になるため、この構成は描画前に止まる。Phase 9では、全Stanza build baselineを維持しつつ、通す代表browser smokeは `scorecard` へ変更した。`pagination-table` のruntime互換をどう扱うかは、全Stanza browser smokeを扱うPhase 11で判断する。
 
+## Phase 11-0 リメイク版compatibility harness hardening: 2026-07-02
+
+Phase 11-0では、Phase 11-1以降の全Stanza browser smokeへ進む前に、local compatibility確認の入口を整理した。
+
+確認したこと:
+
+- `references/metastanza`、`references/togomedium-web`、`references/togostanza-utils` の必要pathを共通helperで確認し、不足時に不足pathと理由を診断できるようにした。
+- metastanza 10件とTogoMedium Stanza 15件の対象名再照合を共通helperへ集約した。
+- `test:compat:local` はdefault `check-all` に含めない方針を維持した。
+- per-Stanza fixture dataの一時配置を `fixtures/<project>/<stanza>/...` へ寄せた。
+- 既存の代表browser smokeは、metastanza `scorecard` とTogoMedium `gmdb-meta-list` のまま維持した。
+
+この段階では、metastanza全10 StanzaとTogoMedium Stanza全15 Stanzaのbrowser smokeはまだ実行しない。Phase 11-0は、失敗時にどのreferences入力、対象Stanza、fixture dataが問題かを分類しやすくする土台である。
+
 ### Phase 11へ送るもの
 
 - metastanza全10 Stanzaのbrowser smoke。
