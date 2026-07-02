@@ -582,6 +582,26 @@ test("supports Phase 2-3 Stanza source APIs in built custom elements", async ({ 
     expect(
       fontLinks.some((href) => href.endsWith("/public/api-probe/assets/api-probe-font.css")),
     ).toBe(true);
+    await expect
+      .poll(() =>
+        page.locator("#api-probe").evaluate((element) => {
+          const shadowLinks = [
+            ...(element.shadowRoot?.querySelectorAll<HTMLLinkElement>("link") ?? []),
+          ].filter((link) => link.href.endsWith("/public/api-probe/assets/api-probe-font.css"));
+          const headLinks = [...document.head.querySelectorAll<HTMLLinkElement>("link")].filter(
+            (link) => link.href.endsWith("/public/api-probe/assets/api-probe-font.css"),
+          );
+
+          return {
+            head: headLinks.length,
+            shadow: shadowLinks.length,
+          };
+        }),
+      )
+      .toEqual({
+        head: 1,
+        shadow: 1,
+      });
 
     await expect
       .poll(() =>
@@ -899,7 +919,7 @@ test("renders a React TSX Stanza from repository dependencies", async ({ page })
       .poll(() => readProbeValue(page, "#react-runtime", "label"))
       .toBe("after-react-mutation");
     expect(await readProbeValue(page, "#react-runtime", "count")).toBe("2");
-    expect(await readProbeValue(page, "#react-runtime", "render-count")).toBe("3");
+    expect(await readProbeValue(page, "#react-runtime", "render-count")).toBe("2");
     expect(requestLog.some((requestPath) => requestPath.includes("react-runtime-probe.js"))).toBe(
       true,
     );

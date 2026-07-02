@@ -215,6 +215,19 @@ Phase 2-3で確認済み。
 
 Phase 2-3では、date/datetimeの変換はunit testで確認した。004のbrowser観測では主要型の表示と属性変更を優先した。
 
+### Phase 11-4 runtime edge確認
+
+Phase 11-4では、`references/togostanza` commit `2e5982d` の `stanza.ts` を読み、`this.params` のedge semanticsを再確認した。
+
+- booleanは、引き続き属性の有無で判定する。
+- boolean以外の未指定parameterは、現行版では `this.params` にkeyが入り、値は `null` になる。リメイク版もPhase 11-4でこの挙動へ寄せた。
+- `number` は `Number(value)` で変換する。invalid値は `NaN` になる。
+- `date` / `datetime` は `new Date(value)` で変換する。invalid値はInvalid Dateになる。
+- `json` は `JSON.parse(value)` で変換する。invalid JSONは例外になる。リメイク版もPhase 11-4でこの挙動へ寄せた。
+- `single-choice`、`text`、未知の `stanza:type` はstringとして扱う。
+
+invalid値の細かいfallbackや警告条件は、引き続きリメイク版仕様の外部契約としては固定しない。集約結果は `docs/implementation/phase-11/runtime-edge-semantics.md` に記録した。
+
 ## 合格条件
 
 - booleanパラメーターの属性有無による判定が一致する。

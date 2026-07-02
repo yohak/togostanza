@@ -61,6 +61,7 @@ export default class Stanza {
   params: Record<string, unknown> = {};
   root!: ShadowRoot;
   #assetBaseUrl: URL | undefined;
+  #renderDebounceTimer: ReturnType<typeof setTimeout> | undefined;
   #requestRender: (() => Promise<void>) | undefined;
   #templates: Record<string, TemplateRenderer> = {};
 
@@ -84,7 +85,14 @@ export default class Stanza {
   }
 
   handleAttributeChange(_name: string, _oldValue: string | null, _newValue: string | null): void {
-    void this.#requestRender?.();
+    if (this.#renderDebounceTimer) {
+      clearTimeout(this.#renderDebounceTimer);
+    }
+
+    this.#renderDebounceTimer = setTimeout(() => {
+      this.#renderDebounceTimer = undefined;
+      void this.#requestRender?.();
+    }, 50);
   }
 
   handleEvent(_event: Event): void {
@@ -95,7 +103,8 @@ export default class Stanza {
     const link = document.createElement("link");
     link.href = resolveStanzaAssetUrl(cssUrl, this.#assetBaseUrl).href;
     link.rel = "stylesheet";
-    this.root.append(link);
+    document.head.append(link);
+    this.root.append(link.cloneNode());
   }
 
   menu(): MenuEntry[] {
@@ -114,6 +123,7 @@ export default class Stanza {
     const response = await fetch(input.endpoint, {
       body,
       headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
         accept: "application/sparql-results+json, application/json",
       },
       method,
@@ -596,6 +606,7 @@ export function createStanzaParams(
     const attributeValue = element.getAttribute(parameter.key);
 
     if (attributeValue === null) {
+      params[parameter.key] = null;
       continue;
     }
 
@@ -612,11 +623,7 @@ function parseParameterValue(value: string, type: string): unknown {
     case "number":
       return Number(value);
     case "json":
-      try {
-        return JSON.parse(value) as unknown;
-      } catch {
-        return value;
-      }
+      return JSON.parse(value) as unknown;
     case "date":
     case "datetime":
       return new Date(value);

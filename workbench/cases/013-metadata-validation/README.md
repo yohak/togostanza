@@ -82,6 +82,18 @@ metadata読み込み段階で失敗するscenarioは、`index.js`、`style.scss`
 - `stanza:style` が欠落した場合に、buildまたはランタイムがどう振る舞うか。
 - `stanza:style` が配列でない場合に、どこで失敗するか。
 
+### Phase 11-4 ソース読解メモ
+
+`references/togostanza` commit `2e5982d` の `src/stanza-element.mjs` と `stanza.ts` では、`stanza:parameter` と `stanza:style` は配列前提で `.map` される。
+
+- `stanza:parameter` 欠落または非配列は、custom element定義時または `this.params` 評価時に失敗し得る。
+- parameter項目の `stanza:key` 欠落は、`undefined` keyとして扱われ得る。
+- 未知の `stanza:type` はdefault分岐でstringとして扱われる。
+- `stanza:style` 欠落はCSS custom property既定値なしで通る。
+- `stanza:style` 非配列は、CSS custom property既定値生成時に失敗し得る。
+
+リメイク版は、Phase 11-4時点で `stanza:parameter` / `stanza:style` の異常形を現行版と同じ失敗へ寄せない。広範なschema validationを本開発で追加しない方針と整合させ、key/typeが読めない項目は無視し、style異常形はCSS既定値なしとして扱う。固定済み最小validation以外のmetadata詳細validationは、後続判断に残す。
+
 ### 現行版観測結果
 
 Phase 8着手時点では、固定済み最小validationの入力だけを `current-pnpm/scenarios/` に用意した。現行版CLIでの実行結果は未観測である。

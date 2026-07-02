@@ -24,6 +24,7 @@ describe("createStanzaParams", () => {
       enabled: true,
       fallback: "fallback value",
       label: "plain label",
+      missing: null,
       mode: "compact",
       payload: { ok: true },
       published: new Date("2026-06-30"),
@@ -39,6 +40,14 @@ describe("createStanzaParams", () => {
     ).toEqual({
       enabled: false,
     });
+  });
+
+  it("throws invalid JSON parameter values like the current runtime", () => {
+    expect(() =>
+      createStanzaParams(attributeSource(new Map([["payload", "{not-json}"]])), {
+        "stanza:parameter": [{ "stanza:key": "payload", "stanza:type": "json" }],
+      }),
+    ).toThrow(SyntaxError);
   });
 });
 

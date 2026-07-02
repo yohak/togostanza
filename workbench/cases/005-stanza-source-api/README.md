@@ -295,6 +295,21 @@ Phase 2-3で確認済み。
 - `query()` のGET、追加header、認証、timeout、abort、response変換の詳細。
 - `menu()` のDOM構造や見た目の互換。
 
+## Phase 11-4 runtime edge確認
+
+Phase 11-4では、`references/togostanza` commit `2e5982d` の `stanza.ts`、`src/stanza-element.mjs`、`src/elements/togostanza--menu.mjs` を読み、Stanza source APIのedge semanticsを再確認した。
+
+- `renderTemplate()` は対象要素の `innerHTML` を置換する。これはリメイク版でも維持している。
+- 現行版は `renderTemplate()` のselector対象がない場合に何もしない。リメイク版は例外にしている。実プロジェクトで問題は出ていないため、Phase 11では修正しない。
+- `handleAttributeChange()` の既定実装は50ms debounce後に `render()` を呼ぶ。リメイク版もPhase 11-4でこの挙動へ寄せた。
+- 現行版にasync `render()` の再入制御はない。リメイク版でも外部契約としては固定しない。
+- 現行版は `render()` 例外を明示的に吸収しない。リメイク版はconsole errorとして報告する。これは診断改善として扱い、現行版へ戻さない。
+- `importWebFontCSS()` は `document.head` と対象Shadow DOMの両方へlinkを追加し、重複抑止はしない。リメイク版もPhase 11-4でこの挙動へ寄せた。
+- `query()` はmethod未指定時に `POST` を使い、`Content-Type: application/x-www-form-urlencoded` を明示する。リメイク版もPhase 11-4でContent-Typeを明示した。
+- `menu()` のitem / divider / handlerはAPIとして維持する。ただし、現行版のLitElementベースのDOM構造、Copy HTML snippet、見た目、keyboard interactionは本開発では固定しない。
+
+集約結果は `docs/implementation/phase-11/runtime-edge-semantics.md` に記録した。
+
 ## Phase 6 リメイク版workbench入力
 
 `remake/generated-repo/` は、005のStanza source API観測をリメイク版CLIで再実行するための入力である。
