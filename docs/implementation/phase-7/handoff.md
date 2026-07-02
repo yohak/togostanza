@@ -41,14 +41,14 @@ Phase 7の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - 既存stanzaリポジトリを `exports` subpathを読む `moduleResolution` へ寄せる案内や、未解決時の診断はPhase 8で扱う。
 - `tsconfig paths` / alias移行案内と同じく、型解決設定の移行もsource and config readinessの一部として扱う。
 
-## Phase Xへ渡す前提
+## Phase 12へ渡す前提
 
 - `private: true` は維持している。
 - `./stanza` と `./config` のsubpath exportは追加済みだが、npm公開準備完了を意味しない。
 - root export、`main`、top-level `types` は追加していない。
 - `files`、公開metadata、tarball同梱範囲は未整理である。
-- `pack -> install -> 実行` 未検証は、引き続きPhase Xのdistribution blockerである。
-- Phase Xのpack install smokeでは、`./stanza` / `./config` のexport、`bin`、`files`、`private`、version、runtime path解決、dependency分類をまとめて再確認する。
+- `pack -> install -> 実行` 未検証は、引き続きPhase 12のdistribution blockerである。
+- Phase 12のpack install smokeでは、`./stanza` / `./config` のexport、`bin`、`files`、`private`、version、runtime path解決、dependency分類をまとめて再確認する。
 
 ## 注意すること
 
@@ -57,7 +57,7 @@ Phase 7の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - 公開用wrapperのdefault exportと、内部ランタイムでcustom element登録や描画に使う `Stanza` classは同じclassを参照する必要がある。
 - build経路では、生成物にbare importを残さないためにVite aliasを使う。Stanza開発者向けの型解決は `exports["./stanza"]` を通る。両者の経路が分かれているため、公開用wrapperと内部ランタイムの `Stanza` classが乖離しないことを維持する。
 - `togostanza/internal/runtime` は内部用import pathであり、package exportには追加していない。外部公開APIとして扱わない。
-- dependency分類はPhase 7時点では実装変更不要だった。将来のpack install smokeで漏れが見つかった場合は、Phase Xで確認したうえで分類を更新する。
+- dependency分類はPhase 7時点では実装変更不要だった。将来のpack install smokeで漏れが見つかった場合は、Phase 12で確認したうえで分類を更新する。
 
 ## 確認結果
 

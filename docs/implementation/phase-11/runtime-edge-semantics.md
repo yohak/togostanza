@@ -61,6 +61,6 @@ Phase 11-4で追加確認したが、現時点では仕様文書へ細かく固�
 ## 後続判断
 
 - `renderTemplate()` の対象selectorが見つからない場合、現行版は何もしないが、リメイク版は例外にしている。既存実プロジェクトで問題は出ていないためPhase 11では修正しない。実プロジェクトで発火した場合に互換修正を検討する。
-- `render()` 例外を現行版同様に未捕捉へ戻すことはしない。リメイク版の診断改善として扱う。ただし、CLI / browser上のstatus message整理はPhase XのCLI status / result messagesへ送る。
+- `render()` 例外を現行版同様に未捕捉へ戻すことはしない。リメイク版の診断改善として扱う。ただし、CLI / browser上のstatus message整理はPhase 12のCLI status / result messagesへ送る。
 - menuのリッチなUI、keyboard interaction、Copy HTML snippet相当の導線は、本開発では不要だが後続優先度は中から高寄りとする。ヘルププレビュー改善と近い領域で扱う。
 - `stanza:parameter` / `stanza:style` の異常形は、現行版が落ちる場合でもリメイク版では許容する箇所がある。これは広範なschema validationを本開発で追加しない方針と整合するため、Phase 11では修正しない。

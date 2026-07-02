@@ -342,7 +342,7 @@ togostanza init . --skip-install --skip-git
 
 - 現行版workflowは `actions/upload-pages-artifact@v1` と `actions/deploy-pages@v1` を使っていたが、リメイク版では実装時点で確認したAction major tagへ更新した。
 - 現行版の観測ではpnpm向けworkflowは対象外だった。リメイク版ではpnpmを公式サポート対象として扱い、pnpm向けworkflowを生成する。
-- リメイク版では、公開npm packageとしての `dependencies.togostanza` 解決やGitHub Actions上でのlive deploy成功はPhase 5で棚卸しし、配布前検証としてはPhase Xへ送る。Phase 2-6では、生成workflowがinstall、build、artifact upload、deployの流れを持つことまでを確認する。
+- リメイク版では、公開npm packageとしての `dependencies.togostanza` 解決やGitHub Actions上でのlive deploy成功はPhase 5で棚卸しし、配布前検証としてはPhase 12へ送る。Phase 2-6では、生成workflowがinstall、build、artifact upload、deployの流れを持つことまでを確認する。
 
 ## Phase 6 リメイク版workbench入力
 
@@ -385,7 +385,7 @@ pnpm run build:local
 
 ### workflow operational constraints
 
-- `dependencies.togostanza` は現時点では `^0.0.0` 由来のversion specとして生成される。`^0.0.0` は実質的に `0.0.0` 固定なので、将来publish versionを上げたpackage解決にはそのまま使えない可能性がある。このdependency specの確定はPhase Xへ送る。
-- 生成workflowのAction major tagは、Phase 2-6で確認済みのtagを使う。Action versionは外部互換契約にはせず、tag更新やlive validationはPhase Xまたは保守更新で扱う。
+- `dependencies.togostanza` は現時点では `^0.0.0` 由来のversion specとして生成される。`^0.0.0` は実質的に `0.0.0` 固定なので、将来publish versionを上げたpackage解決にはそのまま使えない可能性がある。このdependency specの確定はPhase 12へ送る。
+- 生成workflowのAction major tagは、Phase 2-6で確認済みのtagを使う。Action versionは外部互換契約にはせず、tag更新やlive validationはPhase 12または保守更新で扱う。
 - `packageManager` fieldはPhase 10では生成しない。pnpm workflowはpnpm 10系を明示する。
-- 実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開npm package解決を扱うPhase X以降の確認である。
+- 実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開npm package解決を扱うPhase 12以降の確認である。

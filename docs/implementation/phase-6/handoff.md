@@ -46,10 +46,10 @@ Phase 6の設計は [plan.md](./plan.md) を正とする。この文書は設計
 - 011のserve挙動は、watcher、HTTP server、一時ディレクトリcleanupを含むため、Phase 6時点ではpackage automated testを正本の確認入口とする。
 - 012の実プロジェクト回帰は、Phase 9で改めてローカル再現手順と対象範囲を整理する。
 
-## Phase Xへ渡す前提
+## Phase 12へ渡す前提
 
 - Phase 6では `build` / `serve` scriptを生成repoへ追加したが、公開packageとしての `togostanza` 解決は確認していない。
-- `pack -> install -> 実行` 未検証は、引き続きPhase Xのdistribution blockerである。
+- `pack -> install -> 実行` 未検証は、引き続きPhase 12のdistribution blockerである。
 - `files`、`exports`、`bin`、型定義、`private`、version、tarball install、GitHub Actions live deployはPhase 6では扱っていない。
 
 ## 確認結果

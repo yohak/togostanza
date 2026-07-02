@@ -10,7 +10,7 @@ Phase 10では、Phase 6とPhase 7で既に解消済みの事項を再実装し�
 - GitHub Pages workflowの運用制約を、生成repo内の文書として説明できるようにする。
 - scaffold / CLI UXの残項目を、実装するもの、後続へ送るもの、採用しないものに分ける。
 - internal runtime / build surfaceを、外部契約にするものと内部実装に留めるものに分ける。
-- Phase 11の互換検証へ送る項目と、Phase Xの配布検証へ送る項目を混ぜない。
+- Phase 11の互換検証へ送る項目と、Phase 12の配布検証へ送る項目を混ぜない。
 
 ## 完了条件
 
@@ -23,7 +23,7 @@ Phase 10では、Phase 6とPhase 7で既に解消済みの事項を再実装し�
 - `package.json` に既に生成している `scripts.build` / `scripts.serve` の挙動をREADMEとtestで確認している。
 - `index.ts` / `index.tsx` 生成option、bare `init` prompt、CLI library採用、細かいerror code分類をPhase 10で実装しない場合、その理由と後続先を記録している。
 - `moduleResolution: "bundler"` を含む `tsconfig.json` を `init` 雛形へ追加するか判断し、追加しない場合は理由と後続先を記録している。
-- Phase 5棚卸しで束ねた generated workflow operational constraintsを、Phase 10で扱うものとPhase Xへ送るものに分けて記録している。
+- Phase 5棚卸しで束ねた generated workflow operational constraintsを、Phase 10で扱うものとPhase 12へ送るものに分けて記録している。
 - internal runtime / build surfaceについて、Phase 10で変更する項目と変更しない項目を明記している。
 - 可能なら、build wrapper末尾の `export default StanzaClass` を削除しても生成物とbrowser testが通ることを確認する。削除しない場合は理由を記録する。
 - `.togostanza-build-output` markerは、出力先cleanの所有権判定に使う内部markerとして扱い、外部契約ではないことを記録している。Phase 10では原則として削除しない。
@@ -70,7 +70,7 @@ Phase 10では、Phase 6とPhase 7で既に解消済みの事項を再実装し�
 - npm / pnpmでのコマンド例。
 - `generate stanza <id>` でStanzaを追加できること。
 - GitHub Pages workflowが `dist/` をPages artifactとしてdeployすること。
-- workflowは公開npm packageとしての `togostanza` 解決を前提にするため、Phase Xまではlive deploy未確認であることをREADMEへ直接書かない。生成repoの利用者向けREADMEでは、公開後の通常利用手順として自然に読める説明にする。
+- workflowは公開npm packageとしての `togostanza` 解決を前提にするため、Phase 12まではlive deploy未確認であることをREADMEへ直接書かない。生成repoの利用者向けREADMEでは、公開後の通常利用手順として自然に読める説明にする。
 - lockfile前提と `--skip-install` 時の注意。
 
 書きすぎない内容:
@@ -89,7 +89,7 @@ Phase 10では、次を実装しない方針を基本にする。
 - CLI library採用。
 - 細かいerror code分類。
 
-これらは、build / runtime成立やPhase X前の配布blockerではない。必要になった場合は、後続のdeveloper experience改善として個別に計画する。
+これらは、build / runtime成立やPhase 12着手前の配布blockerではない。必要になった場合は、後続のdeveloper experience改善として個別に計画する。
 
 ただし、README本文やhelp文言と実装が食い違う場合はPhase 10で直す。
 
@@ -97,17 +97,17 @@ Phase 8からの引き継ぎとして、`moduleResolution: "bundler"` を含む 
 
 ### generated workflow operational constraints
 
-Phase 10では、GitHub Pages workflowを「公開後の通常利用手順」として説明する。ただし、公開package解決そのものはPhase Xまで扱わない。
+Phase 10では、GitHub Pages workflowを「公開後の通常利用手順」として説明する。ただし、公開package解決そのものはPhase 12まで扱わない。
 
 | 項目 | Phase 10での扱い |
 | --- | --- |
-| `dependencies.togostanza` が `^0.0.0` で生成されること | Phase Xへ送る。`^0.0.0` は実質的に `0.0.0` 固定なので、将来publish versionを上げたpackage解決にはそのまま使えない可能性がある。Phase 10ではdependency specを変更せず、publish versionと配布方針を決めるPhase Xで確定する。 |
+| `dependencies.togostanza` が `^0.0.0` で生成されること | Phase 12へ送る。`^0.0.0` は実質的に `0.0.0` 固定なので、将来publish versionを上げたpackage解決にはそのまま使えない可能性がある。Phase 10ではdependency specを変更せず、publish versionと配布方針を決めるPhase 12で確定する。 |
 | workflowがlockfileを前提にすること | Phase 10でREADMEと001へ記録する。npmでは `package-lock.json`、pnpmではpnpm 10系の `pnpm-lock.yaml` をcommitする前提にする。 |
 | `--skip-install` 後にlockfile無しでpushするとworkflowが失敗しうること | Phase 10でREADMEと001へ記録する。skipした場合は後からinstallし、lockfileをcommitしてからpushする案内にする。 |
-| Action major tag運用 | Phase 10では、生成workflowが使うAction major tagをREADMEまたは001で説明する。Action versionを外部互換契約にはせず、tag更新やlive validationはPhase Xまたは保守更新で扱う。 |
-| `packageManager` field | Phase 10では生成しない方針を維持する。pnpm workflowはpnpm 10系を明示する。`packageManager` fieldを生成するかどうかは、Phase Xまたは後続のdeveloper experience改善で再判断する。 |
+| Action major tag運用 | Phase 10では、生成workflowが使うAction major tagをREADMEまたは001で説明する。Action versionを外部互換契約にはせず、tag更新やlive validationはPhase 12または保守更新で扱う。 |
+| `packageManager` field | Phase 10では生成しない方針を維持する。pnpm workflowはpnpm 10系を明示する。`packageManager` fieldを生成するかどうかは、Phase 12または後続のdeveloper experience改善で再判断する。 |
 
-Phase 10のhandoffには、実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開npm package解決を扱うPhase X以降の確認であると記録する。
+Phase 10のhandoffには、実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開npm package解決を扱うPhase 12以降の確認であると記録する。
 
 ### internal runtime / build surface
 

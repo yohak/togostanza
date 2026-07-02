@@ -33,7 +33,7 @@ Phase 10では、Stanza開発者向けの生成READMEと、`init` 雛形の最�
 - Download JSON導線とヘルププレビューUIのリッチ化は実装していない。
 - bare `init` prompt、`index.ts` / `index.tsx` 生成option、CLI library採用、細かいerror code分類は実装していない。
 
-## Phase Xへ送ること
+## Phase 12へ送ること
 
 - `dependencies.togostanza` のversion spec確定。
   - 現時点では `^0.0.0` 由来のversion specとして生成される。
@@ -66,5 +66,5 @@ Phase 10では、Stanza開発者向けの生成READMEと、`init` 雛形の最�
 ## 注意すること
 
 - 生成READMEは公開後の通常利用手順として読む文書であり、本リポジトリ内部のPhase状況を書かない。
-- 実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開npm package解決を扱うPhase X以降の確認である。
+- 実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開npm package解決を扱うPhase 12以降の確認である。
 - `tsconfig.json` はエディタと型解決の入口を整えるための雛形であり、Phase 10では `tsconfig paths` 自動解決を採用していない。

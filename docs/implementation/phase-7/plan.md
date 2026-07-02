@@ -2,7 +2,7 @@
 
 Phase 7は、リメイク版パッケージの入口とdependency分類を、Stanza開発者から見た開発契約として確認できる状態へ整えるフェーズである。
 
-このフェーズではdistribution準備をしない。pack install、tarball生成、`npm exec togostanza@latest`、`pnpm dlx togostanza@latest`、`private`解除、公開metadata、`files` の最終整理はPhase Xへ送る。Phase 7では、本リポジトリ内で確認できるリメイク版パッケージ内部面を整える。
+このフェーズではdistribution準備をしない。pack install、tarball生成、`npm exec togostanza@latest`、`pnpm dlx togostanza@latest`、`private`解除、公開metadata、`files` の最終整理はPhase 12へ送る。Phase 7では、本リポジトリ内で確認できるリメイク版パッケージ内部面を整える。
 
 ## 目的
 
@@ -10,7 +10,7 @@ Phase 7は、リメイク版パッケージの入口とdependency分類を、Sta
 - `togostanza/stanza` から公開するAPIを、Stanza base classに絞る。
 - 既存の `togostanza/config` subpath exportを維持し、`togostanza/stanza` と合わせて `exports` と `dist` の整合を確認する。
 - リメイク版パッケージのbuild実行時に必要なdependency分類を明確にする。
-- distributionに踏み込まず、Phase Xへ送るpackage公開面とPhase 7で整えるpackage内部面を分ける。
+- distributionに踏み込まず、Phase 12へ送るpackage公開面とPhase 7で整えるpackage内部面を分ける。
 
 ## 完了条件
 
@@ -84,7 +84,7 @@ Phase 7では、次の形を基本にする。
 }
 ```
 
-`import ... from "togostanza"` のroot exportは、現時点で開発契約にも利用契約にもしていない。root exportを何にするかは、package公開面全体を扱うPhase Xで再確認する。
+`import ... from "togostanza"` のroot exportは、現時点で開発契約にも利用契約にもしていない。root exportを何にするかは、package公開面全体を扱うPhase 12で再確認する。
 
 `./stanza` は `package/src/runtime/stanza.ts` へ直結しない。`package/src/runtime/stanza.ts` は、custom element登録やパラメーター変換など、リメイク版ランタイム内部で使う関数も持つ。これらを `togostanza/stanza` から公開すると、Stanza開発者向けAPIではない内部ランタイムAPIまで開発契約に見えてしまう。
 
@@ -163,13 +163,13 @@ Phase 7では、今見えているbuild実行時dependencyを対象に分類を�
 
 `d3`、`date-fns`、`csv-stringify` は、`togostanza-utils` compatibility確認のために使う開発・検証用dependencyであり、リメイク版パッケージのランタイムdependencyにはしない。
 
-`typescript` はリメイク版パッケージの開発時buildに必要なので `devDependencies` に置く。公開後の `togostanza build` はcompiled JSを実行する前提なので、Phase 7ではランタイムdependencyにしない。tarball installやnpm公開時に `dist/` を含めるか、install後buildを要求するかはPhase Xのpack-install smokeで再確認する。
+`typescript` はリメイク版パッケージの開発時buildに必要なので `devDependencies` に置く。公開後の `togostanza build` はcompiled JSを実行する前提なので、Phase 7ではランタイムdependencyにしない。tarball installやnpm公開時に `dist/` を含めるか、install後buildを要求するかはPhase 12のpack-install smokeで再確認する。
 
 ## `private: true` の扱い
 
 `private: true` はPhase 7では維持する。
 
-`./stanza` exportを追加することは、Stanza開発者の開発契約に必要なsubpath整理であり、npm公開準備完了を意味しない。`private`解除、公開metadata、`files`、tarball installはPhase Xで扱う。
+`./stanza` exportを追加することは、Stanza開発者の開発契約に必要なsubpath整理であり、npm公開準備完了を意味しない。`private`解除、公開metadata、`files`、tarball installはPhase 12で扱う。
 
 ## 実装方針
 
@@ -191,7 +191,7 @@ root export、`main`、top-level `types` は追加しない。追加しない理
 - 公開用wrapperのdefault exportと内部ランタイムで使う `Stanza` classが乖離しないこと。
 - `togostanza/stanza` から `registerStanza()` や `createStanzaParams()` をimportする使い方を、Stanza開発者向け開発契約にしないこと。
 
-このテストはpack installを行わない。Phase Xで扱うtarball内同梱漏れ、`files`、npm公開metadataの確認とは分ける。
+このテストはpack installを行わない。Phase 12で扱うtarball内同梱漏れ、`files`、npm公開metadataの確認とは分ける。
 
 ## 検証計画
 
@@ -214,9 +214,9 @@ package配下のコマンドは、`package/mise.toml` を正として `cd packag
 - `togostanza/stanza` と `togostanza/config` の型解決確認を、将来の検証領域に固定ケースとして追加する必要があるか。
 - `registerStanza()` など内部ランタイムAPIのprivate specifier名をどうするか。
 - 既存stanzaリポジトリの `moduleResolution: "node"` を、Phase 8でどのように案内または診断するか。
-- root exportをPhase Xで追加する場合、何を公開するか。
-- top-level `types` をPhase Xで追加するか。
-- `files` とtarball同梱範囲をPhase Xでどう固定するか。
+- root exportをPhase 12で追加する場合、何を公開するか。
+- top-level `types` をPhase 12で追加するか。
+- `files` とtarball同梱範囲をPhase 12でどう固定するか。
 - pack install smokeでdependency分類に漏れが見つかった場合、Phase 7の分類をどう更新するか。現時点の分類は実装変更が必要な差分ではなく、理由の記録と確認を主目的にする。
 
 ## 成果物

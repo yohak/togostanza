@@ -12,7 +12,7 @@ Phase 5では、棚卸しと再設計を混ぜない。Phase 5の成果は実装
 - `docs/spec/`、`docs/investigation/follow-ups.md`、`docs/investigation/open-questions.md`、各workbenchケースREADMEに残る未固定事項を棚卸しする。
 - 残課題の状態と振り分け先フェーズを分け、根拠、影響範囲、推奨を記録する。
 - Phase 6以降の仮ロードマップを作る。ただし、詳細なAPI設計や実装順序までは固定しない。
-- DistributionをPhase Xとして無期限延期し、Phase Xへ進む前の判断材料を整理する。
+- DistributionをPhase 12として後続に切り出し、Phase 12で扱う判断材料を整理する。
 
 ## 完了条件
 
@@ -20,7 +20,7 @@ Phase 5では、棚卸しと再設計を混ぜない。Phase 5の成果は実装
 - `docs/spec/`、`docs/investigation/follow-ups.md`、`docs/investigation/open-questions.md`、workbenchケースREADMEの未固定事項を確認している。
 - 各項目に状態、根拠、影響範囲、振り分け先フェーズを付けている。
 - Phase 6以降の再編案を提示している。
-- Phase X: distributionに送る事項と、distribution前に閉じる事項を分けている。
+- Phase 12: distributionに送る事項と、distribution前に閉じる事項を分けている。
 - Phase 5の成果物を、後続フェーズ計画の入力として使える粒度で記録している。
 - Phase 5で判断済みの振り分けと、後続フェーズで再確認することを、短い一覧として切り出している。
 
@@ -31,7 +31,7 @@ Phase 5では、棚卸しと再設計を混ぜない。Phase 5の成果は実装
 - 未固定事項、既知制約、後続判断、ブロッカーの棚卸し。
 - 残課題の状態分類。
 - Phase 6以降の仮フェーズ案。
-- Phase Xへ送るdistribution関連項目の切り出し。
+- Phase 12へ送るdistribution関連項目の切り出し。
 - 必要な文書リンクの整備。
 
 ## 含めないもの
@@ -64,7 +64,7 @@ Phase 5では、棚卸し項目の状態を `status`、振り分け先を `phase
 | `done` | Phase 0からPhase 4までで完了済み。後続作業は不要。 |
 | `documented constraint` | 既知制約として記録済み。現時点では修正しない。 |
 | `needs decision` | 人間判断または追加調査が必要。 |
-| `distribution blocker` | Phase Xへ進む前に閉じる必要がある。 |
+| `distribution blocker` | Phase 12で閉じる必要がある。 |
 | `open` | 未解決。扱うフェーズは `phase` 列に記録する。 |
 
 `phase` はPhase 5時点の振り分け先を示す。各フェーズの意味は [Phase 5棚卸し](./inventory.md) の `Proposed roadmap seed` を参照し、詳細な範囲、API、実装順序は、そのフェーズの詳細計画で再確認する。

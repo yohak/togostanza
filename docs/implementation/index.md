@@ -22,7 +22,7 @@
 | Phase 9: local compatibility baseline | 実プロジェクト群を使ったローカルcompatibility確認を、後続フェーズへ再利用できるbaselineとして整える。 | [012](../../workbench/cases/012-real-project-regression/)、`test:compat:local` | [設計](./phase-9/plan.md)、[引き継ぎ](./phase-9/handoff.md) |
 | Phase 10: developer experience and internal cleanup | Stanza開発者向けの案内と、外部契約にしない内部面を整理する。 | 生成README、内部面整理、[001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-10/plan.md)、[引き継ぎ](./phase-10/handoff.md) |
 | Phase 11: compatibility verification | 全Stanza browser smoke、TogoMedium Webアプリ本体E2E、runtime edge semanticsを検証する。 | [012](../../workbench/cases/012-real-project-regression/)、runtime edge確認 | [設計](./phase-11/plan.md)、[引き継ぎ](./phase-11/handoff.md) |
-| Phase X: distribution | 将来のnpm配布計画を整理する。 | 配布計画レビュー | 未着手 |
+| Phase 12: distribution | ローカルtarballによる配布前確認とpackage公開面の最終整理を行う。 | pack-install smoke、配布前チェックリスト | [設計](./phase-12/plan.md) |
 
 ## Phase 0: skeleton
 
@@ -164,7 +164,7 @@ Phase 5は実装フェーズではない。既存実装を広げることでは�
 - Phase 4 handoffで後続判断として残した事項の分類。
 - 各項目の分類、根拠、影響範囲、提案先フェーズの記録。
 - Phase 6以降の仮ロードマップ作成。
-- distributionへ進む前に閉じるべき事項と、Phase Xまで送れる事項の切り分け。
+- distributionへ進む前に閉じるべき事項と、Phase 12まで送れる事項の切り分け。
 
 含めない範囲:
 
@@ -182,7 +182,7 @@ Phase 5の設計は [Phase 5: readiness inventory 設計](./phase-5/plan.md) に
 
 ゴールは、`workbench` の検証ケースを、リメイク版CLIで再現できるケース入力として整えることである。
 
-Phase 6はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase Xへ送る。Phase 6では、repo-localの `package/bin/togostanza.mjs` を `node` で呼ぶscriptsを基本にする。
+Phase 6はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase 12へ送る。Phase 6では、repo-localの `package/bin/togostanza.mjs` を `node` で呼ぶscriptsを基本にする。
 
 含める範囲:
 
@@ -207,7 +207,7 @@ Phase 6の設計は [Phase 6: workbench executability 設計](./phase-6/plan.md)
 
 ゴールは、Stanza開発者から見た開発契約として、リメイク版パッケージのsubpath export、型解決、dependency分類を整えることである。
 
-Phase 7はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase Xへ送る。Phase 7では、本リポジトリ内で確認できるリメイク版パッケージ内部面を扱う。
+Phase 7はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase 12へ送る。Phase 7では、本リポジトリ内で確認できるリメイク版パッケージ内部面を扱う。
 
 含める範囲:
 
@@ -331,13 +331,13 @@ Phase 10の設計は [Phase 10: developer experience and internal cleanup 設計
 
 Phase 11では、metastanza全10 StanzaとTogoMedium Stanza全15 Stanzaのbrowser smoke、TogoMedium Webアプリ本体E2E、Runtime edge semanticsを扱う。
 
-Phase 11の設計は [Phase 11: compatibility verification 設計](./phase-11/plan.md) に置き、完了後の状態とPhase X / 後続への引き継ぎは [Phase 11: compatibility verification 引き継ぎ](./phase-11/handoff.md) に置く。
+Phase 11の設計は [Phase 11: compatibility verification 設計](./phase-11/plan.md) に置き、完了後の状態とPhase 12 / 後続への引き継ぎは [Phase 11: compatibility verification 引き継ぎ](./phase-11/handoff.md) に置く。
 
-## Phase X: distribution
+## Phase 12: distribution
 
 ゴールは、将来npm packageとして配布する場合に必要な判断、手順、確認項目を整理し、公開前検証を行うことである。
 
-Phase Xは無期限延期とする。Phase 5で棚卸しした結果と、Phase 6以降で再編・解消した結果を見て、あらためて着手判断する。
+Phase 12は、Phase 5で棚卸ししたdistribution blockerと、Phase 6からPhase 11までで回収したcompatibility確認を受けて着手する。詳細計画は [Phase 12: distribution 設計](./phase-12/plan.md) に置く。
 
 含める範囲:
 
@@ -349,7 +349,6 @@ Phase Xは無期限延期とする。Phase 5で棚卸しした結果と、Phase 
 
 含めない範囲:
 
-- Phase 5時点での着手。
 - `npm publish` の実行。
 - tag作成。
 - GitHub release作成。

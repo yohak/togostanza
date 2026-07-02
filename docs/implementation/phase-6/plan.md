@@ -2,7 +2,7 @@
 
 Phase 6は、Phase 0からPhase 4で作ったリメイク版CLIを、`workbench` の検証ケースから再現できる形へ整えるフェーズである。
 
-このフェーズではdistribution準備をしない。pack install、公開package metadata、`npm exec togostanza@latest`、`pnpm dlx togostanza@latest` はPhase Xへ送る。Phase 6では、repo-localの `package/bin/togostanza.mjs` を `node` で呼び、検証ケースの入力を実際に動かせる状態にする。
+このフェーズではdistribution準備をしない。pack install、公開package metadata、`npm exec togostanza@latest`、`pnpm dlx togostanza@latest` はPhase 12へ送る。Phase 6では、repo-localの `package/bin/togostanza.mjs` を `node` で呼び、検証ケースの入力を実際に動かせる状態にする。
 
 ## 目的
 
@@ -152,7 +152,7 @@ package配下のコマンドは、従来どおり `cd package && mise exec -- pn
 
 workbenchの `remake/generated-repo/package.json` は、ケースに必要なdependenciesを明示する。
 
-`togostanza` dependencyは、repo-local CLI scriptでの実行には使わない。Phase 6では `dependencies.togostanza` の値を配布検証の根拠にしない。pack installと実依存解決はPhase Xで扱う。
+`togostanza` dependencyは、repo-local CLI scriptでの実行には使わない。Phase 6では `dependencies.togostanza` の値を配布検証の根拠にしない。pack installと実依存解決はPhase 12で扱う。
 
 React、Vue、`togostanza-utils` など、Stanzaソースがimportするdependencyはケース入力として必要な範囲で書く。公開CLIのdependency分類はPhase 7で扱う。
 

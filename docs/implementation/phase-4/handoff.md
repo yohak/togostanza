@@ -49,7 +49,7 @@ Phase 4の設計は [plan.md](./plan.md) を正とする。この文書は設計
 ## Phase 5の棚卸し以降で使う前提
 
 - React / React DOM / Vue runtimeは、Stanzaリポジトリ側dependencyとして扱う。CLIは埋め込み先Webサイトへframework runtimeを要求しない。
-- `@vitejs/plugin-vue` と `vue` は、Vue SFC処理のためのCLI build runtime dependencyである。Phase 5で棚卸しし、Phase XまたはPhase 6以降で `dependencies` / `files` / `exports` を整理する際、この分類を崩さない。
+- `@vitejs/plugin-vue` と `vue` は、Vue SFC処理のためのCLI build runtime dependencyである。Phase 5で棚卸しし、Phase 12またはPhase 6以降で `dependencies` / `files` / `exports` を整理する際、この分類を崩さない。
 - `togostanza-utils` のdrop-in互換は、Phase 4で受け入れ対象にしたAPIに限る。純粋データ処理API全体を保証したわけではない。
 - `togostanza-utils/apply-filter` はimport path解決と参考観測までを確認した。戻り値の詳細はPhase 4の互換契約にしていない。
 - 実プロジェクト回帰では、`references/` を直接変更せず、一時ディレクトリへsymlinkまたはコピーしたStanzaリポジトリroot相当で確認した。
@@ -60,8 +60,8 @@ Phase 4の設計は [plan.md](./plan.md) を正とする。この文書は設計
 
 ## Phase 5の棚卸し以降で注意すること
 
-- Phase 5では、`@vitejs/plugin-vue`、`vue`、`vite`、`sass`、`handlebars` などbuild実行時に必要なdependencyを棚卸しし、公開CLI相当で欠けないようにする確認をPhase XまたはPhase 6以降へ分類する。
-- `togostanza/config` はPhase 2-4で最小 `exports` を追加済みである。Phase 5では `exports`、`main`、`bin`、`files`、型定義の整合を棚卸しし、Phase XまたはPhase 6以降のどちらで扱うか分類する。
+- Phase 5では、`@vitejs/plugin-vue`、`vue`、`vite`、`sass`、`handlebars` などbuild実行時に必要なdependencyを棚卸しし、公開CLI相当で欠けないようにする確認をPhase 12またはPhase 6以降へ分類する。
+- `togostanza/config` はPhase 2-4で最小 `exports` を追加済みである。Phase 5では `exports`、`main`、`bin`、`files`、型定義の整合を棚卸しし、Phase 12またはPhase 6以降のどちらで扱うか分類する。
 - 実プロジェクト回帰で使ったTogoMedium aliasは、自動解決ではなく `togostanza.config.ts` への移行設定として扱っている。公開CLIの互換機能として広げる場合は、別途仕様判断が必要である。
 - `treeshake: false` はMUI関連bundleを壊したため、再導入しない。tree-shakingを明示変更する場合は、TogoMedium direct embed smokeを必ず確認する。
 - Sass `@import` の非推奨警告は現行ソース由来としてPhase 4では許容した。将来のSass version変更でwarningからerrorへ変わる可能性は残る。
@@ -69,8 +69,8 @@ Phase 4の設計は [plan.md](./plan.md) を正とする。この文書は設計
 
 ## 後続判断として残すこと
 
-- npm公開に向けた `package.json` metadata、`private`、`files`、`exports`、型定義、dependency分類をPhase 5で棚卸しし、Phase XまたはPhase 6以降へ分類すること。
-- tarball install、`npm exec togostanza@...`、`pnpm dlx togostanza@...` の実解決確認をPhase 5で棚卸しし、Phase Xで扱うか判断すること。
+- npm公開に向けた `package.json` metadata、`private`、`files`、`exports`、型定義、dependency分類をPhase 5で棚卸しし、Phase 12またはPhase 6以降へ分類すること。
+- tarball install、`npm exec togostanza@...`、`pnpm dlx togostanza@...` の実解決確認をPhase 5で棚卸しし、Phase 12で扱うか判断すること。
 - GitHub Actions上のlive deploy確認。
 - TogoMedium Webアプリ本体のbuild / start / end-to-end検証をどのフェーズまたは配布前検証で扱うか。
 - 実プロジェクト回帰を自動testへさらに寄せる範囲。

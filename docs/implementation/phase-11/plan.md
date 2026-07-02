@@ -8,9 +8,9 @@ Phase 11は、Phase 9で作ったlocal compatibility baselineを広げ、実プ�
 
 - metastanza全10 Stanzaのbrowser smokeを行う。
 - TogoMedium Stanza全15 Stanzaのbrowser smokeを行う。
-- TogoMedium Webアプリ本体E2Eを、Phase X前に一度確認できる最小入口として設計・実行する。
+- TogoMedium Webアプリ本体E2Eを、Phase 12着手前に一度確認できる最小入口として設計・実行する。
 - Phase 2-3から残したruntime edge semanticsを、現行版観測とリメイク版確認で整理する。
-- Phase X前に再実行すべきcompatibility確認の入口と、残るリスクを明確にする。
+- Phase 12着手前に再実行すべきcompatibility確認の入口と、残るリスクを明確にする。
 
 ## 完了条件
 
@@ -141,7 +141,7 @@ Phase 11-2のsmoke-runnerでも、対象Stanza ID、生成物path、fixture path
 
 ### Phase 11-3: TogoMedium Web application E2E
 
-目的は、TogoMedium Webアプリ本体をPhase X前に一度確認できる状態にすることである。
+目的は、TogoMedium Webアプリ本体をPhase 12着手前に一度確認できる状態にすることである。
 
 確認すること:
 
@@ -203,11 +203,11 @@ Phase 11で見つかった差分を、次のどれかへ分類する。
 - 実プロジェクト側の移行対象。
 - リメイク版仕様として固定しない既知制約。
 - `docs/investigation/follow-ups.md` または `docs/investigation/open-questions.md` へ戻す後続判断。
-- Phase X前に再実行する確認。
-- Phase Xのdistribution blocker。
+- Phase 12着手前に再実行する確認。
+- Phase 12のdistribution blocker。
 - Futureのdeveloper experience改善。
 
-この分類をhandoffへ記録し、Phase X前に再実行すべき手順を明示する。
+この分類をhandoffへ記録し、Phase 12着手前に再実行すべき手順を明示する。
 
 11-1 / 11-2のbrowser smoke後にruntimeまたはShadow DOM構造を変更した場合は、影響するStanzaのsmokeを再実行する。先に通したsmoke結果は、runtime変更後の根拠として使い回さない。
 
@@ -255,7 +255,7 @@ Phase 11でいうbrowser smokeは、Phase 9と同じく軽量な直接埋め込�
 - 必要だったlocal fixture data。
 - console error、warning、失敗分類。
 - TogoMedium Webアプリ本体E2Eの起動条件と結果。
-- Phase X前に再実行する確認。
+- Phase 12着手前に再実行する確認。
 
 004 / 005 / 013 READMEへ、Runtime edge semanticsの観測結果を追記する。
 
@@ -291,7 +291,7 @@ package実装またはtestに触れた場合:
 - metastanzaの `main.parentNode.style` 依存をruntime互換として吸収するか、移行対象にするか。
 - TogoMedium Webアプリ本体E2Eで使う最小画面とfixture data。
 - Runtime edge semanticsのうち、現行版観測に合わせて固定するものと、既知制約として固定しないもの。
-- Phase X前に再実行する確認の最小セット。
+- Phase 12着手前に再実行する確認の最小セット。
 
 ## 成果物
 

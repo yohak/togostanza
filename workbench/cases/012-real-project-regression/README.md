@@ -310,7 +310,7 @@ fixture data:
 
 - TogoMediumの一時rootでは、`references/togomedium-web/node_modules` と `references/togomedium-web/@packages/stanza/node_modules` の依存を集約して使った。これはreferencesを汚さずにStanza package root相当を作るための検証用配置であり、TogoMedium固有のdependency配置をリメイク版が自動吸収する契約ではない。
 - この確認は生成されたStanza artifact単体のdirect embed smokeであり、TogoMedium Webアプリ本体のE2E、実API接続、画面遷移、ユーザー操作網羅、pixel-level比較は含めない。
-- `check-all` のhermetic browser suiteで、低頻度の `togostanza build` 失敗が観測された。再実行では解消し、Phase 11-2のTogoMedium smoke由来ではない。次に再現した場合は、Vite / esbuildが出すエラー全文、対象fixture、一時出力先を捕捉し、Phase XまたはCI化前の調査項目として扱う。
+- `check-all` のhermetic browser suiteで、低頻度の `togostanza build` 失敗が観測された。再実行では解消し、Phase 11-2のTogoMedium smoke由来ではない。次に再現した場合は、Vite / esbuildが出すエラー全文、対象fixture、一時出力先を捕捉し、Phase 12またはCI化前の調査項目として扱う。
 
 ## Phase 11-3 リメイク版TogoMedium Web route smoke: 2026-07-02
 
@@ -339,7 +339,7 @@ Phase 11-3では、TogoMedium Webアプリ本体をVite dev serverで起動し�
 
 - 確認したのは `/find-media-by-components` の1ルートだけであり、Webアプリ全画面の巡回、実API接続、ユーザー操作、画面遷移、pixel-level比較は含めない。
 - TogoMedium Webの外部共通ヘッダーscriptは、Stanza互換のfatal failureとして扱わない。
-- Webアプリ側の環境変数は検証用に `VITE_URL_STANZA` をローカル `togostanza serve` へ向けた。公開環境のURL設計や配布済みStanzaのホスティングはPhase Xで扱う。
+- Webアプリ側の環境変数は検証用に `VITE_URL_STANZA` をローカル `togostanza serve` へ向けた。公開環境のURL設計や配布済みStanzaのホスティングはPhase 12で扱う。
 
 ### Phase 11へ送るもの
 

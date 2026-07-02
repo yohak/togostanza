@@ -88,7 +88,7 @@ generated-repo/
 
 `package.json` の `packageManager` fieldは、リメイク版仕様に従ってPhase 1でも書き込まない。
 
-ローカルtarballを作って `npm install` / `pnpm install` できることは、Phase 1の完了条件にしない。実インストール確認はPhase 5で棚卸しし、配布前検証としてはPhase Xへ送る。
+ローカルtarballを作って `npm install` / `pnpm install` できることは、Phase 1の完了条件にしない。実インストール確認はPhase 5で棚卸しし、配布前検証としてはPhase 12へ送る。
 
 リメイク版仕様の公式手順例は `init --name <dir>` を前提にする。Phase 1では非対話promptを持たないため、bare `init` は入力不備として扱う。bare `init` を将来prompt付き入口として追加するかどうかは、Phase 1完了後の引き継ぎで判断する。
 
@@ -221,7 +221,7 @@ Phase 1ではNode標準APIベースのCLI parserを継続する。option解析�
 - `g stanza` aliasでも同じ生成結果になることを確認する。
 - `upgrade` が未知commandまたは非対応として失敗することを維持する。
 
-Phase 1では、実インストールは完了条件にしない。ローカルtarballを作って `npm install` / `pnpm install` できること、`node_modules/` が生成されること、lockfileが実install結果として生成されること、生成リポジトリ内で `npm exec togostanza ...` / `pnpm exec togostanza ...` が実際に解決されることは、Phase 5で棚卸しし、配布前検証としてはPhase Xへ送る。
+Phase 1では、実インストールは完了条件にしない。ローカルtarballを作って `npm install` / `pnpm install` できること、`node_modules/` が生成されること、lockfileが実install結果として生成されること、生成リポジトリ内で `npm exec togostanza ...` / `pnpm exec togostanza ...` が実際に解決されることは、Phase 5で棚卸しし、配布前検証としてはPhase 12へ送る。
 
 ### 完了前確認
 
@@ -243,5 +243,5 @@ packageの品質確認やbrowser testは、Codex等のsandbox実行環境では�
 | `README.md` の本文詳細 | 後続判断 |
 | `build` / `serve` の実挙動 | Phase 2 / Phase 3 |
 | `togostanza/stanza` runtime | Phase 2 |
-| ローカルtarballを使ったnpm/pnpmの実インストール確認 | Phase 5で棚卸し、Phase Xで配布前検証 |
-| npm公開metadata、`exports`、`files`、`private` 解除 | Phase 5で棚卸し、Phase Xで最終判断 |
+| ローカルtarballを使ったnpm/pnpmの実インストール確認 | Phase 5で棚卸し、Phase 12で配布前検証 |
+| npm公開metadata、`exports`、`files`、`private` 解除 | Phase 5で棚卸し、Phase 12で最終判断 |

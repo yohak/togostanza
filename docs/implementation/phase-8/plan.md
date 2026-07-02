@@ -48,7 +48,7 @@ Phase 8は、Stanzaソースとbuild設定の移行可能性を整えるフェ�
 - 現行版で未観測のmetadata異常系の仕様固定。
 - 全体的な診断メッセージ体系の整理。
 - pack install smoke。
-- Phase Xのdistribution準備。
+- Phase 12のdistribution準備。
 
 ## source / config移行方針
 

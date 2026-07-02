@@ -58,7 +58,7 @@ Phase 2全体のサブフェーズ境界は [index.md](./index.md) を正とす�
 - Phase 2のランタイムは、素のcustom elementと既存Stanza source APIの最小契約を成立させた状態である。
 - React、Vue、`togostanza-utils` 由来の互換propertyやframework固有のmount / unmount契約は、Phase 4で実プロジェクト回帰と合わせて扱う。
 - `handleEvent()` はbase API名として存在し、Phase 2-5のcontainer連携から呼ばれる。複雑なイベント連携互換はPhase 4の実利用確認で必要に応じて広げる。
-- GitHub Pages workflowは構造として実deploy flowを持つが、公開npm packageとしてのdependency解決とGitHub Actions上のlive deployはPhase 5で棚卸しし、配布前検証としてはPhase Xの責務である。
+- GitHub Pages workflowは構造として実deploy flowを持つが、公開npm packageとしてのdependency解決とGitHub Actions上のlive deployはPhase 5で棚卸しし、配布前検証としてはPhase 12の責務である。
 
 ## 後続判断として残すこと
 
@@ -68,7 +68,7 @@ Phase 2全体のサブフェーズ境界は [index.md](./index.md) を正とす�
 - `serve` のプレビュー一覧を、ヘルププレビューUI復活として扱うか、Phase 3専用の最小一覧として扱うか。
 - `serve` の初回ビルド失敗と再ビルド失敗を、どのURL単位でHTTP 500にするか。
 - Phase 4に入る前に、Phase 2で残したランタイム内部API名やcompat propertyを整理するか。
-- Phase 5で `exports`、`files`、`private`、dependency分類、Action version運用を棚卸しし、Phase 6以降またはPhase Xのどちらで固定するか。
+- Phase 5で `exports`、`files`、`private`、dependency分類、Action version運用を棚卸しし、Phase 6以降またはPhase 12のどちらで固定するか。
 
 ## 確認結果
 

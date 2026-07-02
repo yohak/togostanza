@@ -48,7 +48,7 @@ Phase 11では、Phase 9で作ったlocal compatibility baselineを、全Stanza 
 - menuの内部DOM、keyboard interaction、Copy HTML snippet相当のUIは固定しない。
 - CSS source mapのbyte-level / column-level精度は外部契約にしない。
 
-## Phase Xへ送ること
+## Phase 12へ送ること
 
 - pack install smoke。
 - npm package公開面の最終整理。
@@ -71,7 +71,7 @@ Phase 11では、Phase 9で作ったlocal compatibility baselineを、全Stanza 
 
 ## 再実行手順
 
-Phase X前または互換性に関わるランタイム変更後は、少なくとも次を再実行する。
+Phase 12着手前または互換性に関わるランタイム変更後は、少なくとも次を再実行する。
 
 ```sh
 cd package && mise exec -- pnpm run check-all

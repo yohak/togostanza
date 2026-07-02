@@ -137,7 +137,7 @@ YAML parserの導入は必須にしない。Phase 2-6では、生成workflowはT
 
 workflowは、生成されたリポジトリの依存をインストールし、ローカルに入った `togostanza` dependency経由で `togostanza build` を実行する。global installされた `togostanza` や、GitHub Actions runnerに偶然存在するCLIには依存しない。
 
-Phase 2-6では、workflowの形を実deploy flowへ置き換える。ただし、GitHub Actions上で `dependencies.togostanza` が公開npm packageとして実際に解決できることはPhase 5で棚卸しし、配布前検証としてはPhase Xの責務である。Phase 2-6の完了条件は、生成workflowが公開後のdependency解決を前提にした正しいinstall / build / upload / deploy手順を持つことであり、live deploy成功ではない。
+Phase 2-6では、workflowの形を実deploy flowへ置き換える。ただし、GitHub Actions上で `dependencies.togostanza` が公開npm packageとして実際に解決できることはPhase 5で棚卸しし、配布前検証としてはPhase 12の責務である。Phase 2-6の完了条件は、生成workflowが公開後のdependency解決を前提にした正しいinstall / build / upload / deploy手順を持つことであり、live deploy成功ではない。
 
 `dist/` 生成物は、Phase 2-1からPhase 2-5で成立させた公開用生成物としてそのままartifactにする。workflow側で `dist/` 内のURLを書き換えたり、Pages用の追加buildを行ったりしない。
 
