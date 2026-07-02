@@ -221,15 +221,23 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
           root?: ShadowRoot;
         };
       };
+      const main = host.shadowRoot?.querySelector("main");
+      const mainContainer = main?.parentElement;
 
       return {
         elementConnected: host.stanzaInstance?.element === host,
+        mainContainerTag: mainContainer?.tagName ?? "",
+        mainParentIsElement: main?.parentNode instanceof HTMLElement,
+        mainParentMarker: mainContainer?.getAttribute("data-togostanza-main-container") ?? null,
         rootConnected: host.stanzaInstance?.root === host.shadowRoot,
       };
     });
 
     expect(runtimeState).toEqual({
       elementConnected: true,
+      mainContainerTag: "DIV",
+      mainParentIsElement: true,
+      mainParentMarker: "",
       rootConnected: true,
     });
 
