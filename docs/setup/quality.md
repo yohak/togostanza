@@ -34,6 +34,7 @@ mise exec -- pnpm --version
 | `pnpm test:integration` | CLI integration testを実行する。 |
 | `pnpm test:browser` | Playwrightのbrowser smoke testを実行する。 |
 | `pnpm test:distribution:local` | ローカルtarballをnpm / pnpmへインストールし、配布物としての最小動作を確認する。 |
+| `pnpm test:github-dependency:local` | 一時release refを作り、Git dependencyとしてnpm / pnpmへインストールする確認を行う。 |
 | `pnpm check-all` | 上記の主要確認をまとめて実行する。 |
 
 コード変更を含む作業では、原則として次を完了前確認に使う。
@@ -68,6 +69,12 @@ mise exec -- node ./bin/togostanza.mjs --help
 
 ```sh
 mise exec -- pnpm run test:distribution:local
+```
+
+GitHub dependencyとしての最小確認は、一時git repositoryにbuild済み `dist/` を含むrelease refを作り、`git+file://...#ref` 経由でnpm / pnpmそれぞれへインストールして行う。
+
+```sh
+mise exec -- pnpm run test:github-dependency:local
 ```
 
 この確認は外部公開を行わない。`npm publish`、tag作成、GitHub release作成、公開npm registry上の `latest` 確認は、別途明示承認を受けてから扱う。

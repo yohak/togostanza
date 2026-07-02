@@ -217,6 +217,8 @@ git diff --check
 
 push済みGitHub refを使う前に、必要であれば `git+file://<local-clone>#<ref>` 形式でGitHub dependencyに近い経路をローカル確認する。真の `github:...#<tag-or-sha>` 解決、release branch push、tag作成は外部副作用を伴うため、人間の明示承認を受けてから扱う。
 
+Phase 12-1では `test:github-dependency:local` を追加し、一時git repositoryにbuild済み `dist/` を含むrelease refを作って `git+file://...#ref` からnpm / pnpm installできることを確認する。
+
 ### Phase 12-2: release branch / tag operation
 
 目的は、通常開発branchとGitHub dependency向けrelease refの違いを手順として固定することである。
@@ -229,7 +231,8 @@ push済みGitHub refを使う前に、必要であれば `git+file://<local-clon
 - Stanza開発者にはtagまたはcommit SHA固定を推奨する。
 - root移行後も `.gitignore` は通常開発branchの `dist/` を無視する。
 - release branch / tagに `dist/` を含める具体機構を固定する。
-  - 候補は `git add -f dist/`、release branch用 `.gitignore`、orphan release branchのいずれかとする。
+  - 採用機構は `git add -f dist/` とする。
+  - release branch用 `.gitignore` 差し替えやorphan release branchは、Phase 12時点では採用しない。
   - 採用した機構で、参照先refに `dist/` が実際に含まれることをGitHub dependency smokeで確認する。
 
 文書化すること:

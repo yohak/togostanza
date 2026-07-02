@@ -2,7 +2,9 @@
 
 この文書では、Phase 12で確認した配布前状態と、外部公開前に残す作業を記録する。
 
-この文書の主な内容は、Phase 12前半で実施したローカルtarballによる `pack -> install -> 実行` smokeの完了記録である。Phase 12後半では短期方針をnpm publishではなくGitHub dependency distributionへ切り替える。その再計画は [Phase 12: GitHub dependency distribution 設計](./plan.md) を正とする。
+この文書では、Phase 12で実施したlocal distribution smokeと、外部公開前に残す作業を記録する。
+
+Phase 12では短期方針をnpm publishではなくGitHub dependency distributionへ切り替えた。その再計画は [Phase 12: GitHub dependency distribution 設計](./plan.md) を正とする。
 
 ## 完了したこと
 
@@ -21,6 +23,18 @@
 - 配布前チェックリストを追加した。
   - [Phase 12 release checklist](./release-checklist.md)
 - 品質確認手順に `test:distribution:local` を追加した。
+- root package layoutへ移行した。
+  - `package.json`、`pnpm-lock.yaml`、`mise.toml` はrootへ移した。
+  - `bin/` はroot直下に置いた。
+  - 実装、test、scriptは `src/` 配下へ集約した。
+  - `src/test/**` と `src/scripts/**` はbuild出力から除外した。
+- GitHub dependency local smokeを追加した。
+  - script: `mise exec -- pnpm run test:github-dependency:local`
+  - 一時git repositoryにrelease refを作り、`git+file://...#ref` でnpm / pnpm installする。
+  - release refには `git add -f dist/` でbuild済み `dist/` を含める。
+  - install後のCLIで `--version`、`init --name`、`generate stanza`、`build` を確認する。
+  - install後に `togostanza/stanza` と `togostanza/config` の実行時解決と型解決を確認する。
+  - install対象に `docs/`、`references/`、`src/`、`test/`、`workbench/` が混入していないことを確認する。
 
 ## package surface判断
 
@@ -35,6 +49,8 @@
 | generated repo `dependencies.togostanza` | `^<package version>` を維持する。`0.0.0` のまま公開しない。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 10系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
+| GitHub dependency release ref | `git add -f dist/` でbuild済み `dist/` を含める。 |
+| release branch / tag | 外部pushやtag作成はまだ行わない。人間承認後に行う。 |
 
 ## 確認結果
 
@@ -43,6 +59,7 @@
 ```sh
 mise exec -- pnpm run check-all
 mise exec -- pnpm run test:distribution:local
+mise exec -- pnpm run test:github-dependency:local
 mise exec -- pnpm run test:compat:local
 ```
 
@@ -59,6 +76,10 @@ mise exec -- pnpm run test:compat:local
 - `test:distribution:local`: pass
   - npm tarball install smoke: pass
   - pnpm tarball install smoke: pass
+- `test:github-dependency:local`: pass
+  - local release ref smoke: pass
+  - npm Git dependency install smoke: pass
+  - pnpm Git dependency install smoke: pass
 - `test:compat:local`: pass
   - local compatibility unit: 3 passed
   - local compatibility browser: 5 passed
@@ -71,6 +92,7 @@ mise exec -- pnpm run test:compat:local
 - tag作成
 - GitHub release作成
 - npm registry上の `latest` packageを使った確認
+- `github:...#<tag-or-sha>` を使った公開GitHub経由のinstall確認
 - 公開GitHub Pages環境へのlive deploy
 
 ## 公開前に残すこと
@@ -78,7 +100,10 @@ mise exec -- pnpm run test:compat:local
 - `version` を公開する値へ更新する。
 - `private` を外すタイミングを人間が確認する。
 - repository、homepage、bugsのURLを実際の公開リポジトリに合わせて設定する。
-- `npm publish --dry-run` 相当でtarball内容を再確認する。
+- 公開GitHub dependency用のrelease branchを作り、`git add -f dist/` でbuild済み `dist/` を含める。
+- tagまたはcommit SHAを生成repoの `dependencies.togostanza` へ反映する。
+- 公開GitHub refを使ったnpm / pnpm install確認を行う。
+- npm publishへ進む場合のみ、`npm publish --dry-run` 相当でtarball内容を再確認する。
 - GitHub Actions live deployを行う場合は、対象リポジトリ、公開先、権限、cleanup方針を確認する。
 
 ## 注意点

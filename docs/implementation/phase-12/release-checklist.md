@@ -21,9 +21,9 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | root package layout | Phase 12-0で移行 | repo rootをinstallable packageにする。 |
 | workspace | なし | `docs/`、`workbench/`、`references/` をroot packageのworkspace対象にしない。 |
 | install時build | なし | `prepare` やinstall scriptで `dist/` を作らない。 |
-| release branch / tag | Phase 12-2で定義 | build済み `dist/` を含むGitHub dependency向けrefを作る。 |
+| release branch / tag | local smokeで機構確認済み | build済み `dist/` を含むGitHub dependency向けrefを作る。 |
 | main branchの `dist/` | なし | 通常開発branchでは `dist/` をcommitしない。 |
-| `.gitignore` と `dist/` | 要確認 | 通常branchでは無視し、release refでは明示的に同梱する機構を決める。 |
+| `.gitignore` と `dist/` | `git add -f dist/` を採用 | 通常branchでは無視し、release refでは明示的に同梱する。 |
 | files | `bin/`, `dist/` | install対象を実行入口とcompiled JSへ絞る。 |
 | bin | `togostanza` -> `./bin/togostanza.mjs` | root直下の `bin/` で維持する。 |
 | exports | `./config`, `./stanza` | Stanza開発者向けの開発契約として維持する。 |
@@ -41,6 +41,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 - rootで `mise exec -- pnpm run check-all` が通る。
 - rootで `mise exec -- pnpm run test:compat:local` が通る。
 - rootで `mise exec -- pnpm run test:distribution:local` が通る。
+- rootで `mise exec -- pnpm run test:github-dependency:local` が通る。
 - 通常開発branchに `dist/` をcommitしていない。
 - release branch / tagにはbuild済み `dist/` が含まれる。
 - release branch / tagで `dist/` を含める機構が、`.gitignore` と衝突していない。
