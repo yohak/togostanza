@@ -264,9 +264,55 @@ fixture data:
 - metastanzaのSass `@import` 非推奨警告は引き続き出る。現行ソース由来の警告であり、Phase 11-1でもbuild失敗にはしない。
 - Phase 11-1のbrowser smokeは直接埋め込みの軽量確認であり、現行版とのpixel-level比較やUI操作網羅ではない。
 
+## Phase 11-2 リメイク版TogoMedium full browser smoke: 2026-07-02
+
+Phase 11-2では、TogoMedium Stanza全15件をひとつの一時Stanzaリポジトリrootへsymlinkし、リメイク版CLIでbuildした生成物をブラウザで直接埋め込んで確認した。
+
+確認コマンド:
+
+- `cd package && mise exec -- pnpm run test:compat:local`
+
+確認した対象:
+
+- `gmdb-component-detail`
+- `gmdb-find-media-by-components`
+- `gmdb-find-media-by-organism-phenotype`
+- `gmdb-find-media-by-taxonomic-tree`
+- `gmdb-gms-by-tid`
+- `gmdb-media-alignment-table-by-components`
+- `gmdb-media-alignment-table-by-strains`
+- `gmdb-medium-builder`
+- `gmdb-medium-detail`
+- `gmdb-meta-list`
+- `gmdb-roundtree`
+- `gmdb-similar-media-node`
+- `gmdb-stats-culturable-species`
+- `gmdb-strain-detail`
+- `gmdb-taxon-detail`
+
+観測結果:
+
+- 全15 Stanzaで module scriptの読み込み、custom element upgrade、open Shadow DOM、`main` の生成、最小描画が成功した。
+- React / TSX、TogoMedium provider stack、MUI / Emotion、TanStack Query、Jotai / Reduxを含むStanza単体のdirect embed smokeが通った。
+- 失敗時の診断は、対象Stanza ID、生成物path、fixture path、browser console error、pageerror、failed request、直近requestをまとめて出す。
+- `gmdb-meta-list`、`gmdb-component-detail`、`gmdb-medium-detail`、`gmdb-strain-detail`、`gmdb-taxon-detail` では、fixture data由来の代表文字列を確認した。
+- `gmdb-gms-by-tid`、`gmdb-roundtree`、`gmdb-stats-culturable-species` などのD3系Stanzaも、旧式API shapeに合わせたローカルfixtureで最小描画を確認した。
+
+fixture data:
+
+- per-Stanza fixture HTMLは、一時root内の `fixtures/togomedium/<stanza-id>/fixture.html` に置いた。
+- TogoMedium Stanzaの多くは実API前提のため、fixture HTMLで `window.fetch` を差し替え、ローカルの最小JSON / text responseを返した。
+- API responseは各Stanzaが参照する実API定義に合わせた。代表例として、`gmdb_media_alignment_by_gm_ids`、`gmdb_media_strains_alignment_by_gm_ids`、`gmdb_stat_media_tax_histgram`、`gmdb_organism_by_taxid`、旧式の `gms_by_kegg_tids_3` / `gms_kegg_code_tid` を含む。
+- `gmdb-roundtree` は現行ソースの独自Newick parserに合わせ、root直下に2 branchを持つ最小Newickを使った。
+- 外部Google Fontsの読み込み失敗は、Stanza本体のfatal failureとして扱わない。
+
+差分と制約:
+
+- TogoMediumの一時rootでは、`references/togomedium-web/node_modules` と `references/togomedium-web/@packages/stanza/node_modules` の依存を集約して使った。これはreferencesを汚さずにStanza package root相当を作るための検証用配置であり、TogoMedium固有のdependency配置をリメイク版が自動吸収する契約ではない。
+- この確認は生成されたStanza artifact単体のdirect embed smokeであり、TogoMedium Webアプリ本体のE2E、実API接続、画面遷移、ユーザー操作網羅、pixel-level比較は含めない。
+
 ### Phase 11へ送るもの
 
-- TogoMedium Stanza全15 Stanzaのbrowser smoke。
 - TogoMedium Webアプリ本体E2E。
 - React / Vue / Emotion / MUIの広いversion matrix。
 - Runtime edge semantics。

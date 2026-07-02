@@ -5,6 +5,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -20,6 +21,7 @@ import {
   assertExpectedCompatLocalStanzaDirectories,
   compatFixturePath,
   expectedMetastanzaStanzas,
+  expectedTogoMediumStanzas,
 } from "../support/compat-local.js";
 
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -42,6 +44,12 @@ type BrowserDiagnostics = {
 type MetastanzaSmokeCase = {
   assertRendered(page: Page, selector: string): Promise<void>;
   fixtureFile: string;
+  id: string;
+  overrides?: Record<string, string>;
+};
+
+type TogoMediumSmokeCase = {
+  expectedText?: string;
   id: string;
   overrides?: Record<string, string>;
 };
@@ -125,6 +133,34 @@ const metastanzaSmokeCases: readonly MetastanzaSmokeCase[] = [
     fixtureFile: "tree-data.json",
     id: "tree",
   },
+];
+
+const togoMediumSmokeCases: readonly TogoMediumSmokeCase[] = [
+  { expectedText: "Glucose", id: "gmdb-component-detail" },
+  { id: "gmdb-find-media-by-components" },
+  { id: "gmdb-find-media-by-organism-phenotype" },
+  { id: "gmdb-find-media-by-taxonomic-tree", overrides: { taxonomy_type: "NCBI" } },
+  { id: "gmdb-gms-by-tid" },
+  { id: "gmdb-media-alignment-table-by-components" },
+  { id: "gmdb-media-alignment-table-by-strains" },
+  { id: "gmdb-medium-builder" },
+  { expectedText: "Demo Medium", id: "gmdb-medium-detail" },
+  {
+    expectedText: "Togo Medium Demo",
+    id: "gmdb-meta-list",
+    overrides: {
+      api_url: "https://togomedium.local/list_media",
+      column_names: "true",
+      column_sizes: "40,60",
+      limit: "2",
+      title: "TogoMedium smoke",
+    },
+  },
+  { id: "gmdb-roundtree", overrides: { newick: "https://togomedium.local/roundtree.newick" } },
+  { id: "gmdb-similar-media-node", overrides: { gm_id: "M1" } },
+  { id: "gmdb-stats-culturable-species" },
+  { expectedText: "Demo Strain", id: "gmdb-strain-detail" },
+  { expectedText: "Escherichia coli", id: "gmdb-taxon-detail" },
 ];
 
 test.afterEach(async () => {
@@ -962,102 +998,30 @@ test("directly embeds all real metastanza Stanzas @compat-local", async ({ page 
   }
 });
 
-test("directly embeds a real TogoMedium Stanza with visible Shadow DOM styling @compat-local", async ({
-  page,
-}) => {
-  test.setTimeout(120_000);
+test("directly embeds all real TogoMedium Stanzas @compat-local", async ({ page }) => {
+  test.setTimeout(240_000);
   assertCompatLocalReferencesReady(repositoryRoot);
+  assertExpectedCompatLocalStanzaDirectories(repositoryRoot);
 
   const cwd = makeTemporaryDirectory();
-  writeTogoMediumMetaListRegressionRepo(cwd);
+  writeTogoMediumRegressionRepo(cwd);
   await runCli(["build", "--output-path", "public"], cwd);
 
   const requestLog: string[] = [];
-  const pageErrors: string[] = [];
-  const consoleErrors: string[] = [];
-  const failedRequests: string[] = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("console", (message) => {
-    if (message.type() === "error") {
-      consoleErrors.push(message.text());
-    }
-  });
-  page.on("requestfailed", (request) => {
-    failedRequests.push(`${request.url()} ${request.failure()?.errorText ?? ""}`.trim());
-  });
   const server = await startStaticServer(cwd, requestLog);
 
   try {
     const port = addressPort(server);
-    writeFileSync(
-      resolve(cwd, "fixture.html"),
-      `<!doctype html>
-<html>
-  <body>
-    <script type="module" src="./public/gmdb-meta-list.js"></script>
-    <togostanza-gmdb-meta-list
-      id="togomedium-meta-list"
-      api_url="http://127.0.0.1:${port}/${compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json")}?kind=media"
-      limit="2"
-      title="TogoMedium smoke"
-      column_names="true"
-      column_sizes="40,60"
-    ></togostanza-gmdb-meta-list>
-  </body>
-</html>
-`,
-      "utf8",
-    );
-
-    await page.goto(`http://127.0.0.1:${port}/fixture.html`, { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(5_000);
-    const loadState = await page.evaluate(
-      (diagnostics) => {
-        return {
-          consoleErrors: diagnostics.consoleErrors,
-          defined: Boolean(customElements.get("togostanza-gmdb-meta-list")),
-          failedRequests: diagnostics.failedRequests,
-          pageErrors: diagnostics.pageErrors,
-          recentRequests: diagnostics.requestLog.slice(-12),
-        };
-      },
-      { consoleErrors, failedRequests, pageErrors, requestLog },
-    );
-    expect(loadState.defined, JSON.stringify(loadState, null, 2)).toBe(true);
-    expect(consoleErrors).toEqual([]);
-    expect(failedRequests).toEqual([]);
-    expect(pageErrors).toEqual([]);
-
-    await expect
-      .poll(() => readShadowText(page, "#togomedium-meta-list", "h2"))
-      .toBe("TogoMedium smoke");
-    await expect
-      .poll(() => readShadowText(page, "#togomedium-meta-list", "table"))
-      .toContain("Togo Medium Demo");
-    await expect
-      .poll(() => readShadowText(page, "#togomedium-meta-list", "table"))
-      .toContain("Glucose");
-    await expect
-      .poll(() =>
-        page.locator("#togomedium-meta-list").evaluate((element) => {
-          const table = element.shadowRoot?.querySelector<HTMLElement>("table");
-
-          return table
-            ? {
-                borderCollapse: getComputedStyle(table).borderCollapse,
-                fontSize: getComputedStyle(table).fontSize,
-              }
-            : undefined;
-        }),
-      )
-      .toEqual({
-        borderCollapse: "collapse",
-        fontSize: "16px",
+    for (const smokeCase of togoMediumSmokeCases) {
+      // eslint-disable-next-line no-await-in-loop -- each Stanza gets an isolated page navigation.
+      await runTogoMediumSmokeCase({
+        cwd,
+        page,
+        port,
+        requestLog,
+        smokeCase,
       });
-
-    expect(requestLog).toContain(
-      `/${compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json")}`,
-    );
+    }
   } finally {
     await closeServer(server);
   }
@@ -1388,6 +1352,74 @@ async function runMetastanzaSmokeCase(input: {
   }
 }
 
+async function runTogoMediumSmokeCase(input: {
+  cwd: string;
+  page: Page;
+  port: number;
+  requestLog: string[];
+  smokeCase: TogoMediumSmokeCase;
+}): Promise<void> {
+  const { cwd, page, port, requestLog, smokeCase } = input;
+  const selector = `#togomedium-${smokeCase.id}`;
+  const tagName = `togostanza-${smokeCase.id}`;
+  const fixturePath = compatFixturePath("togomedium", smokeCase.id, "fixture.html");
+  const generatedScriptPath = `public/${smokeCase.id}.js`;
+  const attributes = metadataExampleAttributes(cwd, smokeCase.id, smokeCase.overrides ?? {});
+  const diagnostics = collectBrowserDiagnostics(page);
+  const requestStart = requestLog.length;
+  mkdirSync(dirname(resolve(cwd, fixturePath)), { recursive: true });
+
+  writeFileSync(
+    resolve(cwd, fixturePath),
+    `<!doctype html>
+<html>
+  <body>
+    <script>${formatTogoMediumFetchMockScript()}</script>
+    <script type="module" src="/${generatedScriptPath}"></script>
+    <${tagName}
+      id="togomedium-${smokeCase.id}"
+      ${formatHtmlAttributes(attributes)}
+    ></${tagName}>
+  </body>
+</html>
+`,
+    "utf8",
+  );
+
+  try {
+    await page.goto(`http://127.0.0.1:${port}/${fixturePath}`, {
+      waitUntil: "domcontentloaded",
+    });
+    await page.waitForFunction((name) => customElements.get(name), tagName);
+    await expectTogoMediumHostReady(page, selector);
+
+    if (smokeCase.expectedText) {
+      await expect
+        .poll(() => readShadowText(page, selector, "main"))
+        .toContain(smokeCase.expectedText);
+    }
+
+    expect(diagnostics.consoleErrors).toEqual([]);
+    expect(filterFatalFailedRequests(diagnostics.failedRequests)).toEqual([]);
+    expect(customElementDuplicateDefinitionErrors(diagnostics.pageErrors)).toEqual([]);
+    expect(diagnostics.pageErrors).toEqual([]);
+  } catch (error) {
+    throw new Error(
+      formatTogoMediumSmokeFailure({
+        diagnostics,
+        error,
+        fixturePath,
+        generatedScriptPath,
+        requests: requestLog.slice(requestStart),
+        stanzaId: smokeCase.id,
+      }),
+      { cause: error },
+    );
+  } finally {
+    diagnostics.dispose();
+  }
+}
+
 function collectBrowserDiagnostics(page: Page): BrowserDiagnostics {
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
@@ -1421,7 +1453,9 @@ function collectBrowserDiagnostics(page: Page): BrowserDiagnostics {
 
 function filterFatalFailedRequests(failedRequests: readonly string[]): string[] {
   return failedRequests.filter(
-    (request) => !request.startsWith("https://cdn.jsdelivr.net/npm/katex@"),
+    (request) =>
+      !request.startsWith("https://cdn.jsdelivr.net/npm/katex@") &&
+      !request.startsWith("https://fonts.googleapis.com/"),
   );
 }
 
@@ -1441,6 +1475,31 @@ async function expectMetastanzaHostReady(page: Page, selector: string): Promise<
     )
     .toEqual({
       hasMain: true,
+      hasShadowRoot: true,
+      mainParentIsElement: true,
+      upgraded: true,
+    });
+}
+
+async function expectTogoMediumHostReady(page: Page, selector: string): Promise<void> {
+  await expect
+    .poll(() =>
+      page.locator(selector).evaluate((element) => {
+        const main = element.shadowRoot?.querySelector("main");
+
+        return {
+          hasMain: Boolean(main),
+          hasRenderedContent:
+            (main?.childElementCount ?? 0) > 0 || Boolean(main?.textContent?.trim()),
+          hasShadowRoot: Boolean(element.shadowRoot),
+          mainParentIsElement: main?.parentNode instanceof HTMLElement,
+          upgraded: element.constructor !== HTMLElement,
+        };
+      }),
+    )
+    .toEqual({
+      hasMain: true,
+      hasRenderedContent: true,
       hasShadowRoot: true,
       mainParentIsElement: true,
       upgraded: true,
@@ -1561,6 +1620,28 @@ function formatMetastanzaSmokeFailure(input: {
     `generated: ${input.generatedScriptPath}`,
     `fixture: ${input.fixturePath}`,
     `data: ${input.dataPath}`,
+    `error: ${message}`,
+    formatDiagnosticList("console errors", input.diagnostics.consoleErrors),
+    formatDiagnosticList("page errors", input.diagnostics.pageErrors),
+    formatDiagnosticList("failed requests", input.diagnostics.failedRequests),
+    formatDiagnosticList("recent requests", input.requests),
+  ].join("\n");
+}
+
+function formatTogoMediumSmokeFailure(input: {
+  diagnostics: BrowserDiagnostics;
+  error: unknown;
+  fixturePath: string;
+  generatedScriptPath: string;
+  requests: string[];
+  stanzaId: string;
+}): string {
+  const message = input.error instanceof Error ? input.error.message : String(input.error);
+
+  return [
+    `TogoMedium smoke failed for ${input.stanzaId}`,
+    `generated: ${input.generatedScriptPath}`,
+    `fixture: ${input.fixturePath}`,
     `error: ${message}`,
     formatDiagnosticList("console errors", input.diagnostics.consoleErrors),
     formatDiagnosticList("page errors", input.diagnostics.pageErrors),
@@ -2429,7 +2510,7 @@ function formatMetastanzaTableData(): Array<Record<string, string | number>> {
   ];
 }
 
-function writeTogoMediumMetaListRegressionRepo(cwd: string): void {
+function writeTogoMediumRegressionRepo(cwd: string): void {
   assertCompatLocalReferencesReady(repositoryRoot);
 
   const referenceRoot = resolve(repositoryRoot, "references", "togomedium-web");
@@ -2438,16 +2519,18 @@ function writeTogoMediumMetaListRegressionRepo(cwd: string): void {
   mkdirSync(stanzasDirectory, { recursive: true });
 
   symlinkSync(resolve(stanzaPackageRoot, "package.json"), resolve(cwd, "package.json"));
-  symlinkSync(resolve(referenceRoot, "node_modules"), resolve(cwd, "node_modules"), "dir");
+  linkTogoMediumNodeModules(cwd, referenceRoot, stanzaPackageRoot);
   symlinkSync(resolve(stanzaPackageRoot, "components"), resolve(cwd, "components"), "dir");
   symlinkSync(resolve(stanzaPackageRoot, "styles"), resolve(cwd, "styles"), "dir");
   symlinkSync(resolve(stanzaPackageRoot, "utils"), resolve(cwd, "utils"), "dir");
   symlinkSync(resolve(stanzaPackageRoot, "tsconfig.json"), resolve(cwd, "tsconfig.json"));
-  symlinkSync(
-    resolve(stanzaPackageRoot, "stanzas", "gmdb-meta-list"),
-    resolve(stanzasDirectory, "gmdb-meta-list"),
-    "dir",
-  );
+  for (const stanzaId of expectedTogoMediumStanzas) {
+    symlinkSync(
+      resolve(stanzaPackageRoot, "stanzas", stanzaId),
+      resolve(stanzasDirectory, stanzaId),
+      "dir",
+    );
+  }
   writeFileSync(
     resolve(cwd, "togostanza.config.ts"),
     [
@@ -2463,39 +2546,374 @@ function writeTogoMediumMetaListRegressionRepo(cwd: string): void {
       "        { find: /^%api\\//, replacement: `${referenceRoot}/@packages/api/src/` },",
       "      ],",
       "    },",
+      "    define: {",
+      '      "import.meta.env.VITE_URL_API": JSON.stringify("https://togomedium.local/api/"),',
+      '      "process.env": JSON.stringify({ URL_API: "https://togomedium.local/api/" }),',
+      "    },",
       "  },",
       "};",
       "",
     ].join("\n"),
     "utf8",
   );
-  mkdirSync(
-    dirname(resolve(cwd, compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json"))),
-    { recursive: true },
-  );
-  writeFileSync(
-    resolve(cwd, compatFixturePath("togomedium", "gmdb-meta-list", "meta-list.json")),
-    `${JSON.stringify(
+}
+
+function linkTogoMediumNodeModules(
+  cwd: string,
+  referenceRoot: string,
+  stanzaPackageRoot: string,
+): void {
+  const destinationRoot = resolve(cwd, "node_modules");
+  mkdirSync(destinationRoot, { recursive: true });
+  linkNodeModulesEntries(resolve(referenceRoot, "node_modules"), destinationRoot);
+  linkNodeModulesEntries(resolve(stanzaPackageRoot, "node_modules"), destinationRoot);
+}
+
+function linkNodeModulesEntries(sourceRoot: string, destinationRoot: string): void {
+  for (const entry of readdirSync(sourceRoot)) {
+    if (entry.startsWith(".")) {
+      continue;
+    }
+
+    const sourcePath = resolve(sourceRoot, entry);
+    const destinationPath = resolve(destinationRoot, entry);
+
+    if (entry.startsWith("@")) {
+      mkdirSync(destinationPath, { recursive: true });
+      for (const scopedEntry of readdirSync(sourcePath)) {
+        const scopedDestination = resolve(destinationPath, scopedEntry);
+
+        if (!existsSync(scopedDestination)) {
+          symlinkSync(resolve(sourcePath, scopedEntry), scopedDestination, "dir");
+        }
+      }
+
+      continue;
+    }
+
+    if (!existsSync(destinationPath)) {
+      symlinkSync(sourcePath, destinationPath, "dir");
+    }
+  }
+}
+
+function formatTogoMediumFetchMockScript(): string {
+  const payloads = formatTogoMediumMockPayloads();
+
+  return `
+(() => {
+  const payloads = ${JSON.stringify(payloads)};
+  const jsonResponse = (body) =>
+    new Response(JSON.stringify(body), {
+      headers: { "content-type": "application/json" },
+      status: 200,
+    });
+  const textResponse = (body) =>
+    new Response(body, {
+      headers: { "content-type": "text/plain" },
+      status: 200,
+    });
+
+  window.fetch = async (input) => {
+    const rawUrl = typeof input === "string" ? input : input.url;
+    const url = new URL(rawUrl, window.location.href);
+    const route = url.pathname;
+    const target = url.origin + url.pathname + url.search;
+
+    if (target.includes("wikipedia.org")) {
+      return jsonResponse(payloads.wikipedia);
+    }
+
+    if (target.includes("roundtree.newick")) {
+      return textResponse("(kegg_A:1,kegg_B:1)n1:1,(kegg_C:1,kegg_D:1)n2:1;");
+    }
+
+    if (route.includes("gmdb_component_by_gmoid")) {
+      return jsonResponse(payloads.componentDetail);
+    }
+
+    if (route.includes("gmdb_medium_by_gmid")) {
+      return jsonResponse(payloads.mediumDetail);
+    }
+
+    if (route.includes("gmdb_strain_by_strainid")) {
+      return jsonResponse(payloads.strainDetail);
+    }
+
+    if (route.includes("gmdb_organism_by_taxid")) {
+      return jsonResponse(payloads.taxonDetail);
+    }
+
+    if (route.includes("gmdb_media_alignment_by_gm_ids")) {
+      return jsonResponse(payloads.componentAlignment);
+    }
+
+    if (route.includes("gmdb_media_strains_alignment_by_gm_ids")) {
+      return jsonResponse(payloads.strainAlignment);
+    }
+
+    if (route.includes("gmdb_stat_media_tax_histgram")) {
+      return jsonResponse(payloads.statsCulturableSpecies);
+    }
+
+    if (route.includes("gms_by_kegg_tids_3")) {
+      return jsonResponse(payloads.mediaByTid);
+    }
+
+    if (route.includes("gms_kegg_code_tid")) {
+      return jsonResponse(payloads.keggCodeTid);
+    }
+
+    if (route.includes("gmdb_similar_media_node")) {
+      return jsonResponse(payloads.similarMediaNode);
+    }
+
+    if (route.includes("gmdb_taxonomy_search_by_name")) {
+      return jsonResponse(payloads.taxonSearch);
+    }
+
+    if (route.includes("gmdb_taxonomy_ancestors")) {
+      return jsonResponse(payloads.taxonAncestors);
+    }
+
+    if (route.includes("gmdb_taxonomy_children")) {
+      return jsonResponse(payloads.taxonChildren);
+    }
+
+    if (route.includes("gmdb_list_media_of_taxons")) {
+      return jsonResponse(payloads.metaList);
+    }
+
+    if (route.includes("gmdb_find_media_by")) {
+      return jsonResponse(payloads.findMedia);
+    }
+
+    if (route.includes("gmdb_medium_builder")) {
+      return jsonResponse(payloads.mediumBuilder);
+    }
+
+    if (route.includes("gmdb_components_with_components")) {
+      return jsonResponse(payloads.componentsWithComponents);
+    }
+
+    return jsonResponse(payloads.metaList);
+  };
+})();
+`;
+}
+
+function formatTogoMediumMockPayloads(): Record<string, unknown> {
+  return {
+    componentAlignment: {
+      components: [
+        {
+          function: "Carbon source",
+          gmo_id: "GMO_001005",
+          name: "Glucose",
+          parent: null,
+        },
+      ],
+      media: [
+        {
+          components: ["GMO_001005"],
+          gm_id: "M1",
+          name: "Demo Medium",
+          organisms: ["T1"],
+          original_media_id: "NBRC_M249",
+        },
+      ],
+      organisms: [{ name: "Demo organism", tax_id: "T1" }],
+    },
+    componentDetail: {
+      alt_labels_en: ["D-Glucose"],
+      alt_labels_ja: [],
+      id: "GMO_001005",
+      label_ja: "グルコース",
+      links: [],
+      pref_label: "Glucose",
+      properties: [{ gmo_id: "GMO_001005", label_en: "Carbohydrate", uri: "" }],
+      roles: [],
+      sub_classes: [],
+      super_classes: [],
+    },
+    componentsWithComponents: [
       {
-        columns: [
-          { key: "name", label: "Medium" },
-          { key: "component", label: "Component" },
-        ],
-        contents: [
+        components: [],
+        gmo_id: "GMO_001005",
+        name: "Glucose",
+      },
+    ],
+    findMedia: {
+      columns: [
+        { key: "name", label: "Medium" },
+        { key: "component", label: "Component" },
+      ],
+      contents: [
+        {
+          component: "Glucose",
+          name: { href: "/medium/M1", label: "Togo Medium Demo" },
+        },
+      ],
+      limit: 2,
+      offset: 0,
+      total: 1,
+    },
+    mediaByTid: {
+      growth_media: [
+        {
+          components_group: {
+            "http://purl.jp/bio/10/gmo/GMO_001005": {
+              elements: [
+                {
+                  component: {
+                    label: "Glucose",
+                    uri: "http://purl.jp/bio/10/gmo/GMO_001005",
+                  },
+                },
+              ],
+              label: "Glucose",
+            },
+          },
+          label: "Demo Medium",
+          species: [{ label: "Demo organism", tid: "T1" }],
+          uri: "http://purl.jp/bio/10/gm/M1",
+        },
+      ],
+    },
+    mediumBuilder: {
+      components: [{ gmo_id: "GMO_001005", label: "Glucose", value: 1 }],
+      medium: { gm_id: "M1", name: "Demo Medium" },
+    },
+    mediumDetail: {
+      comments: [{ comment: "Demo note", paragraph_index: 2 }],
+      components: [
+        {
+          items: [
+            {
+              component_name: "Glucose",
+              gmo_id: "GMO_001005",
+              label: "Glucose",
+              unit: "g",
+              volume: 1,
+            },
+          ],
+          paragraph_index: 1,
+          subcomponent_name: "Base",
+        },
+      ],
+      meta: {
+        gm: "M1",
+        name: "Demo Medium",
+        original_media_id: "NBRC_M249",
+        ph: "7.0",
+        src_url: "https://example.org/source",
+      },
+    },
+    keggCodeTid: {
+      A: { tid: "T1" },
+      B: { tid: "T2" },
+      C: { tid: "T3" },
+      D: { tid: "T4" },
+    },
+    metaList: {
+      columns: [
+        { key: "name", label: "Medium" },
+        { key: "component", label: "Component" },
+      ],
+      contents: [
+        {
+          component: "Glucose",
+          name: { href: "/medium/M1", label: "Togo Medium Demo" },
+        },
+      ],
+      limit: 2,
+      offset: 0,
+      total: 1,
+    },
+    similarMediaNode: {
+      edges: [{ source: "M1", target: "M2", value: 1 }],
+      nodes: [
+        { id: "M1", label: "Demo Medium" },
+        { id: "M2", label: "Similar Medium" },
+      ],
+    },
+    statsCulturableSpecies: [
+      { bin: "0-10", frequency: 10 },
+      { bin: "10-20", frequency: 30 },
+    ],
+    strainAlignment: [
+      {
+        gm_id: "M1",
+        label: "Demo Medium",
+        organisms: [
           {
-            component: "Glucose",
-            name: { href: "/medium/M1", label: "Togo Medium Demo" },
+            class: { id: "1236", label: "Gammaproteobacteria" },
+            domain: { id: "2", label: "Bacteria" },
+            family: { id: "543", label: "Enterobacteriaceae" },
+            genus: { id: "561", label: "Escherichia" },
+            order: { id: "91347", label: "Enterobacterales" },
+            phylum: { id: "1224", label: "Proteobacteria" },
+            species: { id: "562", label: "Escherichia coli" },
+            strain: { id: "S1", label: "Demo Strain" },
           },
         ],
-        limit: 2,
-        offset: 0,
-        total: 1,
       },
-      null,
-      2,
-    )}\n`,
-    "utf8",
-  );
+    ],
+    strainDetail: {
+      strain: {
+        other_strain_id_list: [
+          {
+            other_strain_id: "S1-alt",
+            other_strain_link: "https://example.org/strain/S1-alt",
+          },
+        ],
+        strain_id: "S1",
+        strain_name: "Demo Strain",
+      },
+      taxonomy: {
+        authority_name: "Demo authority",
+        lineage: [
+          { label: "Bacteria", rank: "superkingdom", taxid: 2, uri: "https://example.org/taxon/2" },
+          {
+            label: "Escherichia coli",
+            rank: "species",
+            taxid: 562,
+            uri: "https://example.org/taxon/562",
+          },
+        ],
+        rank: "species",
+        scientific_name: "Escherichia coli",
+        taxid: 562,
+      },
+    },
+    taxonDetail: {
+      authority_name: "Demo authority",
+      lineage: [
+        { label: "Bacteria", rank: "superkingdom", taxid: 2, uri: "https://example.org/taxon/2" },
+        {
+          label: "Escherichia coli",
+          rank: "species",
+          taxid: 562,
+          uri: "https://example.org/taxon/562",
+        },
+      ],
+      other_type_material: [{ label: "Other Demo Strain", name: "S2" }],
+      rank: "species",
+      scientific_name: "Escherichia coli",
+      taxid: "562",
+      type_material: [{ label: "Demo Strain", name: "S1" }],
+    },
+    taxonAncestors: [
+      { name: "Bacteria", rank: "superkingdom", tax_id: "2" },
+      { name: "Escherichia coli", rank: "species", tax_id: "562" },
+    ],
+    taxonChildren: [{ name: "Escherichia coli", rank: "species", tax_id: "562" }],
+    taxonSearch: [{ name: "Escherichia coli", rank: "species", tax_id: "562" }],
+    wikipedia: {
+      extract: "Demo Wikipedia summary",
+      thumbnail: { source: "https://example.org/thumb.png" },
+    },
+  };
 }
 
 function writeVueRuntimeProbe(cwd: string): void {
