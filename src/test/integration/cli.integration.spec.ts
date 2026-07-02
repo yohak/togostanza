@@ -192,7 +192,7 @@ describe("CLI smoke", () => {
     };
     expect(readJson(resolve(cwd, "generated-repo", "package.json"))).toMatchObject({
       dependencies: {
-        togostanza: `^${packageJson.version}`,
+        togostanza: "github:yohak/togostanza#<tag-or-sha>",
       },
       name: "generated-repo",
       scripts: {
@@ -202,6 +202,7 @@ describe("CLI smoke", () => {
     });
     expect(readme).toContain("npm run build");
     expect(readme).toContain("npm run serve");
+    expect(readme).toContain("replace `<tag-or-sha>`");
     expect(readme).toContain("GitHub Pages");
     expect(readme).toContain("package-lock.json");
     expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");

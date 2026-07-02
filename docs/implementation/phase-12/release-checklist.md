@@ -7,7 +7,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 ```json
 {
   "dependencies": {
-    "togostanza": "github:satoshionoda/togostanza-remake#<tag-or-sha>"
+    "togostanza": "github:yohak/togostanza#<tag-or-sha>"
   }
 }
 ```
@@ -32,7 +32,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | license | `MIT` | 現行版package metadataと生成雛形の既定licenseに合わせる。 |
 | engines.node | `>=24.5.0` | Phase 12時点では維持する。GitHub dependency運用前に利用者環境と再確認する。 |
 | packageManager | rootの `package.json` で固定 | 開発パッケージの固定として維持する。 |
-| generated repo `dependencies.togostanza` | GitHub dependency specへ見直し | 固定tag、commit SHA、placeholderのどれにするかPhase 12-3で決める。 |
+| generated repo `dependencies.togostanza` | `github:yohak/togostanza#<tag-or-sha>` | 通常生成ではplaceholderを書き、release時にtagまたはcommit SHAへ差し替える。 |
 | generated repo `packageManager` field | なし | `init` は生成しない。pnpm workflowはpnpm 10系を明示する。 |
 
 ## GitHub dependency release前に必ず確認すること
@@ -49,6 +49,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 - install後に `togostanza --version`、`init`、`generate stanza`、`build` が動く。
 - install後に `togostanza/stanza` と `togostanza/config` が解決できる。
 - generated repoの `dependencies.togostanza` が、GitHub dependency specとして意図した値になる。
+- 生成READMEに、`<tag-or-sha>` をrelease tagまたはcommit SHAへ差し替えてからinstallする案内がある。
 - `files` によってinstall対象が最小化されている。
 - install対象に `dist/test/` やtest supportが混入していない。
 - GitHub Pages workflowで使うlockfileとpnpm 10系の前提がREADMEに残っている。

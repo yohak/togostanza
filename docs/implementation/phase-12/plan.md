@@ -7,7 +7,7 @@ Phase 12は、リメイク版パッケージを短期的にGitHub dependencyと�
 ```json
 {
   "dependencies": {
-    "togostanza": "github:satoshionoda/togostanza-remake#<tag-or-sha>"
+    "togostanza": "github:yohak/togostanza#<tag-or-sha>"
   }
 }
 ```
@@ -132,7 +132,7 @@ mise exec -- pnpm run test:compat:local
 ```json
 {
   "dependencies": {
-    "togostanza": "github:satoshionoda/togostanza-remake#<tag-or-sha>"
+    "togostanza": "github:yohak/togostanza#<tag-or-sha>"
   }
 }
 ```
@@ -200,7 +200,7 @@ git diff --check
 確認すること:
 
 - GitHub dependencyとして参照するspec。
-  - 例: `github:satoshionoda/togostanza-remake#<tag-or-sha>`
+  - 例: `github:yohak/togostanza#<tag-or-sha>`
   - `main` 直指定ではなく、tagまたはcommit SHAを優先する。
 - npm環境でGitHub dependencyをinstallし、CLIが起動すること。
 - pnpm環境でGitHub dependencyをinstallし、CLIが起動すること。
@@ -249,16 +249,17 @@ Phase 12-1では `test:github-dependency:local` を追加し、一時git reposit
 
 目的は、`init` が生成するStanzaリポジトリがGitHub dependency運用に乗れる状態にすることである。
 
-判断すること:
+採用する方針:
 
-- generated repoの `dependencies.togostanza` をどのspecにするか。
-  - 固定tag。
-  - commit SHA。
-  - 人間が後から差し替えるplaceholder。
-- `TOGOSTANZA_DEPENDENCY_SPEC` のような検証用overrideを通常機能として扱うか。
-- READMEにGitHub dependency specの差し替え方法を書くか。
+- generated repoの `dependencies.togostanza` は、通常生成では `github:yohak/togostanza#<tag-or-sha>` を書く。
+  - 実release tagまたはcommit SHAが決まるまでは、人間が後から差し替えるplaceholderとして扱う。
+  - `main` 直指定は推奨しない。
+- local smoke、release手順、実GitHub ref確認では `TOGOSTANZA_DEPENDENCY_SPEC` で具体dependency specを注入できるようにする。
+  - `git+file://...#ref` のlocal smokeでも同じ経路を使う。
+  - このoverrideは配布検証とrelease運用のための入口であり、Stanza開発者向けの通常操作としてはREADMEのGitHub dependency specを正とする。
+- READMEには、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallすることを書く。
 - GitHub Pages workflowがGitHub dependency installで通る前提をどう説明するか。
-- pnpm 10系lockfile前提と、GitHub dependency specのlockfile再現性をどう案内するか。
+- pnpm 10系lockfile前提と、GitHub dependency specのlockfile再現性をREADMEで案内する。
 
 ### Phase 12-4: final verification and handoff
 
@@ -316,7 +317,7 @@ GitHub dependency install smokeの具体コマンドは、Phase 12-1で実装す
 ## 残す論点
 
 - release branch名とtag名。
-- generated repoの `dependencies.togostanza` を固定tag、commit SHA、placeholderのどれにするか。
+- 実releaseで使うtag名またはcommit SHA。
 - GitHub dependency smokeを完全自動scriptにするか、手順化に留めるか。
 - `private: true` をGitHub dependency運用で維持するか。npm publishしない限りaccidental publish防止としては維持できるが、GitHub dependency installへの影響は確認する。
 - `engines.node >=24.5.0` を維持するか。

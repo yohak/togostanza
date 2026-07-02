@@ -143,7 +143,7 @@ describe("CLI router", () => {
     const readme = readText(join(cwd, "generated-repo", "README.md"));
 
     expect(packageJson.license).toBe("MIT");
-    expect(packageJson.dependencies.togostanza).toBe(`^${packageMetadata.version}`);
+    expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza#<tag-or-sha>");
     expect(packageJson.packageManager).toBeUndefined();
     expect(packageJson.scripts).toEqual({
       build: "togostanza build",
@@ -156,6 +156,7 @@ describe("CLI router", () => {
     expect(readme).toContain("npm run build");
     expect(readme).toContain("npm run serve");
     expect(readme).toContain("npm exec togostanza generate stanza hello");
+    expect(readme).toContain("replace `<tag-or-sha>`");
     expect(readme).toContain("npm ci");
     expect(readme).toContain("package-lock.json");
     expect(readme).toContain("--skip-install");
@@ -163,6 +164,45 @@ describe("CLI router", () => {
     expectNpmPagesWorkflow(
       readText(join(cwd, "generated-repo", ".github", "workflows", "publish.yml")),
     );
+  });
+
+  it("uses an explicit dependency spec override for init scaffolds", () => {
+    const cwd = makeTemporaryDirectory();
+    const previousSpec = process.env["TOGOSTANZA_DEPENDENCY_SPEC"];
+    process.env["TOGOSTANZA_DEPENDENCY_SPEC"] = "git+file:///tmp/togostanza-release-smoke#phase-12";
+
+    try {
+      const result = routeCli(
+        [
+          "init",
+          "--name",
+          "generated-repo",
+          "--package-manager",
+          "npm",
+          "--skip-install",
+          "--skip-git",
+        ],
+        {
+          cwd,
+        },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBeUndefined();
+      const packageJson = readJson(join(cwd, "generated-repo", "package.json")) as {
+        dependencies: Record<string, string>;
+      };
+
+      expect(packageJson.dependencies.togostanza).toBe(
+        "git+file:///tmp/togostanza-release-smoke#phase-12",
+      );
+    } finally {
+      if (previousSpec === undefined) {
+        delete process.env["TOGOSTANZA_DEPENDENCY_SPEC"];
+      } else {
+        process.env["TOGOSTANZA_DEPENDENCY_SPEC"] = previousSpec;
+      }
+    }
   });
 
   it("creates an init scaffold in the current directory", () => {

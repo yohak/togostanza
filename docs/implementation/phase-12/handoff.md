@@ -35,6 +35,11 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
   - install後のCLIで `--version`、`init --name`、`generate stanza`、`build` を確認する。
   - install後に `togostanza/stanza` と `togostanza/config` の実行時解決と型解決を確認する。
   - install対象に `docs/`、`references/`、`src/`、`test/`、`workbench/` が混入していないことを確認する。
+- 生成repoの `dependencies.togostanza` をGitHub dependency運用へ寄せた。
+  - 通常生成では `github:yohak/togostanza#<tag-or-sha>` をplaceholderとして書く。
+  - 生成READMEには、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallすることを書く。
+  - `TOGOSTANZA_DEPENDENCY_SPEC` で、release手順やlocal smoke用の具体dependency specを注入できるようにした。
+  - `test:github-dependency:local` は `git+file://...#ref` を注入し、生成repoのdependencyに反映されることを確認する。
 
 ## package surface判断
 
@@ -46,7 +51,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | `exports` | `./config` と `./stanza` を維持する。 |
 | root export | 追加しない。 |
 | `main` / top-level `types` | 追加しない。 |
-| generated repo `dependencies.togostanza` | `^<package version>` を維持する。`0.0.0` のまま公開しない。 |
+| generated repo `dependencies.togostanza` | 通常生成では `github:yohak/togostanza#<tag-or-sha>` をplaceholderとして書く。release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体refを注入する。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 10系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
 | GitHub dependency release ref | `git add -f dist/` でbuild済み `dist/` を含める。 |
@@ -101,7 +106,7 @@ mise exec -- pnpm run test:compat:local
 - `private` を外すタイミングを人間が確認する。
 - repository、homepage、bugsのURLを実際の公開リポジトリに合わせて設定する。
 - 公開GitHub dependency用のrelease branchを作り、`git add -f dist/` でbuild済み `dist/` を含める。
-- tagまたはcommit SHAを生成repoの `dependencies.togostanza` へ反映する。
+- 実releaseで使うtagまたはcommit SHAを決め、生成repoの `dependencies.togostanza` placeholderへ反映する。
 - 公開GitHub refを使ったnpm / pnpm install確認を行う。
 - npm publishへ進む場合のみ、`npm publish --dry-run` 相当でtarball内容を再確認する。
 - GitHub Actions live deployを行う場合は、対象リポジトリ、公開先、権限、cleanup方針を確認する。

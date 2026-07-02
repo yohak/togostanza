@@ -156,10 +156,28 @@ function runGitDependencyInstallSmoke(input) {
       "--skip-install",
       "--skip-git",
     ],
-    { cwd: input.projectDirectory },
+    {
+      cwd: input.projectDirectory,
+      env: {
+        TOGOSTANZA_DEPENDENCY_SPEC: input.gitSpec,
+      },
+    },
   );
 
   const stanzaRepository = join(input.projectDirectory, stanzaRepoName);
+  const stanzaPackageJson = JSON.parse(
+    readFileSync(join(stanzaRepository, "package.json"), "utf8"),
+  );
+  if (stanzaPackageJson.dependencies?.togostanza !== input.gitSpec) {
+    throw new Error(
+      [
+        "Generated Stanza repository did not use the smoke dependency spec.",
+        `expected: ${input.gitSpec}`,
+        `actual: ${stanzaPackageJson.dependencies?.togostanza}`,
+      ].join("\n"),
+    );
+  }
+
   run(binaryPath, ["generate", "stanza", "hello"], { cwd: stanzaRepository });
   run(binaryPath, ["build"], { cwd: stanzaRepository });
 
@@ -270,6 +288,7 @@ function run(command, args, options) {
     encoding: "utf8",
     env: {
       ...process.env,
+      ...options.env,
       npm_config_audit: "false",
       npm_config_fund: "false",
     },

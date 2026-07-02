@@ -1,6 +1,5 @@
 import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { packageMetadata } from "../index.js";
 import { getBooleanOption, getStringOption, parseOptions } from "./options.js";
 import { resolvePackageManager, type PackageManager } from "./package-manager.js";
 import { failure, success, type CliResult } from "./result.js";
@@ -13,6 +12,8 @@ export type InitOptions = {
   gitRunner?: CommandRunner;
   installRunner?: CommandRunner;
 };
+
+const defaultTogoStanzaDependencySpec = "github:yohak/togostanza#<tag-or-sha>";
 
 export function handleInit(args: readonly string[], options: InitOptions = {}): CliResult {
   const parsedResult = parseOptions(args, [
@@ -199,11 +200,15 @@ function formatReadme(input: { name: string; packageManager: PackageManager }): 
     input.packageManager === "pnpm"
       ? "If this repository was initialized with `--skip-install`, run the install command locally with pnpm 10 and commit the generated lockfile before pushing to `main`."
       : "If this repository was initialized with `--skip-install`, run the install command locally and commit the generated lockfile before pushing to `main`.";
+  const dependencyGuidance =
+    "If `package.json` contains `github:yohak/togostanza#<tag-or-sha>`, replace `<tag-or-sha>` with the TogoStanza release tag or commit SHA before installing dependencies.";
 
   return [
     `# ${input.name}`,
     "",
     "A TogoStanza repository.",
+    "",
+    dependencyGuidance,
     "",
     "## Development",
     "",
@@ -256,12 +261,16 @@ function createPackageJson(input: { license: string; name: string }): Record<str
       serve: "togostanza serve",
     },
     dependencies: {
-      togostanza: `^${packageMetadata.version}`,
+      togostanza: resolveTogoStanzaDependencySpec(),
     },
     engines: {
       node: ">=24.5.0",
     },
   };
+}
+
+function resolveTogoStanzaDependencySpec(): string {
+  return process.env["TOGOSTANZA_DEPENDENCY_SPEC"]?.trim() || defaultTogoStanzaDependencySpec;
 }
 
 function createTsConfig(): Record<string, unknown> {
