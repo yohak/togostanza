@@ -312,9 +312,38 @@ fixture data:
 - この確認は生成されたStanza artifact単体のdirect embed smokeであり、TogoMedium Webアプリ本体のE2E、実API接続、画面遷移、ユーザー操作網羅、pixel-level比較は含めない。
 - `check-all` のhermetic browser suiteで、低頻度の `togostanza build` 失敗が観測された。再実行では解消し、Phase 11-2のTogoMedium smoke由来ではない。次に再現した場合は、Vite / esbuildが出すエラー全文、対象fixture、一時出力先を捕捉し、Phase XまたはCI化前の調査項目として扱う。
 
+## Phase 11-3 リメイク版TogoMedium Web route smoke: 2026-07-02
+
+Phase 11-3では、TogoMedium Webアプリ本体をVite dev serverで起動し、別ポートで動くリメイク版 `togostanza serve` からTogoMedium Stanza bundleを読み込む最小E2Eを確認した。
+
+確認コマンド:
+
+- `cd package && mise exec -- pnpm run test:compat:local`
+
+確認した経路:
+
+- 一時Stanzaリポジトリrootへ `references/togomedium-web/@packages/stanza` の全15 Stanzaをsymlinkした。
+- 一時rootで `togostanza serve --port <stanza-port>` を起動した。
+- `references/togomedium-web/@packages/web` をVite dev serverで起動した。
+- Webアプリ側の `VITE_URL_STANZA` を `http://127.0.0.1:<stanza-port>` に向けた。
+- `/find-media-by-components` をブラウザで開き、Webアプリが `<script src="<stanza-serve>/gmdb-find-media-by-components.js">` を生成し、`<togostanza-gmdb-find-media-by-components>` がupgradeしてShadow DOM内で最小描画されることを確認した。
+
+観測結果:
+
+- TogoMedium WebアプリのVite dev serverはreferencesを直接変更せずに起動できた。Vite cacheは一時ディレクトリへ向けた。
+- Webアプリのローカルサーバーから、別ポートの `togostanza serve` が配信するStanza module scriptを読み込めた。
+- `togostanza serve` のloopback CORS許可により、TogoMedium Webローカル確認の基本経路が成立した。
+- browser console error、pageerror、fatal failed requestは発生しなかった。
+
+差分と制約:
+
+- 確認したのは `/find-media-by-components` の1ルートだけであり、Webアプリ全画面の巡回、実API接続、ユーザー操作、画面遷移、pixel-level比較は含めない。
+- TogoMedium Webの外部共通ヘッダーscriptは、Stanza互換のfatal failureとして扱わない。
+- Webアプリ側の環境変数は検証用に `VITE_URL_STANZA` をローカル `togostanza serve` へ向けた。公開環境のURL設計や配布済みStanzaのホスティングはPhase Xで扱う。
+
 ### Phase 11へ送るもの
 
-- TogoMedium Webアプリ本体E2E。
+- TogoMedium Webアプリ本体の追加E2E。Phase 11-3では1ルートのlocal smokeまで確認済み。
 - React / Vue / Emotion / MUIの広いversion matrix。
 - Runtime edge semantics。
 - hermetic browser suiteの低頻度build flakeが再現した場合の原因調査。

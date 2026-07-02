@@ -14,7 +14,7 @@ import {
 import { createServer, type Server } from "node:http";
 import { tmpdir } from "node:os";
 import { dirname, extname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, test, type ConsoleMessage, type Page, type Request } from "@playwright/test";
 import {
   assertCompatLocalReferencesReady,
@@ -1027,6 +1027,61 @@ test("directly embeds all real TogoMedium Stanzas @compat-local", async ({ page 
   }
 });
 
+test("loads a real TogoMedium Web route against local Stanza serve @compat-local", async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  assertCompatLocalReferencesReady(repositoryRoot);
+  assertExpectedCompatLocalStanzaDirectories(repositoryRoot);
+
+  const cwd = makeTemporaryDirectory();
+  writeTogoMediumRegressionRepo(cwd);
+
+  const stanzaPort = await findAvailablePort();
+  const webPort = await findAvailablePort();
+  const stanzaServe = startServeCli(["serve", "--port", String(stanzaPort)], cwd);
+  let webServe: RunningProcess | undefined;
+
+  try {
+    await stanzaServe.waitForStdout(`http://127.0.0.1:${stanzaPort}/`);
+    webServe = startTogoMediumWebServer({
+      port: webPort,
+      stanzaBaseUrl: `http://127.0.0.1:${stanzaPort}`,
+      temporaryRoot: cwd,
+    });
+    await waitForHttpOk(
+      `http://127.0.0.1:${webPort}/find-media-by-components`,
+      () => webServe?.output() ?? "",
+    );
+
+    const diagnostics = collectBrowserDiagnostics(page);
+
+    try {
+      await page.goto(`http://127.0.0.1:${webPort}/find-media-by-components`, {
+        waitUntil: "domcontentloaded",
+      });
+      await page.waitForFunction(() =>
+        customElements.get("togostanza-gmdb-find-media-by-components"),
+      );
+      await expectTogoMediumHostReady(page, "togostanza-gmdb-find-media-by-components");
+
+      const scriptSrc = await page
+        .locator('script[src$="/gmdb-find-media-by-components.js"]')
+        .evaluate((element) => (element as HTMLScriptElement).src);
+      expect(scriptSrc).toBe(`http://127.0.0.1:${stanzaPort}/gmdb-find-media-by-components.js`);
+      expect(diagnostics.consoleErrors).toEqual([]);
+      expect(filterFatalFailedRequests(diagnostics.failedRequests)).toEqual([]);
+      expect(customElementDuplicateDefinitionErrors(diagnostics.pageErrors)).toEqual([]);
+      expect(diagnostics.pageErrors).toEqual([]);
+    } finally {
+      diagnostics.dispose();
+    }
+  } finally {
+    await webServe?.close();
+    await stanzaServe.close();
+  }
+});
+
 test("renders a Vue SFC Stanza from repository dependencies", async ({ page }) => {
   test.setTimeout(20_000);
 
@@ -1455,6 +1510,7 @@ function filterFatalFailedRequests(failedRequests: readonly string[]): string[] 
   return failedRequests.filter(
     (request) =>
       !request.startsWith("https://cdn.jsdelivr.net/npm/katex@") &&
+      !request.startsWith("https://dbcls.rois.ac.jp/DBCLS-common-header-footer/") &&
       !request.startsWith("https://fonts.googleapis.com/"),
   );
 }
@@ -1687,6 +1743,11 @@ type RunningCli = {
   waitForStdout(text: string): Promise<void>;
 };
 
+type RunningProcess = {
+  close(): Promise<void>;
+  output(): string;
+};
+
 function startServeCli(args: string[], cwd: string): RunningCli {
   const child = spawn(process.execPath, [resolve(packageRoot, "bin/togostanza.mjs"), ...args], {
     cwd,
@@ -1725,11 +1786,121 @@ function startServeCli(args: string[], cwd: string): RunningCli {
   };
 }
 
+function startTogoMediumWebServer(input: {
+  port: number;
+  stanzaBaseUrl: string;
+  temporaryRoot: string;
+}): RunningProcess {
+  const referenceRoot = resolve(repositoryRoot, "references", "togomedium-web");
+  const webRoot = resolve(referenceRoot, "@packages", "web");
+  const originalConfigUrl = pathToFileURL(resolve(webRoot, "vite.config.ts")).href;
+  const cacheDirectory = resolve(input.temporaryRoot, ".vite-togomedium-web");
+  const configPath = resolve(input.temporaryRoot, "togomedium-web.vite.config.mjs");
+
+  writeFileSync(
+    configPath,
+    [
+      `import originalConfig from ${JSON.stringify(originalConfigUrl)};`,
+      "",
+      "export default async function config(env) {",
+      "  const base = typeof originalConfig === 'function' ? await originalConfig(env) : originalConfig;",
+      "  return {",
+      "    ...base,",
+      `    cacheDir: ${JSON.stringify(cacheDirectory)},`,
+      "    server: {",
+      "      ...(base.server ?? {}),",
+      "      host: '127.0.0.1',",
+      `      port: ${input.port},`,
+      "      strictPort: true,",
+      "    },",
+      "  };",
+      "}",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+
+  const child = spawn(
+    process.execPath,
+    [
+      resolve(referenceRoot, "node_modules", "vite", "bin", "vite.js"),
+      webRoot,
+      "--config",
+      configPath,
+      "--host",
+      "127.0.0.1",
+      "--port",
+      String(input.port),
+      "--strictPort",
+    ],
+    {
+      cwd: webRoot,
+      env: {
+        ...process.env,
+        VITE_URL_API: "https://togomedium.local/api/",
+        VITE_URL_STANZA: input.stanzaBaseUrl,
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
+  let stdout = "";
+  let stderr = "";
+
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk: string) => {
+    stdout += chunk;
+  });
+  child.stderr.on("data", (chunk: string) => {
+    stderr += chunk;
+  });
+
+  return {
+    close: async () => {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        return;
+      }
+
+      const closed = waitForChildClose(child);
+      child.kill("SIGTERM");
+      await closed;
+    },
+    output: () => `${stdout}${stderr}`,
+  };
+}
+
 async function findAvailablePort(): Promise<number> {
   const server = await startStaticServer(tmpdir(), []);
   const port = addressPort(server);
   await closeServer(server);
   return port;
+}
+
+async function waitForHttpOk(url: string, formatProcessOutput: () => string): Promise<void> {
+  const timeoutAt = Date.now() + 30_000;
+  let lastError = "";
+
+  while (Date.now() < timeoutAt) {
+    try {
+      // eslint-disable-next-line no-await-in-loop -- polling waits for the dev server to become reachable.
+      const response = await fetch(url);
+
+      if (response.ok) {
+        return;
+      }
+
+      lastError = `HTTP ${response.status}`;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+
+    // eslint-disable-next-line no-await-in-loop -- polling intentionally waits between attempts.
+    await new Promise((resolveWait) => setTimeout(resolveWait, 100));
+  }
+
+  throw new Error(
+    `Timed out waiting for ${url}. lastError=${lastError} output=${formatProcessOutput()}`,
+  );
 }
 
 function waitForChildClose(child: ChildProcess): Promise<void> {
