@@ -11,7 +11,13 @@ const packageJson = JSON.parse(
       import?: string;
       types?: string;
     };
+    "./stanza"?: {
+      default?: string;
+      import?: string;
+      types?: string;
+    };
   };
+  files?: string[];
   name: string;
   version: string;
 };
@@ -35,5 +41,17 @@ describe("package identity", () => {
       import: "./dist/config.js",
       types: "./dist/config.d.ts",
     });
+  });
+
+  it("exports the public Stanza base class subpath used by Stanza source", () => {
+    expect(packageJson.exports?.["./stanza"]).toEqual({
+      default: "./dist/stanza.js",
+      import: "./dist/stanza.js",
+      types: "./dist/stanza.d.ts",
+    });
+  });
+
+  it("limits packed files to the executable and compiled distribution", () => {
+    expect(packageJson.files).toEqual(["bin/", "dist/"]);
   });
 });

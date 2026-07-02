@@ -197,6 +197,12 @@ cd package && mise exec -- pnpm run test:compat:local
 
 pack smokeの具体コマンドは、Phase 12-1で実装する手順またはscriptを正とする。sandbox環境ではなく、ユーザーのローカル環境で承認付き通常実行を優先する。
 
+Phase 12-1で追加したpack smoke:
+
+```sh
+cd package && mise exec -- pnpm run test:distribution:local
+```
+
 ## 残す論点
 
 - `private` をPhase 12中に外すか、publish直前まで維持するか。
