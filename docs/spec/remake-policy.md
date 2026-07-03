@@ -209,6 +209,27 @@ Stanza stylesheetは `style.scss` を正とする。`stanza.scss` は旧ドキ�
 
 CLI exit codeは、成功時 `0`、失敗時non-zeroを維持する。細かいerror code分類は今回の仕様スコープでは扱わない。
 
+### `serve` の実装方式
+
+リメイク版の `serve` は、`build` と同じビルドパイプラインを一時ディレクトリへ実行し、その生成物を専用のHTTPサーバーで配信する方式を採用する。Vite dev server、`vite build --watch`、`vite preview` の組み合わせは採用しない。
+
+Vite dev serverを採用しない理由:
+
+- `serve` が配信するものは、外部ページへ直接埋め込める自己完結のbuild相当生成物である。Vite dev serverが配信する開発用モジュールグラフは、この埋め込み契約を満たさない。
+
+`vite build --watch` を採用しない理由:
+
+- 再ビルドを引き起こすべき入力の多くが、バンドラのモジュールグラフの外にある。`style.scss` はViteの外でSassとしてコンパイルされ、asset、`metadata.json`、templateも同様である。
+- watch開始時にエントリーポイントの一覧が固定されるため、`serve` 実行中のStanza追加や削除を検知できない。
+- これらをVite pluginで補うことは、独自のwatcherをpluginの内側へ書き直すことと同等になり、簡素化にならない。
+
+`vite preview` を採用しない理由:
+
+- ビルド失敗時にHTTP 500でエラー内容を返す契約と、Stanza単位のエラー隔離は、静的配信では表現できない。再ビルド失敗時に古い生成物を無言で配信し続けることを避ける。
+- リメイク版の `serve` は、再ビルドを新しい一時ディレクトリへ行い、完了後に配信対象を切り替える。出力先を直接書き換える方式では、再ビルド中に書きかけの生成物を配信し得る。この原子性は、別のローカルWebアプリが `serve` からStanzaを読み込む利用で意味を持つ。
+
+このトレードオフとして、バンドラのwatch増分キャッシュは使わず、再ビルドは対象Stanza単位のフルビルドになる。再ビルド速度が問題になった場合は、配信側の構造を維持したまま、ビルド呼び出しへwatch設定を渡す改善を後続判断として扱う。
+
 ## ScaffoldとGenerator
 
 `togostanza init` はStanza repositoryを作る入口として維持する。
@@ -239,6 +260,17 @@ CLI exit codeは、成功時 `0`、失敗時non-zeroを維持する。細かいe
 `defineTogoStanzaConfig()` を提供し、TogoStanza専用設定を中心にする。必要な範囲でVite pluginやVite configを渡せるescape hatchを用意する。
 
 旧 `togostanza-build.mjs/js` を無条件に実行しない。検出した場合は、現行版で有効だった可能性を踏まえて、分かりやすいwarningまたはerrorを出し、移行メモで移行先を案内する。
+
+### ビルド基盤としてのVite
+
+リメイク版は、Rolldownを直接使わず、Viteをビルド基盤として維持する。
+
+`serve` がVite dev serverを使わないことは、Viteを外す理由にしない。リメイク版がViteから使っているものはdev serverではなく、plugin機構とビルドパイプラインである。
+
+- framework対応は、Stanza開発者が `togostanza.config.ts` へVite pluginを追加する方式を開発契約にしている。`@vitejs/plugin-vue` のようにVite専用フックへ依存するpluginがあり、Rolldownの直接利用ではこの契約を維持できない。
+- CSS処理（importされたCSSの収集とマージ、`url()` の書き換え）、`.env` と `import.meta.env`、assetのemitは、Vite層の機能として使っている。
+- 使用中のVite 8は、内部バンドラとしてRolldownを使う。バンドル性能の利益はVite経由でも得られており、Rolldownの直接利用で追加の性能利益はほぼない。
+- Rolldown本体のバージョン追従とAPI変化は、Vite経由で吸収する。
 
 ## Framework
 
