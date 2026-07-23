@@ -18,7 +18,7 @@ Phase 10では、Phase 6とPhase 7で既に解消済みの事項を再実装し�
   - `npm run build` / `pnpm build` と `npm run serve` / `pnpm serve` の基本手順。
   - `togostanza build` / `togostanza serve` との関係。
   - GitHub Pages workflowの概要。
-  - npmでは `package-lock.json`、pnpmではpnpm 10系の `pnpm-lock.yaml` をcommitする前提。
+  - npmでは `package-lock.json`、pnpmではpnpm 11系の `pnpm-lock.yaml` をcommitする前提。
   - `--skip-install` で初期化した場合は、後からinstallしてlockfileをcommitする必要があること。
 - `package.json` に既に生成している `scripts.build` / `scripts.serve` の挙動をREADMEとtestで確認している。
 - `index.ts` / `index.tsx` 生成option、bare `init` prompt、CLI library採用、細かいerror code分類をPhase 10で実装しない場合、その理由と後続先を記録している。
@@ -102,10 +102,10 @@ Phase 10では、GitHub Pages workflowを「公開後の通常利用手順」と
 | 項目 | Phase 10での扱い |
 | --- | --- |
 | `dependencies.togostanza` が `^0.0.0` で生成されること | Phase 12へ送る。`^0.0.0` は実質的に `0.0.0` 固定なので、将来publish versionを上げたpackage解決にはそのまま使えない可能性がある。Phase 10ではdependency specを変更せず、publish versionと配布方針を決めるPhase 12で確定する。 |
-| workflowがlockfileを前提にすること | Phase 10でREADMEと001へ記録する。npmでは `package-lock.json`、pnpmではpnpm 10系の `pnpm-lock.yaml` をcommitする前提にする。 |
+| workflowがlockfileを前提にすること | Phase 10でREADMEと001へ記録する。npmでは `package-lock.json`、pnpmではpnpm 11系の `pnpm-lock.yaml` をcommitする前提にする。 |
 | `--skip-install` 後にlockfile無しでpushするとworkflowが失敗しうること | Phase 10でREADMEと001へ記録する。skipした場合は後からinstallし、lockfileをcommitしてからpushする案内にする。 |
 | Action major tag運用 | Phase 10では、生成workflowが使うAction major tagをREADMEまたは001で説明する。Action versionを外部互換契約にはせず、tag更新やlive validationはPhase 12または保守更新で扱う。 |
-| `packageManager` field | Phase 10では生成しない方針を維持する。pnpm workflowはpnpm 10系を明示する。`packageManager` fieldを生成するかどうかは、Phase 12または後続のdeveloper experience改善で再判断する。 |
+| `packageManager` field | Phase 10では生成しない方針を維持する。pnpm workflowはpnpm 11系を明示する。`packageManager` fieldを生成するかどうかは、Phase 12または後続のdeveloper experience改善で再判断する。 |
 
 Phase 10のhandoffには、実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開npm package解決を扱うPhase 12以降の確認であると記録する。
 

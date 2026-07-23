@@ -651,20 +651,20 @@ function expectNpmPagesWorkflow(workflow: string): void {
   expect(workflow).toContain("npm ci");
   expect(workflow).toContain("npm exec togostanza build");
   expect(workflow).not.toContain("pnpm/action-setup");
-  expect(workflow).not.toContain("pnpm install --frozen-lockfile");
+  expect(workflow).not.toContain("pnpm ci");
   expect(workflow).not.toContain("will be enabled in Phase 2");
 }
 
 function expectPnpmPagesWorkflow(workflow: string): void {
   expectCommonPagesWorkflow(workflow);
   expect(workflow).toContain("pnpm/action-setup@v6");
-  expect(workflow).toContain("version: 10");
+  expect(workflow).toContain("version: 11");
   expect(workflow).toContain("run_install: false");
   expect(workflow).toContain("cache: pnpm");
   expect(workflow).toContain("cache-dependency-path: pnpm-lock.yaml");
-  expect(workflow).toContain("pnpm install --frozen-lockfile");
+  expect(workflow).toContain("pnpm ci");
   expect(workflow).toContain("pnpm exec togostanza build");
-  expect(workflow).not.toContain("npm ci");
+  expect(workflow).not.toContain("- run: npm ci");
   expect(workflow).not.toContain("will be enabled in Phase 2");
 }
 

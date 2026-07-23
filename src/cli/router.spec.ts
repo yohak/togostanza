@@ -300,6 +300,7 @@ describe("CLI router", () => {
       [
         "allowBuilds:",
         "  '@parcel/watcher': true",
+        "  esbuild: true",
         "onlyBuiltDependencies:",
         "  - '@parcel/watcher'",
         "  - esbuild",
@@ -310,9 +311,9 @@ describe("CLI router", () => {
     expect(readme).toContain("pnpm build");
     expect(readme).toContain("pnpm serve");
     expect(readme).toContain("pnpm exec togostanza generate stanza hello");
-    expect(readme).toContain("pnpm install --frozen-lockfile");
+    expect(readme).toContain("pnpm ci");
     expect(readme).toContain("pnpm-lock.yaml");
-    expect(readme).toContain("pnpm 10");
+    expect(readme).toContain("pnpm 11");
   });
 
   it("uses --name as a package name override for init .", () => {
@@ -1754,22 +1755,22 @@ function expectNpmPagesWorkflow(workflow: string): void {
   expect(workflow).toContain("npm ci");
   expect(workflow).toContain("npm exec togostanza build");
   expect(workflow).not.toContain("pnpm/action-setup");
-  expect(workflow).not.toContain("pnpm install --frozen-lockfile");
+  expect(workflow).not.toContain("pnpm ci");
   expect(workflow).not.toContain("will be enabled in Phase 2");
 }
 
 function expectPnpmPagesWorkflow(workflow: string): void {
   expectCommonPagesWorkflow(workflow);
   expect(workflow).toContain("pnpm/action-setup@v6");
-  expect(workflow).toContain("version: 10");
+  expect(workflow).toContain("version: 11");
   expect(workflow).toContain("run_install: false");
   expect(workflow).toContain("actions/setup-node@v6");
   expect(workflow).toContain("node-version: 24");
   expect(workflow).toContain("cache: pnpm");
   expect(workflow).toContain("cache-dependency-path: pnpm-lock.yaml");
-  expect(workflow).toContain("pnpm install --frozen-lockfile");
+  expect(workflow).toContain("pnpm ci");
   expect(workflow).toContain("pnpm exec togostanza build");
-  expect(workflow).not.toContain("npm ci");
+  expect(workflow).not.toContain("- run: npm ci");
   expect(workflow).not.toContain("will be enabled in Phase 2");
 }
 

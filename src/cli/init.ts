@@ -204,17 +204,16 @@ function formatReadme(input: {
       ? "pnpm exec togostanza generate stanza hello"
       : "npm exec togostanza generate stanza hello";
   const lockfile = input.packageManager === "pnpm" ? "pnpm-lock.yaml" : "package-lock.json";
-  const workflowInstall =
-    input.packageManager === "pnpm" ? "pnpm install --frozen-lockfile" : "npm ci";
+  const workflowInstall = input.packageManager === "pnpm" ? "pnpm ci" : "npm ci";
   const workflowBuild =
     input.packageManager === "pnpm" ? "pnpm exec togostanza build" : "npm exec togostanza build";
   const lockfileGuidance =
     input.packageManager === "pnpm"
-      ? `Commit \`${lockfile}\` generated with pnpm 10 so the workflow can run reproducible installs with \`${workflowInstall}\`.`
+      ? `Commit \`${lockfile}\` generated with pnpm 11 so the workflow can run reproducible installs with \`${workflowInstall}\`.`
       : `Commit \`${lockfile}\` so the workflow can run reproducible installs with \`${workflowInstall}\`.`;
   const skipInstallGuidance =
     input.packageManager === "pnpm"
-      ? "If this repository was initialized with `--skip-install`, run the install command locally with pnpm 10 and commit the generated lockfile before pushing to `main`."
+      ? "If this repository was initialized with `--skip-install`, run the install command locally with pnpm 11 and commit the generated lockfile before pushing to `main`."
       : "If this repository was initialized with `--skip-install`, run the install command locally and commit the generated lockfile before pushing to `main`.";
   const dependencyGuidance =
     input.dependencySpec === defaultTogoStanzaDependencySpec
@@ -319,6 +318,7 @@ function formatPnpmWorkspace(): string {
   return [
     "allowBuilds:",
     "  '@parcel/watcher': true",
+    "  esbuild: true",
     "onlyBuiltDependencies:",
     "  - '@parcel/watcher'",
     "  - esbuild",
@@ -332,7 +332,7 @@ function formatPagesWorkflow(packageManager: PackageManager): string {
       ? [
           "      - uses: pnpm/action-setup@v6",
           "        with:",
-          "          version: 10",
+          "          version: 11",
           "          run_install: false",
           "      - uses: actions/setup-node@v6",
           "        with:",
@@ -347,7 +347,7 @@ function formatPagesWorkflow(packageManager: PackageManager): string {
           "          cache: npm",
           "          cache-dependency-path: package-lock.json",
         ];
-  const installCommand = packageManager === "pnpm" ? "pnpm install --frozen-lockfile" : "npm ci";
+  const installCommand = packageManager === "pnpm" ? "pnpm ci" : "npm ci";
   const buildCommand =
     packageManager === "pnpm" ? "pnpm exec togostanza build" : "npm exec togostanza build";
 

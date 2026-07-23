@@ -314,7 +314,7 @@ togostanza init . --skip-install --skip-git
 - workflowは `build` jobで依存をインストールし、`togostanza build` を実行し、`dist/` をPages artifactとしてuploadする。
 - workflowは `deploy` jobでupload済みartifactをGitHub Pagesへdeployする。
 - npm向けworkflowは `npm ci` と `npm exec togostanza build` を使う。
-- pnpm向けworkflowは `pnpm/action-setup` でpnpm 10系を用意し、`pnpm install --frozen-lockfile` と `pnpm exec togostanza build` を使う。
+- pnpm向けworkflowは `pnpm/action-setup` でpnpm 11系を用意し、`pnpm ci` と `pnpm exec togostanza build` を使う。
 - npm向けworkflowにpnpm固有stepは混ざらない。
 - pnpm向けworkflowに `npm ci` は混ざらない。
 - Phase 1のplaceholder文言は残らない。
@@ -334,9 +334,9 @@ togostanza init . --skip-install --skip-git
 ### lockfile前提
 
 - npm向けworkflowは `npm ci` を使うため、`package-lock.json` をcommitしてからpushする前提である。
-- pnpm向けworkflowは `pnpm install --frozen-lockfile` を使うため、`pnpm-lock.yaml` をcommitしてからpushする前提である。
-- pnpm向けworkflowはpnpm 10系を使うため、`pnpm-lock.yaml` もpnpm 10系で生成してcommitする前提である。
-- `--skip-install` の場合はlockfileが生成されないため、Stanza開発者が `npm install` またはpnpm 10系の `pnpm install` を実行し、lockfileをcommitしてからpushする必要がある。
+- pnpm向けworkflowは `pnpm ci` を使うため、`pnpm-lock.yaml` をcommitしてからpushする前提である。
+- pnpm向けworkflowはpnpm 11系を使うため、`pnpm-lock.yaml` もpnpm 11系で生成してcommitする前提である。
+- `--skip-install` の場合はlockfileが生成されないため、Stanza開発者が `npm install` またはpnpm 11系の `pnpm install` を実行し、lockfileをcommitしてからpushする必要がある。
 
 ### 現行版との差分
 
@@ -372,7 +372,7 @@ pnpm run build:local
 - 生成READMEは、`togostanza build` / `togostanza serve` がpackage scriptから呼ばれる関係を書く。
 - 生成READMEは、`generate stanza <id>` に相当する入口を書く。
 - 生成READMEは、GitHub Pages workflowが依存をインストールし、`togostanza build` を実行し、`dist/` をPages artifactとしてdeployする流れを書く。
-- 生成READMEは、npmでは `package-lock.json`、pnpmではpnpm 10系の `pnpm-lock.yaml` をcommitする前提を書く。
+- 生成READMEは、npmでは `package-lock.json`、pnpmではpnpm 11系の `pnpm-lock.yaml` をcommitする前提を書く。
 - 生成READMEは、`--skip-install` で初期化した場合は後からinstallし、lockfileをcommitしてからpushする必要があることを書く。
 - 生成READMEには、Phase番号、workbench、repo-local CLI、pack install未検証などの本リポジトリ内部事情を書かない。
 
@@ -390,5 +390,5 @@ pnpm run build:local
 - release手順やlocal smokeでは、`TOGOSTANZA_DEPENDENCY_SPEC` で具体dependency specを注入できる。
 - placeholderのまま `init` の既定installへ進む場合は、scaffold作成前に明示診断で失敗する。`--skip-install` または具体dependency specの注入が必要。
 - 生成workflowのAction major tagは、Phase 2-6で確認済みのtagを使う。Action versionは外部互換契約にはせず、tag更新やlive validationはPhase 12または保守更新で扱う。
-- `packageManager` fieldはPhase 10では生成しない。pnpm workflowはpnpm 10系を明示する。
+- `packageManager` fieldはPhase 10では生成しない。pnpm workflowはpnpm 11系を明示する。
 - 実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開GitHub refの作成と実release tag / commit SHAの反映後に確認する。

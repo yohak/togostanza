@@ -33,9 +33,9 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | engines.node | `>=24.5.0` | Phase 12時点では維持する。GitHub dependency運用前に利用者環境と再確認する。 |
 | packageManager | rootの `package.json` で固定 | 開発パッケージの固定として維持する。 |
 | generated repo `dependencies.togostanza` | `github:yohak/togostanza#<tag-or-sha>` | 通常生成ではplaceholderを書き、release時にtagまたはcommit SHAへ差し替える。 |
-| generated repo `packageManager` field | なし | `init` は生成しない。pnpm workflowはpnpm 10系を明示する。 |
+| generated repo `packageManager` field | なし | `init` は生成しない。pnpm workflowはpnpm 11系を明示する。 |
 | initial release branch | `release/yohak-github-dependency-20260723` | 初回GitHub dependency release refとして使う。 |
-| initial release tag | `yohak-github-20260723` | organization名を明示し、現行版やnpm versionと混同しないtag名にする。 |
+| initial release tag | `yohak-github-20260723` | organization名を明示し、現行版やnpm versionと混同しないtag名にする。同じ日付の初期調整では、tag名を増やさず必要に応じてcache削除で対応する。 |
 
 ## GitHub dependency release前に必ず確認すること
 
@@ -54,7 +54,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 - 生成READMEに、`<tag-or-sha>` をrelease tagまたはcommit SHAへ差し替えてからinstallする案内がある。
 - `files` によってinstall対象が最小化されている。
 - install対象に `dist/test/` やtest supportが混入していない。
-- GitHub Pages workflowで使うlockfileとpnpm 10系の前提がREADMEに残っている。
+- GitHub Pages workflowで使うlockfileとpnpm 11系の前提がREADMEに残っている。
 
 ## release ref作成手順
 
@@ -127,6 +127,15 @@ TOGOSTANZA_DEPENDENCY_SPEC=${DEPENDENCY_SPEC} pnpm --package ${DEPENDENCY_SPEC} 
 
 `--skip-install` で生成する場合は、生成後に `package.json` の `github:yohak/togostanza#<tag-or-sha>` を実tagまたはcommit SHAへ差し替えてからinstallする。
 
+pnpmで同名tagの古い内容を掴む場合は、次の順でcacheを削除してから再実行する。
+
+```sh
+pnpm store prune
+rm -rf ~/Library/Caches/pnpm/dlx
+```
+
+`pnpm store prune` はstore metadataとpackage cacheを削除する。`pnpm dlx` が古いtag内容を使い続ける場合は、別途 `~/Library/Caches/pnpm/dlx` の削除が必要になる。
+
 ## rollback / 差し替え手順
 
 - push前に問題が見つかった場合は、tagを削除し、release branchを破棄して通常branchへ戻る。
@@ -138,6 +147,7 @@ git branch -D ${RELEASE_BRANCH}
 ```
 
 - push後に問題が見つかった場合は、原則として既存tagを上書きしない。修正commitから新しいrelease branch / tagを作り、生成repoのdependency specを新しいrefへ差し替える。
+- 初回GitHub dependency releaseのように利用者が限られる場合は、人間判断で同じtagを差し替えてよい。その場合は、pnpmの古いdlx cacheを削除する手順を合わせて案内する。
 - push済みtagの削除や置き換えが必要な場合は、Stanza開発者への影響を確認し、人間承認を受けてから行う。
 
 ## 外部副作用があるため明示承認を受けてから行うこと

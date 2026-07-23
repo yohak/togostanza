@@ -10,7 +10,7 @@ Phase 10では、Stanza開発者向けの生成READMEと、`init` 雛形の最�
   - `generate stanza <id>`
   - GitHub Pages workflowの概要
   - lockfile commit前提
-  - pnpmではpnpm 10系の `pnpm-lock.yaml` をcommitする前提
+  - pnpmではpnpm 11系の `pnpm-lock.yaml` をcommitする前提
   - `--skip-install` 時の注意
 - `init` 雛形に `tsconfig.json` を追加した。
   - `moduleResolution: "bundler"` を含める。

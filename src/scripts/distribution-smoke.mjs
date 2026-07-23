@@ -70,6 +70,13 @@ function runInstallSmoke(input) {
     )}\n`,
     "utf8",
   );
+  if (input.packageManager === "pnpm") {
+    writeFileSync(
+      join(input.projectDirectory, "pnpm-workspace.yaml"),
+      formatPnpmWorkspace(),
+      "utf8",
+    );
+  }
 
   if (input.packageManager === "npm") {
     run("npm", ["install", "--no-audit", "--no-fund", input.tarballPath], {
@@ -112,6 +119,18 @@ function runInstallSmoke(input) {
       throw new Error(`Expected build output was not created: ${outputPath}`);
     }
   }
+}
+
+function formatPnpmWorkspace() {
+  return [
+    "allowBuilds:",
+    "  '@parcel/watcher': true",
+    "  esbuild: true",
+    "onlyBuiltDependencies:",
+    "  - '@parcel/watcher'",
+    "  - esbuild",
+    "",
+  ].join("\n");
 }
 
 function assertPublicSubpaths(projectDirectory) {

@@ -14,7 +14,7 @@ Phase 2-6の設計は [plan.md](./plan.md) を正とする。この文書は設�
 - `build` jobで依存インストール、`togostanza build`、`dist/` のPages artifact uploadを行うようにした。
 - `deploy` jobでupload済みartifactをGitHub Pagesへdeployするようにした。
 - npm向けworkflowでは `npm ci` と `npm exec togostanza build` を使うようにした。
-- pnpm向けworkflowでは `pnpm/action-setup` でpnpm 10系を用意し、`pnpm install --frozen-lockfile` と `pnpm exec togostanza build` を使うようにした。
+- pnpm向けworkflowでは `pnpm/action-setup` でpnpm 11系を用意し、`pnpm ci` と `pnpm exec togostanza build` を使うようにした。
 - npm向けworkflowにpnpm固有stepが混ざらないことを確認した。
 - pnpm向けworkflowに `npm ci` が混ざらないことを確認した。
 - `init --name <dir> --package-manager npm` でnpm向けworkflowを生成することを確認した。
@@ -49,15 +49,15 @@ Phase 2-6の設計は [plan.md](./plan.md) を正とする。この文書は設�
 - workflowは `dist/` 内のURLを書き換えない。
 - `dist/` 生成物のサブパス安全性は、Phase 2-1からPhase 2-5で成立させたbuild / runtime側の責務である。
 - npm向けworkflowは `package-lock.json` がcommitされている前提で `npm ci` を使う。
-- pnpm向けworkflowは、pnpm 10系で生成した `pnpm-lock.yaml` がcommitされている前提で `pnpm install --frozen-lockfile` を使う。
-- `--skip-install` で初期化した場合、Stanza開発者が後から `npm install` またはpnpm 10系の `pnpm install` を実行し、lockfileをcommitしてからpushする必要がある。
+- pnpm向けworkflowは、pnpm 11系で生成した `pnpm-lock.yaml` がcommitされている前提で `pnpm ci` を使う。
+- `--skip-install` で初期化した場合、Stanza開発者が後から `npm install` またはpnpm 11系の `pnpm install` を実行し、lockfileをcommitしてからpushする必要がある。
 - live deploy成功は、公開npm package解決が必要になるためPhase 5で棚卸しし、配布前検証としてはPhase 12の責務である。
 
 ## Phase 3以降で注意すること
 
 - Phase 2-6のworkflowは、公開後のdependency解決を前提にした正しいinstall / build / upload / deploy手順を生成するところまでを完了条件にしている。GitHub Actions上での成功までは確認していない。
 - `dependencies.togostanza` はPhase 2-6時点では `^0.0.0` で生成される。公開npm packageとして解決できる状態はPhase 5で棚卸しし、Phase 12で扱うか判断する。
-- pnpm向けworkflowはpnpm 10系を明示する。別versionのpnpmで生成したlockfileがGitHub Actions上のpnpm 10系で読めるかどうかは、Phase 2-6では互換契約として広げていない。
+- pnpm向けworkflowはpnpm 11系を明示する。別versionのpnpmで生成したlockfileがGitHub Actions上のpnpm 11系で読めるかどうかは、Phase 2-6では互換契約として広げていない。
 - Action major tagは実装時点で確認済みだが、外部互換契約ではない。GitHub Actions側の推奨が変わった場合は保守更新として扱ってよい。
 - GitHub repositoryのPages設定やcustom domainはworkflow生成の範囲外である。後続でREADME案内を追加する場合は、この制約を明記する。
 - `test:browser` を含む完了前確認は、引き続き `cd package && mise exec -- pnpm run check-all` を承認付き通常実行で確認する。

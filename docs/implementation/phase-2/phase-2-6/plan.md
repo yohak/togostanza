@@ -19,7 +19,7 @@ Phase 2-6は、Phase 1で生成していたGitHub Pages workflow placeholderを�
 - `init . --package-manager pnpm` と、既存 `pnpm-lock.yaml` がある `init .` でもpnpm向けworkflowが生成される。
 - workflow生成は、`--skip-install` と `--skip-git` の有無に依存しない。
 - npm向けworkflowには、Node.js setup、`npm ci`、`npm exec togostanza build`、`dist/` のPages artifact upload、Pages deployの流れがある。
-- pnpm向けworkflowには、Node.js setup、pnpm setup、`pnpm install --frozen-lockfile`、`pnpm exec togostanza build`、`dist/` のPages artifact upload、Pages deployの流れがある。
+- pnpm向けworkflowには、Node.js setup、pnpm setup、`pnpm ci`、`pnpm exec togostanza build`、`dist/` のPages artifact upload、Pages deployの流れがある。
 - workflowは、`pages: write` と `id-token: write` を含むPages deploy用permissionsを持つ。
 - workflowは、`dist/` をartifact pathとして使う。
 - workflowは、GitHub Pages側のサブパス配信を前提にし、生成物側の相対URL契約を壊す追加変換を行わない。
@@ -106,12 +106,12 @@ pnpm向けworkflow:
 
 - Node.js 24をセットアップする。
 - 実装時に確認した `pnpm/action-setup@<major>` でpnpmを用意する。
-- `pnpm install --frozen-lockfile` で依存をインストールする。
+- `pnpm ci` で依存をインストールする。
 - `pnpm exec togostanza build` で `dist/` を生成する。
 
 リメイク版の `init` は `package.json` の `packageManager` fieldを書かない方針である。そのため、pnpm向けworkflowではGitHub Actions上でpnpmを明示的に用意する。Phase 2-6では、生成workflowのpnpm versionを `10` 系にする。
 
-pnpm向けworkflowが `pnpm install --frozen-lockfile` を使う以上、Stanza開発者がcommitする `pnpm-lock.yaml` もpnpm 10系で生成する前提にする。別versionのpnpmで生成したlockfileがGitHub Actions上のpnpm 10系で読めるかどうかは、Phase 2-6では互換契約として広げない。将来 `packageManager` fieldを生成する判断をする場合は、その時点でworkflowとlockfile生成案内も見直す。
+pnpm向けworkflowが `pnpm ci` を使う以上、Stanza開発者がcommitする `pnpm-lock.yaml` もpnpm 11系で生成する前提にする。別versionのpnpmで生成したlockfileがGitHub Actions上のpnpm 11系で読めるかどうかは、Phase 2-6では互換契約として広げない。将来 `packageManager` fieldを生成する判断をする場合は、その時点でworkflowとlockfile生成案内も見直す。
 
 ### 2-6c tests / case update
 
@@ -120,7 +120,7 @@ pnpm向けworkflowが `pnpm install --frozen-lockfile` を使う以上、Stanza�
 対象:
 
 - unit testで、npm向けworkflowに `npm ci`、`npm exec togostanza build`、`actions/upload-pages-artifact`、`actions/deploy-pages`、`path: dist` が含まれることを確認する。
-- unit testで、pnpm向けworkflowに `pnpm/action-setup`、`pnpm install --frozen-lockfile`、`pnpm exec togostanza build`、`actions/upload-pages-artifact`、`actions/deploy-pages`、`path: dist` が含まれることを確認する。
+- unit testで、pnpm向けworkflowに `pnpm/action-setup`、`pnpm ci`、`pnpm exec togostanza build`、`actions/upload-pages-artifact`、`actions/deploy-pages`、`path: dist` が含まれることを確認する。
 - unit testで、placeholder文言が残っていないことを確認する。
 - 実装前または実装時に、生成workflowで使うAction major tagがGitHub上に存在することを確認する。
 - integration testで、bin entry経由の `init --package-manager npm` と `init --package-manager pnpm` が実deploy workflowを生成することを確認する。
@@ -149,7 +149,7 @@ GitHub Pagesを有効化するrepository setting、公開branch/source設定、c
 
 npmでは、lockfileが存在する前提の再現可能インストールとして `npm ci` を使う。`init --skip-install` 直後は `package-lock.json` が存在しない可能性があるが、Phase 1で決めたとおり、実インストールとlockfile生成はStanza開発者が後から行う。workflowは、GitHubへpushする前にlockfileを生成してcommitする前提にする。
 
-pnpmでは、`pnpm-lock.yaml` が存在する前提の再現可能インストールとして `pnpm install --frozen-lockfile` を使う。`init --skip-install` 直後は `pnpm-lock.yaml` が存在しない可能性があるが、npmと同じく、Stanza開発者が後からpnpm 10系で `pnpm install` を実行してlockfileをcommitする前提にする。
+pnpmでは、`pnpm-lock.yaml` が存在する前提の再現可能インストールとして `pnpm ci` を使う。`init --skip-install` 直後は `pnpm-lock.yaml` が存在しない可能性があるが、npmと同じく、Stanza開発者が後からpnpm 11系で `pnpm install` を実行してlockfileをcommitする前提にする。
 
 Phase 2-6では、workflow内でlockfileが無い場合にinstall commandを緩める処理は入れない。これは、CI上の依存解決を再現可能にするためである。lockfile未生成時のREADME案内や初期setup手順は、必要なら後続で整える。
 
@@ -160,13 +160,13 @@ Phase 2-6では、workflow内でlockfileが無い場合にinstall commandを緩�
 - `init --name generated-repo --package-manager npm --skip-install --skip-git` がnpm向けworkflowを生成すること。
 - npm向けworkflowに、Node.js setup、`npm ci`、`npm exec togostanza build`、Pages artifact upload、Pages deployが含まれること。
 - `init --name generated-repo --package-manager pnpm --skip-install --skip-git` がpnpm向けworkflowを生成すること。
-- pnpm向けworkflowに、pnpm setup、`pnpm install --frozen-lockfile`、`pnpm exec togostanza build`、Pages artifact upload、Pages deployが含まれること。
+- pnpm向けworkflowに、pnpm setup、`pnpm ci`、`pnpm exec togostanza build`、Pages artifact upload、Pages deployが含まれること。
 - `init . --package-manager pnpm` でpnpm向けworkflowが生成されること。
 - 既存 `pnpm-lock.yaml` がある `init .` でpnpm向けworkflowが生成されること。
 - Phase 1のplaceholder文言が残らないこと。
 - default initでinstallまで実行した場合は、選択したパッケージマネージャーのlockfileが生成され、そのlockfileをcommitしてからpushする前提でworkflowが動くこと。
-- pnpm向けworkflowではpnpm 10系を使うため、`pnpm-lock.yaml` もpnpm 10系で生成してcommitする前提であること。
-- `--skip-install` の場合はlockfileが生成されないため、Stanza開発者が `npm install` またはpnpm 10系の `pnpm install` を実行し、lockfileをcommitしてからpushする必要があること。
+- pnpm向けworkflowではpnpm 11系を使うため、`pnpm-lock.yaml` もpnpm 11系で生成してcommitする前提であること。
+- `--skip-install` の場合はlockfileが生成されないため、Stanza開発者が `npm install` またはpnpm 11系の `pnpm install` を実行し、lockfileをcommitしてからpushする必要があること。
 - 実GitHub Actions実行やGitHub Pagesへのlive deployはPhase 2-6では行わないこと。
 
 現行版との差分として、pnpm向けworkflowをリメイク版で正式に生成することを記録する。現行版では `init --package-manager` の選択肢がnpm/yarnであり、pnpm向けworkflowは観測対象外だった。

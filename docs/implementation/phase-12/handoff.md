@@ -1,6 +1,6 @@
 # Phase 12: distribution 引き継ぎ
 
-この文書では、Phase 12で実施したlocal distribution smokeと、外部公開前に残す作業を記録する。
+この文書では、Phase 12で実施したlocal distribution smoke、GitHub dependency release ref、外部公開前に残す作業を記録する。
 
 Phase 12では短期方針をnpm publishではなくGitHub dependency distributionへ切り替えた。その再計画は [Phase 12: GitHub dependency distribution 設計](./plan.md) を正とする。
 
@@ -54,10 +54,10 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | `main` / top-level `types` | 追加しない。 |
 | generated repo `dependencies.togostanza` | 通常生成では `github:yohak/togostanza#<tag-or-sha>` をplaceholderとして書く。release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体refを注入する。 |
 | placeholder dependency install | placeholderのまま既定installへ進ませない。`--skip-install`、`TOGOSTANZA_DEPENDENCY_SPEC`、またはrelease時の実tag/SHA反映を使う。 |
-| generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 10系を明示する。 |
+| generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
 | GitHub dependency release ref | `git add -f dist/` でbuild済み `dist/` を含める。 |
-| release branch / tag | 初回は `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使う。外部pushやtag作成はまだ行わない。人間承認後に行う。 |
+| release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使う。初回調整ではtag名を増やさず、必要に応じてpnpm cache削除で対応する。 |
 
 ## 確認結果
 
@@ -89,6 +89,9 @@ mise exec -- pnpm run test:compat:local
   - npm Git dependency install smoke: pass
   - pnpm Git dependency install smoke: pass
   - concrete dependency specを注入した `init` 既定install: pass
+- public GitHub ref smoke: pass
+  - `github:yohak/togostanza#yohak-github-20260723` からnpmでCLIを起動し、`init` の既定installが通ることを確認した。
+  - `github:yohak/togostanza#yohak-github-20260723` からpnpm dlxでCLIを起動し、`init` の既定installが通ることを確認した。
 - `test:compat:local`: pass
   - local compatibility unit: 3 passed
   - local compatibility browser: 5 passed
@@ -105,10 +108,8 @@ mise exec -- pnpm run test:compat:local
 次は外部副作用または公開後環境に関わるため、Phase 12通常作業では実行していない。
 
 - `npm publish`
-- tag作成
 - GitHub release作成
 - npm registry上の `latest` packageを使った確認
-- `github:...#<tag-or-sha>` を使った公開GitHub経由のinstall確認
 - 公開GitHub Pages環境へのlive deploy
 
 ## 公開前に残すこと
@@ -116,14 +117,12 @@ mise exec -- pnpm run test:compat:local
 - `version` を公開する値へ更新する。
 - `private` を外すタイミングを人間が確認する。
 - repository、homepage、bugsのURLを実際の公開リポジトリに合わせて設定する。
-- 公開GitHub dependency用の `release/yohak-github-dependency-20260723` branchを作り、`git add -f dist/` でbuild済み `dist/` を含める。
-- `yohak-github-20260723` tagを作り、生成repoの `dependencies.togostanza` placeholderへ反映する。
-- 公開GitHub refを使ったnpm / pnpm install確認を行う。
 - npm publishへ進む場合のみ、`npm publish --dry-run` 相当でtarball内容を再確認する。
 - GitHub Actions live deployを行う場合は、対象リポジトリ、公開先、権限、cleanup方針を確認する。
 
 ## 注意点
 
 - `references/` 依存確認はローカルcompatibility確認であり、CI再現性は保証しない。
+- pnpmが同名tagの古い内容を掴む場合は、`pnpm store prune` と `~/Library/Caches/pnpm/dlx` の削除で対応する。
 - Sass `@import` 非推奨警告は既知制約であり、Phase 12では失敗扱いにしない。
 - `engines.node >=24.5.0` は現状維持だが、公開前にStanza開発者の実環境と照合する。

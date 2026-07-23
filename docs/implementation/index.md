@@ -308,7 +308,7 @@ Phase 10では、Phase 6とPhase 7で既に解消済みの事項を再実装し�
 含める範囲:
 
 - `init` が生成するREADME本文の改善。
-- 生成repoの `build` / `serve` script、GitHub Pages workflow、lockfile前提、pnpm 10前提、`--skip-install` 時の注意をStanza開発者向けに説明すること。
+- 生成repoの `build` / `serve` script、GitHub Pages workflow、lockfile前提、pnpm 11前提、`--skip-install` 時の注意をStanza開発者向けに説明すること。
 - `index.ts` / `index.tsx` 生成option、bare `init` prompt、CLI library採用、細かいerror code分類を、Phase 10で実装するか後続へ送るかの明示。
 - build wrapper末尾の `export default StanzaClass`、`.togostanza-build-output` marker、menu shell、`metadata.json` のDownload JSON導線など、内部面または未固定面の整理判断。
 - 001 READMEへのPhase 10観測または差分記録。

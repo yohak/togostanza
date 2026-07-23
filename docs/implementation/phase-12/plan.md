@@ -263,7 +263,7 @@ Phase 12-1では `test:github-dependency:local` を追加し、一時git reposit
 - READMEには、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallすることを書く。
 - placeholderのまま既定installへ進むと失敗するため、具体dependency specが無い場合は `--skip-install` を必須にし、scaffold作成前に明示診断を返す。
 - GitHub Pages workflowがGitHub dependency installで通る前提をどう説明するか。
-- pnpm 10系lockfile前提と、GitHub dependency specのlockfile再現性をREADMEで案内する。
+- pnpm 11系lockfile前提と、GitHub dependency specのlockfile再現性をREADMEで案内する。
 
 ### Phase 12-4: final verification and handoff
 

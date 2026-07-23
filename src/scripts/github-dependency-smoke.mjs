@@ -136,6 +136,13 @@ function runGitDependencyBootstrapSmoke(input) {
     )}\n`,
     "utf8",
   );
+  if (input.packageManager === "pnpm") {
+    writeFileSync(
+      join(input.projectDirectory, "pnpm-workspace.yaml"),
+      formatPnpmWorkspace(),
+      "utf8",
+    );
+  }
 
   const initArgs = ["init", "--name", "bootstrap-stanza", "--skip-install", "--skip-git"];
   if (input.packageManager === "npm") {
@@ -187,6 +194,13 @@ function runGitDependencyInstallSmoke(input) {
     )}\n`,
     "utf8",
   );
+  if (input.packageManager === "pnpm") {
+    writeFileSync(
+      join(input.projectDirectory, "pnpm-workspace.yaml"),
+      formatPnpmWorkspace(),
+      "utf8",
+    );
+  }
 
   if (input.packageManager === "npm") {
     run("npm", ["install", "--no-audit", "--no-fund"], {
@@ -240,6 +254,18 @@ function runGitDependencyInstallSmoke(input) {
       throw new Error(`Expected build output was not created: ${outputPath}`);
     }
   }
+}
+
+function formatPnpmWorkspace() {
+  return [
+    "allowBuilds:",
+    "  '@parcel/watcher': true",
+    "  esbuild: true",
+    "onlyBuiltDependencies:",
+    "  - '@parcel/watcher'",
+    "  - esbuild",
+    "",
+  ].join("\n");
 }
 
 function assertInstalledPackageContents(projectDirectory) {
