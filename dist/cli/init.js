@@ -108,6 +108,9 @@ function createScaffold(input) {
     writeFileSync(join(input.destination, "package.json"), formatJson(createPackageJson(input)), "utf8");
     writeFileSync(join(input.destination, "README.md"), formatReadme(input), "utf8");
     writeFileSync(join(input.destination, "tsconfig.json"), formatJson(createTsConfig()), "utf8");
+    if (input.packageManager === "pnpm") {
+        writeFileSync(join(input.destination, "pnpm-workspace.yaml"), formatPnpmWorkspace(), "utf8");
+    }
     writeFileSync(join(input.destination, ".gitignore"), "node_modules/\ndist/\n", "utf8");
     writeFileSync(join(input.destination, "common.scss"), "/* Shared stylesheet for stanzas. */\n", "utf8");
     writeFileSync(join(input.destination, "assets", ".keep"), "", "utf8");
@@ -195,13 +198,6 @@ function createPackageJson(input) {
         engines: {
             node: ">=24.5.0",
         },
-        ...(input.packageManager === "pnpm"
-            ? {
-                pnpm: {
-                    onlyBuiltDependencies: ["@parcel/watcher", "esbuild"],
-                },
-            }
-            : {}),
     };
 }
 function resolveTogoStanzaDependencySpec() {
@@ -224,6 +220,9 @@ function createTsConfig() {
         },
         include: ["stanzas/**/*", "lib/**/*", "togostanza.config.ts"],
     };
+}
+function formatPnpmWorkspace() {
+    return ["onlyBuiltDependencies:", "  - '@parcel/watcher'", "  - esbuild", ""].join("\n");
 }
 function formatPagesWorkflow(packageManager) {
     const setupSteps = packageManager === "pnpm"

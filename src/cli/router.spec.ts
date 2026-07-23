@@ -163,6 +163,7 @@ describe("CLI router", () => {
     expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza#<tag-or-sha>");
     expect(packageJson.packageManager).toBeUndefined();
     expect(packageJson.pnpm).toBeUndefined();
+    expect(existsSync(join(cwd, "generated-repo", "pnpm-workspace.yaml"))).toBe(false);
     expect(packageJson.scripts).toEqual({
       build: "togostanza build",
       serve: "togostanza serve",
@@ -292,9 +293,12 @@ describe("CLI router", () => {
     expect(result.stderr).toBeUndefined();
     expectPnpmPagesWorkflow(readText(join(cwd, ".github", "workflows", "publish.yml")));
     const packageJson = readJson(join(cwd, "package.json")) as {
-      pnpm?: { onlyBuiltDependencies?: string[] };
+      pnpm?: unknown;
     };
-    expect(packageJson.pnpm?.onlyBuiltDependencies).toEqual(["@parcel/watcher", "esbuild"]);
+    expect(packageJson.pnpm).toBeUndefined();
+    expect(readText(join(cwd, "pnpm-workspace.yaml"))).toBe(
+      ["onlyBuiltDependencies:", "  - '@parcel/watcher'", "  - esbuild", ""].join("\n"),
+    );
     const readme = readText(join(cwd, "README.md"));
     expect(readme).toContain("pnpm build");
     expect(readme).toContain("pnpm serve");
