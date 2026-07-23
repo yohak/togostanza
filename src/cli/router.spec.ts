@@ -150,6 +150,7 @@ describe("CLI router", () => {
       dependencies: Record<string, string>;
       license: string;
       packageManager?: string;
+      pnpm?: unknown;
       scripts: Record<string, string>;
     };
     const tsConfig = readJson(join(cwd, "generated-repo", "tsconfig.json")) as {
@@ -161,6 +162,7 @@ describe("CLI router", () => {
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza#<tag-or-sha>");
     expect(packageJson.packageManager).toBeUndefined();
+    expect(packageJson.pnpm).toBeUndefined();
     expect(packageJson.scripts).toEqual({
       build: "togostanza build",
       serve: "togostanza serve",
@@ -289,6 +291,10 @@ describe("CLI router", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBeUndefined();
     expectPnpmPagesWorkflow(readText(join(cwd, ".github", "workflows", "publish.yml")));
+    const packageJson = readJson(join(cwd, "package.json")) as {
+      pnpm?: { onlyBuiltDependencies?: string[] };
+    };
+    expect(packageJson.pnpm?.onlyBuiltDependencies).toEqual(["@parcel/watcher", "esbuild"]);
     const readme = readText(join(cwd, "README.md"));
     expect(readme).toContain("pnpm build");
     expect(readme).toContain("pnpm serve");

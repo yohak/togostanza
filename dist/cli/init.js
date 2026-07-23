@@ -195,6 +195,13 @@ function createPackageJson(input) {
         engines: {
             node: ">=24.5.0",
         },
+        ...(input.packageManager === "pnpm"
+            ? {
+                pnpm: {
+                    onlyBuiltDependencies: ["@parcel/watcher", "esbuild"],
+                },
+            }
+            : {}),
     };
 }
 function resolveTogoStanzaDependencySpec() {

@@ -269,6 +269,7 @@ function createPackageJson(input: {
   dependencySpec: string;
   license: string;
   name: string;
+  packageManager: PackageManager;
 }): Record<string, unknown> {
   return {
     name: input.name,
@@ -285,6 +286,13 @@ function createPackageJson(input: {
     engines: {
       node: ">=24.5.0",
     },
+    ...(input.packageManager === "pnpm"
+      ? {
+          pnpm: {
+            onlyBuiltDependencies: ["@parcel/watcher", "esbuild"],
+          },
+        }
+      : {}),
   };
 }
 
