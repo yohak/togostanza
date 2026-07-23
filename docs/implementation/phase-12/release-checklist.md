@@ -50,6 +50,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 - release branch / tagのrefを使って、npmとpnpmの両方でGitHub dependency installできる。
 - install後に `togostanza --version`、`init`、`generate stanza`、`build` が動く。
 - install後に `togostanza/stanza` と `togostanza/config` が解決できる。
+- TogoMedium実リポジトリなど、少なくとも1つの実プロジェクトでGitHub dependencyが意図通り動く。
 - generated repoの `dependencies.togostanza` が、GitHub dependency specとして意図した値になる。
 - 生成READMEに、`<tag-or-sha>` をrelease tagまたはcommit SHAへ差し替えてからinstallする案内がある。
 - `files` によってinstall対象が最小化されている。

@@ -114,6 +114,8 @@ references/
 
 `docs/`、`workbench/`、`references/` は本リポジトリに残す。ただし、root packageはworkspace化しない。これらの配下にある `package.json` は、リファレンスまたは検証環境の入力として扱い、root packageの管理対象に含めない。
 
+`pnpm-workspace.yaml` は、pnpm 11のdependency build承認などを置くpnpm設定ファイルとして使う。`packages` で複数パッケージを列挙せず、`docs/`、`workbench/`、`references/` をNodeワークスペースのpackageとして扱わない。
+
 ### 品質確認対象
 
 root package化後の標準確認はrootで実行する。
@@ -325,3 +327,5 @@ GitHub dependency install smokeの具体コマンドは、Phase 12-1で実装す
 ## 残す論点
 
 - `engines.node >=24.5.0` を維持するか。
+
+Phase 12後の残作業は [Phase 12後の残作業](./remaining-work.md) を正とする。

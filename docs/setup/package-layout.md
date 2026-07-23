@@ -9,6 +9,9 @@
 - リメイク版は、リポジトリルートの単一Nodeパッケージとして扱う。
 - リメイク版の `package.json`、`pnpm-lock.yaml`、`mise.toml` はリポジトリルートに置く。
 - 本リポジトリ全体をNodeワークスペースとして扱わない。
+- `pnpm-workspace.yaml` は、pnpm 11のdependency build承認など、pnpm設定を置くために使う。
+  - `packages` で複数パッケージを列挙しない。
+  - `docs/`、`references/`、`workbench/` をNodeワークスペースのpackageとして扱わない。
 - `references/*/package.json` はリファレンスリポジトリ側のものとして扱う。
 - `workbench/cases/<case>/<env>/package.json` や `workbench/cases/<case>/<env>/<generated-repo>/package.json` は検証環境側のものとして扱う。
 
@@ -20,6 +23,7 @@
 ```text
 package.json
 pnpm-lock.yaml
+pnpm-workspace.yaml
 mise.toml
 bin/
 src/

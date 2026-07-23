@@ -41,6 +41,10 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
   - `TOGOSTANZA_DEPENDENCY_SPEC` で、release手順やlocal smoke用の具体dependency specを注入できるようにした。
   - `test:github-dependency:local` は `git+file://...#ref` を注入し、生成repoのdependencyに反映されることを確認する。
   - placeholderのまま `init` の既定installへ進もうとした場合は、scaffold作成前に明示診断で失敗するようにした。
+- TogoMedium実リポジトリでGitHub dependency経路を人間確認した。
+  - `dependencies.togostanza` を `github:yohak/togostanza#yohak-github-20260723` へ変更し、意図通り動くことを確認した。
+- Phase 12後の残作業を整理した。
+  - [Phase 12後の残作業](./remaining-work.md)
 
 ## package surface判断
 
@@ -92,6 +96,8 @@ mise exec -- pnpm run test:compat:local
 - public GitHub ref smoke: pass
   - `github:yohak/togostanza#yohak-github-20260723` からnpmでCLIを起動し、`init` の既定installが通ることを確認した。
   - `github:yohak/togostanza#yohak-github-20260723` からpnpm dlxでCLIを起動し、`init` の既定installが通ることを確認した。
+- TogoMedium実リポジトリ確認: pass
+  - 人間確認として、`dependencies.togostanza` を `github:yohak/togostanza#yohak-github-20260723` へ変更し、意図通り動くことを確認した。
 - `test:compat:local`: pass
   - local compatibility unit: 3 passed
   - local compatibility browser: 5 passed
@@ -113,6 +119,8 @@ mise exec -- pnpm run test:compat:local
 - 公開GitHub Pages環境へのlive deploy
 
 ## 公開前に残すこと
+
+残作業の一覧は [Phase 12後の残作業](./remaining-work.md) を正とする。
 
 - `version` を公開する値へ更新する。
 - `private` を外すタイミングを人間が確認する。
