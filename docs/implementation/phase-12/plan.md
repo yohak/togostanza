@@ -319,9 +319,9 @@ GitHub dependency install smokeの具体コマンドは、Phase 12-1で実装す
 - install対象は `files` で最小化する。
 - GitHub dependency smokeは `test:github-dependency:local` として自動script化する。
 - `private: true` はGitHub dependency install smokeで問題ないことを確認し、npm publishしない限り維持する。
+- 初回release branchは `release/yohak-github-dependency-20260723` とする。
+- 初回release tagは `yohak-github-20260723` とする。
 
 ## 残す論点
 
-- release branch名とtag名。
-- 実releaseで使うtag名またはcommit SHA。
 - `engines.node >=24.5.0` を維持するか。

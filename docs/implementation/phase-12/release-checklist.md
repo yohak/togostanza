@@ -34,6 +34,8 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | packageManager | rootの `package.json` で固定 | 開発パッケージの固定として維持する。 |
 | generated repo `dependencies.togostanza` | `github:yohak/togostanza#<tag-or-sha>` | 通常生成ではplaceholderを書き、release時にtagまたはcommit SHAへ差し替える。 |
 | generated repo `packageManager` field | なし | `init` は生成しない。pnpm workflowはpnpm 10系を明示する。 |
+| initial release branch | `release/yohak-github-dependency-20260723` | 初回GitHub dependency release refとして使う。 |
+| initial release tag | `yohak-github-20260723` | organization名を明示し、現行版やnpm versionと混同しないtag名にする。 |
 
 ## GitHub dependency release前に必ず確認すること
 
@@ -58,11 +60,11 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 
 ここでは、公開GitHub dependency用のrelease branch / tagを作る手順を示す。通常開発branchへ `dist/` を混入させないため、作業前にworktreeがcleanであることを確認する。
 
-1. release branch名、tag名、生成repoへ書くdependency specを決める。
+1. release branch名、tag名、生成repoへ書くdependency specを決める。初回は次の値を使う。
 
 ```sh
-RELEASE_BRANCH=release/github-dependency-YYYYMMDD
-RELEASE_TAG=togostanza-github-YYYYMMDD
+RELEASE_BRANCH=release/yohak-github-dependency-20260723
+RELEASE_TAG=yohak-github-20260723
 DEPENDENCY_SPEC=github:yohak/togostanza#${RELEASE_TAG}
 ```
 

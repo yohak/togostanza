@@ -57,7 +57,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 10系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
 | GitHub dependency release ref | `git add -f dist/` でbuild済み `dist/` を含める。 |
-| release branch / tag | 外部pushやtag作成はまだ行わない。人間承認後に行う。 |
+| release branch / tag | 初回は `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使う。外部pushやtag作成はまだ行わない。人間承認後に行う。 |
 
 ## 確認結果
 
@@ -116,8 +116,8 @@ mise exec -- pnpm run test:compat:local
 - `version` を公開する値へ更新する。
 - `private` を外すタイミングを人間が確認する。
 - repository、homepage、bugsのURLを実際の公開リポジトリに合わせて設定する。
-- 公開GitHub dependency用のrelease branchを作り、`git add -f dist/` でbuild済み `dist/` を含める。
-- 実releaseで使うtagまたはcommit SHAを決め、生成repoの `dependencies.togostanza` placeholderへ反映する。
+- 公開GitHub dependency用の `release/yohak-github-dependency-20260723` branchを作り、`git add -f dist/` でbuild済み `dist/` を含める。
+- `yohak-github-20260723` tagを作り、生成repoの `dependencies.togostanza` placeholderへ反映する。
 - 公開GitHub refを使ったnpm / pnpm install確認を行う。
 - npm publishへ進む場合のみ、`npm publish --dry-run` 相当でtarball内容を再確認する。
 - GitHub Actions live deployを行う場合は、対象リポジトリ、公開先、権限、cleanup方針を確認する。
