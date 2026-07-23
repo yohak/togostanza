@@ -1,7 +1,5 @@
 # Phase 12: distribution 引き継ぎ
 
-この文書では、Phase 12で確認した配布前状態と、外部公開前に残す作業を記録する。
-
 この文書では、Phase 12で実施したlocal distribution smokeと、外部公開前に残す作業を記録する。
 
 Phase 12では短期方針をnpm publishではなくGitHub dependency distributionへ切り替えた。その再計画は [Phase 12: GitHub dependency distribution 設計](./plan.md) を正とする。
@@ -59,7 +57,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 
 ## 確認結果
 
-確認日: 2026-07-02
+確認日: 2026-07-23
 
 ```sh
 mise exec -- pnpm run check-all
@@ -75,7 +73,7 @@ mise exec -- pnpm run test:compat:local
   - lint
   - type-check
   - build
-  - unit test: 79 passed, 2 skipped
+  - unit test: 80 passed, 2 skipped
   - integration test: 21 passed
   - browser test: 10 passed
 - `test:distribution:local`: pass
@@ -88,6 +86,13 @@ mise exec -- pnpm run test:compat:local
 - `test:compat:local`: pass
   - local compatibility unit: 3 passed
   - local compatibility browser: 5 passed
+    - Emotion style in Shadow DOM smoke
+    - metastanza全10 Stanza direct embed smoke
+    - TogoMedium全15 Stanza direct embed smoke
+    - TogoMedium Web local serve連携 smoke
+    - 実 `togostanza-utils` package smoke
+
+確認時に、既知制約であるSass `@import` deprecation warningは再度出た。Phase 12では失敗扱いにしない。
 
 ## 実行しなかったこと
 

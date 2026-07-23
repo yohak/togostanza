@@ -313,11 +313,11 @@ GitHub dependency install smokeの具体コマンドは、Phase 12-1で実装す
 - 通常開発branchでは `dist/` をcommitしない。
 - GitHub dependency向けrelease branch / tagにはbuild済み `dist/` を含める。
 - install対象は `files` で最小化する。
+- GitHub dependency smokeは `test:github-dependency:local` として自動script化する。
+- `private: true` はGitHub dependency install smokeで問題ないことを確認し、npm publishしない限り維持する。
 
 ## 残す論点
 
 - release branch名とtag名。
 - 実releaseで使うtag名またはcommit SHA。
-- GitHub dependency smokeを完全自動scriptにするか、手順化に留めるか。
-- `private: true` をGitHub dependency運用で維持するか。npm publishしない限りaccidental publish防止としては維持できるが、GitHub dependency installへの影響は確認する。
 - `engines.node >=24.5.0` を維持するか。
