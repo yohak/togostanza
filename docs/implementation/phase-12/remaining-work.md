@@ -28,7 +28,7 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 | GitHub release作成 | release branch / tagはあるが、GitHub releaseは未作成。 | 任意 | Stanza開発者へ配布refや変更内容を案内しやすくなる。 | 必要になった時点で作る。GitHub dependency install自体には必須ではない。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflowはpnpm 11系を明示する。 | 継続判断 | ローカルpnpmとGitHub Actionsのpnpm version差に影響する可能性がある。 | 現状維持。pnpm version差分が問題化したら再判断する。 |
 | `pnpm-workspace.yaml` | pnpm 11のdependency build承認を置く設定ファイルとして維持。複数packageを列挙するworkspace package定義としては使わない。 | documented constraint | 後続作業者が `docs/`、`references/`、`workbench/` をNodeワークスペース対象と誤認する可能性がある。 | `packages` を追加する場合は、ワークスペース化として別途判断する。 |
-| GitHub dependency tag cache | 同名tagを更新した場合、pnpmが古い内容を使うことがある。 | 運用制約 | 狭い利用者範囲ではcache削除で対応できるが、広がると混乱する。 | 初期運用ではtag名を増やさず、必要に応じてcache削除を案内する。広く使う段階ではtag不変運用へ寄せる。 |
+| GitHub dependency tag / lockfile運用 | npm / pnpmのlockfileはGit dependencyを解決したcommitへ固定する。同名tagを更新しても、既存lockfileやfrozen installは旧commitを参照し続ける。 | 運用制約 | 同じdependency specから環境によって異なる内容が解決され、修正版が既存生成リポジトリへ反映されない可能性がある。 | いまからtagは不変として扱う。修正時は新しいtagを作り、dependency spec更新とlockfile再生成を案内する。 |
 | `test:compat:local` の可搬性 | `references/` 依存のローカル確認として維持。CI再現性は保証しない。 | 本開発外 | 他マシンやCIで同じcompatibility確認を再現しづらい。 | CI化は本開発対象外。runtimeへ触る変更時はローカルで再実行する。 |
 | Sass `@import` 非推奨警告 | 既知制約。Phase 12では失敗扱いにしない。 | watch note | Sass依存更新で将来error化する可能性がある。 | 依存更新時に確認する。通常作業では深追いしない。 |
 

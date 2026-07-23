@@ -35,7 +35,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | generated repo `dependencies.togostanza` | `github:yohak/togostanza#<tag-or-sha>` | 通常生成ではplaceholderを書き、release時にtagまたはcommit SHAへ差し替える。 |
 | generated repo `packageManager` field | なし | `init` は生成しない。pnpm workflowはpnpm 11系を明示する。 |
 | initial release branch | `release/yohak-github-dependency-20260723` | 初回GitHub dependency release refとして使う。 |
-| initial release tag | `yohak-github-20260723` | organization名を明示し、現行版やnpm versionと混同しないtag名にする。同じ日付の初期調整では、tag名を増やさず必要に応じてcache削除で対応する。 |
+| initial release tag | `yohak-github-20260723` | organization名を明示し、現行版やnpm versionと混同しないtag名にする。tagは不変として扱い、修正時は新しいtagを作る。 |
 
 ## GitHub dependency release前に必ず確認すること
 
@@ -128,14 +128,14 @@ TOGOSTANZA_DEPENDENCY_SPEC=${DEPENDENCY_SPEC} pnpm --package ${DEPENDENCY_SPEC} 
 
 `--skip-install` で生成する場合は、生成後に `package.json` の `github:yohak/togostanza#<tag-or-sha>` を実tagまたはcommit SHAへ差し替えてからinstallする。
 
-pnpmで同名tagの古い内容を掴む場合は、次の順でcacheを削除してから再実行する。
+GitHub dependencyのtagは不変として扱う。npm / pnpmのlockfileはGit dependencyを解決したcommitへ固定するため、既存tagを動かしても既存生成リポジトリのfrozen installは旧commitを参照し続ける。修正版を出す場合は、新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
+
+過去の初期調整や切り分けで古いcacheを疑う場合だけ、ローカル対処として次を使う。これは公開済みtagの更新手順ではない。`~/Library/Caches/pnpm/dlx` はmacOSの標準設定を前提にした例であり、別OSや設定変更済み環境では実際のpnpm cache配置を確認してから削除する。
 
 ```sh
 pnpm store prune
 rm -rf ~/Library/Caches/pnpm/dlx
 ```
-
-`pnpm store prune` はstore metadataとpackage cacheを削除する。`pnpm dlx` が古いtag内容を使い続ける場合は、別途 `~/Library/Caches/pnpm/dlx` の削除が必要になる。
 
 ## rollback / 差し替え手順
 
@@ -147,9 +147,8 @@ git switch main
 git branch -D ${RELEASE_BRANCH}
 ```
 
-- push後に問題が見つかった場合は、原則として既存tagを上書きしない。修正commitから新しいrelease branch / tagを作り、生成repoのdependency specを新しいrefへ差し替える。
-- 初回GitHub dependency releaseのように利用者が限られる場合は、人間判断で同じtagを差し替えてよい。その場合は、pnpmの古いdlx cacheを削除する手順を合わせて案内する。
-- push済みtagの削除や置き換えが必要な場合は、Stanza開発者への影響を確認し、人間承認を受けてから行う。
+- push後に問題が見つかった場合は、既存tagを上書きしない。修正commitから新しいrelease branch / tagを作り、Stanzaリポジトリ側のdependency specを新しいrefへ差し替え、lockfileを再生成する。
+- push済みtagの置き換えや再利用は行わない。問題のあるtagを削除する必要がある場合も、Stanza開発者への影響を確認し、人間承認を受けたうえで削除だけを行い、修正版には必ず新しいtag名を使う。
 
 ## 外部副作用があるため明示承認を受けてから行うこと
 

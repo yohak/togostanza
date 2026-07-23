@@ -61,7 +61,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
 | GitHub dependency release ref | `git add -f dist/` でbuild済み `dist/` を含める。 |
-| release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使う。初回調整ではtag名を増やさず、必要に応じてpnpm cache削除で対応する。 |
+| release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使った。今後の修正では既存tagを上書きせず、新しいrelease branch / tagを作る。 |
 
 ## 確認結果
 
@@ -131,6 +131,7 @@ mise exec -- pnpm run test:compat:local
 ## 注意点
 
 - `references/` 依存確認はローカルcompatibility確認であり、CI再現性は保証しない。
-- pnpmが同名tagの古い内容を掴む場合は、`pnpm store prune` と `~/Library/Caches/pnpm/dlx` の削除で対応する。
+- GitHub dependencyのtagは不変として扱う。修正版を出す場合は新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
+- `pnpm store prune` と `~/Library/Caches/pnpm/dlx` の削除は、過去の初期調整や切り分けで古いcacheを疑う場合のローカル対処であり、公開済みtagの更新手順としては扱わない。
 - Sass `@import` 非推奨警告は既知制約であり、Phase 12では失敗扱いにしない。
 - `engines.node >=24.5.0` は現状維持だが、公開前にStanza開発者の実環境と照合する。
