@@ -57,6 +57,18 @@
 
 `build` / `serve` の内部基盤はVite 8を基本にする。Broccoli、Rollup、Vueは内部実装上の必須要件にしない。
 
+## 配布と生成repo依存
+
+現行版の `init` は、生成repoの `dependencies.togostanza` に `github:togostanza/togostanza` のタグ無しGitHub dependencyを書き込む。この形は、Stanza開発者が生成直後のリポジトリでrelease tagを手作業で選ばなくても依存をインストールできる開発契約として維持する。
+
+リメイク版でも、正式版の生成repo仕様ではタグ無しGitHub dependencyを既定にする。短期の `yohak` 経路では `github:yohak/togostanza`、正式版マージ後は `github:togostanza/togostanza` を既定候補にする。
+
+一方、開発中の検証、TogoMedium確認、固定点の記録では不変tagまたはcommit SHAを使う。tagは既存refを動かさず、修正版では新しいtagを作る。
+
+タグ無しGitHub dependencyは、lockfileなしの新規installではその時点のdefault branchを解決する。install後はnpm / pnpmのlockfileが解決commitを固定するため、既存Stanzaリポジトリが新しい `main` へ追従するには、依存更新とlockfile再生成が必要になる。この再現性とのトレードオフは受け入れ、現行版と同じ生成repo体験を優先する。
+
+問題のある `main` を公開した場合は、既存tagを動かすのではなく、`main` のforward-fixを基本にする。固定refが必要な検証や一時運用では、新しいtagまたはcommit SHAを案内する。
+
 ## Runtime
 
 ### 埋め込み形式

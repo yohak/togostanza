@@ -12,6 +12,8 @@ Phase 12は、リメイク版パッケージを短期的にGitHub dependencyと�
 }
 ```
 
+後続の正式版マージ準備では、現行版の `init` が生成する `github:togostanza/togostanza` に寄せ、生成repoの既定dependencyはタグ無しGitHub dependencyにする方針へ更新した。Phase 12でのtagまたはSHA指定は、短期配布経路と検証固定点のための方針として扱う。
+
 ## 前提
 
 Phase 12の前半では、ローカルtarballによる `pack -> install -> 実行` smokeをすでに確認している。この確認結果は [Phase 12: distribution 引き継ぎ](./handoff.md) に記録している。
@@ -31,7 +33,8 @@ Phase 12へ入る前の再確認として、次が完了している。
 - 本リポジトリのmain側も、リリースを意識したroot package layoutへ移行する。
 - GitHub dependency install時に、repo rootがそのまま `togostanza` packageとして成立する状態にする。
 - `npm publish` やinstall時buildに依存せず、release branch / tagでbuild済み `dist/` を提供する運用を決める。
-- 通常開発branchでは `dist/` を持たず、release branch / tagだけに `dist/` を含める境界を明確にする。
+- Phase 12時点では、通常開発branchでは `dist/` を持たず、release branch / tagだけに `dist/` を含める境界を明確にする。
+- 後続の正式版マージ準備では、`develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う方針へ見直す。
 - `docs/`、`workbench/`、`references/` は本リポジトリに残しつつ、install対象と通常品質確認対象から外す。
 - Phase 12完了後に、Stanza開発者がGitHub dependencyでインストールして `togostanza` を使える確認結果と手順を残す。
 
@@ -143,6 +146,8 @@ GitHub dependency install時にbuildを行わない。`prepare` やinstall scrip
 
 通常開発branchでは `dist/` をcommitしない。GitHub dependency向けのrelease branch / tagにだけ、build済み `dist/` を含める。
 
+この段落はPhase 12実施時点の短期方針である。後続の正式版マージ準備では、タグ無しGitHub dependencyがdefault branchを読むため、`develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う方針へ見直す。
+
 ### install対象
 
 install対象は最小化する。
@@ -228,12 +233,14 @@ Phase 12-1では `test:github-dependency:local` を追加し、一時git reposit
 
 目的は、通常開発branchとGitHub dependency向けrelease refの違いを手順として固定することである。
 
+このサブフェーズは、Phase 12時点のtag / SHA指定GitHub dependencyを対象にしている。後続の正式版マージ準備では、`main` をタグ無しGitHub dependencyの公開入口として扱うため、branch役割は再定義する。
+
 方針:
 
 - 通常開発branchでは `dist/` をcommitしない。
 - GitHub dependency向けのrelease branch / tagにはbuild済み `dist/` を含める。
 - install時buildは行わない。
-- Stanza開発者にはtagまたはcommit SHA固定を推奨する。
+- Phase 12時点では、Stanza開発者にはtagまたはcommit SHA固定を推奨する。
 - root移行後も `.gitignore` は通常開発branchの `dist/` を無視する。
 - release branch / tagに `dist/` を含める具体機構を固定する。
   - 採用機構は `git add -f dist/` とする。
@@ -258,7 +265,11 @@ Phase 12-1では `test:github-dependency:local` を追加し、一時git reposit
 
 - generated repoの `dependencies.togostanza` は、通常生成では `github:yohak/togostanza#<tag-or-sha>` を書く。
   - 実release tagまたはcommit SHAが決まるまでは、人間が後から差し替えるplaceholderとして扱う。
-  - `main` 直指定は推奨しない。
+  - Phase 12時点では `main` 直指定は推奨しない。
+- 後続の正式版マージ準備では、現行版の生成repo仕様に寄せ、タグ無しGitHub dependencyを既定にする。
+  - 短期の `yohak` 経路では `github:yohak/togostanza` を候補にする。
+  - 正式版マージ後は `github:togostanza/togostanza` を候補にする。
+  - tagまたはcommit SHAは、開発中の検証や固定化が必要な場合に使う。
 - local smoke、release手順、実GitHub ref確認では `TOGOSTANZA_DEPENDENCY_SPEC` で具体dependency specを注入できるようにする。
   - `git+file://...#ref` のlocal smokeでも同じ経路を使う。
   - このoverrideは配布検証とrelease運用のための入口であり、Stanza開発者向けの通常操作としてはREADMEのGitHub dependency specを正とする。
@@ -316,8 +327,9 @@ GitHub dependency install smokeの具体コマンドは、Phase 12-1で実装す
 - 通常の品質確認対象は原則として `src/` と `bin/`、必要な設定ファイルに限定する。
 - `docs/`、`workbench/`、`references/` は本リポジトリに残すが、通常の `check-all` とinstall対象には含めない。
 - GitHub dependency install時のbuildは行わない。
-- 通常開発branchでは `dist/` をcommitしない。
-- GitHub dependency向けrelease branch / tagにはbuild済み `dist/` を含める。
+- Phase 12時点では、通常開発branchでは `dist/` をcommitしない。
+- 後続の正式版マージ準備では、`develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。
+- GitHub dependency向けrelease branch / tagにはbuild済み `dist/` を含める。タグ無しGitHub dependencyが読む `main` も、install時buildを使わない方針を維持する限りbuild済み `dist/` を必ず含める。
 - install対象は `files` で最小化する。
 - GitHub dependency smokeは `test:github-dependency:local` として自動script化する。
 - `private: true` はGitHub dependency install smokeで問題ないことを確認し、npm publishしない限り維持する。

@@ -4,6 +4,8 @@
 
 Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-20260723` を使う方針を採用した。local smoke、public GitHub ref smoke、TogoMedium実リポジトリでの人間確認により、TogoMedium用途ではGitHub dependency経路が成立している。
 
+その後、正式版の生成repo仕様では、現行版に寄せてタグ無しGitHub dependencyを既定にする方針を採用した。開発中の検証や固定点の記録では不変tagを使う。
+
 この文書は次の実装計画ではない。残作業を、いつ判断するか、どの条件で着手するかが分かるように分類する。
 
 ## 現在の到達点
@@ -20,6 +22,9 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 | 項目 | 現在の状態 | 分類 | 影響 | 推奨 |
 | ---- | ---------- | ---- | ---- | ---- |
+| `develop` / `main` / tag の役割実装 | 方針は採用済み。現在は `main` に `dist/` が追跡されているが、`develop` branchはまだ無い。install時buildを行わない限り、`main` と検証tagにはbuild済み `dist/` が必須。 | 次にやる候補 | Stanza開発者がタグ無しGitHub dependencyでinstallできるか、通常開発で生成物差分が混ざらないかに影響する。 | 次の実装計画でbranch作成、default branch設定、`develop` から `main` への反映方法、`dist/` 生成・検証、rollbackを定義する。 |
+| 生成repoのタグ無しGitHub dependency実装 | Phase 12時点の生成repoは `github:yohak/togostanza#<tag-or-sha>` placeholderを使う。正式生成仕様ではタグ無しGitHub dependencyを採用済み。 | 次にやる候補 | 正式版マージ後の生成repoが現行版と同じ使い勝手になるかに影響する。 | `init`、生成README、testをタグ無しGitHub dependencyへ更新する。検証時だけ `TOGOSTANZA_DEPENDENCY_SPEC` でtagまたはcommit SHAを注入する。 |
+| タグ無しGitHub dependencyのlockfile更新手順 | lockfileなしの新規installはdefault branchを解決し、lockfileありのfrozen installは記録commitを再現する。既存repo更新手順は未整理。 | 次にやる候補 | `main` 更新後に既存Stanzaリポジトリがいつ・どう追従するかに影響する。 | fresh install、frozen install、依存更新、forward-fixをREADMEとsmokeに含める。 |
 | GitHub Pages live deploy確認 | workflow構造は生成済みだが、公開GitHub Pages環境でのlive deployは未実行。 | 次にやる候補 | Stanza開発者が生成repoをpushした後の公開導線に影響する。 | GitHub dependency運用の次の実地確認として優先度高め。 |
 | CLI status / result messages | `build` 成功時の所要時間表示は追加済み。全体の文言体系は未整理。 | 後続改善 | Stanza開発者が失敗原因を把握しやすくなる。 | GitHub dependency運用後、利用時に分かりにくい箇所から整理する。 |
 | `engines.node >=24.5.0` | 現状維持。 | 公開前判断 | Stanza開発者のローカル環境と合わない場合、installや実行の入口で止まる。 | 利用者範囲を広げる前に実環境と照合する。 |
@@ -44,6 +49,6 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 ## 次の候補
 
-次に実装作業として進むなら、GitHub Pages live deploy確認が最も自然である。
+次に実装作業として進むなら、`develop` / `main` / tag の役割実装、生成repoのタグ無しGitHub dependency実装、タグ無しGitHub dependencyのlockfile更新手順を先に整理するのが自然である。
 
 一方、すぐに実装を増やさない場合は、TogoMedium実リポジトリでの確認範囲をもう少し具体化して記録する。たとえば、install、build、serve、Webアプリ連携のどこまで確認したかを追記する。

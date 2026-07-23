@@ -4,6 +4,8 @@
 
 Phase 12では短期方針をnpm publishではなくGitHub dependency distributionへ切り替えた。その再計画は [Phase 12: GitHub dependency distribution 設計](./plan.md) を正とする。
 
+その後の整理で、正式版の生成repo仕様は現行版に寄せ、タグ無しGitHub dependencyを既定にする方針にした。Phase 12で確認した `github:yohak/togostanza#yohak-github-20260723` は、開発中の検証と固定点のためのrefとして扱う。
+
 ## 完了したこと
 
 - ローカルtarballを使った `pack -> install -> 実行` smokeを追加した。
@@ -36,7 +38,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
   - install後に `togostanza/stanza` と `togostanza/config` の実行時解決と型解決を確認する。
   - install対象に `docs/`、`references/`、`src/`、`test/`、`workbench/` が混入していないことを確認する。
 - 生成repoの `dependencies.togostanza` をGitHub dependency運用へ寄せた。
-  - 通常生成では `github:yohak/togostanza#<tag-or-sha>` をplaceholderとして書く。
+  - Phase 12実装時点では `github:yohak/togostanza#<tag-or-sha>` をplaceholderとして書く。
   - 生成READMEには、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallすることを書く。
   - `TOGOSTANZA_DEPENDENCY_SPEC` で、release手順やlocal smoke用の具体dependency specを注入できるようにした。
   - `test:github-dependency:local` は `git+file://...#ref` を注入し、生成repoのdependencyに反映されることを確認する。
@@ -56,11 +58,12 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | `exports` | `./config` と `./stanza` を維持する。 |
 | root export | 追加しない。 |
 | `main` / top-level `types` | 追加しない。 |
-| generated repo `dependencies.togostanza` | 通常生成では `github:yohak/togostanza#<tag-or-sha>` をplaceholderとして書く。release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体refを注入する。 |
-| placeholder dependency install | placeholderのまま既定installへ進ませない。`--skip-install`、`TOGOSTANZA_DEPENDENCY_SPEC`、またはrelease時の実tag/SHA反映を使う。 |
+| generated repo `dependencies.togostanza` | Phase 12実装時点では `github:yohak/togostanza#<tag-or-sha>` placeholderを生成する。後続の正式生成仕様では、現行版に寄せてタグ無しGitHub dependencyを既定にする。 |
+| concrete dependency spec injection | release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体tagまたはcommit SHAを注入できる。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
-| GitHub dependency release ref | `git add -f dist/` でbuild済み `dist/` を含める。 |
+| branch roles | 後続で `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして定義する。 |
+| GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。後続ではタグ無しGitHub dependencyが読む `main` もinstall可能にする。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使った。今後の修正では既存tagを上書きせず、新しいrelease branch / tagを作る。 |
 
 ## 確認結果

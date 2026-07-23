@@ -2,15 +2,19 @@
 
 この文書では、GitHub dependency distributionへ進む前に人間が確認する項目を整理する。
 
-Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub dependency installである。Stanza開発者は自分の `package.json` に次のようなdependencyを書く。
+Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub dependency installである。
+
+正式版の生成repo仕様では、現行版に寄せてタグ無しGitHub dependencyを既定にする。Stanza開発者は自分の `package.json` に次のようなdependencyを持つ。
 
 ```json
 {
   "dependencies": {
-    "togostanza": "github:yohak/togostanza#<tag-or-sha>"
+    "togostanza": "github:yohak/togostanza"
   }
 }
 ```
+
+開発中の検証、固定点の記録、TogoMedium確認では不変tagを使う。tagは既存refを動かさず、修正版では新しいtagを作る。
 
 ## 現在の判断
 
@@ -21,9 +25,10 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | root package layout | Phase 12-0で移行 | repo rootをinstallable packageにする。 |
 | workspace | なし | `docs/`、`workbench/`、`references/` をroot packageのworkspace対象にしない。 |
 | install時build | なし | `prepare` やinstall scriptで `dist/` を作らない。 |
-| release branch / tag | local smokeで機構確認済み | build済み `dist/` を含むGitHub dependency向けrefを作る。 |
-| main branchの `dist/` | なし | 通常開発branchでは `dist/` をcommitしない。 |
-| `.gitignore` と `dist/` | `git add -f dist/` を採用 | 通常branchでは無視し、release refでは明示的に同梱する。 |
+| branch roles | 採用方針 / 未実装 | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。branch作成、default branch設定、反映手順は後続で実装する。 |
+| `develop` の `dist/` | なし | 通常開発branchでは `dist/` をcommitしない。 |
+| `main` の `dist/` | 必須 | タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能な状態を保つ。install時buildを使わない限り、build済み `dist/` を必ず含める。 |
+| `.gitignore` と `dist/` | 要再確認 | `develop` では無視し、`main` やrelease tagでは明示的に同梱する。 |
 | files | `bin/`, `dist/` | install対象を実行入口とcompiled JSへ絞る。 |
 | bin | `togostanza` -> `./bin/togostanza.mjs` | root直下の `bin/` で維持する。 |
 | exports | `./config`, `./stanza` | Stanza開発者向けの開発契約として維持する。 |
@@ -32,9 +37,9 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | license | `MIT` | 現行版package metadataと生成雛形の既定licenseに合わせる。 |
 | engines.node | `>=24.5.0` | Phase 12時点では維持する。GitHub dependency運用前に利用者環境と再確認する。 |
 | packageManager | rootの `package.json` で固定 | 開発パッケージの固定として維持する。 |
-| generated repo `dependencies.togostanza` | `github:yohak/togostanza#<tag-or-sha>` | 通常生成ではplaceholderを書き、release時にtagまたはcommit SHAへ差し替える。 |
+| generated repo `dependencies.togostanza` | `github:yohak/togostanza` | 正式生成仕様ではタグ無しGitHub dependencyを既定にする。開発中の検証では `TOGOSTANZA_DEPENDENCY_SPEC` でtagまたはcommit SHAを注入してよい。 |
 | generated repo `packageManager` field | なし | `init` は生成しない。pnpm workflowはpnpm 11系を明示する。 |
-| initial release branch | `release/yohak-github-dependency-20260723` | 初回GitHub dependency release refとして使う。 |
+| initial release branch | `release/yohak-github-dependency-20260723` | 初回GitHub dependency検証refとして使った。今後の正式運用では `develop` / `main` / tag の役割定義に合わせて見直す。 |
 | initial release tag | `yohak-github-20260723` | organization名を明示し、現行版やnpm versionと混同しないtag名にする。tagは不変として扱い、修正時は新しいtagを作る。 |
 
 ## GitHub dependency release前に必ず確認すること
@@ -44,34 +49,72 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 - rootで `mise exec -- pnpm run test:compat:local` が通る。
 - rootで `mise exec -- pnpm run test:distribution:local` が通る。
 - rootで `mise exec -- pnpm run test:github-dependency:local` が通る。
-- 通常開発branchに `dist/` をcommitしていない。
-- release branch / tagにはbuild済み `dist/` が含まれる。
-- release branch / tagで `dist/` を含める機構が、`.gitignore` と衝突していない。
-- release branch / tagのrefを使って、npmとpnpmの両方でGitHub dependency installできる。
+- 通常開発branchである `develop` に `dist/` をcommitしていない。
+- 公開入口である `main` は、タグ無しGitHub dependencyでinstallできる状態になっている。
+- 開発中の検証tagにはbuild済み `dist/` が含まれる。
+- `main` や検証tagで `dist/` を含める機構が、`.gitignore` と衝突していない。
+- タグ無しGitHub dependencyと検証tagの両方で、npmとpnpmのinstall確認方針が決まっている。
+- タグ無しGitHub dependencyのlockfileなしfresh installが、その時点のdefault branchを解決することを確認する。
+- タグ無しGitHub dependencyのlockfileありfrozen installが、同じcommitを再現することを確認する。
+- 既存Stanzaリポジトリが新しい `main` へ更新する正式手順をREADMEに書く。
+- 問題のある `main` を公開した場合は、既存tagの置き換えではなくforward-fixを基本にする。
 - install後に `togostanza --version`、`init`、`generate stanza`、`build` が動く。
 - install後に `togostanza/stanza` と `togostanza/config` が解決できる。
 - TogoMedium実リポジトリなど、少なくとも1つの実プロジェクトでGitHub dependencyが意図通り動く。
-- generated repoの `dependencies.togostanza` が、GitHub dependency specとして意図した値になる。
-- 生成READMEに、`<tag-or-sha>` をrelease tagまたはcommit SHAへ差し替えてからinstallする案内がある。
+- generated repoの `dependencies.togostanza` が、正式生成仕様としてタグ無しGitHub dependencyになる。
+- 生成READMEに、通常はタグ無しGitHub dependencyを使い、検証や固定化が必要な場合だけtagまたはcommit SHAを使う案内がある。
 - `files` によってinstall対象が最小化されている。
 - install対象に `dist/test/` やtest supportが混入していない。
 - GitHub Pages workflowで使うlockfileとpnpm 11系の前提がREADMEに残っている。
 
+## タグ無しGitHub dependencyの確認観点
+
+正式版の生成repo仕様では、タグ無しGitHub dependencyを既定にする。`develop` / `main` / tag の役割実装時には、tag指定smokeとは別に次を確認する。
+
+- `github:yohak/togostanza` のようなタグ無しdependencyで、npmとpnpmのfresh installがその時点のdefault branchを解決する。
+- fresh install後のlockfileには、解決されたcommitが記録される。
+- lockfileありのfrozen installは、default branchが進んでいてもlockfile上の同じcommitを再現する。
+- 既存Stanzaリポジトリを新しい `main` へ更新する手順が、npmとpnpmの両方で確認されている。
+- 問題のある `main` を公開した場合は、既存tagの置き換えではなくforward-fixする。必要に応じて、検証用の新しいtagまたはcommit SHAを案内する。
+
 ## release ref作成手順
 
-ここでは、公開GitHub dependency用のrelease branch / tagを作る手順を示す。通常開発branchへ `dist/` を混入させないため、作業前にworktreeがcleanであることを確認する。
+ここでは、開発中の検証・固定refとしてrelease branch / tagを作る手順を示す。正式生成仕様の既定はタグ無しGitHub dependencyだが、検証や固定化が必要な場合は不変tagを使う。通常開発branchへ `dist/` を混入させないため、作業前にworktreeがcleanであることを確認する。
 
-1. release branch名、tag名、生成repoへ書くdependency specを決める。初回は次の値を使う。
+1. base branch、release branch名、tag名、生成repoへ書くdependency specを決める。通常は `develop` をbase branchにし、release branchとtagには未使用のrelease idを使う。
 
 ```sh
-RELEASE_BRANCH=release/yohak-github-dependency-20260723
-RELEASE_TAG=yohak-github-20260723
+REMOTE=yohak-github
+BASE_BRANCH=develop
+RELEASE_ID=yohak-github-YYYYMMDD-label
+RELEASE_BRANCH=release/${RELEASE_ID}
+RELEASE_TAG=${RELEASE_ID}
 DEPENDENCY_SPEC=github:yohak/togostanza#${RELEASE_TAG}
 ```
 
-2. 通常branchで最終確認を実行する。
+`release/yohak-github-dependency-20260723` と `yohak-github-20260723` は初回検証で使用済みの値であり、再利用しない。
+同じ日に複数回release refを作る場合は、`label` に短い目的や連番を入れて重複を避ける。
+
+2. base branchが存在し、release branchとtagがlocal / remoteの両方で未使用であることを確認する。
 
 ```sh
+git fetch --prune --tags ${REMOTE}
+git branch --list ${BASE_BRANCH}
+git branch --list ${RELEASE_BRANCH}
+git tag --list ${RELEASE_TAG}
+git ls-remote --heads ${REMOTE} ${BASE_BRANCH}
+git ls-remote --heads ${REMOTE} ${RELEASE_BRANCH}
+git ls-remote --tags ${REMOTE} ${RELEASE_TAG}
+```
+
+`BASE_BRANCH` はlocal / remoteの両方で表示されること、`RELEASE_BRANCH` と `RELEASE_TAG` はlocal / remoteの両方で何も表示されないことを確認する。
+
+3. base branchがpush先remoteと同じcommitを指していることを確認し、最終確認を実行する。
+
+```sh
+git switch ${BASE_BRANCH}
+git rev-parse ${BASE_BRANCH}
+git rev-parse ${REMOTE}/${BASE_BRANCH}
 git status --short
 mise exec -- pnpm run check-all
 mise exec -- pnpm run test:compat:local
@@ -79,13 +122,15 @@ mise exec -- pnpm run test:distribution:local
 mise exec -- pnpm run test:github-dependency:local
 ```
 
-3. release branchを作る。
+2つの `git rev-parse` が同じcommitを表示することを確認する。異なる場合は、base branchを更新するか、どのcommitをbaseにするかを人間が判断してから進める。
+
+4. release branchを作る。
 
 ```sh
 git switch -c ${RELEASE_BRANCH}
 ```
 
-4. build済み `dist/` を作り、`.gitignore` を越えて明示的にstageする。
+5. build済み `dist/` を作り、`.gitignore` を越えて明示的にstageする。
 
 ```sh
 mise exec -- pnpm run build
@@ -93,33 +138,33 @@ git add -f dist
 git status --short
 ```
 
-5. release refに必要なファイルが含まれることを確認してcommitする。
+6. release refに必要なファイルが含まれることを確認してcommitする。
 
 ```sh
 git commit -m "release: include built dist for ${RELEASE_TAG}"
 git ls-tree -r --name-only HEAD -- bin dist package.json
 ```
 
-6. tagを作る。
+7. tagを作る。
 
 ```sh
 git tag ${RELEASE_TAG}
 ```
 
-7. push前に、tagが指す内容を確認する。
+8. push前に、tagが指す内容を確認する。
 
 ```sh
 git ls-tree -r --name-only ${RELEASE_TAG} -- dist/cli.js dist/stanza.js dist/config.js
 ```
 
-8. 人間承認後にrelease branchとtagをpushする。
+9. 人間承認後にrelease branchとtagをpushする。
 
 ```sh
-git push yohak-github ${RELEASE_BRANCH}
-git push yohak-github ${RELEASE_TAG}
+git push ${REMOTE} ${RELEASE_BRANCH}
+git push ${REMOTE} ${RELEASE_TAG}
 ```
 
-9. 公開GitHub refを使って、npm / pnpmの両方でinstall確認を行う。生成repoを作る場合は、実tagまたはcommit SHAを `TOGOSTANZA_DEPENDENCY_SPEC` で注入するか、生成後に `package.json` の `<tag-or-sha>` を差し替える。
+10. 公開GitHub refを使って、npm / pnpmの両方でinstall確認を行う。生成repoを作る場合は、実tagまたはcommit SHAを `TOGOSTANZA_DEPENDENCY_SPEC` で注入するか、生成後に `package.json` の `<tag-or-sha>` を差し替える。
 
 ```sh
 TOGOSTANZA_DEPENDENCY_SPEC=${DEPENDENCY_SPEC} npm exec --package ${DEPENDENCY_SPEC} -- togostanza init --name npm-stanza
@@ -143,7 +188,7 @@ rm -rf ~/Library/Caches/pnpm/dlx
 
 ```sh
 git tag -d ${RELEASE_TAG}
-git switch main
+git switch ${BASE_BRANCH}
 git branch -D ${RELEASE_BRANCH}
 ```
 

@@ -33,7 +33,7 @@ TogoStanzaリメイク版は、Stanzaを作成、開発、ビルドし、Webペ�
 
 Stanza開発者側で公式サポートするパッケージマネージャーは `npm` と `pnpm` とする。`yarn` は公式サポート対象にしない。
 
-短期的なGitHub dependency配布では、初回の `init` はGitHub refからCLIを直接起動する。
+短期的なGitHub dependency配布では、初回の `init` はGitHub refからCLIを直接起動できる。開発中の検証や固定点の記録では、不変tagまたはcommit SHAを使ってよい。
 
 ```sh
 npm exec --package github:yohak/togostanza#<tag-or-sha> -- togostanza init --name <dir> --skip-install
@@ -48,7 +48,9 @@ Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行す�
 
 `package-lock.json` がある場合は `npm`、`pnpm-lock.yaml` がある場合は `pnpm` とみなす。`package-lock.json` と `pnpm-lock.yaml` が同時に存在する場合、または `--package-manager` の指定と既存lockfileが矛盾する場合はエラーにする。エラー文言そのものは固定しないが、開発者がlockfileの整理や指定の修正を行える診断を出す。
 
-`init` は既定で依存関係のインストールまで実行する。ただし、生成される `dependencies.togostanza` が `github:yohak/togostanza#<tag-or-sha>` のような未確定placeholderを含む場合は、自動インストールへ進まず、`--skip-install` または具体dependency specの指定を促す診断を返す。`--skip-install` が指定された場合はインストールを実行せず、lockfileも生成しない。`pnpm` を使う場合、開発者環境で `pnpm` コマンドが利用できることを前提にする。TogoStanza CLIは `pnpm` 自体を自動導入しない。
+`init` は生成repoの `dependencies.togostanza` にGitHub dependencyを書き込む。正式版の生成repo仕様では、現行版に寄せてタグ無しGitHub dependencyを既定にする。短期の `yohak` 経路では `github:yohak/togostanza`、正式版マージ後は `github:togostanza/togostanza` を既定候補にする。開発中の検証や固定化が必要な場合は、不変tagまたはcommit SHAを `TOGOSTANZA_DEPENDENCY_SPEC` などの検証用入口から注入してよい。
+
+`init` は既定で依存関係のインストールまで実行する。ただし、生成される `dependencies.togostanza` が `<tag-or-sha>` のような未確定placeholderを含む場合は、自動インストールへ進まず、`--skip-install` または具体dependency specの指定を促す診断を返す。`--skip-install` が指定された場合はインストールを実行せず、lockfileも生成しない。`pnpm` を使う場合、開発者環境で `pnpm` コマンドが利用できることを前提にする。TogoStanza CLIは `pnpm` 自体を自動導入しない。
 
 `init` は既定でgit初期化を行う。`--skip-git` が指定された場合はgit初期化を行わない。GitHub Pages workflow生成はgit初期化の有無とは独立して扱う。
 
@@ -87,6 +89,8 @@ togostanza.config.ts
 Stanzaリポジトリは `togostanza` を依存として持つ。依存の置き方は、公開時のnpm package、GitHub参照、workspace / linkなど、実行環境に応じて許容する。リメイク版CLIは、正しいリポジトリでない場合や必要な依存が利用できない場合に分かりやすい診断を出す。
 
 lockfileは、使用するパッケージマネージャーの依存解決結果として扱う。`init` がどのlockfileを生成するか、また既存lockfileをどう更新するかは、選択されたパッケージマネージャーに従う。`--skip-install` で初期化した場合、lockfileは開発者が後から `npm install` または `pnpm install` を実行したときに生成される。
+
+タグ無しGitHub dependencyは、lockfileなしの新規installではその時点のdefault branchを解決する。lockfileありのfrozen installでは、lockfileに記録されたcommitを再現する。既存Stanzaリポジトリを新しい `main` へ更新する場合は、依存更新コマンドを実行してlockfileを再生成し、そのlockfileをcommitする。問題のある `main` を公開した場合は、既存tagの置き換えではなくforward-fixを基本とする。
 
 `README.md` はStanzaリポジトリまたは各stanzaの説明として扱う。ヘルプページや一覧で参照してよいが、本文のDOM構造や表示UIは固定しない。
 
