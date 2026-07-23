@@ -316,7 +316,14 @@ function createTsConfig(): Record<string, unknown> {
 }
 
 function formatPnpmWorkspace(): string {
-  return ["onlyBuiltDependencies:", "  - '@parcel/watcher'", "  - esbuild", ""].join("\n");
+  return [
+    "allowBuilds:",
+    "  '@parcel/watcher': true",
+    "onlyBuiltDependencies:",
+    "  - '@parcel/watcher'",
+    "  - esbuild",
+    "",
+  ].join("\n");
 }
 
 function formatPagesWorkflow(packageManager: PackageManager): string {

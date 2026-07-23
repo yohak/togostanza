@@ -222,7 +222,14 @@ function createTsConfig() {
     };
 }
 function formatPnpmWorkspace() {
-    return ["onlyBuiltDependencies:", "  - '@parcel/watcher'", "  - esbuild", ""].join("\n");
+    return [
+        "allowBuilds:",
+        "  '@parcel/watcher': true",
+        "onlyBuiltDependencies:",
+        "  - '@parcel/watcher'",
+        "  - esbuild",
+        "",
+    ].join("\n");
 }
 function formatPagesWorkflow(packageManager) {
     const setupSteps = packageManager === "pnpm"

@@ -297,7 +297,14 @@ describe("CLI router", () => {
     };
     expect(packageJson.pnpm).toBeUndefined();
     expect(readText(join(cwd, "pnpm-workspace.yaml"))).toBe(
-      ["onlyBuiltDependencies:", "  - '@parcel/watcher'", "  - esbuild", ""].join("\n"),
+      [
+        "allowBuilds:",
+        "  '@parcel/watcher': true",
+        "onlyBuiltDependencies:",
+        "  - '@parcel/watcher'",
+        "  - esbuild",
+        "",
+      ].join("\n"),
     );
     const readme = readText(join(cwd, "README.md"));
     expect(readme).toContain("pnpm build");
