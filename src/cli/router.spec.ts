@@ -31,6 +31,7 @@ const repositoryRoot = packageRoot;
 const localCorsOrigin = "http://127.0.0.1:5173";
 const localhostCorsOrigin = "http://localhost:5173";
 const localCompatibilityIt = process.env.TOGOSTANZA_RUN_LOCAL_COMPAT === "1" ? it : it.skip;
+const releaseDependencySpec = "git+file:///tmp/togostanza-release-smoke#phase-12";
 
 const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");
@@ -48,6 +49,21 @@ function routeCli(args: readonly string[], options: CliRouteOptions = {}): CliRe
   }
 
   return result;
+}
+
+function withTogoStanzaDependencySpec<T>(dependencySpec: string, callback: () => T): T {
+  const previousSpec = process.env["TOGOSTANZA_DEPENDENCY_SPEC"];
+  process.env["TOGOSTANZA_DEPENDENCY_SPEC"] = dependencySpec;
+
+  try {
+    return callback();
+  } finally {
+    if (previousSpec === undefined) {
+      delete process.env["TOGOSTANZA_DEPENDENCY_SPEC"];
+    } else {
+      process.env["TOGOSTANZA_DEPENDENCY_SPEC"] = previousSpec;
+    }
+  }
 }
 
 async function routeCliAsync(
@@ -168,10 +184,8 @@ describe("CLI router", () => {
 
   it("uses an explicit dependency spec override for init scaffolds", () => {
     const cwd = makeTemporaryDirectory();
-    const previousSpec = process.env["TOGOSTANZA_DEPENDENCY_SPEC"];
-    process.env["TOGOSTANZA_DEPENDENCY_SPEC"] = "git+file:///tmp/togostanza-release-smoke#phase-12";
 
-    try {
+    withTogoStanzaDependencySpec(releaseDependencySpec, () => {
       const result = routeCli(
         [
           "init",
@@ -193,17 +207,58 @@ describe("CLI router", () => {
         dependencies: Record<string, string>;
       };
 
-      expect(packageJson.dependencies.togostanza).toBe(
-        "git+file:///tmp/togostanza-release-smoke#phase-12",
-      );
-    } finally {
-      if (previousSpec === undefined) {
-        delete process.env["TOGOSTANZA_DEPENDENCY_SPEC"];
-      } else {
-        process.env["TOGOSTANZA_DEPENDENCY_SPEC"] = previousSpec;
-      }
-    }
+      expect(packageJson.dependencies.togostanza).toBe(releaseDependencySpec);
+    });
   });
+
+  for (const packageManager of ["npm", "pnpm"] as const) {
+    it(`rejects default ${packageManager} install while the dependency spec is a placeholder`, () => {
+      const cwd = makeTemporaryDirectory();
+      const result = routeCli(
+        ["init", "--name", `${packageManager}-repo`, "--package-manager", packageManager],
+        {
+          cwd,
+          installRunner: failingInstallRunner,
+        },
+      );
+
+      expect(result).toEqual({
+        exitCode: 1,
+        stderr:
+          "Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC, or rerun init with --skip-install.",
+      });
+      expect(existsSync(join(cwd, `${packageManager}-repo`))).toBe(false);
+    });
+  }
+
+  for (const packageManager of ["npm", "pnpm"] as const) {
+    it(`runs default ${packageManager} install when a concrete dependency spec is set`, () => {
+      const cwd = makeTemporaryDirectory();
+      const calls: string[] = [];
+      const installRunner: CommandRunner = (command, args, options) => {
+        calls.push(`${command} ${args.join(" ")} @ ${options.cwd}`);
+        return { exitCode: 0 };
+      };
+
+      withTogoStanzaDependencySpec(releaseDependencySpec, () => {
+        const result = routeCli(
+          ["init", "--name", `${packageManager}-repo`, "--package-manager", packageManager],
+          {
+            cwd,
+            installRunner,
+          },
+        );
+
+        expect(result.exitCode).toBe(0);
+      });
+
+      expect(calls).toEqual([`${packageManager} install @ ${join(cwd, `${packageManager}-repo`)}`]);
+      const packageJson = readJson(join(cwd, `${packageManager}-repo`, "package.json")) as {
+        dependencies: Record<string, string>;
+      };
+      expect(packageJson.dependencies.togostanza).toBe(releaseDependencySpec);
+    });
+  }
 
   it("creates an init scaffold in the current directory", () => {
     const cwd = makeNamedTemporaryDirectory("current-repo");
@@ -291,10 +346,12 @@ describe("CLI router", () => {
       return { exitCode: 0 };
     };
 
-    const result = routeCli(["init", ".", "--skip-git"], {
-      cwd,
-      installRunner,
-    });
+    const result = withTogoStanzaDependencySpec(releaseDependencySpec, () =>
+      routeCli(["init", ".", "--skip-git"], {
+        cwd,
+        installRunner,
+      }),
+    );
 
     expect(result.exitCode).toBe(0);
     expect(calls).toEqual([`npm install @ ${cwd}`]);
@@ -309,10 +366,12 @@ describe("CLI router", () => {
       return { exitCode: 0 };
     };
 
-    const result = routeCli(["init", ".", "--skip-git"], {
-      cwd,
-      installRunner,
-    });
+    const result = withTogoStanzaDependencySpec(releaseDependencySpec, () =>
+      routeCli(["init", ".", "--skip-git"], {
+        cwd,
+        installRunner,
+      }),
+    );
 
     expect(result.exitCode).toBe(0);
     expect(calls).toEqual([`pnpm install @ ${cwd}`]);
@@ -427,12 +486,11 @@ describe("CLI router", () => {
       return { exitCode: 0 };
     };
 
-    const result = routeCli(
-      ["init", "--name", "pnpm-repo", "--package-manager", "pnpm", "--skip-git"],
-      {
+    const result = withTogoStanzaDependencySpec(releaseDependencySpec, () =>
+      routeCli(["init", "--name", "pnpm-repo", "--package-manager", "pnpm", "--skip-git"], {
         cwd,
         installRunner,
-      },
+      }),
     );
 
     expect(result.exitCode).toBe(0);
@@ -450,12 +508,11 @@ describe("CLI router", () => {
       return { exitCode: 0 };
     };
 
-    const result = routeCli(
-      ["init", "--name", "npm-repo", "--package-manager", "npm", "--skip-git"],
-      {
+    const result = withTogoStanzaDependencySpec(releaseDependencySpec, () =>
+      routeCli(["init", "--name", "npm-repo", "--package-manager", "npm", "--skip-git"], {
         cwd,
         installRunner,
-      },
+      }),
     );
 
     expect(result.exitCode).toBe(0);
@@ -482,10 +539,12 @@ describe("CLI router", () => {
     try {
       process.env.npm_config_user_agent = "pnpm/11.0.0 node/v24.5.0 darwin arm64";
 
-      const result = routeCli(["init", "--name", "inferred-repo", "--skip-git"], {
-        cwd,
-        installRunner,
-      });
+      const result = withTogoStanzaDependencySpec(releaseDependencySpec, () =>
+        routeCli(["init", "--name", "inferred-repo", "--skip-git"], {
+          cwd,
+          installRunner,
+        }),
+      );
 
       expect(result.exitCode).toBe(0);
       expect(calls).toEqual([`pnpm install @ ${join(cwd, "inferred-repo")}`]);

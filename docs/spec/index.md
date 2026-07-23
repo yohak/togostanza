@@ -33,12 +33,14 @@ TogoStanzaリメイク版は、Stanzaを作成、開発、ビルドし、Webペ�
 
 Stanza開発者側で公式サポートするパッケージマネージャーは `npm` と `pnpm` とする。`yarn` は公式サポート対象にしない。
 
-初回の `init` は、次の起動方法を公式手順とする。
+短期的なGitHub dependency配布では、初回の `init` はGitHub refからCLIを直接起動する。
 
 ```sh
-npm exec togostanza@latest init --name <dir>
-pnpm dlx togostanza@latest init --name <dir>
+npm exec --package github:yohak/togostanza#<tag-or-sha> -- togostanza init --name <dir> --skip-install
+pnpm --package github:yohak/togostanza#<tag-or-sha> dlx togostanza init --name <dir> --skip-install
 ```
+
+npm registryへ公開する場合は、`npm exec togostanza@latest init --name <dir>`、`pnpm dlx togostanza@latest init --name <dir>` のようなregistry経由の起動方法をあらためて確認する。
 
 Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行する場合は、選択したパッケージマネージャー経由で実行する。たとえば `npm exec togostanza build`、`pnpm exec togostanza build`、または `package.json` のscripts経由で実行する。グローバルインストールされた `togostanza` は前提にしない。
 
@@ -46,7 +48,7 @@ Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行す�
 
 `package-lock.json` がある場合は `npm`、`pnpm-lock.yaml` がある場合は `pnpm` とみなす。`package-lock.json` と `pnpm-lock.yaml` が同時に存在する場合、または `--package-manager` の指定と既存lockfileが矛盾する場合はエラーにする。エラー文言そのものは固定しないが、開発者がlockfileの整理や指定の修正を行える診断を出す。
 
-`init` は既定で依存関係のインストールまで実行する。`--skip-install` が指定された場合はインストールを実行せず、lockfileも生成しない。`pnpm` を使う場合、開発者環境で `pnpm` コマンドが利用できることを前提にする。TogoStanza CLIは `pnpm` 自体を自動導入しない。
+`init` は既定で依存関係のインストールまで実行する。ただし、生成される `dependencies.togostanza` が `github:yohak/togostanza#<tag-or-sha>` のような未確定placeholderを含む場合は、自動インストールへ進まず、`--skip-install` または具体dependency specの指定を促す診断を返す。`--skip-install` が指定された場合はインストールを実行せず、lockfileも生成しない。`pnpm` を使う場合、開発者環境で `pnpm` コマンドが利用できることを前提にする。TogoStanza CLIは `pnpm` 自体を自動導入しない。
 
 `init` は既定でgit初期化を行う。`--skip-git` が指定された場合はgit初期化を行わない。GitHub Pages workflow生成はgit初期化の有無とは独立して扱う。
 

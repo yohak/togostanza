@@ -211,6 +211,23 @@ describe("CLI smoke", () => {
     );
   });
 
+  for (const packageManager of ["npm", "pnpm"] as const) {
+    it(`rejects default ${packageManager} install while the generated dependency is a placeholder`, async () => {
+      const cwd = makeTemporaryDirectory();
+      const result = await runCli(
+        ["init", "--name", `${packageManager}-repo`, "--package-manager", packageManager],
+        cwd,
+      );
+
+      expect(result.code).toBe(1);
+      expect(result.stdout).toBe("");
+      expect(result.stderr.trim()).toBe(
+        "Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC, or rerun init with --skip-install.",
+      );
+      expect(existsSync(resolve(cwd, `${packageManager}-repo`))).toBe(false);
+    });
+  }
+
   it("creates an init scaffold in the current directory through the bin entry", async () => {
     const cwd = makeNamedTemporaryDirectory("current-repo");
     const result = await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);

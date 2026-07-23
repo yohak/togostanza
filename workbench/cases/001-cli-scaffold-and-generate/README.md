@@ -388,6 +388,7 @@ pnpm run build:local
 - `dependencies.togostanza` はPhase 12-3以降、通常生成では `github:yohak/togostanza#<tag-or-sha>` として生成される。
 - 生成READMEは、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallする案内を書く。
 - release手順やlocal smokeでは、`TOGOSTANZA_DEPENDENCY_SPEC` で具体dependency specを注入できる。
+- placeholderのまま `init` の既定installへ進む場合は、scaffold作成前に明示診断で失敗する。`--skip-install` または具体dependency specの注入が必要。
 - 生成workflowのAction major tagは、Phase 2-6で確認済みのtagを使う。Action versionは外部互換契約にはせず、tag更新やlive validationはPhase 12または保守更新で扱う。
 - `packageManager` fieldはPhase 10では生成しない。pnpm workflowはpnpm 10系を明示する。
 - 実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、公開GitHub refの作成と実release tag / commit SHAの反映後に確認する。

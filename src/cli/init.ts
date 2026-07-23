@@ -82,9 +82,17 @@ export function handleInit(args: readonly string[], options: InitOptions = {}): 
   }
 
   const license = getStringOption(parsed, "--license") ?? "MIT";
+  const dependencySpec = resolveTogoStanzaDependencySpec();
+
+  if (!getBooleanOption(parsed, "--skip-install") && isPlaceholderDependencySpec(dependencySpec)) {
+    return failure(
+      "Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC, or rerun init with --skip-install.",
+    );
+  }
 
   try {
     createScaffold({
+      dependencySpec,
       destination,
       license,
       name: packageName,
@@ -143,6 +151,7 @@ export function formatInstallCommand(packageManager: PackageManager): {
 }
 
 function createScaffold(input: {
+  dependencySpec: string;
   destination: string;
   license: string;
   name: string;
@@ -179,7 +188,11 @@ function createScaffold(input: {
   );
 }
 
-function formatReadme(input: { name: string; packageManager: PackageManager }): string {
+function formatReadme(input: {
+  dependencySpec: string;
+  name: string;
+  packageManager: PackageManager;
+}): string {
   const installCommand = input.packageManager === "pnpm" ? "pnpm install" : "npm install";
   const buildCommand = input.packageManager === "pnpm" ? "pnpm build" : "npm run build";
   const serveCommand = input.packageManager === "pnpm" ? "pnpm serve" : "npm run serve";
@@ -201,7 +214,9 @@ function formatReadme(input: { name: string; packageManager: PackageManager }): 
       ? "If this repository was initialized with `--skip-install`, run the install command locally with pnpm 10 and commit the generated lockfile before pushing to `main`."
       : "If this repository was initialized with `--skip-install`, run the install command locally and commit the generated lockfile before pushing to `main`.";
   const dependencyGuidance =
-    "If `package.json` contains `github:yohak/togostanza#<tag-or-sha>`, replace `<tag-or-sha>` with the TogoStanza release tag or commit SHA before installing dependencies.";
+    input.dependencySpec === defaultTogoStanzaDependencySpec
+      ? "If `package.json` contains `github:yohak/togostanza#<tag-or-sha>`, replace `<tag-or-sha>` with the TogoStanza release tag or commit SHA before installing dependencies."
+      : `This repository depends on \`${input.dependencySpec}\`.`;
 
   return [
     `# ${input.name}`,
@@ -250,7 +265,11 @@ function formatReadme(input: { name: string; packageManager: PackageManager }): 
   ].join("\n");
 }
 
-function createPackageJson(input: { license: string; name: string }): Record<string, unknown> {
+function createPackageJson(input: {
+  dependencySpec: string;
+  license: string;
+  name: string;
+}): Record<string, unknown> {
   return {
     name: input.name,
     version: "0.0.1",
@@ -261,7 +280,7 @@ function createPackageJson(input: { license: string; name: string }): Record<str
       serve: "togostanza serve",
     },
     dependencies: {
-      togostanza: resolveTogoStanzaDependencySpec(),
+      togostanza: input.dependencySpec,
     },
     engines: {
       node: ">=24.5.0",
@@ -271,6 +290,10 @@ function createPackageJson(input: { license: string; name: string }): Record<str
 
 function resolveTogoStanzaDependencySpec(): string {
   return process.env["TOGOSTANZA_DEPENDENCY_SPEC"]?.trim() || defaultTogoStanzaDependencySpec;
+}
+
+function isPlaceholderDependencySpec(dependencySpec: string): boolean {
+  return dependencySpec.includes("<tag-or-sha>");
 }
 
 function createTsConfig(): Record<string, unknown> {

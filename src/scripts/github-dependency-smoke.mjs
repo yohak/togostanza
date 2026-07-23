@@ -29,6 +29,16 @@ try {
   createLocalReleaseRepository(releaseRepository);
 
   const gitSpec = `git+${pathToFileURL(releaseRepository).href}#${releaseRef}`;
+  runGitDependencyBootstrapSmoke({
+    gitSpec,
+    packageManager: "npm",
+    projectDirectory: join(temporaryRoot, "npm-bootstrap"),
+  });
+  runGitDependencyBootstrapSmoke({
+    gitSpec,
+    packageManager: "pnpm",
+    projectDirectory: join(temporaryRoot, "pnpm-bootstrap"),
+  });
   runGitDependencyInstallSmoke({
     binaryName: "togostanza",
     gitSpec,
@@ -111,6 +121,53 @@ function copyTrackedWorkingTree(destination) {
   }
 }
 
+function runGitDependencyBootstrapSmoke(input) {
+  mkdirSync(input.projectDirectory, { recursive: true });
+  writeFileSync(
+    join(input.projectDirectory, "package.json"),
+    `${JSON.stringify(
+      {
+        name: `${input.packageManager}-github-dependency-bootstrap-smoke`,
+        private: true,
+        version: "0.0.0",
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+
+  const initArgs = ["init", "--name", "bootstrap-stanza", "--skip-install", "--skip-git"];
+  if (input.packageManager === "npm") {
+    run("npm", ["exec", "--yes", "--package", input.gitSpec, "--", "togostanza", "--version"], {
+      cwd: input.projectDirectory,
+    });
+    run("npm", ["exec", "--yes", "--package", input.gitSpec, "--", "togostanza", ...initArgs], {
+      cwd: input.projectDirectory,
+    });
+  } else {
+    run("pnpm", ["--package", input.gitSpec, "dlx", "togostanza", "--version"], {
+      cwd: input.projectDirectory,
+    });
+    run("pnpm", ["--package", input.gitSpec, "dlx", "togostanza", ...initArgs], {
+      cwd: input.projectDirectory,
+    });
+  }
+
+  const generatedPackageJson = JSON.parse(
+    readFileSync(join(input.projectDirectory, "bootstrap-stanza", "package.json"), "utf8"),
+  );
+  if (generatedPackageJson.dependencies?.togostanza !== "github:yohak/togostanza#<tag-or-sha>") {
+    throw new Error(
+      [
+        "Git dependency bootstrap init did not generate the placeholder dependency spec.",
+        "expected: github:yohak/togostanza#<tag-or-sha>",
+        `actual: ${generatedPackageJson.dependencies?.togostanza}`,
+      ].join("\n"),
+    );
+  }
+}
+
 function runGitDependencyInstallSmoke(input) {
   mkdirSync(input.projectDirectory, { recursive: true });
   writeFileSync(
@@ -147,15 +204,7 @@ function runGitDependencyInstallSmoke(input) {
   const stanzaRepoName = `${input.packageManager}-stanza`;
   run(
     binaryPath,
-    [
-      "init",
-      "--name",
-      stanzaRepoName,
-      "--package-manager",
-      input.packageManager,
-      "--skip-install",
-      "--skip-git",
-    ],
+    ["init", "--name", stanzaRepoName, "--package-manager", input.packageManager, "--skip-git"],
     {
       cwd: input.projectDirectory,
       env: {

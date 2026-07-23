@@ -30,7 +30,9 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
   - script: `mise exec -- pnpm run test:github-dependency:local`
   - 一時git repositoryにrelease refを作り、`git+file://...#ref` でnpm / pnpm installする。
   - release refには `git add -f dist/` でbuild済み `dist/` を含める。
+  - npm / pnpmからGit refのCLIを直接起動し、`init --skip-install` できることを確認する。
   - install後のCLIで `--version`、`init --name`、`generate stanza`、`build` を確認する。
+  - install後のCLIから `TOGOSTANZA_DEPENDENCY_SPEC` を使って具体refを注入し、`init` の既定installが通ることを確認する。
   - install後に `togostanza/stanza` と `togostanza/config` の実行時解決と型解決を確認する。
   - install対象に `docs/`、`references/`、`src/`、`test/`、`workbench/` が混入していないことを確認する。
 - 生成repoの `dependencies.togostanza` をGitHub dependency運用へ寄せた。
@@ -38,6 +40,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
   - 生成READMEには、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallすることを書く。
   - `TOGOSTANZA_DEPENDENCY_SPEC` で、release手順やlocal smoke用の具体dependency specを注入できるようにした。
   - `test:github-dependency:local` は `git+file://...#ref` を注入し、生成repoのdependencyに反映されることを確認する。
+  - placeholderのまま `init` の既定installへ進もうとした場合は、scaffold作成前に明示診断で失敗するようにした。
 
 ## package surface判断
 
@@ -50,6 +53,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | root export | 追加しない。 |
 | `main` / top-level `types` | 追加しない。 |
 | generated repo `dependencies.togostanza` | 通常生成では `github:yohak/togostanza#<tag-or-sha>` をplaceholderとして書く。release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体refを注入する。 |
+| placeholder dependency install | placeholderのまま既定installへ進ませない。`--skip-install`、`TOGOSTANZA_DEPENDENCY_SPEC`、またはrelease時の実tag/SHA反映を使う。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 10系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
 | GitHub dependency release ref | `git add -f dist/` でbuild済み `dist/` を含める。 |
@@ -73,16 +77,18 @@ mise exec -- pnpm run test:compat:local
   - lint
   - type-check
   - build
-  - unit test: 80 passed, 2 skipped
-  - integration test: 21 passed
+  - unit test: 84 passed, 2 skipped
+  - integration test: 23 passed
   - browser test: 10 passed
 - `test:distribution:local`: pass
   - npm tarball install smoke: pass
   - pnpm tarball install smoke: pass
 - `test:github-dependency:local`: pass
   - local release ref smoke: pass
+  - npm / pnpm Git ref bootstrap smoke: pass
   - npm Git dependency install smoke: pass
   - pnpm Git dependency install smoke: pass
+  - concrete dependency specを注入した `init` 既定install: pass
 - `test:compat:local`: pass
   - local compatibility unit: 3 passed
   - local compatibility browser: 5 passed

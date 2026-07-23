@@ -54,6 +54,90 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 - install対象に `dist/test/` やtest supportが混入していない。
 - GitHub Pages workflowで使うlockfileとpnpm 10系の前提がREADMEに残っている。
 
+## release ref作成手順
+
+ここでは、公開GitHub dependency用のrelease branch / tagを作る手順を示す。通常開発branchへ `dist/` を混入させないため、作業前にworktreeがcleanであることを確認する。
+
+1. release branch名、tag名、生成repoへ書くdependency specを決める。
+
+```sh
+RELEASE_BRANCH=release/github-dependency-YYYYMMDD
+RELEASE_TAG=togostanza-github-YYYYMMDD
+DEPENDENCY_SPEC=github:yohak/togostanza#${RELEASE_TAG}
+```
+
+2. 通常branchで最終確認を実行する。
+
+```sh
+git status --short
+mise exec -- pnpm run check-all
+mise exec -- pnpm run test:compat:local
+mise exec -- pnpm run test:distribution:local
+mise exec -- pnpm run test:github-dependency:local
+```
+
+3. release branchを作る。
+
+```sh
+git switch -c ${RELEASE_BRANCH}
+```
+
+4. build済み `dist/` を作り、`.gitignore` を越えて明示的にstageする。
+
+```sh
+mise exec -- pnpm run build
+git add -f dist
+git status --short
+```
+
+5. release refに必要なファイルが含まれることを確認してcommitする。
+
+```sh
+git commit -m "release: include built dist for ${RELEASE_TAG}"
+git ls-tree -r --name-only HEAD -- bin dist package.json
+```
+
+6. tagを作る。
+
+```sh
+git tag ${RELEASE_TAG}
+```
+
+7. push前に、tagが指す内容を確認する。
+
+```sh
+git ls-tree -r --name-only ${RELEASE_TAG} -- dist/cli.js dist/stanza.js dist/config.js
+```
+
+8. 人間承認後にrelease branchとtagをpushする。
+
+```sh
+git push yohak-github ${RELEASE_BRANCH}
+git push yohak-github ${RELEASE_TAG}
+```
+
+9. 公開GitHub refを使って、npm / pnpmの両方でinstall確認を行う。生成repoを作る場合は、実tagまたはcommit SHAを `TOGOSTANZA_DEPENDENCY_SPEC` で注入するか、生成後に `package.json` の `<tag-or-sha>` を差し替える。
+
+```sh
+TOGOSTANZA_DEPENDENCY_SPEC=${DEPENDENCY_SPEC} npm exec --package ${DEPENDENCY_SPEC} -- togostanza init --name npm-stanza
+TOGOSTANZA_DEPENDENCY_SPEC=${DEPENDENCY_SPEC} pnpm --package ${DEPENDENCY_SPEC} dlx togostanza init --name pnpm-stanza
+```
+
+`--skip-install` で生成する場合は、生成後に `package.json` の `github:yohak/togostanza#<tag-or-sha>` を実tagまたはcommit SHAへ差し替えてからinstallする。
+
+## rollback / 差し替え手順
+
+- push前に問題が見つかった場合は、tagを削除し、release branchを破棄して通常branchへ戻る。
+
+```sh
+git tag -d ${RELEASE_TAG}
+git switch main
+git branch -D ${RELEASE_BRANCH}
+```
+
+- push後に問題が見つかった場合は、原則として既存tagを上書きしない。修正commitから新しいrelease branch / tagを作り、生成repoのdependency specを新しいrefへ差し替える。
+- push済みtagの削除や置き換えが必要な場合は、Stanza開発者への影響を確認し、人間承認を受けてから行う。
+
 ## 外部副作用があるため明示承認を受けてから行うこと
 
 - release branchのpush。

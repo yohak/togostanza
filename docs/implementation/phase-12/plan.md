@@ -209,6 +209,9 @@ git diff --check
   - `togostanza init`
   - `togostanza generate stanza`
   - `togostanza build`
+- GitHub refからCLIを直接起動するbootstrap経路を確認する。
+  - npm: `npm exec --package github:yohak/togostanza#<tag-or-sha> -- togostanza ...`
+  - pnpm: `pnpm --package github:yohak/togostanza#<tag-or-sha> dlx togostanza ...`
 - `import Stanza from "togostanza/stanza"` と `import { defineTogoStanzaConfig } from "togostanza/config"` が、GitHub dependency install後に解決できること。
 
 必要に応じて、既存の `test:distribution:local` をGitHub dependency smokeへ拡張する。ただし、外部GitHubへpushやtag作成が必要な確認は、人間の明示承認を受けてから扱う。
@@ -258,6 +261,7 @@ Phase 12-1では `test:github-dependency:local` を追加し、一時git reposit
   - `git+file://...#ref` のlocal smokeでも同じ経路を使う。
   - このoverrideは配布検証とrelease運用のための入口であり、Stanza開発者向けの通常操作としてはREADMEのGitHub dependency specを正とする。
 - READMEには、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallすることを書く。
+- placeholderのまま既定installへ進むと失敗するため、具体dependency specが無い場合は `--skip-install` を必須にし、scaffold作成前に明示診断を返す。
 - GitHub Pages workflowがGitHub dependency installで通る前提をどう説明するか。
 - pnpm 10系lockfile前提と、GitHub dependency specのlockfile再現性をREADMEで案内する。
 
