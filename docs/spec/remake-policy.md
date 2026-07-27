@@ -135,7 +135,13 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 `${id}.html` のUI、DOM、preview機能、snippet生成の詳細は再設計可能とする。
 
-`togostanza--menu` の内部DOM構造や見た目は `再設計` 可能とする。実プロジェクトでstyleが当たっているため、見た目のregression testは重点的に行う。
+`togostanza--menu` の外側custom element名は、実プロジェクトでstyleが当たっているため維持する。menuはStanzaのShadow DOM内で `<main>` と同じ相対配置コンテナに置き、`this.menu()` のitem / divider、Copy HTML snippet、About導線を扱う。
+
+`togostanza--menu` の内部DOM構造や見た目は `再設計` 可能とする。内部class名、id、DOM階層の完全一致は必須互換にしない。ただし、実プロジェクトで観測されるstyle適用とmenu itemの操作はregression testで重点確認する。
+
+現行版ではinfo icon再クリックでmenuを開閉する。リメイク版では、Stanza利用者の自然な操作として `Escape` と外側clickでも閉じられるようにする。これは現行版の操作を壊す変更ではなく、追加操作として扱う。
+
+Copy HTML snippetのmodule script URLは、Stanza bundleのregistrationからruntimeへ渡す。About URLから `.js` を逆算する実装にはしない。画面端でのpopup自動flipは初回の互換範囲に含めない。
 
 ## Stanza Source
 
@@ -202,7 +208,7 @@ Stanza stylesheetは `style.scss` を正とする。`stanza.scss` は旧ドキ�
 
 `${id}.js.map` は開発支援寄りの生成物として扱い、必須互換には置かない。
 
-`index.html`、`-togostanza/help-app.js` などのヘルププレビュー側生成物は `再設計` 可能とする。`${id}.html` はmenuのAbout導線から参照されるため存在は維持するが、内容は再設計可能とする。
+`index.html`、`-togostanza/help-app.js` などのヘルププレビュー側生成物は `再設計` 可能とする。`${id}.html` はmenuのAbout導線から参照されるため存在を維持し、Stanza開発者がパラメーターとstyleを変更できるリッチなヘルププレビューを提供する。実装にはVue 3とBootstrap 5 CSSを採用し、Bootstrap JSは使わない。query parameterによる初期値上書きは採用しない。具体的なDOM構造、CSS class、内部bundle名は固定しない。
 
 既存Stanzaソースからのasset importが壊れないことも開発契約として見る。ただし、data URL inline、別ファイルemit、hash名、size thresholdなどのasset処理詳細は実装時に判断する。
 
@@ -317,4 +323,4 @@ Svelteなど、旧ドキュメントに例はあるが実プロジェクトで�
 - Vite 8実装設計。
 - `togostanza.config.ts` の具体schema。
 - 実プロジェクトregression testの設計。
-- ヘルププレビューの再設計範囲。
+- ヘルププレビューの追加改善範囲。

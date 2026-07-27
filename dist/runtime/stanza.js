@@ -1,3 +1,4 @@
+import { registerTogoStanzaMenuElement, } from "./menu.js";
 const coordinationReadyMaxAttempts = 10;
 let pendingRuntimeContext;
 const initializeRuntime = Symbol("togostanza.initializeRuntime");
@@ -91,6 +92,7 @@ export function registerStanza(registration) {
         return;
     }
     registerCoordinationElements();
+    registerTogoStanzaMenuElement();
     if (customElements.get(registration.tagName)) {
         return;
     }
@@ -99,16 +101,18 @@ export function registerStanza(registration) {
     class TogoStanzaElement extends HTMLElement {
         static observedAttributes = observedAttributes;
         stanzaInstance;
-        #menuShell;
+        #menuElement;
         #hasConnected = false;
         constructor() {
             super();
             const root = this.attachShadow({ mode: "open" });
             root.append(createStyleDefaults(registration.metadata));
             root.append(createStylesheetLink(registration.cssUrl));
-            root.append(createMainContainer());
-            this.#menuShell = createMenuShell(registration.aboutUrl);
-            root.append(this.#menuShell);
+            const { container, menu } = createMainContainer();
+            this.#menuElement = menu;
+            this.#menuElement.href = registration.aboutUrl.href;
+            this.#menuElement.scriptUrl = registration.scriptUrl.href;
+            root.append(container);
             const context = {
                 assetBaseUrl: registration.assetBaseUrl,
                 element: this,
@@ -119,11 +123,13 @@ export function registerStanza(registration) {
             };
             this.stanzaInstance = createStanzaInstance(registration.StanzaClass, context);
             this.stanzaInstance[initializeRuntime](context);
+            this.#menuElement.menuDefinition = this.stanzaInstance.menu.bind(this.stanzaInstance);
+            this.#menuElement.stanzaInstance = this.stanzaInstance;
         }
         connectedCallback() {
             this.#hasConnected = true;
             this.#refreshParams();
-            this.#updateMenuShell();
+            this.#updateMenu();
             this.#scheduleRender();
         }
         attributeChangedCallback(name, oldValue, newValue) {
@@ -131,7 +137,7 @@ export function registerStanza(registration) {
                 return;
             }
             this.#refreshParams();
-            this.#updateMenuShell();
+            this.#updateMenu();
             if (this.#hasConnected && parameterKeys.includes(name)) {
                 this.stanzaInstance.handleAttributeChange(name, oldValue, newValue);
             }
@@ -153,13 +159,14 @@ export function registerStanza(registration) {
         }
         async #renderStanza() {
             await this.stanzaInstance.render();
-            this.#updateMenuShell();
+            this.#updateMenu();
         }
-        #updateMenuShell() {
+        #updateMenu() {
             const placement = resolveMenuPlacement(this, registration.metadata);
-            this.#menuShell.dataset.placement = placement;
-            this.#menuShell.hidden = placement === "none";
-            renderMenuItems(this.#menuShell, this.stanzaInstance.menu());
+            this.#menuElement.dataset.placement = placement;
+            this.#menuElement.hidden = placement === "none";
+            this.#menuElement.placement = placement;
+            this.#menuElement.refresh();
         }
     }
     customElements.define(registration.tagName, TogoStanzaElement);
@@ -175,9 +182,12 @@ function createStanzaInstance(StanzaClass, context) {
 }
 function createMainContainer() {
     const container = document.createElement("div");
+    const menu = document.createElement("togostanza--menu");
     container.dataset.togostanzaMainContainer = "";
-    container.append(document.createElement("main"));
-    return container;
+    container.style.position = "relative";
+    menu.dataset.togostanzaMenu = "";
+    container.append(document.createElement("main"), menu);
+    return { container, menu };
 }
 function registerCoordinationElements() {
     if (!customElements.get("togostanza--container")) {
@@ -333,38 +343,6 @@ function createStylesheetLink(cssUrl) {
     link.href = cssUrl.href;
     link.rel = "stylesheet";
     return link;
-}
-function createMenuShell(aboutUrl) {
-    const menu = document.createElement("nav");
-    menu.dataset.togostanzaMenu = "";
-    const items = document.createElement("div");
-    items.dataset.togostanzaMenuItems = "";
-    const aboutLink = document.createElement("a");
-    aboutLink.href = aboutUrl.href;
-    aboutLink.textContent = "About";
-    menu.append(items, aboutLink);
-    return menu;
-}
-function renderMenuItems(menu, entries) {
-    const items = menu.querySelector("[data-togostanza-menu-items]");
-    if (!items) {
-        return;
-    }
-    items.replaceChildren(...entries.map((entry) => createMenuEntryElement(entry)));
-}
-function createMenuEntryElement(entry) {
-    if (entry.type === "divider") {
-        const divider = document.createElement("hr");
-        divider.dataset.togostanzaMenuDivider = "";
-        return divider;
-    }
-    const button = document.createElement("button");
-    button.dataset.togostanzaMenuItem = "";
-    button.textContent = entry.label;
-    if (entry.handler) {
-        button.addEventListener("click", entry.handler);
-    }
-    return button;
 }
 function resolveMenuPlacement(element, metadata) {
     const attributePlacement = element.getAttribute("togostanza-menu-placement");

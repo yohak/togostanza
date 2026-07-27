@@ -122,6 +122,7 @@ Stanza entrypointからimportされるリポジトリ内ファイルは、stanza
 
 ```text
 dist/
+  index.html
   {id}.js
   {id}.css
   {id}.html
@@ -137,11 +138,15 @@ dist/
 
 `{id}.css` は、対象stanzaのShadow DOM内に適用されるstylesheetとして生成する。対応する `style.scss` がない場合でも、空のCSS生成物を出してよい。
 
-`{id}.html` は、menuのAbout導線から参照できるStanza説明ページとして存在させる。ページのUI、DOM構造、プレビュー機能、snippet生成の詳細は再設計可能とする。
+`index.html` は、ビルド対象stanzaの一覧と各 `{id}.html` への導線を提供する。
+
+`{id}.html` は、menuのAbout導線から参照できるStanza説明ページとして存在させる。ページでは、メタデータ由来のパラメーターとstyleを変更し、custom elementのプレビューとHTML snippetへ反映できる。About情報、Events概要、`{id}/metadata.json` のDownload JSON導線も提供する。具体的なUI、DOM構造、内部bundle名は固定しない。
+
+パラメーターの初期値は `stanza:default` を優先し、無い場合は `stanza:example` を使う。styleの初期値は `stanza:default` を使う。ヘルププレビューのquery parameterで初期値を上書きする機能は提供しない。
 
 `{id}/metadata.json` は公開配布物として出力する。ランタイム初期化に必要なmetadataは `{id}.js` へinlineしてよく、ブラウザ実行時に `{id}/metadata.json` をfetchすることは必須にしない。`{id}/metadata.json` は、Download JSON、外部参照、後続ツール、ヘルプやAbout導線で参照できる公開資料として扱う。
 
-`{id}.js.map` などのsource mapは開発支援生成物として扱い、必須互換にはしない。`index.html`、`-togostanza/*` などヘルププレビュー内部生成物の構造も必須互換にはしない。
+`{id}.js.map` などのsource mapは開発支援生成物として扱い、必須互換にはしない。`-togostanza/*` などヘルププレビュー内部生成物の構造も必須互換にはしない。
 
 Stanzaソースからのasset importは壊さない。data URL inline、別ファイルemit、hash名、size thresholdなどの詳細は固定しない。
 
@@ -182,13 +187,13 @@ GitHub Pages公開導線は、Stanzaリポジトリそのものを公開する�
 | URL | 内容 |
 | --- | ---- |
 | `/` | Stanza一覧。 |
-| `/{id}.html` | 対象stanzaの最小プレビュー。 |
+| `/{id}.html` | 対象stanzaのリッチなヘルププレビュー。 |
 | `/{id}.js` | 対象stanzaのmodule script。 |
 | `/{id}.css` | 対象stanzaのstylesheet。 |
 | `/{id}/metadata.json` | 対象stanzaのmetadata。 |
 | asset URL | ルートassetとstanza別asset。 |
 
-`/` と `/{id}.html` のUI、DOM構造、カスタマイズUI、HTML snippet生成の詳細は固定しない。ただし、Stanza開発者が対象stanzaをブラウザで確認できる最小プレビューを提供する。
+`/` と `/{id}.html` は、`build` が生成するStanza一覧とリッチなヘルププレビューを同じ生成経路で配信する。UI、DOM構造、内部bundle名、HTML snippetの書式は固定しない。
 
 `serve` はStanzaソース、`metadata.json`、template、stylesheet、asset、設定、共通ファイルの変更を検知する。変更後のブラウザ反映はページ再読み込みを必須仕様とする。HMRは必須仕様にしない。
 
@@ -217,7 +222,11 @@ StanzaごとのCSSはShadow DOM内に適用する。`metadata["stanza:style"]` �
 
 外部ページがShadow DOM内部を直接queryして操作する使い方は、利用契約として保証しない。一方で、Stanzaソース内から `this.root` と `this.root.querySelector("main")` を使うことは開発契約として維持する。
 
-menu placementは、`metadata["stanza:menu-placement"]` と `togostanza-menu-placement` 属性で指定できる。`none` の場合、menu UIは表示されない。`togostanza-menu_placement` はリメイク版では受け付けない。`togostanza--menu` の内部DOM構造や見た目は再設計可能だが、About導線と `${id}.html` への参照は維持する。
+menu placementは、`metadata["stanza:menu-placement"]` と `togostanza-menu-placement` 属性で指定できる。`top-left`、`top-right`、`bottom-left`、`bottom-right`、`none` を扱い、`none` の場合はmenu UIを表示しない。`togostanza-menu_placement` はリメイク版では受け付けない。
+
+runtimeは、StanzaのShadow DOM内で `<main>` と同じ相対配置コンテナに `<togostanza--menu>` custom elementを置く。menu buttonからpopupを開き、再クリック、`Escape`、外側clickで閉じられる。`Escape` は開いているpopupだけを閉じ、focusをそのpopupを開いたmenu buttonへ戻す。popupは `this.menu()` のitem / divider、`Copy HTML snippet to clipboard`、`About this stanza` を表示する。Copy HTML snippetは、対象Stanza bundleのmodule scriptと、現在のcustom elementの `outerHTML` を使う。About導線は `${id}.html` を新しいタブで開く。
+
+`togostanza--menu` の外側custom element名と観測可能な操作は維持する。内部DOM構造、class名、id、見た目、画面端での自動flipは固定しない。
 
 ## パラメーター
 
@@ -285,7 +294,7 @@ export default class Example extends Stanza {
 
 `this.importWebFontCSS()` のlink注入先と重複制御の詳細は固定しない。ただし、既存Stanzaソースから同じ名前で呼び出せること、Shadow DOM内の表示に必要なCSSを読み込めることを維持する。
 
-`this.menu()` は、`{ type: "item", label, handler }` と `{ type: "divider" }` を返せる。runtime menuはこれらのitemを扱い、`handler` を呼び出せる。menu UIのDOM構造や見た目は固定しない。
+`this.menu()` は、`{ type: "item", label, handler }` と `{ type: "divider" }` を返せる。runtime menuはpopupを開くときとStanza描画後に定義を再評価し、item clickで `handler` を呼び出してpopupを閉じる。menu UIの内部DOM構造や見た目は固定しない。
 
 ## Stanza間連携
 

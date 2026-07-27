@@ -1,3 +1,9 @@
+import {
+  registerTogoStanzaMenuElement,
+  type MenuEntry,
+  type TogoStanzaMenuElement,
+} from "./menu.js";
+
 type StanzaRuntimeContext = {
   assetBaseUrl: URL;
   element: HTMLElement;
@@ -12,18 +18,6 @@ type TemplateRenderer = (parameters?: Record<string, unknown>) => string;
 type AttributeSource = Pick<HTMLElement, "getAttribute" | "hasAttribute">;
 type StanzaElement = HTMLElement & {
   stanzaInstance?: Stanza;
-};
-
-type MenuEntry = MenuDivider | MenuItem;
-
-type MenuDivider = {
-  type: "divider";
-};
-
-type MenuItem = {
-  handler?: () => void;
-  label: string;
-  type: "item";
 };
 
 const coordinationReadyMaxAttempts = 10;
@@ -48,6 +42,7 @@ export type StanzaRegistration = {
   cssUrl: URL;
   id: string;
   metadata: Record<string, unknown>;
+  scriptUrl: URL;
   StanzaClass: StanzaConstructor;
   tagName: string;
   templates: Record<string, TemplateRenderer>;
@@ -167,6 +162,7 @@ export function registerStanza(registration: StanzaRegistration): void {
   }
 
   registerCoordinationElements();
+  registerTogoStanzaMenuElement();
 
   if (customElements.get(registration.tagName)) {
     return;
@@ -179,7 +175,7 @@ export function registerStanza(registration: StanzaRegistration): void {
     static observedAttributes = observedAttributes;
 
     stanzaInstance: Stanza;
-    #menuShell: HTMLElement;
+    #menuElement: TogoStanzaMenuElement;
     #hasConnected = false;
 
     constructor() {
@@ -188,10 +184,11 @@ export function registerStanza(registration: StanzaRegistration): void {
       const root = this.attachShadow({ mode: "open" });
       root.append(createStyleDefaults(registration.metadata));
       root.append(createStylesheetLink(registration.cssUrl));
-      root.append(createMainContainer());
-
-      this.#menuShell = createMenuShell(registration.aboutUrl);
-      root.append(this.#menuShell);
+      const { container, menu } = createMainContainer();
+      this.#menuElement = menu;
+      this.#menuElement.href = registration.aboutUrl.href;
+      this.#menuElement.scriptUrl = registration.scriptUrl.href;
+      root.append(container);
 
       const context = {
         assetBaseUrl: registration.assetBaseUrl,
@@ -204,12 +201,14 @@ export function registerStanza(registration: StanzaRegistration): void {
 
       this.stanzaInstance = createStanzaInstance(registration.StanzaClass, context);
       this.stanzaInstance[initializeRuntime](context);
+      this.#menuElement.menuDefinition = this.stanzaInstance.menu.bind(this.stanzaInstance);
+      this.#menuElement.stanzaInstance = this.stanzaInstance;
     }
 
     connectedCallback(): void {
       this.#hasConnected = true;
       this.#refreshParams();
-      this.#updateMenuShell();
+      this.#updateMenu();
       this.#scheduleRender();
     }
 
@@ -219,7 +218,7 @@ export function registerStanza(registration: StanzaRegistration): void {
       }
 
       this.#refreshParams();
-      this.#updateMenuShell();
+      this.#updateMenu();
 
       if (this.#hasConnected && parameterKeys.includes(name)) {
         this.stanzaInstance.handleAttributeChange(name, oldValue, newValue);
@@ -245,15 +244,16 @@ export function registerStanza(registration: StanzaRegistration): void {
 
     async #renderStanza(): Promise<void> {
       await this.stanzaInstance.render();
-      this.#updateMenuShell();
+      this.#updateMenu();
     }
 
-    #updateMenuShell(): void {
+    #updateMenu(): void {
       const placement = resolveMenuPlacement(this, registration.metadata);
 
-      this.#menuShell.dataset.placement = placement;
-      this.#menuShell.hidden = placement === "none";
-      renderMenuItems(this.#menuShell, this.stanzaInstance.menu());
+      this.#menuElement.dataset.placement = placement;
+      this.#menuElement.hidden = placement === "none";
+      this.#menuElement.placement = placement;
+      this.#menuElement.refresh();
     }
   }
 
@@ -273,12 +273,18 @@ function createStanzaInstance(
   }
 }
 
-function createMainContainer(): HTMLElement {
+function createMainContainer(): {
+  container: HTMLElement;
+  menu: TogoStanzaMenuElement;
+} {
   const container = document.createElement("div");
+  const menu = document.createElement("togostanza--menu") as TogoStanzaMenuElement;
   container.dataset.togostanzaMainContainer = "";
-  container.append(document.createElement("main"));
+  container.style.position = "relative";
+  menu.dataset.togostanzaMenu = "";
+  container.append(document.createElement("main"), menu);
 
-  return container;
+  return { container, menu };
 }
 
 function registerCoordinationElements(): void {
@@ -498,50 +504,6 @@ function createStylesheetLink(cssUrl: URL): HTMLLinkElement {
   link.rel = "stylesheet";
 
   return link;
-}
-
-function createMenuShell(aboutUrl: URL): HTMLElement {
-  const menu = document.createElement("nav");
-  menu.dataset.togostanzaMenu = "";
-
-  const items = document.createElement("div");
-  items.dataset.togostanzaMenuItems = "";
-
-  const aboutLink = document.createElement("a");
-  aboutLink.href = aboutUrl.href;
-  aboutLink.textContent = "About";
-
-  menu.append(items, aboutLink);
-
-  return menu;
-}
-
-function renderMenuItems(menu: HTMLElement, entries: MenuEntry[]): void {
-  const items = menu.querySelector<HTMLElement>("[data-togostanza-menu-items]");
-
-  if (!items) {
-    return;
-  }
-
-  items.replaceChildren(...entries.map((entry) => createMenuEntryElement(entry)));
-}
-
-function createMenuEntryElement(entry: MenuEntry): HTMLElement {
-  if (entry.type === "divider") {
-    const divider = document.createElement("hr");
-    divider.dataset.togostanzaMenuDivider = "";
-    return divider;
-  }
-
-  const button = document.createElement("button");
-  button.dataset.togostanzaMenuItem = "";
-  button.textContent = entry.label;
-
-  if (entry.handler) {
-    button.addEventListener("click", entry.handler);
-  }
-
-  return button;
 }
 
 function resolveMenuPlacement(element: HTMLElement, metadata: Record<string, unknown>): string {

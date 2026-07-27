@@ -326,3 +326,13 @@ pnpm run serve:fixture
 ```
 
 確認URLは `http://127.0.0.1:4175/fixtures/source-api.html` とする。`serve:fixture` は `/sparql` へのfixture responseも提供する。
+
+## Phase 13 ヘルププレビュー観測
+
+- 確認日: 2026-07-27
+- 確認対象: `src/test/browser/custom-element.smoke.spec.ts`
+- 確認コマンド: `mise exec -- pnpm run test:browser`
+
+リッチなヘルププレビューのHTML snippetに、対象stanzaのmodule script、現在のparameter属性、変更されたCSS custom property、custom elementタグが含まれることを確認した。Copy buttonも実装し、Clipboard APIが利用できない場合はページ内で失敗状態を表示する。
+
+ヘルププレビューは生成済み `{id}.js` を通常のmodule scriptとして読み込む。`this.params`、`renderTemplate()`、`this.root` などのStanza source APIはプレビュー専用経路へ置き換えず、direct embedと同じランタイム経路で動く。

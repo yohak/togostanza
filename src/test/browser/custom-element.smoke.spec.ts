@@ -200,7 +200,23 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
   await runCli(["generate", "stanza", "metadataNone", "--timestamp", "2026-06-30"], cwd);
   writeFileSync(
     resolve(cwd, "stanzas", "visible-menu", "style.scss"),
-    "main {\n  color: rgb(1, 2, 3);\n}\n",
+    `:host {
+  display: block;
+  width: 240px;
+}
+
+[data-togostanza-main-container] {
+  min-height: 100px;
+}
+
+main {
+  color: rgb(1, 2, 3);
+}
+
+togostanza--menu {
+  z-index: 4321;
+}
+`,
     "utf8",
   );
   updateMetadata(resolve(cwd, "stanzas", "metadata-none", "metadata.json"), {
@@ -215,8 +231,12 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
     <script type="module" src="./public/visible-menu.js"></script>
     <script type="module" src="./public/metadata-none.js"></script>
     <togostanza-visible-menu id="visible" say-to="runtime" togostanza-menu_placement="none"></togostanza-visible-menu>
+    <togostanza-visible-menu id="top-left" togostanza-menu-placement="top-left"></togostanza-visible-menu>
+    <togostanza-visible-menu id="top-right" togostanza-menu-placement="top-right"></togostanza-visible-menu>
+    <togostanza-visible-menu id="bottom-left" togostanza-menu-placement="bottom-left"></togostanza-visible-menu>
     <togostanza-visible-menu id="attribute-hidden" togostanza-menu-placement="none"></togostanza-visible-menu>
     <togostanza-metadata-none id="metadata-hidden"></togostanza-metadata-none>
+    <button id="outside-focus" type="button">Outside focus target</button>
   </body>
 </html>
 `,
@@ -230,6 +250,7 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
     await page.goto(`http://127.0.0.1:${port}/fixture.html`);
     await page.waitForFunction(() => customElements.get("togostanza-visible-menu"));
     await page.waitForFunction(() => customElements.get("togostanza-metadata-none"));
+    await page.waitForFunction(() => customElements.get("togostanza--menu"));
 
     await expect
       .poll(() =>
@@ -305,10 +326,47 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
         text: "Hello, updated!",
       });
 
+    const menuStructure = await page.locator("#visible").evaluate((element) => {
+      const main = element.shadowRoot?.querySelector("main");
+      const menu = element.shadowRoot?.querySelector("togostanza--menu");
+      const MenuClass = customElements.get("togostanza--menu");
+
+      return {
+        buttonHasIcon: Boolean(
+          menu?.shadowRoot?.querySelector("[data-togostanza-menu-button] svg path"),
+        ),
+        menuIsCustomElement: Boolean(MenuClass && menu instanceof MenuClass),
+        siblings: main?.parentElement === menu?.parentElement,
+        zIndex: menu ? getComputedStyle(menu).zIndex : "",
+      };
+    });
+
+    expect(menuStructure).toEqual({
+      buttonHasIcon: true,
+      menuIsCustomElement: true,
+      siblings: true,
+      zIndex: "4321",
+    });
+
     await expectMenuState(page, "#visible", {
       hidden: false,
       hrefSuffix: "/public/visible-menu.html",
       placement: "bottom-right",
+    });
+    await expectMenuState(page, "#top-left", {
+      hidden: false,
+      hrefSuffix: "/public/visible-menu.html",
+      placement: "top-left",
+    });
+    await expectMenuState(page, "#top-right", {
+      hidden: false,
+      hrefSuffix: "/public/visible-menu.html",
+      placement: "top-right",
+    });
+    await expectMenuState(page, "#bottom-left", {
+      hidden: false,
+      hrefSuffix: "/public/visible-menu.html",
+      placement: "bottom-left",
     });
     await expectMenuState(page, "#attribute-hidden", {
       hidden: true,
@@ -320,6 +378,72 @@ test("loads built Stanza custom elements from static module scripts", async ({ p
       hrefSuffix: "/public/metadata-none.html",
       placement: "none",
     });
+    await expectMenuPosition(page, "#top-left", "top-left");
+    await expectMenuPosition(page, "#visible", "bottom-right");
+
+    await clickRuntimeMenuControl(page, "#visible", "[data-togostanza-menu-button]");
+    expect(
+      await page.locator("#visible").evaluate((element) => {
+        const container = element.shadowRoot?.querySelector<HTMLElement>(
+          "[data-togostanza-main-container]",
+        );
+        const menu = element.shadowRoot?.querySelector<HTMLElement>("togostanza--menu");
+        const menuRoot = menu?.shadowRoot;
+        const button = menuRoot?.querySelector<HTMLElement>("[data-togostanza-menu-button]");
+        const popup = menuRoot?.querySelector<HTMLElement>("[data-togostanza-menu-popup]");
+        const containerRect = container?.getBoundingClientRect();
+        const buttonRect = button?.getBoundingClientRect();
+        const popupRect = popup?.getBoundingClientRect();
+
+        return {
+          buttonHeight: Math.round(buttonRect?.height ?? 0),
+          buttonRightOverflow:
+            buttonRect && containerRect ? Math.round(buttonRect.right - containerRect.right) : null,
+          buttonWidth: Math.round(buttonRect?.width ?? 0),
+          popupFontSize: popup ? getComputedStyle(popup).fontSize : "",
+          popupRightOverflow:
+            popupRect && containerRect ? Math.round(popupRect.right - containerRect.right) : null,
+          shadowHorizontalOverflow: container
+            ? container.scrollWidth - container.clientWidth
+            : null,
+        };
+      }),
+    ).toEqual({
+      buttonHeight: 24,
+      buttonRightOverflow: 0,
+      buttonWidth: 24,
+      popupFontSize: "12px",
+      popupRightOverflow: 0,
+      shadowHorizontalOverflow: 0,
+    });
+    await page.keyboard.press("Escape");
+    expect(
+      await page.locator("#visible").evaluate((element) => {
+        const menu = element.shadowRoot?.querySelector("togostanza--menu");
+        const button = menu?.shadowRoot?.querySelector("[data-togostanza-menu-button]");
+
+        return {
+          buttonFocused: menu?.shadowRoot?.activeElement === button,
+          popupHidden: Boolean(
+            menu?.shadowRoot?.querySelector<HTMLElement>("[data-togostanza-menu-popup]")?.hidden,
+          ),
+        };
+      }),
+    ).toEqual({
+      buttonFocused: true,
+      popupHidden: true,
+    });
+    expect(
+      await page.locator("#top-left").evaluate((element) => {
+        const menu = element.shadowRoot?.querySelector("togostanza--menu");
+        const button = menu?.shadowRoot?.querySelector("[data-togostanza-menu-button]");
+        return menu?.shadowRoot?.activeElement === button;
+      }),
+    ).toBe(false);
+
+    await page.locator("#outside-focus").focus();
+    await page.keyboard.press("Escape");
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe("outside-focus");
 
     expect(requestLog.some((requestPath) => requestPath.endsWith("/metadata.json"))).toBe(false);
   } finally {
@@ -507,7 +631,58 @@ test("maps runtime parameters in built Stanza custom elements", async ({ page })
   }
 });
 
+test("provides the same rich help preview after build and through serve", async ({ page }) => {
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  writeHelpPreviewProbe(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+  const staticServer = await startStaticServer(cwd, []);
+
+  try {
+    const port = addressPort(staticServer);
+    await assertRichHelpPreview(
+      page,
+      `http://127.0.0.1:${port}/public/help-preview-probe.html?label=query-override`,
+    );
+
+    await page.goto(`http://127.0.0.1:${port}/public/index.html`);
+    await expect(page.getByRole("link", { name: "Help Preview Probe" })).toHaveAttribute(
+      "href",
+      "./help-preview-probe.html",
+    );
+  } finally {
+    await closeServer(staticServer);
+  }
+
+  const servePort = await findAvailablePort();
+  const serve = startServeCli(["serve", "--port", String(servePort)], cwd);
+
+  try {
+    await serve.waitForStdout(`http://127.0.0.1:${servePort}/`);
+    await page.goto(`http://127.0.0.1:${servePort}/`);
+    await page.getByRole("link", { name: "Help Preview Probe" }).click();
+    await expect(page).toHaveURL(`http://127.0.0.1:${servePort}/help-preview-probe.html`);
+    await expect(page.locator('[data-togostanza-parameter="label"]')).toHaveValue("default-label");
+    await expect.poll(() => readHelpPreviewProbeValue(page, "label")).toBe("default-label");
+  } finally {
+    await serve.close();
+  }
+});
+
 test("supports Phase 2-3 Stanza source APIs in built custom elements", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText(value: string) {
+          (window as typeof window & { togostanzaCopiedHTML?: string }).togostanzaCopiedHTML =
+            value;
+          return Promise.resolve();
+        },
+      },
+    });
+  });
+
   const cwd = makeTemporaryDirectory();
   await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
   writeSourceApiProbe(cwd);
@@ -604,28 +779,39 @@ test("supports Phase 2-3 Stanza source APIs in built custom elements", async ({ 
       });
 
     await expect
-      .poll(() =>
-        page.locator("#api-probe").evaluate((element) => {
-          const menu = element.shadowRoot?.querySelector<HTMLElement>("[data-togostanza-menu]");
-          const itemLabels = [
-            ...(menu?.querySelectorAll<HTMLElement>("[data-togostanza-menu-item]") ?? []),
-          ].map((item) => item.textContent?.trim());
-
-          return {
-            dividerCount: menu?.querySelectorAll("[data-togostanza-menu-divider]").length,
-            itemLabels,
-          };
-        }),
-      )
-      .toEqual({
-        dividerCount: 1,
+      .poll(() => readRuntimeMenuState(page, "#api-probe"))
+      .toMatchObject({
+        aboutRel: "noopener noreferrer",
+        aboutTarget: "_blank",
+        buttonExpanded: "false",
+        copyLabel: "Copy HTML snippet to clipboard",
+        dividerCount: 2,
         itemLabels: ["Inspect before-mutation"],
+        popupHidden: true,
       });
 
-    await page.locator("#api-probe").evaluate((element) => {
-      element.shadowRoot?.querySelector<HTMLButtonElement>("[data-togostanza-menu-item]")?.click();
+    const initialMenuState = await readRuntimeMenuState(page, "#api-probe");
+    expect(initialMenuState.aboutHref).toBe(`http://127.0.0.1:${port}/public/api-probe.html`);
+
+    await clickRuntimeMenuControl(page, "#api-probe", "[data-togostanza-menu-button]");
+    expect((await readRuntimeMenuState(page, "#api-probe")).popupHidden).toBe(false);
+    await clickRuntimeMenuControl(page, "#api-probe", "[data-togostanza-menu-button]");
+    expect((await readRuntimeMenuState(page, "#api-probe")).popupHidden).toBe(true);
+
+    await clickRuntimeMenuControl(page, "#api-probe", "[data-togostanza-menu-button]");
+    await page.keyboard.press("Escape");
+    expect((await readRuntimeMenuState(page, "#api-probe")).popupHidden).toBe(true);
+
+    await clickRuntimeMenuControl(page, "#api-probe", "[data-togostanza-menu-button]");
+    await page.evaluate(() => {
+      document.body.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
     });
+    expect((await readRuntimeMenuState(page, "#api-probe")).popupHidden).toBe(true);
+
+    await clickRuntimeMenuControl(page, "#api-probe", "[data-togostanza-menu-button]");
+    await clickRuntimeMenuControl(page, "#api-probe", "[data-togostanza-menu-item]");
     expect(await readProbeValue(page, "#api-probe", "menu-click")).toBe("before-mutation");
+    expect((await readRuntimeMenuState(page, "#api-probe")).popupHidden).toBe(true);
 
     expect(sparqlRequests).toHaveLength(1);
     expect(sparqlRequests[0]).toMatchObject({
@@ -649,15 +835,29 @@ test("supports Phase 2-3 Stanza source APIs in built custom elements", async ({ 
     expect(await readProbeValue(page, "#api-probe", "last-attribute")).toBe("limit:3->5");
     await expect.poll(() => readSparqlQuery(sparqlRequests.at(-1))).toContain("LIMIT 5");
     await expect
-      .poll(() =>
-        page.locator("#api-probe").evaluate((element) => {
-          const menu = element.shadowRoot?.querySelector<HTMLElement>("[data-togostanza-menu]");
-          return [
-            ...(menu?.querySelectorAll<HTMLElement>("[data-togostanza-menu-item]") ?? []),
-          ].map((item) => item.textContent?.trim());
-        }),
-      )
+      .poll(() => readRuntimeMenuState(page, "#api-probe").then((state) => state.itemLabels))
       .toEqual(["Inspect after-mutation"]);
+
+    await clickRuntimeMenuControl(page, "#api-probe", "[data-togostanza-menu-button]");
+    await clickRuntimeMenuControl(page, "#api-probe", '[data-togostanza-menu-action="copy"]');
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (window as typeof window & { togostanzaCopiedHTML?: string }).togostanzaCopiedHTML ??
+            "",
+        ),
+      )
+      .toContain(`src="http://127.0.0.1:${port}/public/api-probe.js"`);
+    const copiedHTML = await page.evaluate(
+      () =>
+        (window as typeof window & { togostanzaCopiedHTML?: string }).togostanzaCopiedHTML ?? "",
+    );
+    expect(copiedHTML).toContain("<script");
+    expect(copiedHTML).toContain('type="module"');
+    expect(copiedHTML).toContain("<togostanza-api-probe");
+    expect(copiedHTML).toContain('label="after-mutation"');
+    expect((await readRuntimeMenuState(page, "#api-probe")).popupHidden).toBe(true);
 
     await expect
       .poll(() =>
@@ -1226,17 +1426,30 @@ test("runs the real togostanza-utils package against the remake runtime @compat-
       ]),
     );
 
+    const utilsMenuState = await readRuntimeMenuState(page, "#utils");
+    expect(utilsMenuState.itemLabels).toEqual([
+      "Download SVG",
+      "Download PNG",
+      "Download JSON",
+      "Download CSV",
+      "Download TSV",
+    ]);
+
+    await clickRuntimeMenuControl(page, "#utils", "[data-togostanza-menu-button]");
+    expect((await readRuntimeMenuState(page, "#utils")).popupHidden).toBe(false);
+
     await page.locator("#utils").evaluate((element) => {
+      const menu = element.shadowRoot?.querySelector("togostanza--menu");
       const buttons = [
-        ...(element.shadowRoot?.querySelectorAll<HTMLButtonElement>(
-          "[data-togostanza-menu-item]",
-        ) ?? []),
+        ...(menu?.shadowRoot?.querySelectorAll<HTMLButtonElement>("[data-togostanza-menu-item]") ??
+          []),
       ];
       for (const button of buttons) {
         button.click();
       }
     });
     await page.waitForTimeout(300);
+    expect((await readRuntimeMenuState(page, "#utils")).popupHidden).toBe(true);
 
     expect(pageErrors).toEqual([]);
     expect(consoleErrors.filter((message) => !message.includes("Failed to load resource"))).toEqual(
@@ -1299,13 +1512,15 @@ async function expectMenuState(
   },
 ): Promise<void> {
   const state = await page.locator(selector).evaluate((element) => {
-    const menu = element.shadowRoot?.querySelector<HTMLElement>("[data-togostanza-menu]");
-    const aboutLink = menu?.querySelector<HTMLAnchorElement>("a");
+    const menu = element.shadowRoot?.querySelector<HTMLElement>("togostanza--menu");
+    const aboutLink = menu?.shadowRoot?.querySelector<HTMLAnchorElement>(
+      '[data-togostanza-menu-action="about"]',
+    );
 
     return {
       hidden: menu?.hidden,
       href: aboutLink?.href,
-      placement: menu?.dataset.placement,
+      placement: menu?.getAttribute("placement"),
     };
   });
 
@@ -1313,6 +1528,90 @@ async function expectMenuState(
   expect(state.placement).toBe(expected.placement);
   expect(state.href).toBeDefined();
   expect(state.href?.endsWith(expected.hrefSuffix)).toBe(true);
+}
+
+async function expectMenuPosition(
+  page: Page,
+  selector: string,
+  placement: "bottom-right" | "top-left",
+): Promise<void> {
+  const offsets = await page.locator(selector).evaluate((element) => {
+    const main = element.shadowRoot?.querySelector("main");
+    const container = main?.parentElement;
+    const menu = element.shadowRoot?.querySelector<HTMLElement>("togostanza--menu");
+    const containerRect = container?.getBoundingClientRect();
+    const menuRect = menu?.getBoundingClientRect();
+
+    if (!containerRect || !menuRect) {
+      return undefined;
+    }
+
+    return {
+      bottom: Math.abs(containerRect.bottom - menuRect.bottom),
+      left: Math.abs(containerRect.left - menuRect.left),
+      right: Math.abs(containerRect.right - menuRect.right),
+      top: Math.abs(containerRect.top - menuRect.top),
+    };
+  });
+
+  expect(offsets).toBeDefined();
+  if (placement === "top-left") {
+    expect(offsets?.top).toBeLessThan(1);
+    expect(offsets?.left).toBeLessThan(1);
+  } else {
+    expect(offsets?.bottom).toBeLessThan(1);
+    expect(offsets?.right).toBeLessThan(1);
+  }
+}
+
+type RuntimeMenuState = {
+  aboutHref: string;
+  aboutRel: string;
+  aboutTarget: string;
+  buttonExpanded: string;
+  copyLabel: string;
+  dividerCount: number;
+  itemLabels: string[];
+  popupHidden: boolean;
+};
+
+function readRuntimeMenuState(page: Page, selector: string): Promise<RuntimeMenuState> {
+  return page.locator(selector).evaluate((element) => {
+    const menu = element.shadowRoot?.querySelector<HTMLElement>("togostanza--menu");
+    const menuRoot = menu?.shadowRoot;
+    const about = menuRoot?.querySelector<HTMLAnchorElement>(
+      '[data-togostanza-menu-action="about"]',
+    );
+    const button = menuRoot?.querySelector<HTMLButtonElement>("[data-togostanza-menu-button]");
+    const copy = menuRoot?.querySelector<HTMLButtonElement>('[data-togostanza-menu-action="copy"]');
+    const popup = menuRoot?.querySelector<HTMLElement>("[data-togostanza-menu-popup]");
+
+    return {
+      aboutHref: about?.href ?? "",
+      aboutRel: about?.rel ?? "",
+      aboutTarget: about?.target ?? "",
+      buttonExpanded: button?.getAttribute("aria-expanded") ?? "",
+      copyLabel: copy?.textContent?.trim() ?? "",
+      dividerCount: menuRoot?.querySelectorAll("[data-togostanza-menu-divider]").length ?? 0,
+      itemLabels: [
+        ...(menuRoot?.querySelectorAll<HTMLElement>("[data-togostanza-menu-item]") ?? []),
+      ].map((item) => item.textContent?.trim() ?? ""),
+      popupHidden: Boolean(popup?.hidden),
+    };
+  });
+}
+
+function clickRuntimeMenuControl(
+  page: Page,
+  selector: string,
+  controlSelector: string,
+): Promise<void> {
+  return page.locator(selector).evaluate((element, nestedSelector) => {
+    element.shadowRoot
+      ?.querySelector("togostanza--menu")
+      ?.shadowRoot?.querySelector<HTMLElement>(nestedSelector)
+      ?.click();
+  }, controlSelector);
 }
 
 async function expectParameterProbe(
@@ -1402,6 +1701,19 @@ async function runMetastanzaSmokeCase(input: {
     await page.waitForFunction((name) => customElements.get(name), tagName);
     await expectMetastanzaHostReady(page, selector);
     await smokeCase.assertRendered(page, selector);
+
+    if (smokeCase.id === "linechart") {
+      await clickRuntimeMenuControl(page, selector, "[data-togostanza-menu-button]");
+      const menuState = await readRuntimeMenuState(page, selector);
+      expect(menuState.popupHidden).toBe(false);
+      expect(menuState.itemLabels).toEqual([
+        "Download SVG",
+        "Download PNG",
+        "Download JSON",
+        "Download CSV",
+        "Download TSV",
+      ]);
+    }
 
     const requests = requestLog.slice(requestStart);
     expect(requests).toContain(`/${dataPath}`);
@@ -2055,6 +2367,280 @@ function formatAttributeChange(change) {
   <dt>render count</dt><dd data-probe="render-count">{{renderCount}}</dd>
 </dl>
 `,
+    "utf8",
+  );
+}
+
+async function assertRichHelpPreview(page: Page, url: string): Promise<void> {
+  await page.goto(url);
+  await page.waitForFunction(() => customElements.get("togostanza-help-preview-probe"));
+
+  const preview = page.locator(
+    '[data-togostanza-preview="help-preview-probe"] togostanza-help-preview-probe',
+  );
+  const labelInput = page.locator('[data-togostanza-parameter="label"]');
+  const countInput = page.locator('[data-togostanza-parameter="count"]');
+  const widthInput = page.locator('[data-togostanza-parameter="width"]');
+  const emptyTextInput = page.locator('[data-togostanza-parameter="empty-text"]');
+  const flagInput = page.locator('[data-togostanza-parameter="flag"]');
+  const modeInput = page.locator('[data-togostanza-parameter="mode"]');
+  const dateInput = page.locator('[data-togostanza-parameter="day"]');
+  const datetimeInput = page.locator('[data-togostanza-parameter="moment"]');
+  const payloadInput = page.locator('[data-togostanza-parameter="payload"]');
+  const snippet = page.locator("[data-togostanza-snippet]");
+
+  await expect(page.locator('[data-togostanza-preview="help-preview-probe"]')).toHaveCSS(
+    "border-top-width",
+    "0px",
+  );
+  await expect(page.locator('[data-togostanza-preview="help-preview-probe"]')).toHaveCSS(
+    "background-color",
+    "rgb(245, 247, 248)",
+  );
+  await expect(labelInput).toHaveValue("default-label");
+  await expect(countInput).toHaveAttribute("type", "number");
+  await expect(countInput).toHaveValue("2");
+  await expect(widthInput).toHaveValue("");
+  await expect(emptyTextInput).toHaveValue("");
+  await expect(flagInput).not.toBeChecked();
+  await expect(modeInput).toHaveValue("compact");
+  await expect(dateInput).toHaveAttribute("type", "date");
+  await expect(datetimeInput).toHaveAttribute("type", "datetime-local");
+  await expect(payloadInput).toHaveAttribute("type", "text");
+  await expect(preview).not.toHaveAttribute("flag");
+  await expect(preview).not.toHaveAttribute("width");
+  await expect(preview).toHaveAttribute("empty-text", "");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "label")).toBe("default-label");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "width")).toBe("null");
+  await expect(snippet).not.toContainText("\n  width=");
+  await expect(snippet).toContainText('empty-text=""');
+  await expect(snippet).not.toContainText("--help-preview-accent");
+
+  await labelInput.fill("updated-label");
+  await countInput.fill("7");
+  await widthInput.fill("640");
+  await modeInput.selectOption("expanded");
+  await dateInput.fill("2026-08-01");
+  await datetimeInput.fill("2026-08-01T09:30");
+  await payloadInput.fill('{"updated":true}');
+  await flagInput.check();
+
+  await expect.poll(() => readHelpPreviewProbeValue(page, "label")).toBe("updated-label");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "count")).toBe("7");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "width")).toBe("640");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "mode")).toBe("expanded");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "day")).toBe("2026-08-01");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "moment")).toBe("2026-08-01T09:30");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "payload")).toBe('{"updated":true}');
+  await expect.poll(() => readHelpPreviewProbeValue(page, "flag")).toBe("true");
+  await expect(preview).toHaveAttribute("width", "640");
+  await expect(preview).toHaveAttribute("flag", "");
+
+  await flagInput.uncheck();
+  await expect.poll(() => readHelpPreviewProbeValue(page, "flag")).toBe("false");
+  await expect(preview).not.toHaveAttribute("flag");
+
+  await page.locator('[data-togostanza-tab="styles"]').click();
+  const colorInput = page.locator('[data-togostanza-style="--help-preview-accent"]');
+  await expect(colorInput).toHaveValue("#245c73");
+  await colorInput.fill("#ff0000");
+  await expect
+    .poll(() =>
+      preview.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue("--help-preview-accent").trim(),
+      ),
+    )
+    .toBe("#ff0000");
+  await expect
+    .poll(() =>
+      preview.evaluate((element) => {
+        const main = element.shadowRoot?.querySelector<HTMLElement>("main");
+        return main ? getComputedStyle(main).borderLeftColor : "";
+      }),
+    )
+    .toBe("rgb(255, 0, 0)");
+
+  await expect(snippet).toContainText(
+    '<script type="module" src="./help-preview-probe.js"></script>',
+  );
+  await expect(snippet).toContainText('label="updated-label"');
+  await expect(snippet).toContainText('width="640"');
+  await expect(snippet).toContainText('day="2026-08-01"');
+  await expect(snippet).toContainText('moment="2026-08-01T09:30"');
+  await expect(snippet).toContainText('payload="{&quot;updated&quot;:true}"');
+  await expect(snippet).not.toContainText("\n  flag");
+  await expect(snippet).toContainText("--help-preview-accent: #ff0000;");
+
+  await page.locator('[data-togostanza-tab="events"]').click();
+  await expect(page.getByText("selectedValue")).toBeVisible();
+  await page.locator('[data-togostanza-tab="about"]').click();
+  await expect(page.getByRole("link", { name: "Download JSON" })).toHaveAttribute(
+    "href",
+    "./help-preview-probe/metadata.json",
+  );
+}
+
+function readHelpPreviewProbeValue(page: Page, key: string): Promise<string> {
+  return page
+    .locator('[data-togostanza-preview="help-preview-probe"] togostanza-help-preview-probe')
+    .evaluate((element, probeKey) => {
+      return (
+        element.shadowRoot?.querySelector<HTMLElement>(`[data-probe="${probeKey}"]`)?.textContent ??
+        ""
+      );
+    }, key);
+}
+
+function writeHelpPreviewProbe(cwd: string): void {
+  const stanzaDirectory = resolve(cwd, "stanzas", "help-preview-probe");
+  mkdirSync(resolve(stanzaDirectory, "templates"), { recursive: true });
+  mkdirSync(resolve(stanzaDirectory, "assets"), { recursive: true });
+  writeFileSync(
+    resolve(stanzaDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "help-preview-probe",
+        "stanza:author": "Codex",
+        "stanza:definition": "Browser probe for the rich help preview.",
+        "stanza:incomingEvent": [
+          {
+            "stanza:description": "Receives a selected value.",
+            "stanza:key": "selectedValue",
+          },
+        ],
+        "stanza:label": "Help Preview Probe",
+        "stanza:license": "MIT",
+        "stanza:menu-placement": "none",
+        "stanza:outgoingEvent": [],
+        "stanza:parameter": [
+          {
+            "stanza:default": "default-label",
+            "stanza:description": "Text label.",
+            "stanza:example": "example-label",
+            "stanza:key": "label",
+            "stanza:type": "string",
+          },
+          {
+            "stanza:example": "2",
+            "stanza:key": "count",
+            "stanza:type": "number",
+          },
+          {
+            "stanza:description": "Number without a default or example.",
+            "stanza:key": "width",
+            "stanza:type": "number",
+          },
+          {
+            "stanza:default": "",
+            "stanza:description": "Text with an explicit empty default.",
+            "stanza:key": "empty-text",
+            "stanza:type": "string",
+          },
+          {
+            "stanza:default": false,
+            "stanza:key": "flag",
+            "stanza:type": "boolean",
+          },
+          {
+            "stanza:choice": ["compact", "expanded"],
+            "stanza:example": "compact",
+            "stanza:key": "mode",
+            "stanza:type": "single-choice",
+          },
+          {
+            "stanza:example": "2026-07-27",
+            "stanza:key": "day",
+            "stanza:type": "date",
+          },
+          {
+            "stanza:example": "2026-07-27T17:00",
+            "stanza:key": "moment",
+            "stanza:type": "datetime",
+          },
+          {
+            "stanza:example": '{"initial":true}',
+            "stanza:key": "payload",
+            "stanza:type": "json",
+          },
+        ],
+        "stanza:style": [
+          {
+            "stanza:default": "#245c73",
+            "stanza:key": "--help-preview-accent",
+            "stanza:type": "color",
+          },
+        ],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "index.js"),
+    `import Stanza from "togostanza/stanza";
+
+export default class HelpPreviewProbe extends Stanza {
+  render() {
+    this.renderTemplate({
+      template: "stanza.html.hbs",
+      parameters: {
+        count: String(this.params.count),
+        day: formatDate(this.params.day),
+        flag: String(this.params.flag),
+        label: String(this.params.label),
+        mode: String(this.params.mode),
+        moment: formatDatetime(this.params.moment),
+        payload: JSON.stringify(this.params.payload),
+        width: String(this.params.width),
+      },
+    });
+  }
+}
+
+function formatDate(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    return String(value);
+  }
+
+  return value.toISOString().slice(0, 10);
+}
+
+function formatDatetime(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    return String(value);
+  }
+
+  return \`\${[
+    value.getFullYear(),
+    String(value.getMonth() + 1).padStart(2, "0"),
+    String(value.getDate()).padStart(2, "0"),
+  ].join("-")}T\${String(value.getHours()).padStart(2, "0")}:\${String(
+    value.getMinutes(),
+  ).padStart(2, "0")}\`;
+}
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "templates", "stanza.html.hbs"),
+    `<dl>
+  <dt>label</dt><dd data-probe="label">{{label}}</dd>
+  <dt>count</dt><dd data-probe="count">{{count}}</dd>
+  <dt>width</dt><dd data-probe="width">{{width}}</dd>
+  <dt>flag</dt><dd data-probe="flag">{{flag}}</dd>
+  <dt>mode</dt><dd data-probe="mode">{{mode}}</dd>
+  <dt>day</dt><dd data-probe="day">{{day}}</dd>
+  <dt>moment</dt><dd data-probe="moment">{{moment}}</dd>
+  <dt>payload</dt><dd data-probe="payload">{{payload}}</dd>
+</dl>
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "style.scss"),
+    "main { border-left: 4px solid var(--help-preview-accent); }\n",
     "utf8",
   );
 }

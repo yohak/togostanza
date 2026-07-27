@@ -23,6 +23,8 @@
 | Phase 10: developer experience and internal cleanup | Stanza開発者向けの案内と、外部契約にしない内部面を整理する。 | 生成README、内部面整理、[001](../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-10/plan.md)、[引き継ぎ](./phase-10/handoff.md) |
 | Phase 11: compatibility verification | 全Stanza browser smoke、TogoMedium Webアプリ本体E2E、runtime edge semanticsを検証する。 | [012](../../workbench/cases/012-real-project-regression/)、runtime edge確認 | [設計](./phase-11/plan.md)、[引き継ぎ](./phase-11/handoff.md) |
 | Phase 12: GitHub dependency distribution | GitHub dependency installを短期配布経路として成立させる。 | root package layout、GitHub dependency install smoke、release branch / tag運用 | [設計](./phase-12/plan.md)、[引き継ぎ](./phase-12/handoff.md)、[残作業](./phase-12/remaining-work.md) |
+| Phase 13: rich preview / help page | buildとserveで、パラメーターやstyleを変更できるリッチなヘルププレビューを提供する。 | `index.html`、`{id}.html`、ヘルププレビューapp、browser test | [設計](./phase-13/plan.md)、[引き継ぎ](./phase-13/handoff.md) |
+| Phase 14: Menu UI polish | 埋め込み後のmenu UIを現行版の観測可能な挙動に近づける。 | `togostanza--menu`、`this.menu()` item、`togostanza-utils` menu helper、browser test | [設計](./phase-14/plan.md)、[引き継ぎ](./phase-14/handoff.md) |
 
 ## Phase 0: skeleton
 
@@ -360,6 +362,60 @@ Phase 12後半では、短期方針をnpm publishではなくGitHub dependency i
 - GitHub Packages npm registryへの公開。
 - ワークスペース化。
 - install時build。
+
+## Phase 13: rich preview / help page
+
+ゴールは、Stanza開発者がbuild生成物やserve上のページから、パラメーターやstyleを変更しながら対象stanzaを確認できるリッチなヘルププレビューを提供することである。
+
+Phase 13では、現行版のヘルププレビュー体験を参考にしつつ、内部DOM構造や `-togostanza/` 配下のbundle構造の完全互換は固定しない。`index.html` と `{id}.html` の存在、Stanza開発者がブラウザで確認できるUI、About導線、Download JSON導線、HTML snippet導線を重視する。
+
+Phase 13の設計は [Phase 13: リッチなヘルププレビュー計画](./phase-13/plan.md) に置き、完了後の状態と残論点は [Phase 13: rich preview / help page 引き継ぎ](./phase-13/handoff.md) に置く。
+
+含める範囲:
+
+- `build` が生成する `index.html` と `{id}.html` のリッチ化。
+- `serve` で同じヘルププレビューUIを確認できること。
+- Vue 3によるヘルププレビューapp。
+- Bootstrap 5 CSSによるフォーム、タブ、ボタン、snippet表示。
+- `stanza:parameter` と `stanza:style` 由来の型別フォーム。
+- custom elementプレビュー、HTML snippet、About、Download JSON導線。
+
+含めない範囲:
+
+- query parameterによる初期値上書き。
+- プレビュー状態をURLで共有する機能。
+- 現行版のDOM構造、CSS class、bundle名の完全互換。
+- Bootstrap JS。
+- JSON専用editor。
+- menu UIのリッチ化。
+
+## Phase 14: Menu UI polish
+
+ゴールは、StanzaをWebページへ埋め込んだ後のmenu UIを、現行版の観測可能な挙動に近づけることである。
+
+Phase 14では、現行版と同じ実装技術を採用することではなく、Stanza利用者とStanza開発者から見える挙動を優先する。`togostanza--menu` custom element、info icon、popup、placement、`this.menu()` item / divider、Copy HTML snippet、About this stanza、`togostanza-utils` のdownload系menu helperを扱う。
+
+Phase 14の設計は [Phase 14: Menu UI polish 計画](./phase-14/plan.md) に置き、完了後の状態は [Phase 14: Menu UI polish 引き継ぎ](./phase-14/handoff.md) に置く。
+
+含める範囲:
+
+- `<togostanza--menu>` custom elementの復元。
+- `<main>` と `<togostanza--menu>` を同じ相対配置コンテナへ置くこと。
+- `metadata["stanza:menu-placement"]` と `togostanza-menu-placement` 属性。
+- `top-left`、`top-right`、`bottom-left`、`bottom-right`、`none`。
+- info icon、popup、開閉、`Escape`、外側click。
+- `this.menu()` のitem / divider表示とhandler実行。
+- `Copy HTML snippet to clipboard`。
+- `About this stanza`。
+- `togostanza-utils` のdownload系menu helperが使えることの確認。
+
+含めない範囲:
+
+- Lit、Popper、Primer Octicons packageの追加。
+- Popper相当の画面端自動flip。
+- 現行版Shadow DOM内部のclass名、id、DOM階層の完全一致。
+- `togostanza-menu_placement` の復活。
+- 実ファイル保存まで含むdownload E2E。
 
 ## 詳細計画の扱い
 

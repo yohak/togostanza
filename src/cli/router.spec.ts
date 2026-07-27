@@ -918,6 +918,9 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "dist", "build-probe.css.map"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe.html"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe", "metadata.json"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "index.html"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "-togostanza", "help-app.js"))).toBe(true);
+    expect(existsSync(join(cwd, "dist", "-togostanza", "help-app.css"))).toBe(true);
     const script = readText(join(cwd, "dist", "build-probe.js"));
     expect(script).not.toContain("togostanza/stanza");
     expect(script).not.toContain("__togostanzaBuildEntries");
@@ -926,7 +929,11 @@ describe("CLI router", () => {
     expect(script).toContain("customElements.define");
     expect(script).toContain("stanza.html.hbs");
     expect(script).toContain("Hello, ");
-    expect(readText(join(cwd, "dist", "build-probe.html"))).toContain("./build-probe.js");
+    const helpHtml = readText(join(cwd, "dist", "build-probe.html"));
+    expect(helpHtml).toContain("./build-probe.js");
+    expect(helpHtml).toContain("./-togostanza/help-app.js");
+    expect(helpHtml).toContain('"stanza:label":"Build Probe"');
+    expect(readText(join(cwd, "dist", "index.html"))).toContain("./build-probe.html");
   });
 
   it("uses an existing serve package script in build next steps", async () => {
@@ -992,8 +999,9 @@ describe("CLI router", () => {
     );
     expect(existsSync(join(cwd, "public", "assets", ".keep"))).toBe(false);
     expect(existsSync(join(cwd, "public", "asset-probe", "assets", ".keep"))).toBe(false);
-    expect(existsSync(join(cwd, "public", "index.html"))).toBe(false);
-    expect(existsSync(join(cwd, "public", "-togostanza"))).toBe(false);
+    expect(existsSync(join(cwd, "public", "index.html"))).toBe(true);
+    expect(existsSync(join(cwd, "public", "-togostanza", "help-app.js"))).toBe(true);
+    expect(existsSync(join(cwd, "public", "-togostanza", "help-app.css"))).toBe(true);
   });
 
   it("builds Sass that imports scoped package styles through node_modules", async () => {

@@ -1,3 +1,4 @@
+import { type MenuEntry } from "./menu.js";
 type StanzaRuntimeContext = {
     assetBaseUrl: URL;
     element: HTMLElement;
@@ -9,15 +10,6 @@ type StanzaRuntimeContext = {
 type StanzaConstructor = new () => Stanza;
 type TemplateRenderer = (parameters?: Record<string, unknown>) => string;
 type AttributeSource = Pick<HTMLElement, "getAttribute" | "hasAttribute">;
-type MenuEntry = MenuDivider | MenuItem;
-type MenuDivider = {
-    type: "divider";
-};
-type MenuItem = {
-    handler?: () => void;
-    label: string;
-    type: "item";
-};
 export type QueryInput = {
     endpoint: string;
     method?: "POST";
@@ -35,6 +27,7 @@ export type StanzaRegistration = {
     cssUrl: URL;
     id: string;
     metadata: Record<string, unknown>;
+    scriptUrl: URL;
     StanzaClass: StanzaConstructor;
     tagName: string;
     templates: Record<string, TemplateRenderer>;

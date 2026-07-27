@@ -186,11 +186,17 @@ export async function buildStanzaArtifacts(
       input.rootDirectory,
       buildConfigResult.config.vite,
     );
+    await buildHelpPreviewApp(input.outputDirectory);
     buildStyles(selectedStanzaResult.stanzas, input.outputDirectory, input.rootDirectory);
     copyBuildAssets(selectedStanzaResult.stanzas, input.outputDirectory, input.rootDirectory, {
       copyRootAssets: !input.stanzaIds,
     });
-    writeHtmlFiles(selectedStanzaResult.stanzas, input.outputDirectory);
+    writeHtmlFiles(
+      selectedStanzaResult.stanzas,
+      stanzaResult.stanzas,
+      input.outputDirectory,
+      input.rootDirectory,
+    );
   } catch (error) {
     return { error: formatBuildError(error, input.rootDirectory) };
   }
@@ -696,6 +702,37 @@ async function buildEntrypoints(
   }
 }
 
+async function buildHelpPreviewApp(outputDirectory: string): Promise<void> {
+  const helpOutputDirectory = join(outputDirectory, "-togostanza");
+  rmSync(helpOutputDirectory, { force: true, recursive: true });
+
+  await viteBuild({
+    base: "./",
+    build: {
+      emptyOutDir: false,
+      outDir: outputDirectory,
+      rollupOptions: {
+        input: {
+          "help-app": helpPreviewAppPath(),
+        },
+        output: {
+          assetFileNames: "-togostanza/[name][extname]",
+          chunkFileNames: "-togostanza/_chunks/[name]-[hash].js",
+          entryFileNames: "-togostanza/[name].js",
+        },
+      },
+      sourcemap: true,
+      target: "es2024",
+    },
+    configFile: false,
+    logLevel: "silent",
+    publicDir: false,
+    resolve: {
+      dedupe: ["vue"],
+    },
+  });
+}
+
 function collectEntryCssPlugin(outputDirectory: string): Plugin {
   const entryCssByName = new Map<string, string>();
 
@@ -765,6 +802,7 @@ function formatEntrypointWrapper(stanza: StanzaDefinition): string {
     `  cssUrl: new URL(${JSON.stringify(`./${stanza.id}.css`)}, import.meta.url),`,
     `  aboutUrl: new URL(${JSON.stringify(`./${stanza.id}.html`)}, import.meta.url),`,
     `  assetBaseUrl: new URL(${JSON.stringify(`./${stanza.id}/assets/`)}, import.meta.url),`,
+    "  scriptUrl: new URL(import.meta.url),",
     "  metadata,",
     "  StanzaClass,",
     "  templates,",
@@ -873,28 +911,127 @@ function copyBuildAssets(
   }
 }
 
-function writeHtmlFiles(stanzas: readonly StanzaDefinition[], outputDirectory: string): void {
-  for (const stanza of stanzas) {
-    const html = [
-      "<!doctype html>",
-      '<html lang="en">',
-      "  <head>",
-      '    <meta charset="utf-8">',
-      '    <meta name="viewport" content="width=device-width, initial-scale=1">',
-      `    <title>${escapeHtml(stanza.label)}</title>`,
-      `    <link rel="stylesheet" href="./${stanza.id}.css">`,
-      "  </head>",
-      "  <body>",
-      `    <h1>${escapeHtml(stanza.label)}</h1>`,
-      ...(stanza.definition ? [`    <p>${escapeHtml(stanza.definition)}</p>`] : []),
-      `    <script type="module" src="./${stanza.id}.js"></script>`,
-      "  </body>",
-      "</html>",
-      "",
-    ].join("\n");
+function writeHtmlFiles(
+  builtStanzas: readonly StanzaDefinition[],
+  allStanzas: readonly StanzaDefinition[],
+  outputDirectory: string,
+  rootDirectory: string,
+): void {
+  writeFileSync(
+    join(outputDirectory, "index.html"),
+    formatIndexHtml(allStanzas, readRepositoryName(rootDirectory)),
+    "utf8",
+  );
 
-    writeFileSync(join(outputDirectory, `${stanza.id}.html`), html, "utf8");
+  for (const stanza of builtStanzas) {
+    writeFileSync(join(outputDirectory, `${stanza.id}.html`), formatHelpHtml(stanza), "utf8");
   }
+}
+
+function formatIndexHtml(stanzas: readonly StanzaDefinition[], repositoryName: string): string {
+  const stanzaItems = stanzas
+    .map((stanza) =>
+      [
+        '        <article class="list-group-item p-0">',
+        '          <a class="d-block text-decoration-none text-body p-3 p-lg-4" href="./' +
+          `${escapeHtml(stanza.id)}.html">`,
+        '            <div class="togostanza-index-row">',
+        `              <p class="togostanza-index-id font-monospace small text-body-secondary mb-0">${escapeHtml(stanza.id)}</p>`,
+        "              <div>",
+        `                <h2 class="h5 mb-1">${escapeHtml(stanza.label)}</h2>`,
+        stanza.definition
+          ? `                <p class="mb-0 text-body-secondary">${escapeHtml(stanza.definition)}</p>`
+          : '                <p class="mb-0 text-body-secondary">No definition provided.</p>',
+        "              </div>",
+        "            </div>",
+        "          </a>",
+        "        </article>",
+      ].join("\n"),
+    )
+    .join("\n");
+
+  return [
+    "<!doctype html>",
+    '<html lang="en">',
+    "  <head>",
+    '    <meta charset="utf-8">',
+    '    <meta name="viewport" content="width=device-width, initial-scale=1">',
+    `    <title>${escapeHtml(repositoryName)} Stanzas</title>`,
+    '    <link rel="stylesheet" href="./-togostanza/help-app.css">',
+    "    <style>",
+    "      .togostanza-index-row {",
+    "        display: grid;",
+    "        grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);",
+    "        gap: 2rem;",
+    "        align-items: start;",
+    "      }",
+    "      .togostanza-index-id {",
+    "        overflow-wrap: anywhere;",
+    "      }",
+    "      @media (max-width: 767.98px) {",
+    "        .togostanza-index-row {",
+    "          grid-template-columns: 1fr;",
+    "          gap: 0.35rem;",
+    "        }",
+    "      }",
+    "    </style>",
+    "  </head>",
+    '  <body class="bg-body-tertiary">',
+    '    <main class="container py-5">',
+    `      <h1 class="display-6 mb-2">${escapeHtml(repositoryName)}</h1>`,
+    '      <p class="lead text-body-secondary mb-4">Stanzas</p>',
+    '      <section class="list-group shadow-sm" aria-label="Stanza list">',
+    stanzaItems,
+    "      </section>",
+    "    </main>",
+    "  </body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
+function formatHelpHtml(stanza: StanzaDefinition): string {
+  const previewData = JSON.stringify({
+    ...(stanza.definition ? { definition: stanza.definition } : {}),
+    id: stanza.id,
+    label: stanza.label,
+    metadata: stanza.metadata,
+  }).replaceAll("<", "\\u003c");
+
+  return [
+    "<!doctype html>",
+    '<html lang="en">',
+    "  <head>",
+    '    <meta charset="utf-8">',
+    '    <meta name="viewport" content="width=device-width, initial-scale=1">',
+    `    <title>${escapeHtml(stanza.label)}</title>`,
+    '    <link rel="stylesheet" href="./-togostanza/help-app.css">',
+    "  </head>",
+    "  <body>",
+    '    <div id="togostanza-help-app"></div>',
+    `    <script id="togostanza-preview-data" type="application/json">${previewData}</script>`,
+    `    <script type="module" src="./${escapeHtml(stanza.id)}.js"></script>`,
+    '    <script type="module" src="./-togostanza/help-app.js"></script>',
+    "  </body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
+function readRepositoryName(rootDirectory: string): string {
+  try {
+    const packageValue: unknown = JSON.parse(
+      readFileSync(join(rootDirectory, "package.json"), "utf8"),
+    );
+
+    if (isRecord(packageValue) && typeof packageValue["name"] === "string") {
+      return packageValue["name"];
+    }
+  } catch {
+    // The repository context validates package.json before this build path.
+  }
+
+  return basename(rootDirectory);
 }
 
 function copyDirectoryContents(sourceDirectory: string, destinationDirectory: string): void {
@@ -973,6 +1110,16 @@ function publicStanzaPath(): string {
   }
 
   return fileURLToPath(new URL("../stanza.js", import.meta.url));
+}
+
+function helpPreviewAppPath(): string {
+  const sourcePath = fileURLToPath(new URL("../preview/help-app.ts", import.meta.url));
+
+  if (existsSync(sourcePath)) {
+    return sourcePath;
+  }
+
+  return fileURLToPath(new URL("../preview/help-app.js", import.meta.url));
 }
 
 function internalRuntimePath(): string {
