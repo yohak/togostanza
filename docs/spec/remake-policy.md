@@ -135,7 +135,11 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 `${id}.html` のUI、DOM、preview機能、snippet生成の詳細は再設計可能とする。
 
-`togostanza--menu` の内部DOM構造や見た目は `再設計` 可能とする。実プロジェクトでstyleが当たっているため、見た目のregression testは重点的に行う。
+`togostanza--menu` の外側custom element名は、実プロジェクトでstyleが当たっているため維持する。menuはStanzaのShadow DOM内で `<main>` と同じ相対配置コンテナに置き、`this.menu()` のitem / divider、Copy HTML snippet、About導線を扱う。
+
+`togostanza--menu` の内部DOM構造や見た目は `再設計` 可能とする。内部class名、id、DOM階層の完全一致は必須互換にしない。ただし、実プロジェクトで観測されるstyle適用とmenu itemの操作はregression testで重点確認する。
+
+現行版ではinfo icon再クリックでmenuを開閉する。リメイク版では、Stanza利用者の自然な操作として `Escape` と外側clickでも閉じられるようにする。これは現行版の操作を壊す変更ではなく、追加操作として扱う。
 
 ## Stanza Source
 
