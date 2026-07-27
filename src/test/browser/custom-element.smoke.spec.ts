@@ -382,6 +382,40 @@ togostanza--menu {
     await expectMenuPosition(page, "#visible", "bottom-right");
 
     await clickRuntimeMenuControl(page, "#visible", "[data-togostanza-menu-button]");
+    expect(
+      await page.locator("#visible").evaluate((element) => {
+        const container = element.shadowRoot?.querySelector<HTMLElement>(
+          "[data-togostanza-main-container]",
+        );
+        const menu = element.shadowRoot?.querySelector<HTMLElement>("togostanza--menu");
+        const menuRoot = menu?.shadowRoot;
+        const button = menuRoot?.querySelector<HTMLElement>("[data-togostanza-menu-button]");
+        const popup = menuRoot?.querySelector<HTMLElement>("[data-togostanza-menu-popup]");
+        const containerRect = container?.getBoundingClientRect();
+        const buttonRect = button?.getBoundingClientRect();
+        const popupRect = popup?.getBoundingClientRect();
+
+        return {
+          buttonHeight: Math.round(buttonRect?.height ?? 0),
+          buttonRightOverflow:
+            buttonRect && containerRect ? Math.round(buttonRect.right - containerRect.right) : null,
+          buttonWidth: Math.round(buttonRect?.width ?? 0),
+          popupFontSize: popup ? getComputedStyle(popup).fontSize : "",
+          popupRightOverflow:
+            popupRect && containerRect ? Math.round(popupRect.right - containerRect.right) : null,
+          shadowHorizontalOverflow: container
+            ? container.scrollWidth - container.clientWidth
+            : null,
+        };
+      }),
+    ).toEqual({
+      buttonHeight: 24,
+      buttonRightOverflow: 0,
+      buttonWidth: 24,
+      popupFontSize: "12px",
+      popupRightOverflow: 0,
+      shadowHorizontalOverflow: 0,
+    });
     await page.keyboard.press("Escape");
     expect(
       await page.locator("#visible").evaluate((element) => {
@@ -2355,6 +2389,14 @@ async function assertRichHelpPreview(page: Page, url: string): Promise<void> {
   const payloadInput = page.locator('[data-togostanza-parameter="payload"]');
   const snippet = page.locator("[data-togostanza-snippet]");
 
+  await expect(page.locator('[data-togostanza-preview="help-preview-probe"]')).toHaveCSS(
+    "border-top-width",
+    "0px",
+  );
+  await expect(page.locator('[data-togostanza-preview="help-preview-probe"]')).toHaveCSS(
+    "background-color",
+    "rgb(245, 247, 248)",
+  );
   await expect(labelInput).toHaveValue("default-label");
   await expect(countInput).toHaveAttribute("type", "number");
   await expect(countInput).toHaveValue("2");

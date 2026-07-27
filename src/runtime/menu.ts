@@ -146,6 +146,7 @@ export function registerTogoStanzaMenuElement(): void {
 
       this.#popup.hidden = !open;
       this.#button.setAttribute("aria-expanded", String(open));
+      this.toggleAttribute("data-open", open);
     }
 
     #createEntry(entry: MenuEntry): HTMLElement {
@@ -261,11 +262,16 @@ function createMenuStyles(): HTMLStyleElement {
     :host {
       position: absolute;
       display: block;
+      box-sizing: border-box;
       width: 24px;
       height: 24px;
       color: #24292f;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       z-index: 1;
+    }
+
+    :host([data-open]) {
+      width: min(14rem, 100%);
     }
 
     :host([hidden]),
@@ -308,17 +314,43 @@ function createMenuStyles(): HTMLStyleElement {
     }
 
     [data-togostanza-menu-button] {
-      display: grid;
+      display: block;
+      box-sizing: border-box;
+      position: absolute;
       width: 24px;
       height: 24px;
       padding: 4px;
       color: inherit;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid rgba(27, 31, 36, 0.2);
-      border-radius: 50%;
-      box-shadow: 0 1px 2px rgba(31, 35, 40, 0.12);
+      background: rgba(255, 255, 255, 0.8);
+      border: 0;
+      border-radius: 12px;
       cursor: pointer;
-      place-items: center;
+    }
+
+    :host([placement="top-left"]) [data-togostanza-menu-button] {
+      top: 0;
+      left: 0;
+    }
+
+    :host([placement="top-right"]) [data-togostanza-menu-button] {
+      top: 0;
+      right: 0;
+    }
+
+    :host([placement="bottom-left"]) [data-togostanza-menu-button] {
+      bottom: 0;
+      left: 0;
+    }
+
+    :host [data-togostanza-menu-button],
+    :host([placement="bottom-right"]) [data-togostanza-menu-button] {
+      right: 0;
+      bottom: 0;
+    }
+
+    [data-togostanza-menu-button] svg {
+      display: block;
+      transform: translateY(0.5px);
     }
 
     [data-togostanza-menu-button]:focus-visible {
@@ -328,15 +360,18 @@ function createMenuStyles(): HTMLStyleElement {
 
     [data-togostanza-menu-popup] {
       position: absolute;
-      min-width: 12rem;
-      max-width: min(20rem, 80vw);
+      box-sizing: border-box;
+      width: 100%;
       margin: 0;
-      padding: 0.35rem 0;
-      color: #24292f;
+      padding: 0.5rem 0;
+      color: #212529;
       background: #fff;
-      border: 1px solid rgba(27, 31, 36, 0.15);
-      border-radius: 6px;
-      box-shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
+      background-clip: padding-box;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 0.25rem;
+      box-shadow: none;
+      font-size: 12px;
+      font-weight: 400;
       list-style: none;
     }
 
@@ -345,31 +380,32 @@ function createMenuStyles(): HTMLStyleElement {
     }
 
     :host([placement="top-left"]) [data-togostanza-menu-popup] {
-      top: calc(100% + 6px);
+      top: 100%;
       left: 0;
     }
 
     :host([placement="top-right"]) [data-togostanza-menu-popup] {
-      top: calc(100% + 6px);
+      top: 100%;
       right: 0;
     }
 
     :host([placement="bottom-left"]) [data-togostanza-menu-popup] {
-      bottom: calc(100% + 6px);
+      bottom: 100%;
       left: 0;
     }
 
     :host [data-togostanza-menu-popup],
     :host([placement="bottom-right"]) [data-togostanza-menu-popup] {
       right: 0;
-      bottom: calc(100% + 6px);
+      bottom: 100%;
     }
 
     [data-togostanza-menu-item],
     [data-togostanza-menu-action] {
       display: block;
+      box-sizing: border-box;
       width: 100%;
-      padding: 0.4rem 0.85rem;
+      padding: 0.25rem 1rem;
       color: inherit;
       text-align: left;
       text-decoration: none;

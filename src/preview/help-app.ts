@@ -529,8 +529,7 @@ function installPreviewStyles(): void {
       min-height: 18rem;
       overflow: auto;
       padding: 1rem;
-      background: #fff;
-      border: 1px solid #dee2e6;
+      background: #f5f7f8;
     }
 
     .togostanza-snippet {
