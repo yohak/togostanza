@@ -145,6 +145,18 @@ describe("CLI router", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBeUndefined();
+    expect(result.stdout).toBe(
+      [
+        "Created Stanza repository: generated-repo",
+        "",
+        "Next steps:",
+        "  cd generated-repo",
+        "  npm install",
+        "  npm exec togostanza generate stanza hello",
+        "  npm run build",
+        "  npm run serve",
+      ].join("\n"),
+    );
 
     const packageJson = readJson(join(cwd, "generated-repo", "package.json")) as {
       dependencies: Record<string, string>;
@@ -238,6 +250,20 @@ describe("CLI router", () => {
       );
 
       expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain(`Created Stanza repository: ${packageManager}-repo`);
+      expect(result.stdout).toBe(
+        [
+          `Created Stanza repository: ${packageManager}-repo`,
+          "",
+          "Next steps:",
+          `  cd ${packageManager}-repo`,
+          packageManager === "pnpm"
+            ? "  pnpm exec togostanza generate stanza hello"
+            : "  npm exec togostanza generate stanza hello",
+          packageManager === "pnpm" ? "  pnpm build" : "  npm run build",
+          packageManager === "pnpm" ? "  pnpm serve" : "  npm run serve",
+        ].join("\n"),
+      );
       expect(calls).toEqual([`${packageManager} install @ ${join(cwd, `${packageManager}-repo`)}`]);
       const packageJson = readJson(join(cwd, `${packageManager}-repo`, "package.json")) as {
         dependencies: Record<string, string>;
@@ -704,11 +730,30 @@ describe("CLI router", () => {
     const result = routeCli(["g", "stanza", "aliasProbe"], { cwd, currentDate });
 
     expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Created stanza: alias-probe");
+    expect(result.stdout).toContain("Next steps:");
+    expect(result.stdout).toContain("  pnpm exec togostanza build");
+    expect(result.stdout).toContain("  pnpm exec togostanza serve");
     expect(readJson(join(cwd, "stanzas", "alias-probe", "metadata.json"))).toMatchObject({
       "@id": "alias-probe",
       "stanza:label": "Alias Probe",
       "stanza:created": "2026-06-30",
     });
+  });
+
+  it("uses existing Stanza package scripts in generate stanza next steps", () => {
+    const cwd = makeStanzaRepoRoot({
+      scripts: {
+        "stanza:build": "togostanza build",
+        "stanza:server": "togostanza serve",
+      },
+    });
+    const result = routeCli(["generate", "stanza", "scriptProbe"], { cwd, currentDate });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Created stanza: script-probe");
+    expect(result.stdout).toContain("  pnpm stanza:build");
+    expect(result.stdout).toContain("  pnpm stanza:server");
   });
 
   it("uses default generate stanza options", () => {
@@ -861,9 +906,11 @@ describe("CLI router", () => {
     const result = await routeCliAsync(["b"], { cwd });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toMatch(
-      /^Built Stanza repository: repo \(output: dist, duration: \d+ ms\)\.$/,
-    );
+    expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stdout).toContain("Output: dist");
+    expect(result.stdout).toMatch(/Duration: \d+ ms/);
+    expect(result.stdout).toContain("Next step:");
+    expect(result.stdout).toContain("  pnpm exec togostanza serve");
     expect(existsSync(join(cwd, "dist", "build-probe.js"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe.js.map"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe.css"))).toBe(true);
@@ -879,6 +926,21 @@ describe("CLI router", () => {
     expect(script).toContain("stanza.html.hbs");
     expect(script).toContain("Hello, ");
     expect(readText(join(cwd, "dist", "build-probe.html"))).toContain("./build-probe.js");
+  });
+
+  it("uses an existing serve package script in build next steps", async () => {
+    const cwd = makeStanzaRepoRoot({
+      scripts: {
+        serve: "togostanza serve",
+      },
+    });
+    routeCli(["generate", "stanza", "scriptBuildProbe"], { cwd, currentDate });
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stdout).toContain("  pnpm serve");
   });
 
   it("builds custom output assets, sass root alias, and clean output", async () => {
@@ -1126,9 +1188,9 @@ describe("CLI router", () => {
     const result = await routeCliAsync(["build"], { cwd });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toMatch(
-      /^Built Stanza repository: repo \(output: dist, duration: \d+ ms\)\.$/,
-    );
+    expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stdout).toContain("Output: dist");
+    expect(result.stdout).toMatch(/Duration: \d+ ms/);
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.mjs");
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.js");
     expect(result.stderr).toContain("togostanza.config.ts");
@@ -1390,7 +1452,11 @@ describe("CLI router", () => {
 
     expect(result).toEqual({
       exitCode: 0,
-      stdout: `Serving Stanza repository: repo at http://127.0.0.1:${port}/`,
+      stdout: [
+        "Serving Stanza repository: repo",
+        `URL: http://127.0.0.1:${port}/`,
+        "Press Ctrl-C to stop.",
+      ].join("\n"),
     });
     expect(existsSync(join(cwd, "dist"))).toBe(false);
 
@@ -1566,11 +1632,19 @@ describe("CLI router", () => {
     return directory;
   }
 
-  function makeStanzaRepoRoot(): string {
+  function makeStanzaRepoRoot(input: { scripts?: Record<string, string> } = {}): string {
     const directory = makeNamedTemporaryDirectory("repo");
     writeFileSync(
       join(directory, "package.json"),
-      `${JSON.stringify({ dependencies: { togostanza: "^0.0.0" }, name: "repo" }, null, 2)}\n`,
+      `${JSON.stringify(
+        {
+          dependencies: { togostanza: "^0.0.0" },
+          name: "repo",
+          ...(input.scripts ? { scripts: input.scripts } : {}),
+        },
+        null,
+        2,
+      )}\n`,
       "utf8",
     );
     return directory;

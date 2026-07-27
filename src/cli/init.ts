@@ -1,6 +1,7 @@
 import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getBooleanOption, getStringOption, parseOptions } from "./options.js";
+import { formatPackageExecCommand, formatPackageScriptCommand } from "./package-command.js";
 import { resolvePackageManager, type PackageManager } from "./package-manager.js";
 import { failure, success, type CliResult } from "./result.js";
 import { runCommand, type CommandRunner } from "./runner.js";
@@ -137,7 +138,14 @@ export function handleInit(args: readonly string[], options: InitOptions = {}): 
     }
   }
 
-  return success(`Created Stanza repository: ${packageName}`);
+  return success(
+    formatInitSuccessMessage({
+      initCurrentDirectory,
+      installSkipped: getBooleanOption(parsed, "--skip-install"),
+      packageManager: packageManagerResult.packageManager,
+      packageName,
+    }),
+  );
 }
 
 export function formatInstallCommand(packageManager: PackageManager): {
@@ -148,6 +156,28 @@ export function formatInstallCommand(packageManager: PackageManager): {
     args: ["install"],
     command: packageManager,
   };
+}
+
+function formatInitSuccessMessage(input: {
+  initCurrentDirectory: boolean;
+  installSkipped: boolean;
+  packageManager: PackageManager;
+  packageName: string;
+}): string {
+  const installCommand = formatInstallCommand(input.packageManager);
+
+  return [
+    `Created Stanza repository: ${input.packageName}`,
+    "",
+    "Next steps:",
+    ...(input.initCurrentDirectory ? [] : [`  cd ${input.packageName}`]),
+    ...(input.installSkipped
+      ? [`  ${installCommand.command} ${installCommand.args.join(" ")}`]
+      : []),
+    `  ${formatPackageExecCommand(input.packageManager, "generate stanza hello")}`,
+    `  ${formatPackageScriptCommand(input.packageManager, "build")}`,
+    `  ${formatPackageScriptCommand(input.packageManager, "serve")}`,
+  ].join("\n");
 }
 
 function createScaffold(input: {

@@ -187,7 +187,18 @@ describe("CLI smoke", () => {
 
     expect(result.code).toBe(0);
     expect(result.stderr).toBe("");
-    expect(result.stdout).toContain("Created Stanza repository: generated-repo");
+    expect(result.stdout).toContain(
+      [
+        "Created Stanza repository: generated-repo",
+        "",
+        "Next steps:",
+        "  cd generated-repo",
+        "  npm install",
+        "  npm exec togostanza generate stanza hello",
+        "  npm run build",
+        "  npm run serve",
+      ].join("\n"),
+    );
     const readme = readFileSync(resolve(cwd, "generated-repo", "README.md"), "utf8");
     const tsConfig = readJson(resolve(cwd, "generated-repo", "tsconfig.json")) as {
       compilerOptions: Record<string, unknown>;
@@ -247,7 +258,18 @@ describe("CLI smoke", () => {
 
     expect(result.code).toBe(0);
     expect(result.stderr).toBe("");
-    expect(result.stdout).toContain("Created Stanza repository: current-repo");
+    expect(result.stdout).toContain(
+      [
+        "Created Stanza repository: current-repo",
+        "",
+        "Next steps:",
+        "  pnpm install",
+        "  pnpm exec togostanza generate stanza hello",
+        "  pnpm build",
+        "  pnpm serve",
+      ].join("\n"),
+    );
+    expect(result.stdout).not.toContain("  cd current-repo");
     expect(readJson(resolve(cwd, "package.json"))).toMatchObject({
       name: "current-repo",
     });
@@ -431,6 +453,9 @@ describe("CLI smoke", () => {
 
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stdout).toContain("Output: public");
+    expect(result.stdout).toMatch(/Duration: \d+ ms/);
+    expect(result.stdout).toContain("  pnpm serve");
     expect(result.stderr).toBe("");
     expect(existsSync(resolve(cwd, "public", "hello-world.js"))).toBe(true);
     expect(existsSync(resolve(cwd, "public", "hello-world.js.map"))).toBe(true);

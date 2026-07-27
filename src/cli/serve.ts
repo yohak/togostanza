@@ -170,7 +170,11 @@ export async function handleServe(
 
   return {
     exitCode: 0,
-    stdout: `Serving Stanza repository: ${repoContextResult.context.packageName} at http://${listenHost}:${listenResult.port}/`,
+    stdout: [
+      `Serving Stanza repository: ${repoContextResult.context.packageName}`,
+      `URL: http://${listenHost}:${listenResult.port}/`,
+      "Press Ctrl-C to stop.",
+    ].join("\n"),
   };
 
   async function closeServeSession(): Promise<void> {

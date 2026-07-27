@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getStringOption, parseOptions } from "./options.js";
+import { formatTogoStanzaCommand } from "./package-command.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure, success, type CliResult } from "./result.js";
 import { isValidStanzaId, normalizeStanzaId, titleCaseStanzaId } from "./stanza-id.js";
@@ -81,7 +82,23 @@ export function handleGenerateStanza(
     throw error;
   }
 
-  return success(`Created stanza: ${id}`);
+  return success(
+    [
+      `Created stanza: ${id}`,
+      "",
+      "Next steps:",
+      `  ${formatTogoStanzaCommand({
+        commandName: "build",
+        packageManager: repoContextResult.context.packageManager,
+        scripts: repoContextResult.context.scripts,
+      })}`,
+      `  ${formatTogoStanzaCommand({
+        commandName: "serve",
+        packageManager: repoContextResult.context.packageManager,
+        scripts: repoContextResult.context.scripts,
+      })}`,
+    ].join("\n"),
+  );
 }
 
 function createStanzaSource(input: {

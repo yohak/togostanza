@@ -20,6 +20,7 @@ import { compileString, type Importer } from "sass";
 import { build as viteBuild, mergeConfig, type InlineConfig, type Plugin } from "vite";
 import { loadTogoStanzaBuildConfig } from "./build-config.js";
 import { getStringOption, parseOptions } from "./options.js";
+import { formatTogoStanzaCommand } from "./package-command.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure, type CliResult } from "./result.js";
 import { isValidStanzaId, titleCaseStanzaId } from "./stanza-id.js";
@@ -115,7 +116,18 @@ export async function handleBuild(
   return {
     exitCode: 0,
     ...(buildResult.warnings.length > 0 ? { stderr: buildResult.warnings.join("\n") } : {}),
-    stdout: `Built Stanza repository: ${repoContextResult.context.packageName} (output: ${outputPath}, duration: ${durationMs} ms).`,
+    stdout: [
+      `Built Stanza repository: ${repoContextResult.context.packageName}`,
+      `Output: ${outputPath}`,
+      `Duration: ${durationMs} ms`,
+      "",
+      "Next step:",
+      `  ${formatTogoStanzaCommand({
+        commandName: "serve",
+        packageManager: repoContextResult.context.packageManager,
+        scripts: repoContextResult.context.scripts,
+      })}`,
+    ].join("\n"),
   };
 }
 

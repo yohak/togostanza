@@ -9,6 +9,7 @@ export type StanzaRepoContext = {
   packageManager: PackageManager;
   packageName: string;
   rootDirectory: string;
+  scripts: Record<string, string>;
 };
 
 export type StanzaRepoContextResult =
@@ -63,6 +64,7 @@ export function resolveStanzaRepoContext(rootDirectory: string): StanzaRepoConte
       packageManager: packageManagerResult.packageManager,
       packageName,
       rootDirectory,
+      scripts: readPackageScripts(packageJson),
     }),
   };
 }
@@ -133,6 +135,24 @@ function readStringProperty(
   return typeof propertyValue === "string" ? propertyValue : undefined;
 }
 
+function readPackageScripts(packageJson: Record<string, unknown>): Record<string, string> {
+  const scripts = packageJson.scripts;
+
+  if (!isRecord(scripts)) {
+    return {};
+  }
+
+  const result: Record<string, string> = {};
+
+  for (const [name, command] of Object.entries(scripts)) {
+    if (typeof command === "string") {
+      result[name] = command;
+    }
+  }
+
+  return result;
+}
+
 function withOptionalLockfilePath(input: {
   dependencySpec: string;
   lockfilePath: string | undefined;
@@ -140,6 +160,7 @@ function withOptionalLockfilePath(input: {
   packageManager: PackageManager;
   packageName: string;
   rootDirectory: string;
+  scripts: Record<string, string>;
 }): StanzaRepoContext {
   if (input.lockfilePath) {
     return {
@@ -149,6 +170,7 @@ function withOptionalLockfilePath(input: {
       packageManager: input.packageManager,
       packageName: input.packageName,
       rootDirectory: input.rootDirectory,
+      scripts: input.scripts,
     };
   }
 
@@ -158,6 +180,7 @@ function withOptionalLockfilePath(input: {
     packageManager: input.packageManager,
     packageName: input.packageName,
     rootDirectory: input.rootDirectory,
+    scripts: input.scripts,
   };
 }
 

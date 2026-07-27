@@ -20,6 +20,7 @@
 - リメイク版のGitHub dependency経路では、npm registryへのpublishはまだ行っていない。一方、現行版 `togostanza` はnpm registry公開済みである。
 - 現行版の `init` が生成するStanzaリポジトリは、`dependencies.togostanza` にタグ無しGitHub dependencyを持つ。リメイク版も、短期の `yohak` 経路では `github:yohak/togostanza` を通常生成する。
 - `engines.node` は `>=24.5.0` から `>=24.0.0` へ緩和済みである。開発・検証の標準実行環境はroot `mise.toml` のNode 24.5.0を維持する。
+- `init`、`generate stanza`、`build`、`serve` の成功メッセージは、結果と次の手順が分かる形へ整備済みである。
 - `develop` / `main` / immutable tagの役割方針は採用済みである。local / remote `develop` branchは作成済みで、`dist/` はGit追跡対象から外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済み。ただし、branch protectionと、最新 `develop` から `main` へ反映する実作業は未実施である。
 - GitHub dependencyのtagは不変として扱う方針に変更済みである。修正版は新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
 - GitHub dependency経路は短期配布経路として成立しているが、公開運用、Stanza開発者向けDX、プレビュー、診断、正式版マージ後のnpm registry配布には未整理の項目が残る。
@@ -57,7 +58,7 @@
 | ---- | ---------------- | -------- | ------ | ---------------- |
 | `develop` から `main` への公開反映手順 | 正式版の生成repoはタグ無しGitHub dependencyを既定にする。つまり `main` は一般の人が見る公開入口であり、package managerがinstallする対象にもなる。install時buildを行わない限り、`main` と検証tagにはbuild済み `dist/` が必須。一方、通常開発branchで `dist/` を追跡し続けると、ソース変更と生成物変更が混ざる。local / remote `develop` は作成済みで、`dist/` 追跡も外した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済みだが、最新 `develop` の `7742f9b` はまだ `main` へ反映していない。 | 採用済み方針として、`develop` を通常開発branch、`main` をinstall可能な公開入口、tagを開発中の検証・固定refとして扱う。公開remoteのdefault branchは `main` として確認済み。release checklistに公開反映手順を記録済み。次はbranch protectionと、最新 `develop` の `main` 反映を行う。 | 高 | 必須 |
 | タグ無しGitHub dependencyのlockfile更新手順 | タグ無しGitHub dependencyも、install後はlockfileが解決commitを固定する。`main` が更新されても既存Stanzaリポジトリは自動追従しない。 | local smokeでfresh install、frozen install、同じdependency specでの明示更新を確認する。Stanza開発者向け手順は `docs/guides/github-dependency.md` に記録済み。 | 中 | 推奨 |
-| CLI status / result messages | `build` 成功時のduration表示はあるが、`init`、`build`、`serve` の成功・失敗・次に開くURLなどの案内は全体設計していない。 | 普段の開発導線でよく触るため、次に扱う第一候補にする。詳細な文言や対象範囲は実装計画時に決める。 | 高 | 必須 |
+| CLI diagnostic messages | 成功メッセージは一巡したが、validation、migration warning、environment warningなどの失敗時診断はまだ散っている。 | 現行版にはない改善機能に近いため、優先度は下げる。必要な局所改善は各作業で拾う。 | 低 | 後続 |
 | リッチなプレビュー / ヘルプページ | 現行版の `index.html` / `-togostanza/` 相当のリッチなプレビュー構造は復元していない。正式版として見たときに、Stanza開発者向けの開発支援体験の劣化として見えやすい。 | 後続DXでは最優先候補にする。現行版のDOM完全再現ではなく、正式版として許容できるプレビュー体験を定義して実装する。 | 高 | 必須 |
 | GitHub Pages live deploy確認 | workflow構造はあるが、公開GitHub Pages環境でのlive deployは未確認。 | 生成repoをpushして、install、build、artifact upload、deployまで通るかを見る。ローカル開発導線よりは一段下だが、現行版にもある公開体験として高優先に残す。 | 高 | 必須 |
 | menu / About UI polish | `none`、About導線、基本placementはあるが、見た目やDOM完全互換は固定していない。正式版として見たときに、Stanza利用者やStanza開発者からUI劣化として見えやすい。 | 現行版の完全再現ではなく、正式版としての受け入れ条件を先に定義する。リッチプレビューと合わせてUI品質を整理する。 | 高 | 必須 |
@@ -67,7 +68,6 @@
 | GitHub dependency運用メモ | tag不変運用、lockfile、dependency spec更新、古いcacheを疑う場合の切り分けが運用知識として残っている。 | tag不変運用を前提に、Stanza開発者向けの短い運用メモとして整える。cache削除は公開済みtag更新の代替ではなく、ローカル切り分け用として扱う。 | 中 | 推奨 |
 | TogoMedium実リポジトリ確認の詳細記録 | 「意図通り動く」ことは確認済みだが、install、build、serve、Webアプリ連携のどこまで確認したかの粒度は粗い。 | 確認範囲を追加で記録する。実装作業ではなく観測記録として扱う。 | 中 | 推奨 |
 | GitHub Pages workflow運用制約 | pnpm 11系lockfile、lockfileなしpush、Action major tag、GitHub dependency specの案内が運用知識として残る。 | live deploy確認と合わせて、Stanza開発者向け案内へ寄せる。 | 中 | 推奨 |
-| 診断メッセージ整理 | validation、migration warning、preview warning、environment warningの文言や修正案がまだ散っている。 | 現行版にはない改善機能に近いため、優先度は下げる。必要な局所改善は各作業で拾う。 | 低 | 後続 |
 | metadata validation強化 | `@id` とディレクトリ名一致など最小validationはあるが、`stanza:parameter` やstyle metadataの詳細schemaは広げていない。 | 現行版より厳しくする新規改善に近い。既存の正しいmetadataを壊さない範囲で、必要になったときに扱う。 | 低 | 後続 |
 | `init .` merge / 既存ファイル扱い | 現状は安全側に衝突失敗する。既存 `.gitignore`、README、LICENSE、package.jsonとのmerge方針は未整理。 | Stanza開発者向けDXとして検討する。自動mergeは慎重にし、まず扱うファイル範囲を決める。 | 中 | 後続 |
 | bare `init` / interactive prompt | 非対話入口を重視してきたため、bare `init` のpromptは未採用。 | 公式導線やCLI UXを見直すときに判断する。TTY / non-TTYの挙動を分けるなら別途設計する。 | 中 | 後続 |
@@ -110,8 +110,7 @@
 現時点のおすすめは、次の順である。
 
 1. branch protection・`main` 反映
-2. CLI status / result messages
-3. リッチなプレビュー / ヘルプページの方向付け
-4. GitHub Pages live deploy確認
-5. menu / About UI polish
-6. 正式版マージ準備
+2. リッチなプレビュー / ヘルプページの方向付け
+3. GitHub Pages live deploy確認
+4. menu / About UI polish
+5. 正式版マージ準備
