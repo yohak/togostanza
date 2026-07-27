@@ -164,11 +164,11 @@ function runGitDependencyBootstrapSmoke(input) {
   const generatedPackageJson = JSON.parse(
     readFileSync(join(input.projectDirectory, "bootstrap-stanza", "package.json"), "utf8"),
   );
-  if (generatedPackageJson.dependencies?.togostanza !== "github:yohak/togostanza#<tag-or-sha>") {
+  if (generatedPackageJson.dependencies?.togostanza !== "github:yohak/togostanza") {
     throw new Error(
       [
-        "Git dependency bootstrap init did not generate the placeholder dependency spec.",
-        "expected: github:yohak/togostanza#<tag-or-sha>",
+        "Git dependency bootstrap init did not generate the tagless dependency spec.",
+        "expected: github:yohak/togostanza",
         `actual: ${generatedPackageJson.dependencies?.togostanza}`,
       ].join("\n"),
     );
@@ -240,6 +240,42 @@ function runGitDependencyInstallSmoke(input) {
       ].join("\n"),
     );
   }
+
+  // pnpm resolves github: shorthand through GitHub's codeload endpoint, so this
+  // path intentionally verifies the public tagless dependency instead of the
+  // local release ref used by the fixed-ref smoke above.
+  const defaultStanzaRepoName = `${input.packageManager}-default-stanza`;
+  run(
+    binaryPath,
+    [
+      "init",
+      "--name",
+      defaultStanzaRepoName,
+      "--package-manager",
+      input.packageManager,
+      "--skip-git",
+    ],
+    {
+      cwd: input.projectDirectory,
+    },
+  );
+
+  const defaultStanzaRepository = join(input.projectDirectory, defaultStanzaRepoName);
+  const defaultStanzaPackageJson = JSON.parse(
+    readFileSync(join(defaultStanzaRepository, "package.json"), "utf8"),
+  );
+  if (defaultStanzaPackageJson.dependencies?.togostanza !== "github:yohak/togostanza") {
+    throw new Error(
+      [
+        "Generated Stanza repository did not use the default tagless dependency spec.",
+        "expected: github:yohak/togostanza",
+        `actual: ${defaultStanzaPackageJson.dependencies?.togostanza}`,
+      ].join("\n"),
+    );
+  }
+
+  const defaultBinaryPath = join(defaultStanzaRepository, "node_modules", ".bin", input.binaryName);
+  run(defaultBinaryPath, ["--version"], { cwd: defaultStanzaRepository });
 
   run(binaryPath, ["generate", "stanza", "hello"], { cwd: stanzaRepository });
   run(binaryPath, ["build"], { cwd: stanzaRepository });

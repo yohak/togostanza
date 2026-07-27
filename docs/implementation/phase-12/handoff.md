@@ -38,11 +38,11 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
   - install後に `togostanza/stanza` と `togostanza/config` の実行時解決と型解決を確認する。
   - install対象に `docs/`、`references/`、`src/`、`test/`、`workbench/` が混入していないことを確認する。
 - 生成repoの `dependencies.togostanza` をGitHub dependency運用へ寄せた。
-  - Phase 12実装時点では `github:yohak/togostanza#<tag-or-sha>` をplaceholderとして書く。
-  - 生成READMEには、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallすることを書く。
+  - 通常生成では `github:yohak/togostanza` を書く。
+  - 生成READMEには、GitHub dependencyとlockfileの関係を書く。
   - `TOGOSTANZA_DEPENDENCY_SPEC` で、release手順やlocal smoke用の具体dependency specを注入できるようにした。
   - `test:github-dependency:local` は `git+file://...#ref` を注入し、生成repoのdependencyに反映されることを確認する。
-  - placeholderのまま `init` の既定installへ進もうとした場合は、scaffold作成前に明示診断で失敗するようにした。
+  - overrideに `<tag-or-sha>` のようなplaceholderが残ったまま `init` の既定installへ進もうとした場合は、scaffold作成前に明示診断で失敗するようにした。
 - TogoMedium実リポジトリでGitHub dependency経路を人間確認した。
   - `dependencies.togostanza` を `github:yohak/togostanza#yohak-github-20260723` へ変更し、意図通り動くことを確認した。
 - Phase 12後の残作業を整理した。
@@ -58,7 +58,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | `exports` | `./config` と `./stanza` を維持する。 |
 | root export | 追加しない。 |
 | `main` / top-level `types` | 追加しない。 |
-| generated repo `dependencies.togostanza` | Phase 12実装時点では `github:yohak/togostanza#<tag-or-sha>` placeholderを生成する。後続の正式生成仕様では、現行版に寄せてタグ無しGitHub dependencyを既定にする。 |
+| generated repo `dependencies.togostanza` | 通常生成では `github:yohak/togostanza` を生成する。正式版マージ後は `github:togostanza/togostanza` へ切り替える候補として扱う。 |
 | concrete dependency spec injection | release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体tagまたはcommit SHAを注入できる。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
@@ -84,7 +84,7 @@ mise exec -- pnpm run test:compat:local
   - lint
   - type-check
   - build
-  - unit test: 84 passed, 2 skipped
+  - unit test: 85 passed, 2 skipped
   - integration test: 23 passed
   - browser test: 10 passed
 - `test:distribution:local`: pass
@@ -93,12 +93,17 @@ mise exec -- pnpm run test:compat:local
 - `test:github-dependency:local`: pass
   - local release ref smoke: pass
   - npm / pnpm Git ref bootstrap smoke: pass
+  - bootstrapしたCLIが生成するrepoのタグ無しGitHub dependency: pass
   - npm Git dependency install smoke: pass
   - pnpm Git dependency install smoke: pass
   - concrete dependency specを注入した `init` 既定install: pass
+  - overrideなしの `init` 既定installが、公開 `github:yohak/togostanza` をnpm / pnpm双方で解決できることを確認した。
 - public GitHub ref smoke: pass
   - `github:yohak/togostanza#yohak-github-20260723` からnpmでCLIを起動し、`init` の既定installが通ることを確認した。
   - `github:yohak/togostanza#yohak-github-20260723` からpnpm dlxでCLIを起動し、`init` の既定installが通ることを確認した。
+- generated repo tagless dependency smoke: pass
+  - ローカルCLIから `init --package-manager npm` を実行し、生成repoの既定installが `github:yohak/togostanza` で通ることを確認した。
+  - ローカルCLIから `init --package-manager pnpm` を実行し、生成repoの既定installが `github:yohak/togostanza` で通ることを確認した。
 - TogoMedium実リポジトリ確認: pass
   - 人間確認として、`dependencies.togostanza` を `github:yohak/togostanza#yohak-github-20260723` へ変更し、意図通り動くことを確認した。
 - `test:compat:local`: pass

@@ -25,6 +25,7 @@ const temporaryDirectories: string[] = [];
 function runCli(
   args: string[],
   cwd = packageRoot,
+  env: NodeJS.ProcessEnv = {},
 ): Promise<{
   code: number | null;
   stderr: string;
@@ -33,6 +34,7 @@ function runCli(
   return new Promise((resolveResult, reject) => {
     const child = spawn(process.execPath, [resolve(packageRoot, "bin/togostanza.mjs"), ...args], {
       cwd,
+      env: { ...process.env, ...env },
       stdio: ["ignore", "pipe", "pipe"],
     });
 
@@ -192,7 +194,7 @@ describe("CLI smoke", () => {
     };
     expect(readJson(resolve(cwd, "generated-repo", "package.json"))).toMatchObject({
       dependencies: {
-        togostanza: "github:yohak/togostanza#<tag-or-sha>",
+        togostanza: "github:yohak/togostanza",
       },
       name: "generated-repo",
       scripts: {
@@ -202,7 +204,10 @@ describe("CLI smoke", () => {
     });
     expect(readme).toContain("npm run build");
     expect(readme).toContain("npm run serve");
-    expect(readme).toContain("replace `<tag-or-sha>`");
+    expect(readme).toContain("This repository depends on `github:yohak/togostanza`.");
+    expect(readme).toContain(
+      "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA",
+    );
     expect(readme).toContain("GitHub Pages");
     expect(readme).toContain("package-lock.json");
     expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");
@@ -212,17 +217,20 @@ describe("CLI smoke", () => {
   });
 
   for (const packageManager of ["npm", "pnpm"] as const) {
-    it(`rejects default ${packageManager} install while the generated dependency is a placeholder`, async () => {
+    it(`rejects ${packageManager} install when the dependency override is a placeholder`, async () => {
       const cwd = makeTemporaryDirectory();
       const result = await runCli(
         ["init", "--name", `${packageManager}-repo`, "--package-manager", packageManager],
         cwd,
+        {
+          TOGOSTANZA_DEPENDENCY_SPEC: "github:yohak/togostanza#<tag-or-sha>",
+        },
       );
 
       expect(result.code).toBe(1);
       expect(result.stdout).toBe("");
       expect(result.stderr.trim()).toBe(
-        "Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC, or rerun init with --skip-install.",
+        "Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC to a concrete GitHub dependency, or rerun init with --skip-install.",
       );
       expect(existsSync(resolve(cwd, `${packageManager}-repo`))).toBe(false);
     });

@@ -164,14 +164,12 @@ git push ${REMOTE} ${RELEASE_BRANCH}
 git push ${REMOTE} ${RELEASE_TAG}
 ```
 
-10. 公開GitHub refを使って、npm / pnpmの両方でinstall確認を行う。生成repoを作る場合は、実tagまたはcommit SHAを `TOGOSTANZA_DEPENDENCY_SPEC` で注入するか、生成後に `package.json` の `<tag-or-sha>` を差し替える。
+10. 公開GitHub refを使って、npm / pnpmの両方でinstall確認を行う。生成repoを作る場合は、検証用の実tagまたはcommit SHAを `TOGOSTANZA_DEPENDENCY_SPEC` で注入し、固定ref経路でも既定installが通ることを確認する。
 
 ```sh
 TOGOSTANZA_DEPENDENCY_SPEC=${DEPENDENCY_SPEC} npm exec --package ${DEPENDENCY_SPEC} -- togostanza init --name npm-stanza
 TOGOSTANZA_DEPENDENCY_SPEC=${DEPENDENCY_SPEC} pnpm --package ${DEPENDENCY_SPEC} dlx togostanza init --name pnpm-stanza
 ```
-
-`--skip-install` で生成する場合は、生成後に `package.json` の `github:yohak/togostanza#<tag-or-sha>` を実tagまたはcommit SHAへ差し替えてからinstallする。
 
 GitHub dependencyのtagは不変として扱う。npm / pnpmのlockfileはGit dependencyを解決したcommitへ固定するため、既存tagを動かしても既存生成リポジトリのfrozen installは旧commitを参照し続ける。修正版を出す場合は、新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
 

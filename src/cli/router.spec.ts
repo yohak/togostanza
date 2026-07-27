@@ -160,7 +160,7 @@ describe("CLI router", () => {
     const readme = readText(join(cwd, "generated-repo", "README.md"));
 
     expect(packageJson.license).toBe("MIT");
-    expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza#<tag-or-sha>");
+    expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza");
     expect(packageJson.packageManager).toBeUndefined();
     expect(packageJson.pnpm).toBeUndefined();
     expect(existsSync(join(cwd, "generated-repo", "pnpm-workspace.yaml"))).toBe(false);
@@ -175,7 +175,10 @@ describe("CLI router", () => {
     expect(readme).toContain("npm run build");
     expect(readme).toContain("npm run serve");
     expect(readme).toContain("npm exec togostanza generate stanza hello");
-    expect(readme).toContain("replace `<tag-or-sha>`");
+    expect(readme).toContain("This repository depends on `github:yohak/togostanza`.");
+    expect(readme).toContain(
+      "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA",
+    );
     expect(readme).toContain("npm ci");
     expect(readme).toContain("package-lock.json");
     expect(readme).toContain("--skip-install");
@@ -215,24 +218,47 @@ describe("CLI router", () => {
   });
 
   for (const packageManager of ["npm", "pnpm"] as const) {
-    it(`rejects default ${packageManager} install while the dependency spec is a placeholder`, () => {
+    it(`runs default ${packageManager} install with the tagless GitHub dependency`, () => {
       const cwd = makeTemporaryDirectory();
+      const calls: string[] = [];
+      const installRunner: CommandRunner = (command, args, options) => {
+        calls.push(`${command} ${args.join(" ")} @ ${options.cwd}`);
+        return { exitCode: 0 };
+      };
       const result = routeCli(
         ["init", "--name", `${packageManager}-repo`, "--package-manager", packageManager],
         {
           cwd,
-          installRunner: failingInstallRunner,
+          installRunner,
         },
       );
+
+      expect(result.exitCode).toBe(0);
+      expect(calls).toEqual([`${packageManager} install @ ${join(cwd, `${packageManager}-repo`)}`]);
+      const packageJson = readJson(join(cwd, `${packageManager}-repo`, "package.json")) as {
+        dependencies: Record<string, string>;
+      };
+      expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza");
+    });
+  }
+
+  it("rejects placeholder dependency installs when the verification override is not concrete", () => {
+    const cwd = makeTemporaryDirectory();
+
+    withTogoStanzaDependencySpec("github:yohak/togostanza#<tag-or-sha>", () => {
+      const result = routeCli(["init", "--name", "placeholder-repo", "--package-manager", "npm"], {
+        cwd,
+        installRunner: failingInstallRunner,
+      });
 
       expect(result).toEqual({
         exitCode: 1,
         stderr:
-          "Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC, or rerun init with --skip-install.",
+          "Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC to a concrete GitHub dependency, or rerun init with --skip-install.",
       });
-      expect(existsSync(join(cwd, `${packageManager}-repo`))).toBe(false);
+      expect(existsSync(join(cwd, "placeholder-repo"))).toBe(false);
     });
-  }
+  });
 
   for (const packageManager of ["npm", "pnpm"] as const) {
     it(`runs default ${packageManager} install when a concrete dependency spec is set`, () => {

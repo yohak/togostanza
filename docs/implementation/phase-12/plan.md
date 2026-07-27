@@ -263,18 +263,15 @@ Phase 12-1では `test:github-dependency:local` を追加し、一時git reposit
 
 採用する方針:
 
-- generated repoの `dependencies.togostanza` は、通常生成では `github:yohak/togostanza#<tag-or-sha>` を書く。
-  - 実release tagまたはcommit SHAが決まるまでは、人間が後から差し替えるplaceholderとして扱う。
-  - Phase 12時点では `main` 直指定は推奨しない。
-- 後続の正式版マージ準備では、現行版の生成repo仕様に寄せ、タグ無しGitHub dependencyを既定にする。
+- generated repoの `dependencies.togostanza` は、通常生成ではタグ無しGitHub dependencyを書く。
   - 短期の `yohak` 経路では `github:yohak/togostanza` を候補にする。
   - 正式版マージ後は `github:togostanza/togostanza` を候補にする。
   - tagまたはcommit SHAは、開発中の検証や固定化が必要な場合に使う。
 - local smoke、release手順、実GitHub ref確認では `TOGOSTANZA_DEPENDENCY_SPEC` で具体dependency specを注入できるようにする。
   - `git+file://...#ref` のlocal smokeでも同じ経路を使う。
   - このoverrideは配布検証とrelease運用のための入口であり、Stanza開発者向けの通常操作としてはREADMEのGitHub dependency specを正とする。
-- READMEには、`<tag-or-sha>` をTogoStanzaのrelease tagまたはcommit SHAへ差し替えてからinstallすることを書く。
-- placeholderのまま既定installへ進むと失敗するため、具体dependency specが無い場合は `--skip-install` を必須にし、scaffold作成前に明示診断を返す。
+- READMEには、GitHub dependencyとlockfileの関係を書く。
+- `TOGOSTANZA_DEPENDENCY_SPEC` に `<tag-or-sha>` のようなplaceholderを指定した場合は、具体値へ置換するか `--skip-install` を指定する。placeholderが残ったまま既定installへ進もうとした場合は、scaffold作成前に明示診断を返す。
 - GitHub Pages workflowがGitHub dependency installで通る前提をどう説明するか。
 - pnpm 11系lockfile前提と、GitHub dependency specのlockfile再現性をREADMEで案内する。
 

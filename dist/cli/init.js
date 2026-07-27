@@ -4,7 +4,7 @@ import { getBooleanOption, getStringOption, parseOptions } from "./options.js";
 import { resolvePackageManager } from "./package-manager.js";
 import { failure, success } from "./result.js";
 import { runCommand } from "./runner.js";
-const defaultTogoStanzaDependencySpec = "github:yohak/togostanza#<tag-or-sha>";
+const defaultTogoStanzaDependencySpec = "github:yohak/togostanza";
 export function handleInit(args, options = {}) {
     const parsedResult = parseOptions(args, [
         { kind: "value", name: "--name" },
@@ -55,7 +55,7 @@ export function handleInit(args, options = {}) {
     const license = getStringOption(parsed, "--license") ?? "MIT";
     const dependencySpec = resolveTogoStanzaDependencySpec();
     if (!getBooleanOption(parsed, "--skip-install") && isPlaceholderDependencySpec(dependencySpec)) {
-        return failure("Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC, or rerun init with --skip-install.");
+        return failure(`Cannot install placeholder dependency ${dependencySpec}. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC to a concrete GitHub dependency, or rerun init with --skip-install.`);
     }
     try {
         createScaffold({
@@ -128,20 +128,20 @@ function formatReadme(input) {
     const workflowInstall = input.packageManager === "pnpm" ? "pnpm ci" : "npm ci";
     const workflowBuild = input.packageManager === "pnpm" ? "pnpm exec togostanza build" : "npm exec togostanza build";
     const lockfileGuidance = input.packageManager === "pnpm"
-        ? `Commit \`${lockfile}\` generated with pnpm 11 so the workflow can run reproducible installs with \`${workflowInstall}\`.`
-        : `Commit \`${lockfile}\` so the workflow can run reproducible installs with \`${workflowInstall}\`.`;
+        ? `Commit \`${lockfile}\` generated with pnpm 11 so the workflow can run reproducible installs with \`${workflowInstall}\`. The GitHub dependency is resolved to a commit in the lockfile.`
+        : `Commit \`${lockfile}\` so the workflow can run reproducible installs with \`${workflowInstall}\`. The GitHub dependency is resolved to a commit in the lockfile.`;
     const skipInstallGuidance = input.packageManager === "pnpm"
         ? "If this repository was initialized with `--skip-install`, run the install command locally with pnpm 11 and commit the generated lockfile before pushing to `main`."
         : "If this repository was initialized with `--skip-install`, run the install command locally and commit the generated lockfile before pushing to `main`.";
-    const dependencyGuidance = input.dependencySpec === defaultTogoStanzaDependencySpec
-        ? "If `package.json` contains `github:yohak/togostanza#<tag-or-sha>`, replace `<tag-or-sha>` with the TogoStanza release tag or commit SHA before installing dependencies."
-        : `This repository depends on \`${input.dependencySpec}\`.`;
+    const dependencyGuidance = `This repository depends on \`${input.dependencySpec}\`.`;
+    const fixedDependencyGuidance = "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA such as `github:yohak/togostanza#yohak-github-YYYYMMDD-label`.";
     return [
         `# ${input.name}`,
         "",
         "A TogoStanza repository.",
         "",
         dependencyGuidance,
+        fixedDependencyGuidance,
         "",
         "## Development",
         "",

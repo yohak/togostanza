@@ -15,6 +15,7 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 | GitHub dependency install | `github:yohak/togostanza#yohak-github-20260723` でnpm / pnpmのsmoke確認済み。 |
 | 実プロジェクト確認 | TogoMedium実リポジトリで `dependencies.togostanza` をGitHub dependencyへ差し替え、意図通り動くことを人間確認済み。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使用。 |
+| 生成repoのタグ無しGitHub dependency | `init` は通常生成で `github:yohak/togostanza` を書く。検証時だけ `TOGOSTANZA_DEPENDENCY_SPEC` でtagまたはcommit SHAを注入できる。 |
 | install対象 | `files` により `bin/` と `dist/` へ限定済み。 |
 | npm publish | Phase 12では行わない。 |
 
@@ -23,7 +24,6 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 | 項目 | 現在の状態 | 分類 | 影響 | 推奨 |
 | ---- | ---------- | ---- | ---- | ---- |
 | `develop` / `main` / tag の役割実装 | 方針は採用済み。現在は `main` に `dist/` が追跡されているが、`develop` branchはまだ無い。install時buildを行わない限り、`main` と検証tagにはbuild済み `dist/` が必須。 | 次にやる候補 | Stanza開発者がタグ無しGitHub dependencyでinstallできるか、通常開発で生成物差分が混ざらないかに影響する。 | 次の実装計画でbranch作成、default branch設定、`develop` から `main` への反映方法、`dist/` 生成・検証、rollbackを定義する。 |
-| 生成repoのタグ無しGitHub dependency実装 | Phase 12時点の生成repoは `github:yohak/togostanza#<tag-or-sha>` placeholderを使う。正式生成仕様ではタグ無しGitHub dependencyを採用済み。 | 次にやる候補 | 正式版マージ後の生成repoが現行版と同じ使い勝手になるかに影響する。 | `init`、生成README、testをタグ無しGitHub dependencyへ更新する。検証時だけ `TOGOSTANZA_DEPENDENCY_SPEC` でtagまたはcommit SHAを注入する。 |
 | タグ無しGitHub dependencyのlockfile更新手順 | lockfileなしの新規installはdefault branchを解決し、lockfileありのfrozen installは記録commitを再現する。既存repo更新手順は未整理。 | 次にやる候補 | `main` 更新後に既存Stanzaリポジトリがいつ・どう追従するかに影響する。 | fresh install、frozen install、依存更新、forward-fixをREADMEとsmokeに含める。 |
 | GitHub Pages live deploy確認 | workflow構造は生成済みだが、公開GitHub Pages環境でのlive deployは未実行。 | 次にやる候補 | Stanza開発者が生成repoをpushした後の公開導線に影響する。 | GitHub dependency運用の次の実地確認として優先度高め。 |
 | CLI status / result messages | `build` 成功時の所要時間表示は追加済み。全体の文言体系は未整理。 | 後続改善 | Stanza開発者が失敗原因を把握しやすくなる。 | GitHub dependency運用後、利用時に分かりにくい箇所から整理する。 |
@@ -49,6 +49,6 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 ## 次の候補
 
-次に実装作業として進むなら、`develop` / `main` / tag の役割実装、生成repoのタグ無しGitHub dependency実装、タグ無しGitHub dependencyのlockfile更新手順を先に整理するのが自然である。
+次に実装作業として進むなら、`develop` / `main` / tag の役割実装と、タグ無しGitHub dependencyのlockfile更新手順を先に整理するのが自然である。
 
 一方、すぐに実装を増やさない場合は、TogoMedium実リポジトリでの確認範囲をもう少し具体化して記録する。たとえば、install、build、serve、Webアプリ連携のどこまで確認したかを追記する。
