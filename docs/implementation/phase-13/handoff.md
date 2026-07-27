@@ -63,6 +63,9 @@ Phase 13の設計は [Phase 13: リッチなヘルププレビュー計画](./pl
   - [011 Serve development server](../../../workbench/cases/011-serve-development-server/README.md)
 - README本文のMarkdown表示はPhase 13では入れず、[follow-ups](../../investigation/follow-ups.md) に記録した。
 - 別リポジトリでの人間確認を受け、`index.html` のStanza一覧を固定カラムの縦積み表示へ調整した。
+- 別リポジトリでの人間確認を受け、`{id}.html` のプレビューステージから枠線を外し、Stanza外側の背景を薄いグレーにした。
+  - プレビューUIの枠線がStanza本体のborderと誤認されないようにするため。
+  - 現行版のように、Stanza外の領域が背景として沈んで見えるようにするため。
 
 ## 確認結果
 
@@ -117,6 +120,18 @@ git diff --check
 - `build`: pass
 - `git diff --check`: pass
 
+プレビューステージの枠線と背景色の調整後に、追加で次を確認した。
+
+```sh
+mise exec -- pnpm run build
+mise exec -- pnpm exec playwright test --config playwright.config.ts --grep "rich help preview"
+```
+
+結果:
+
+- `build`: pass
+- `rich help preview` browser test: pass
+
 ## 実行しなかったこと
 
 - README本文のMarkdown表示。
@@ -124,13 +139,11 @@ git diff --check
 - イベントの送受信用操作UI。
 - query parameterによるプレビュー初期値上書き。
 - ヘルププレビュー内の自動reloadやHMR。
-- menu UIのリッチ化。
 - `-togostanza/` 配下のbundle名、CSS名、チャンク構造の完全互換固定。
 
 ## 残す論点
 
 - README本文の表示は、Markdown変換依存や安全な読み込み方針を決めてから扱う。
-- menu / About UI polishは、ヘルププレビューとは別に、正式版としての受け入れ条件を決めて扱う。
+- menu / About UI polishはPhase 14で扱った。残る細部が見つかった場合も、ヘルププレビュー本体とは別に扱う。
 - JSON専用editor、イベント操作UI、プレビュー状態のURL共有は、現行版体験と実利用要求を確認してから採否を判断する。
 - `serve` は引き続き一時出力ディレクトリを使う。`dist/` に統一する場合は、通常開発中の出力先保護とのトレードオフを改めて判断する。
-

@@ -23,7 +23,7 @@
 - `init`、`generate stanza`、`build`、`serve` の成功メッセージ、`build` / `serve` の更新時刻つきビルド所要時間、`build` の対話的な出力先clearは整備済みである。
 - `develop` / `main` / immutable tagの役割方針は採用済みである。local / remote `develop` branchは作成済みで、`dist/` はGit追跡対象から外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済みbaselineである。ただし、branch protectionと、その後の `develop` から `main` へ反映する実作業は未実施である。
 - GitHub dependencyのtagは不変として扱う方針に変更済みである。修正版は新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
-- GitHub dependency経路は短期配布経路として成立している。Phase 13でリッチなヘルププレビューも復元済みである。一方、公開運用、Stanza開発者向けドキュメント、menu UI polish、診断、正式版マージ後のnpm registry配布には未整理の項目が残る。
+- GitHub dependency経路は短期配布経路として成立している。Phase 13でリッチなヘルププレビュー、Phase 14でmenu UI polishも復元済みである。一方、公開運用、Stanza開発者向けドキュメント、診断、正式版マージ後のnpm registry配布には未整理の項目が残る。
 
 ## 優先度の見方
 
@@ -60,7 +60,6 @@
 | タグ無しGitHub dependencyのlockfile更新手順 | タグ無しGitHub dependencyも、install後はlockfileが解決commitを固定する。`main` が更新されても既存Stanzaリポジトリは自動追従しない。 | local smokeでfresh install、frozen install、同じdependency specでの明示更新を確認する。Stanza開発者向け手順は `docs/guides/github-dependency.md` に記録済み。 | 中 | 推奨 |
 | CLI diagnostic messages | 成功メッセージは一巡したが、validation、migration warning、environment warningなどの失敗時診断はまだ散っている。 | 現行版にはない改善機能に近いため、優先度は下げる。必要な局所改善は各作業で拾う。 | 低 | 後続 |
 | GitHub Pages live deploy確認 | workflow構造はあるが、公開GitHub Pages環境でのlive deployは未確認。 | 生成repoをpushして、install、build、artifact upload、deployまで通るかを見る。ローカル開発導線よりは一段下だが、現行版にもある公開体験として高優先に残す。 | 高 | 必須 |
-| menu / About UI polish | `none`、About導線、基本placementはあるが、現行版の `<togostanza--menu>` custom element、info icon、popup、Copy HTML snippet、`togostanza-utils` のdownload系menu helper確認は未復元。正式版として見たときに、埋め込み後のmenu挙動の劣化として見えやすい。 | Phase 14で、現行版の観測可能なmenu挙動に寄せる。Lit、Popper、Primer packageは初回では追加せず、必要ならPopper導入を再検討する。 | 高 | 必須 |
 | 正式版マージ準備 | 中期的に現行版リポジトリへ正式版として取り込むことを作業前提にする。正式版メインブランチでは、今回の移行のための検証コードやPhase文書がノイズになる可能性がある。 | 現行版リポジトリへ入れるもの、入れないものを分類する。正式版向けファイル整理、Stanza開発者向けドキュメント整理、検証資産の置き場所をまとめて扱う。 | 高 | 必須 |
 | Stanza開発者向けドキュメント充実 | 生成README、source / config移行ガイド、release checklist、remaining workはあるが、Stanza開発者向けのまとまった正式導線としてはまだ散らばっている。 | 正式版マージ準備の一部として、導入、移行、開発、公開手順を整理する。 | 高 | 必須 |
 | npm registry配布引き継ぎ計画 | 現行版 `togostanza` はnpm registry公開済みである。実際のpublishは正式版マージ後でよいが、権限、version、dist-tag、rollback、公開担当、GitHub dependencyとの移行期間をマージ後まで未決定にすると切り替え条件が分離する。 | 実publishは正式版マージ直後でもよい。正式版マージ前には、権限確認、version方針、dist-tag方針、rollback、公開担当、許容するタイムラグと利用者案内を決める。 | 高 | 必須 |
@@ -110,5 +109,5 @@
 
 1. branch protection・`main` 反映
 2. GitHub Pages live deploy確認
-3. menu / About UI polish
-4. 正式版マージ準備
+3. 正式版マージ準備
+4. Stanza開発者向けドキュメント充実

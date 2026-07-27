@@ -7,6 +7,9 @@
 - `top-left`、`top-right`、`bottom-left`、`bottom-right`、`none` のplacementを扱う。
 - `metadata["stanza:menu-placement"]` と `togostanza-menu-placement` を扱い、`togostanza-menu_placement` は復活させていない。
 - 固定SVGのinfo icon、popup、再クリック、`Escape`、外側clickによる開閉を実装した。`Escape` は開いているpopupだけを閉じ、そのmenu buttonへfocusを戻す。
+- menu buttonは24px内に収め、popupの文字サイズと余白を現行版に近い補助UIとして小さめに調整した。
+- popupを開いたときに横スクロールが出ないよう、開状態の `<togostanza--menu>` host幅、button配置、menu itemの `box-sizing` を調整した。
+- bottom/right系のpopupは、menu buttonとの隙間を作らず、現行版に近い位置へ寄せた。
 - `this.menu()` のitem / dividerを表示し、item click後にhandlerを呼び出してpopupを閉じる。
 - Copy HTML snippetに、registration由来のmodule script URLと現在のcustom element `outerHTML` を使う。
 - About linkを `${id}.html`、`target="_blank"`、`rel="noopener noreferrer"` で出力する。
@@ -23,6 +26,7 @@ info iconはPrimer Octiconsの `info-16` を固定SVGとしてruntimeへ同梱�
   - 対角2配置の実座標。
   - 外側 `togostanza--menu` styleの適用。
   - info icon、popup開閉、`Escape`、外側click。複数Stanzaで開いていたmenu buttonへのfocus復帰と、閉状態でのfocus非干渉。
+  - popup表示時にbuttonが24pxを保つこと、popup文字サイズが小さめであること、Shadow DOM内で横overflowを起こさないこと。
   - item / divider、handler、menu再評価。
   - Copy HTML snippetのbundle URLとcurrent `outerHTML`。
   - About link。
@@ -44,4 +48,11 @@ info iconはPrimer Octiconsの `info-16` を固定SVGとしてruntimeへ同梱�
 mise exec -- pnpm run check-all
 mise exec -- pnpm run test:compat:local
 git diff --check
+```
+
+最終の視覚調整後には、追加で次を確認した。
+
+```sh
+mise exec -- pnpm run build
+mise exec -- pnpm exec playwright test --config playwright.config.ts --grep "loads built Stanza custom elements"
 ```
