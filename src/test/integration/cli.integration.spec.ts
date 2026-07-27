@@ -21,7 +21,7 @@ const packageJson = JSON.parse(readFileSync(resolve(packageRoot, "package.json")
   version: string;
 };
 const temporaryDirectories: string[] = [];
-const statusTimestampPattern = String.raw`\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}\]`;
+const statusTimestampPattern = String.raw`\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]`;
 
 function runCli(
   args: string[],
