@@ -208,6 +208,12 @@ TogoMedium Stanza確認では、`%stanza/*`、`%storybook/*`、`%core/*`、`%api
 
 Phase 9計画ではmetastanza代表候補を `pagination-table` としていたが、direct embed smokeの試行で、Stanzaソースが `main.parentNode.style` を前提にしている差分が見つかった。リメイク版runtimeでは `main.parentNode` が `ShadowRoot` になるため、この構成は描画前に止まる。Phase 9では、全Stanza build baselineを維持しつつ、通す代表browser smokeは `scorecard` へ変更した。`pagination-table` のruntime互換をどう扱うかは、全Stanza browser smokeを扱うPhase 11で判断する。
 
+## Phase 14 menu UI確認: 2026-07-27
+
+`test:compat:local` のmetastanza全10 Stanza direct embed smokeを、新しい `<togostanza--menu>` runtimeで再実行した。代表として `linechart` のpopupを開き、実Stanzaソースが `togostanza-utils` から生成するDownload SVG / PNG / JSON / CSV / TSV itemが表示されることを確認した。
+
+`togostanza--menu` は `<main>` と同じ相対配置コンテナに置かれ、metastanza側から外側custom elementへ当てるstyleを維持する。download itemの実ファイル保存と内容比較はこの観測範囲に含めない。
+
 ## Phase 11-0 リメイク版compatibility harness hardening: 2026-07-02
 
 Phase 11-0では、Phase 11-1以降の全Stanza browser smokeへ進む前に、local compatibility確認の入口を整理した。

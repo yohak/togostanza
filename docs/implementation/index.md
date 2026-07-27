@@ -24,7 +24,7 @@
 | Phase 11: compatibility verification | 全Stanza browser smoke、TogoMedium Webアプリ本体E2E、runtime edge semanticsを検証する。 | [012](../../workbench/cases/012-real-project-regression/)、runtime edge確認 | [設計](./phase-11/plan.md)、[引き継ぎ](./phase-11/handoff.md) |
 | Phase 12: GitHub dependency distribution | GitHub dependency installを短期配布経路として成立させる。 | root package layout、GitHub dependency install smoke、release branch / tag運用 | [設計](./phase-12/plan.md)、[引き継ぎ](./phase-12/handoff.md)、[残作業](./phase-12/remaining-work.md) |
 | Phase 13: rich preview / help page | buildとserveで、パラメーターやstyleを変更できるリッチなヘルププレビューを提供する。 | `index.html`、`{id}.html`、ヘルププレビューapp、browser test | [設計](./phase-13/plan.md)、[引き継ぎ](./phase-13/handoff.md) |
-| Phase 14: Menu UI polish | 埋め込み後のmenu UIを現行版の観測可能な挙動に近づける。 | `togostanza--menu`、`this.menu()` item、`togostanza-utils` menu helper、browser test | [設計](./phase-14/plan.md) |
+| Phase 14: Menu UI polish | 埋め込み後のmenu UIを現行版の観測可能な挙動に近づける。 | `togostanza--menu`、`this.menu()` item、`togostanza-utils` menu helper、browser test | [設計](./phase-14/plan.md)、[引き継ぎ](./phase-14/handoff.md) |
 
 ## Phase 0: skeleton
 
@@ -395,7 +395,7 @@ Phase 13の設計は [Phase 13: リッチなヘルププレビュー計画](./ph
 
 Phase 14では、現行版と同じ実装技術を採用することではなく、Stanza利用者とStanza開発者から見える挙動を優先する。`togostanza--menu` custom element、info icon、popup、placement、`this.menu()` item / divider、Copy HTML snippet、About this stanza、`togostanza-utils` のdownload系menu helperを扱う。
 
-Phase 14の設計は [Phase 14: Menu UI polish 計画](./phase-14/plan.md) に置く。
+Phase 14の設計は [Phase 14: Menu UI polish 計画](./phase-14/plan.md) に置き、完了後の状態は [Phase 14: Menu UI polish 引き継ぎ](./phase-14/handoff.md) に置く。
 
 含める範囲:
 

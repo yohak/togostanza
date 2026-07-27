@@ -222,7 +222,11 @@ StanzaごとのCSSはShadow DOM内に適用する。`metadata["stanza:style"]` �
 
 外部ページがShadow DOM内部を直接queryして操作する使い方は、利用契約として保証しない。一方で、Stanzaソース内から `this.root` と `this.root.querySelector("main")` を使うことは開発契約として維持する。
 
-menu placementは、`metadata["stanza:menu-placement"]` と `togostanza-menu-placement` 属性で指定できる。`none` の場合、menu UIは表示されない。`togostanza-menu_placement` はリメイク版では受け付けない。`togostanza--menu` の内部DOM構造や見た目は再設計可能だが、About導線と `${id}.html` への参照は維持する。
+menu placementは、`metadata["stanza:menu-placement"]` と `togostanza-menu-placement` 属性で指定できる。`top-left`、`top-right`、`bottom-left`、`bottom-right`、`none` を扱い、`none` の場合はmenu UIを表示しない。`togostanza-menu_placement` はリメイク版では受け付けない。
+
+runtimeは、StanzaのShadow DOM内で `<main>` と同じ相対配置コンテナに `<togostanza--menu>` custom elementを置く。menu buttonからpopupを開き、再クリック、`Escape`、外側clickで閉じられる。`Escape` は開いているpopupだけを閉じ、focusをそのpopupを開いたmenu buttonへ戻す。popupは `this.menu()` のitem / divider、`Copy HTML snippet to clipboard`、`About this stanza` を表示する。Copy HTML snippetは、対象Stanza bundleのmodule scriptと、現在のcustom elementの `outerHTML` を使う。About導線は `${id}.html` を新しいタブで開く。
+
+`togostanza--menu` の外側custom element名と観測可能な操作は維持する。内部DOM構造、class名、id、見た目、画面端での自動flipは固定しない。
 
 ## パラメーター
 
@@ -290,7 +294,7 @@ export default class Example extends Stanza {
 
 `this.importWebFontCSS()` のlink注入先と重複制御の詳細は固定しない。ただし、既存Stanzaソースから同じ名前で呼び出せること、Shadow DOM内の表示に必要なCSSを読み込めることを維持する。
 
-`this.menu()` は、`{ type: "item", label, handler }` と `{ type: "divider" }` を返せる。runtime menuはこれらのitemを扱い、`handler` を呼び出せる。menu UIのDOM構造や見た目は固定しない。
+`this.menu()` は、`{ type: "item", label, handler }` と `{ type: "divider" }` を返せる。runtime menuはpopupを開くときとStanza描画後に定義を再評価し、item clickで `handler` を呼び出してpopupを閉じる。menu UIの内部DOM構造や見た目は固定しない。
 
 ## Stanza間連携
 

@@ -141,6 +141,8 @@ method未指定の `this.query()` は `POST` を既定methodとする。
 
 現行版ではinfo icon再クリックでmenuを開閉する。リメイク版では、Stanza利用者の自然な操作として `Escape` と外側clickでも閉じられるようにする。これは現行版の操作を壊す変更ではなく、追加操作として扱う。
 
+Copy HTML snippetのmodule script URLは、Stanza bundleのregistrationからruntimeへ渡す。About URLから `.js` を逆算する実装にはしない。画面端でのpopup自動flipは初回の互換範囲に含めない。
+
 ## Stanza Source
 
 既存のStanzaソースは、可能な限り変更しない方針とする。

@@ -212,6 +212,12 @@ direct embedでは現行runtimeのmenu UIはlight DOMに表示されなかった
 
 `applyFilter` はTogoStanza接点を持たない純粋データ処理APIなので、上の観測値は参考観測として扱う。ただし、既存Stanzaソースが直接importしているため、`togostanza-utils/apply-filter` のimport解決は確認対象に含める。`Data` class、`togostanza-utils/data`、graph/tree helperは、このケースの受け入れ対象には含めない。
 
+## Phase 14 menu UI確認: 2026-07-27
+
+`test:compat:local` の `utils-probe` は、`references/togostanza-utils` の実packageを変更せずにcopyして使う。`downloadSvgMenuItem()`、`downloadPngMenuItem()`、`downloadJSONMenuItem()`、`downloadCSVMenuItem()`、`downloadTSVMenuItem()` が返すitemを `<togostanza--menu>` のpopupへ表示し、各itemのhandlerをclickした。
+
+Download SVG / PNG / JSON / CSV / TSVの5 itemとdividerが表示され、handler呼び出し後にruntime構造依存の `pageerror` は出なかった。browser testはdownload eventをcancelしており、保存されたファイルの内容までは確認していない。
+
 ## 実行コマンド
 
 現行版の確認は `current-pnpm/generated-repo/` で行う。

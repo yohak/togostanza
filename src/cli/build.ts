@@ -802,6 +802,7 @@ function formatEntrypointWrapper(stanza: StanzaDefinition): string {
     `  cssUrl: new URL(${JSON.stringify(`./${stanza.id}.css`)}, import.meta.url),`,
     `  aboutUrl: new URL(${JSON.stringify(`./${stanza.id}.html`)}, import.meta.url),`,
     `  assetBaseUrl: new URL(${JSON.stringify(`./${stanza.id}/assets/`)}, import.meta.url),`,
+    "  scriptUrl: new URL(import.meta.url),",
     "  metadata,",
     "  StanzaClass,",
     "  templates,",
