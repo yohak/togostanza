@@ -1,5 +1,5 @@
 import { formatPackageIdentity } from "../index.js";
-import { handleBuild } from "./build.js";
+import { handleBuild, type ConfirmCleanOutput } from "./build.js";
 import { findCommand, listCommandUsages, type CommandDefinition } from "./commands.js";
 import { handleGenerateStanza } from "./generate-stanza.js";
 import { handleInit, type CommandRunner } from "./init.js";
@@ -9,11 +9,13 @@ import { handleServe, type ServeSession } from "./serve.js";
 export type MaybePromise<T> = Promise<T> | T;
 
 export type CliRouteOptions = {
+  confirmCleanOutput?: ConfirmCleanOutput;
   cwd?: string;
   currentDate?: Date;
   gitRunner?: CommandRunner;
   installRunner?: CommandRunner;
   onServeSession?: (session: ServeSession) => void;
+  progressOutput?: (message: string) => void;
   serveWatch?: boolean;
 };
 
@@ -60,7 +62,7 @@ function routeCommand(
   }
 
   if (command.canonicalName === "build") {
-    return handleBuild(args, options);
+    return handleBuild(args, withBuildOptions(options));
   }
 
   if (command.canonicalName === "serve") {
@@ -70,10 +72,18 @@ function routeCommand(
   return failure(`Command is not implemented yet: ${command.canonicalName}`);
 }
 
+function withBuildOptions(options: CliRouteOptions): Parameters<typeof handleBuild>[1] {
+  return {
+    ...(options.confirmCleanOutput ? { confirmCleanOutput: options.confirmCleanOutput } : {}),
+    ...(options.cwd ? { cwd: options.cwd } : {}),
+  };
+}
+
 function withServeOptions(options: CliRouteOptions): Parameters<typeof handleServe>[1] {
   return {
     ...(options.cwd ? { cwd: options.cwd } : {}),
     ...(options.onServeSession ? { onServeSession: options.onServeSession } : {}),
+    ...(options.progressOutput ? { progressOutput: options.progressOutput } : {}),
     ...(typeof options.serveWatch === "boolean" ? { watch: options.serveWatch } : {}),
   };
 }

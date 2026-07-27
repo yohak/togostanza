@@ -32,6 +32,7 @@
 - loopback originからの `GET` と `OPTIONS` preflightにCORS headerを返すこと。
 - `serve` が `dist/` を書き換えないこと。
 - 変更後にページ再読み込みで反映されること。
+- 初回ビルドと再ビルド完了時に、更新完了とビルド所要時間が標準出力へ表示されること。
 - stanza固有入力の変更では対象stanzaだけが再ビルドされること。
 - 依存グラフ上の変更では影響を受けるstanzaがinvalidateされること。
 - 安全に特定できない変更では全体invalidateされること。
@@ -43,6 +44,7 @@
 - 必須URLが配信される。
 - loopback originからのCORS確認ができる。
 - Stanza entrypoint、metadata、template、stylesheet、asset、設定、共有ソースの変更が反映される。
+- 初回ビルドと再ビルド完了時に、ビルド所要時間を含むstatus messageが確認できる。
 - 再ビルド失敗時にプロセスが終了しない。
 - ビルド失敗中の対象URLでエラー内容が分かる。
 - 修正後に通常のプレビューとbuild相当URLへ復帰する。
@@ -52,6 +54,7 @@
 - 起動コマンドとport。
 - 配信されたURLとHTTP status。
 - CORS headerと `OPTIONS` preflightのHTTP status。
+- 初回ビルド、対象stanza再ビルド、全体再ビルドのstatus message。
 - 変更したファイルとinvalidate対象。
 - ビルド失敗時の画面、HTTP status、復帰手順。
 - 対象stanzaだけの再ビルド失敗で、対象stanzaのURLだけがHTTP 500になること。

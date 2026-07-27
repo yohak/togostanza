@@ -16,7 +16,12 @@ export function runCli(
   output = consoleOutput,
   options: CliRouteOptions = {},
 ): Promise<number> {
-  return Promise.resolve(routeCli(args, options)).then((result) => {
+  return Promise.resolve(
+    routeCli(args, {
+      progressOutput: output.stdout,
+      ...options,
+    }),
+  ).then((result) => {
     if (result.stdout) {
       output.stdout(result.stdout);
     }

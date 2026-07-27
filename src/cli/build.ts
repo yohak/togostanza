@@ -5,6 +5,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -13,6 +14,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
+import { createInterface } from "node:readline/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import vue from "@vitejs/plugin-vue";
 import Handlebars from "handlebars";
@@ -28,8 +30,14 @@ import { isValidStanzaId, titleCaseStanzaId } from "./stanza-id.js";
 const require = createRequire(import.meta.url);
 
 export type BuildOptions = {
+  confirmCleanOutput?: ConfirmCleanOutput;
   cwd?: string;
 };
+
+export type ConfirmCleanOutput = (input: {
+  outputDirectory: string;
+  warning: string;
+}) => boolean | Promise<boolean>;
 
 export type StanzaDefinition = {
   definition?: string;
@@ -43,6 +51,8 @@ export type StanzaDefinition = {
 };
 
 export type BuildStanzaArtifactsInput = {
+  allowUnmarkedOutputDirectory?: boolean;
+  confirmCleanOutput?: ConfirmCleanOutput;
   outputDirectory: string;
   prepareOutputDirectory?: boolean;
   rootDirectory: string;
@@ -102,6 +112,7 @@ export async function handleBuild(
 
   const startedAt = performance.now();
   const buildResult = await buildStanzaArtifacts({
+    ...(options.confirmCleanOutput ? { confirmCleanOutput: options.confirmCleanOutput } : {}),
     outputDirectory: outputDirectoryResult.outputDirectory,
     prepareOutputDirectory: true,
     rootDirectory,
@@ -152,9 +163,17 @@ export async function buildStanzaArtifacts(
     return { error: buildConfigResult.error };
   }
 
+  const cleanPermissionResult = await resolveOutputDirectoryCleanPermission(input);
+
+  if ("error" in cleanPermissionResult) {
+    return { error: cleanPermissionResult.error };
+  }
+
   try {
     if (input.prepareOutputDirectory) {
-      prepareOutputDirectory(input.outputDirectory, input.rootDirectory);
+      prepareOutputDirectory(input.outputDirectory, input.rootDirectory, {
+        allowUnmarkedOutputDirectory: cleanPermissionResult.allowUnmarkedOutputDirectory,
+      });
       writeOutputMarker(input.outputDirectory);
     } else {
       mkdirSync(input.outputDirectory, { recursive: true });
@@ -408,19 +427,135 @@ function resolveEntrypoint(
   };
 }
 
-function prepareOutputDirectory(outputDirectory: string, rootDirectory: string): void {
+function outputDirectoryCleanStatus(
+  outputDirectory: string,
+  rootDirectory: string,
+):
+  | {
+      kind: "ok";
+    }
+  | {
+      error: string;
+    }
+  | {
+      kind: "needs-confirmation";
+      refusal: string;
+      warning: string;
+    } {
+  const realpathStatus = outputDirectoryRealpathStatus(outputDirectory, rootDirectory);
+
+  if ("error" in realpathStatus) {
+    return realpathStatus;
+  }
+
   if (existsSync(outputDirectory)) {
     if (!pathIsDirectory(outputDirectory)) {
-      throw new Error(`Output path exists and is not a directory: ${outputDirectory}`);
+      return { error: `Output path exists and is not a directory: ${outputDirectory}` };
     }
 
     const entries = readdirSync(outputDirectory);
     const markerPath = join(outputDirectory, outputMarkerFileName);
 
     if (entries.length > 0 && !pathIsFile(markerPath)) {
-      throw new Error(
-        `Refusing to clean output directory without ${outputMarkerFileName}: ${outputDirectory}`,
-      );
+      return {
+        kind: "needs-confirmation",
+        refusal: `Refusing to clean output directory without ${outputMarkerFileName}: ${outputDirectory}`,
+        warning: [
+          `Output directory is not marked as a TogoStanza build output: ${outputDirectory}`,
+          "Clearing it may delete files not created by this version of TogoStanza.",
+        ].join("\n"),
+      };
+    }
+  }
+
+  if (!pathIsDirectory(rootDirectory)) {
+    return { error: `Stanza repository root is not a directory: ${rootDirectory}` };
+  }
+
+  return { kind: "ok" };
+}
+
+function outputDirectoryRealpathStatus(
+  outputDirectory: string,
+  rootDirectory: string,
+):
+  | {
+      kind: "ok";
+    }
+  | {
+      error: string;
+    } {
+  const rootRealPath = realpathSync(rootDirectory);
+  const { ancestor, canonicalPath } = canonicalizeThroughExistingAncestor(outputDirectory);
+
+  if (!pathIsInsideOrEqual(rootRealPath, canonicalPath)) {
+    return {
+      error: `Invalid output path: ${outputDirectory} resolves outside the Stanza repository root through ${ancestor}.`,
+    };
+  }
+
+  const relativeCanonicalPath = relative(rootRealPath, canonicalPath);
+
+  if (relativeCanonicalPath === "" || relativeCanonicalPath === ".") {
+    return { error: `Invalid output path: ${outputDirectory} resolves to the repository root.` };
+  }
+
+  const [firstPart] = relativeCanonicalPath.split(/[/\\]+/);
+
+  if (firstPart && knownSourceOrControlDirectories.has(firstPart)) {
+    return {
+      error: `Invalid output path: ${outputDirectory} resolves to source or control directory ${firstPart}.`,
+    };
+  }
+
+  return { kind: "ok" };
+}
+
+function canonicalizeThroughExistingAncestor(path: string): {
+  ancestor: string;
+  canonicalPath: string;
+} {
+  let candidate = path;
+  const missingParts: string[] = [];
+
+  while (!existsSync(candidate)) {
+    missingParts.unshift(basename(candidate));
+    const parent = dirname(candidate);
+
+    if (parent === candidate) {
+      return { ancestor: candidate, canonicalPath: candidate };
+    }
+
+    candidate = parent;
+  }
+
+  return {
+    ancestor: candidate,
+    canonicalPath: resolve(realpathSync(candidate), ...missingParts),
+  };
+}
+
+function prepareOutputDirectory(
+  outputDirectory: string,
+  rootDirectory: string,
+  options: { allowUnmarkedOutputDirectory: boolean },
+): void {
+  const outputDirectoryStatus = outputDirectoryCleanStatus(outputDirectory, rootDirectory);
+
+  if ("error" in outputDirectoryStatus) {
+    throw new Error(outputDirectoryStatus.error);
+  }
+
+  if (
+    outputDirectoryStatus.kind === "needs-confirmation" &&
+    !options.allowUnmarkedOutputDirectory
+  ) {
+    throw new Error(outputDirectoryStatus.refusal);
+  }
+
+  if (existsSync(outputDirectory)) {
+    if (!pathIsDirectory(outputDirectory)) {
+      throw new Error(`Output path exists and is not a directory: ${outputDirectory}`);
     }
 
     rmSync(outputDirectory, { force: true, recursive: true });
@@ -430,6 +565,73 @@ function prepareOutputDirectory(outputDirectory: string, rootDirectory: string):
 
   if (!pathIsDirectory(rootDirectory)) {
     throw new Error(`Stanza repository root is not a directory: ${rootDirectory}`);
+  }
+}
+
+async function resolveOutputDirectoryCleanPermission(input: BuildStanzaArtifactsInput): Promise<
+  | {
+      allowUnmarkedOutputDirectory: boolean;
+    }
+  | {
+      error: string;
+    }
+> {
+  let allowUnmarkedOutputDirectory = input.allowUnmarkedOutputDirectory ?? false;
+
+  if (!input.prepareOutputDirectory || allowUnmarkedOutputDirectory) {
+    return { allowUnmarkedOutputDirectory };
+  }
+
+  try {
+    const outputDirectoryStatus = outputDirectoryCleanStatus(
+      input.outputDirectory,
+      input.rootDirectory,
+    );
+
+    if ("error" in outputDirectoryStatus) {
+      return { error: outputDirectoryStatus.error };
+    }
+
+    if (outputDirectoryStatus.kind === "needs-confirmation") {
+      const confirmed = await (input.confirmCleanOutput ?? confirmCleanOutputInteractively)({
+        outputDirectory: input.outputDirectory,
+        warning: outputDirectoryStatus.warning,
+      });
+
+      if (!confirmed) {
+        return { error: outputDirectoryStatus.refusal };
+      }
+
+      allowUnmarkedOutputDirectory = true;
+    }
+  } catch (error) {
+    return { error: formatBuildError(error, input.rootDirectory) };
+  }
+
+  return { allowUnmarkedOutputDirectory };
+}
+
+async function confirmCleanOutputInteractively(input: {
+  outputDirectory: string;
+  warning: string;
+}): Promise<boolean> {
+  if (!process.stdin.isTTY || !process.stderr.isTTY) {
+    return false;
+  }
+
+  const readline = createInterface({
+    input: process.stdin,
+    output: process.stderr,
+  });
+
+  try {
+    const answer = await readline.question(
+      `${input.warning}\nClear and overwrite this directory? [y/N] `,
+    );
+
+    return answer.trim().toLowerCase() === "y" || answer.trim().toLowerCase() === "yes";
+  } finally {
+    readline.close();
   }
 }
 
@@ -885,6 +1087,16 @@ function pathIsDirectory(path: string): boolean {
 
     throw error;
   }
+}
+
+function pathIsInsideOrEqual(rootDirectory: string, candidatePath: string): boolean {
+  const relativePath = relative(rootDirectory, candidatePath);
+
+  return (
+    relativePath === "" ||
+    relativePath === "." ||
+    (!relativePath.startsWith("..") && !isAbsolute(relativePath))
+  );
 }
 
 function pathIsFile(path: string): boolean {

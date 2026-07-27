@@ -58,6 +58,8 @@ Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行す�
 
 CLIは成功時にexit code `0` を返す。失敗時はnon-zeroを返す。細かいerror code分類とstdout/stderrの詳細な文言は互換対象にしない。ただし、入力不備、設定移行、ビルド失敗は、Stanza IDやファイルパスなど修正に必要な情報が分かる診断を出す。
 
+CLIは、Stanza開発者が次に何を確認すればよいか分かる状態メッセージを出す。文言そのものは固定しないが、`build` と `serve` のビルド完了メッセージには所要時間を含める。
+
 ## Stanzaリポジトリ
 
 Stanzaリポジトリは、1つ以上のstanzaと、TogoStanza CLIを実行するためのNode package定義、関連設定、共通assetを含むディレクトリである。リメイク版は、少なくとも次の構成を扱う。
@@ -143,6 +145,8 @@ dist/
 
 Stanzaソースからのasset importは壊さない。data URL inline、別ファイルemit、hash名、size thresholdなどの詳細は固定しない。
 
+`build` は、出力先にリメイク版が管理するbuild生成物かどうかを識別するmarkerを置く。出力先が空でなく、かつ現在のリメイク版が安全に上書きできる生成物として識別できない場合、いきなり削除しない。対話可能な端末ではwarningを出したうえで、出力先をclearして上書きするか、終了するかをStanza開発者に確認する。非対話環境では自動clearせず、warningまたはerrorを出して終了する。
+
 ## GitHub Pages公開
 
 リメイク版は、`init` 直後のStanzaリポジトリからGitHub Pagesへ公開できる導線を提供する。
@@ -191,6 +195,8 @@ GitHub Pages公開導線は、Stanzaリポジトリそのものを公開する�
 Stanza entrypoint、stylesheet、template、metadata、stanza別assetの変更は、原則として対象stanzaだけをinvalidateする。Stanza entrypointからimportされる共有ソースの変更は、依存グラフ上で影響を受けるstanzaをinvalidateする。stanza追加削除、共通ファイル、設定、依存関係解決に影響する変更は、必要に応じてstanza一覧、関連stanza、または全体をinvalidateする。
 
 `serve` は初回ビルドや再ビルドに失敗しても終了しない。ビルド失敗中の対象URLには、エラー内容が分かるHTMLをHTTP 500で返す。入力が修正された場合は再ビルドし、通常のプレビューとbuild相当URLへ復帰する。
+
+`serve` は、初回ビルドとファイル変更ごとの再ビルドが完了するたびに、更新が完了したこととビルド所要時間を標準出力へ表示する。文言は固定しないが、Stanza開発者が「変更が反映されたか」と「どれくらい時間がかかったか」を確認できることを維持する。
 
 ## ランタイム埋め込み
 

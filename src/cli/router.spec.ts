@@ -1409,6 +1409,119 @@ describe("CLI router", () => {
     expect(readText(join(cwd, "public", "manual.txt"))).toBe("manual\n");
   });
 
+  it("cleans a non-owned output directory after interactive confirmation", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "confirmProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+    const confirmations: string[] = [];
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], {
+      confirmCleanOutput: ({ outputDirectory, warning }) => {
+        confirmations.push(`${outputDirectory}\n${warning}`);
+        return true;
+      },
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(confirmations).toHaveLength(1);
+    expect(confirmations[0]).toContain(join(cwd, "public"));
+    expect(confirmations[0]).toContain("not marked as a TogoStanza build output");
+    expect(existsSync(join(cwd, "public", "manual.txt"))).toBe(false);
+    expect(existsSync(join(cwd, "public", "confirm-probe.js"))).toBe(true);
+  });
+
+  it("keeps a non-owned output directory after interactive confirmation is declined", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "abortProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], {
+      confirmCleanOutput: () => false,
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Refusing to clean output directory");
+    expect(readText(join(cwd, "public", "manual.txt"))).toBe("manual\n");
+  });
+
+  it("returns a build failure when output cleanup confirmation fails", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "promptFailureProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], {
+      confirmCleanOutput: () => {
+        throw new Error("prompt unavailable");
+      },
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Build failed: prompt unavailable");
+    expect(readText(join(cwd, "public", "manual.txt"))).toBe("manual\n");
+  });
+
+  it("rejects output paths that escape the repository through a symlink", async () => {
+    const cwd = makeStanzaRepoRoot();
+    const outsideDirectory = makeNamedTemporaryDirectory("outside");
+    routeCli(["generate", "stanza", "symlinkProbe"], { cwd, currentDate });
+    mkdirSync(join(outsideDirectory, "generated"));
+    writeFileSync(join(outsideDirectory, "generated", "manual.txt"), "manual\n", "utf8");
+    symlinkSync(outsideDirectory, join(cwd, "public"), "dir");
+
+    const result = await routeCliAsync(["build", "--output-path", "public/generated"], {
+      confirmCleanOutput: () => true,
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("resolves outside the Stanza repository root");
+    expect(readText(join(outsideDirectory, "generated", "manual.txt"))).toBe("manual\n");
+  });
+
+  it("rejects output paths that resolve to source or control directories through a symlink", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "protectedSymlinkProbe"], { cwd, currentDate });
+    symlinkSync(cwd, join(cwd, "public"), "dir");
+
+    const result = await routeCliAsync(["build", "--output-path", "public/.git"], {
+      confirmCleanOutput: () => true,
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("resolves to source or control directory .git");
+    expect(existsSync(join(cwd, ".git"))).toBe(false);
+  });
+
+  it("rechecks the output path after interactive confirmation before cleaning", async () => {
+    const cwd = makeStanzaRepoRoot();
+    const outsideDirectory = makeNamedTemporaryDirectory("outside");
+    routeCli(["generate", "stanza", "raceProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+    mkdirSync(join(outsideDirectory, "public"));
+    writeFileSync(join(outsideDirectory, "public", "outside.txt"), "outside\n", "utf8");
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], {
+      confirmCleanOutput: () => {
+        rmSync(join(cwd, "public"), { force: true, recursive: true });
+        symlinkSync(join(outsideDirectory, "public"), join(cwd, "public"), "dir");
+        return true;
+      },
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("resolves outside the Stanza repository root");
+    expect(readText(join(outsideDirectory, "public", "outside.txt"))).toBe("outside\n");
+  });
+
   it("recovers from a failed build on the next build", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "recoverProbe"], { cwd, currentDate });
@@ -1450,14 +1563,17 @@ describe("CLI router", () => {
       serveWatch: false,
     });
 
-    expect(result).toEqual({
-      exitCode: 0,
-      stdout: [
-        "Serving Stanza repository: repo",
-        `URL: http://127.0.0.1:${port}/`,
-        "Press Ctrl-C to stop.",
-      ].join("\n"),
-    });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toMatch(
+      new RegExp(
+        [
+          "^Serving Stanza repository: repo",
+          `URL: http://127\\.0\\.0\\.1:${port}/`,
+          "Initial build completed in \\d+ ms\\.",
+          "Press Ctrl-C to stop\\.$",
+        ].join("\n"),
+      ),
+    );
     expect(existsSync(join(cwd, "dist"))).toBe(false);
 
     const index = await fetchText(port, "/");
@@ -1501,11 +1617,15 @@ describe("CLI router", () => {
       "utf8",
     );
     const port = await findAvailablePort();
+    const progressMessages: string[] = [];
 
     await routeCliAsync(["serve", "--port", String(port)], {
       cwd,
       onServeSession: (session) => {
         serveSessions.push(session);
+      },
+      progressOutput: (message) => {
+        progressMessages.push(message);
       },
     });
 
@@ -1521,6 +1641,9 @@ describe("CLI router", () => {
       const css = await fetchText(port, "/watch-probe.css");
       return css.body.includes("rgb(4, 5, 6)");
     });
+    expect(
+      progressMessages.some((message) => /^Rebuilt stanza watch-probe in \d+ ms\.$/.test(message)),
+    ).toBe(true);
   });
 
   it("rebuilds all stanzas after shared source or root asset changes", async () => {
@@ -1562,11 +1685,15 @@ describe("CLI router", () => {
     }
 
     const port = await findAvailablePort();
+    const progressMessages: string[] = [];
 
     await routeCliAsync(["serve", "--port", String(port)], {
       cwd,
       onServeSession: (session) => {
         serveSessions.push(session);
+      },
+      progressOutput: (message) => {
+        progressMessages.push(message);
       },
     });
 
@@ -1588,6 +1715,9 @@ describe("CLI router", () => {
         rootAsset.body === "after-asset\n"
       );
     });
+    expect(
+      progressMessages.some((message) => /^Rebuilt all stanzas in \d+ ms\.$/.test(message)),
+    ).toBe(true);
   });
 
   it("returns HTTP 500 for a failed stanza rebuild and recovers after a fix", async () => {
