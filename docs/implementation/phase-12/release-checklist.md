@@ -25,7 +25,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | root package layout | Phase 12-0で移行 | repo rootをinstallable packageにする。 |
 | workspace | なし | `docs/`、`workbench/`、`references/` をroot packageのworkspace対象にしない。 |
 | install時build | なし | `prepare` やinstall scriptで `dist/` を作らない。 |
-| branch roles | local実装済み / remote一部確認 | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。local `develop` は作成済み。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。remote `develop` のpush、branch protection、反映手順の実行は後続で実装する。 |
+| branch roles | local / remote `develop` 作成済み | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。local / remote `develop` は作成済み。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。branch protectionと、`main` への反映実行は後続で実装する。 |
 | `develop` の `dist/` | 追跡なし | local `develop` では `dist/` をGit追跡対象から外した。通常開発branchでは `dist/` をcommitしない。 |
 | `main` の `dist/` | 必須 | タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能な状態を保つ。install時buildを使わない限り、build済み `dist/` を必ず含める。 |
 | `.gitignore` と `dist/` | local確認済み / main反映未実装 | `develop` では無視し、`main` やrelease tagでは明示的に同梱する。 |

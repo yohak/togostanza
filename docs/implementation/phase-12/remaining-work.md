@@ -24,7 +24,7 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 | 項目 | 現在の状態 | 分類 | 影響 | 推奨 |
 | ---- | ---------- | ---- | ---- | ---- |
-| `develop` から `main` への公開反映手順 | local `develop` は作成済みで、`dist/` 追跡も外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。`main` 側で `develop` をmergeし、同じworktreeでbuild済み `dist/` をcommitする反復可能な手順はrelease checklistに記録済み。remote `develop` のpush、branch protection、実際の `main` 反映は未実施。 | 次にやる候補 | Stanza開発者がタグ無しGitHub dependencyでinstallできるか、通常開発で生成物差分が混ざらないかに影響する。 | remote `develop` をpushし、必要ならbranch protectionを設定してから、手順に従って `main` を更新する。 |
+| `develop` から `main` への公開反映手順 | local / remote `develop` は作成済みで、`dist/` 追跡も外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。`main` 側で `develop` をmergeし、同じworktreeでbuild済み `dist/` をcommitする反復可能な手順はrelease checklistに記録済み。branch protectionと、実際の `main` 反映は未実施。 | 次にやる候補 | Stanza開発者がタグ無しGitHub dependencyでinstallできるか、通常開発で生成物差分が混ざらないかに影響する。 | 必要ならbranch protectionを設定してから、手順に従って `main` を更新する。 |
 | タグ無しGitHub dependencyのlockfile更新手順 | local smokeでは、lockfileなしfresh install、lockfileありfrozen install、同じdependency specでの明示更新を確認する。Stanza開発者向けの短い更新手順は `docs/guides/github-dependency.md` に記録済み。 | documented constraint | `main` 更新後に既存Stanzaリポジトリがいつ・どう追従するかに影響する。 | 実利用で不足が見えたら、生成README側にも要約を追加する。 |
 | GitHub Pages live deploy確認 | workflow構造は生成済みだが、公開GitHub Pages環境でのlive deployは未実行。 | 次にやる候補 | Stanza開発者が生成repoをpushした後の公開導線に影響する。 | GitHub dependency運用の次の実地確認として優先度高め。 |
 | CLI status / result messages | `build` 成功時の所要時間表示は追加済み。全体の文言体系は未整理。 | 後続改善 | Stanza開発者が失敗原因を把握しやすくなる。 | GitHub dependency運用後、利用時に分かりにくい箇所から整理する。 |
@@ -50,6 +50,6 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 ## 次の候補
 
-次に実装作業として進むなら、remoteのdefault branch確認・branch protection・`main` 反映を先に行うのが自然である。
+次に実装作業として進むなら、branch protectionと `main` 反映を先に行うのが自然である。
 
 一方、すぐに実装を増やさない場合は、TogoMedium実リポジトリでの確認範囲をもう少し具体化して記録する。たとえば、install、build、serve、Webアプリ連携のどこまで確認したかを追記する。

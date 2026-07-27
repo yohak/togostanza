@@ -62,7 +62,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | concrete dependency spec injection | release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体tagまたはcommit SHAを注入できる。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
-| branch roles | local `develop` branchを作成し、通常開発branchとして `dist/` を追跡対象から外した。`main` はinstall可能な公開入口、tagは検証・固定refとして扱う。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。remote `develop` のpush、branch protection、反映手順の実行は後続で実装する。 |
+| branch roles | local `develop` branchを作成し、通常開発branchとして `dist/` を追跡対象から外した。remote `develop` も作成済み。`main` はinstall可能な公開入口、tagは検証・固定refとして扱う。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。branch protectionと、`main` への反映実行は後続で実装する。 |
 | GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。タグ無しGitHub dependencyが読む `main` もinstall可能にする方針で、`develop` から `main` への反復可能な公開反映手順はrelease checklistに記録済み。実際の `main` 反映は後続で行う。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使った。今後の修正では既存tagを上書きせず、新しいrelease branch / tagを作る。 |
 
