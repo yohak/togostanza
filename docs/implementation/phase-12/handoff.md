@@ -62,8 +62,8 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | concrete dependency spec injection | release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体tagまたはcommit SHAを注入できる。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
 | `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
-| branch roles | 後続で `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして定義する。 |
-| GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。後続ではタグ無しGitHub dependencyが読む `main` もinstall可能にする。 |
+| branch roles | local `develop` branchを作成し、通常開発branchとして `dist/` を追跡対象から外した。`main` はinstall可能な公開入口、tagは検証・固定refとして扱う。公開remoteのdefault branchは `main` として維持する。remote default branch確認・固定、branch protection、反映手順は後続で実装する。 |
+| GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。タグ無しGitHub dependencyが読む `main` もinstall可能にする方針だが、`develop` から `main` への反映手順は後続で定義する。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使った。今後の修正では既存tagを上書きせず、新しいrelease branch / tagを作る。 |
 
 ## 確認結果
@@ -92,6 +92,7 @@ mise exec -- pnpm run test:compat:local
   - pnpm tarball install smoke: pass
 - `test:github-dependency:local`: pass
   - local release ref smoke: pass
+  - local release repositoryのdefault branch `main` をref指定なし `git+file://...` でinstallするsmoke: pass
   - npm / pnpm Git ref bootstrap smoke: pass
   - bootstrapしたCLIが生成するrepoのタグ無しGitHub dependency: pass
   - npm Git dependency install smoke: pass

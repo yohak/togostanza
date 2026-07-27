@@ -25,10 +25,10 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | root package layout | Phase 12-0で移行 | repo rootをinstallable packageにする。 |
 | workspace | なし | `docs/`、`workbench/`、`references/` をroot packageのworkspace対象にしない。 |
 | install時build | なし | `prepare` やinstall scriptで `dist/` を作らない。 |
-| branch roles | 採用方針 / 未実装 | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。branch作成、default branch設定、反映手順は後続で実装する。 |
-| `develop` の `dist/` | なし | 通常開発branchでは `dist/` をcommitしない。 |
+| branch roles | local実装済み / remote未実装 | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。local `develop` は作成済み。公開remoteのdefault branchは `main` として維持する。default branch確認・固定、branch protection、反映手順は後続で実装する。 |
+| `develop` の `dist/` | 追跡なし | local `develop` では `dist/` をGit追跡対象から外した。通常開発branchでは `dist/` をcommitしない。 |
 | `main` の `dist/` | 必須 | タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能な状態を保つ。install時buildを使わない限り、build済み `dist/` を必ず含める。 |
-| `.gitignore` と `dist/` | 要再確認 | `develop` では無視し、`main` やrelease tagでは明示的に同梱する。 |
+| `.gitignore` と `dist/` | local確認済み / main反映未実装 | `develop` では無視し、`main` やrelease tagでは明示的に同梱する。 |
 | files | `bin/`, `dist/` | install対象を実行入口とcompiled JSへ絞る。 |
 | bin | `togostanza` -> `./bin/togostanza.mjs` | root直下の `bin/` で維持する。 |
 | exports | `./config`, `./stanza` | Stanza開発者向けの開発契約として維持する。 |
@@ -69,9 +69,10 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 
 ## タグ無しGitHub dependencyの確認観点
 
-正式版の生成repo仕様では、タグ無しGitHub dependencyを既定にする。`develop` / `main` / tag の役割実装時には、tag指定smokeとは別に次を確認する。
+正式版の生成repo仕様では、タグ無しGitHub dependencyを既定にする。`develop` から `main` への公開反映手順を定義するときは、tag指定smokeとは別に次を確認する。
 
-- `github:yohak/togostanza` のようなタグ無しdependencyで、npmとpnpmのfresh installがその時点のdefault branchを解決する。
+- `git+file://...` のref指定なしdependencyで、npmとpnpmのfresh installがlocal release repositoryのdefault branch `main` を解決する。
+- `github:yohak/togostanza` のようなタグ無しdependencyで、npmとpnpmのfresh installが公開remoteのdefault branch `main` を解決する。
 - fresh install後のlockfileには、解決されたcommitが記録される。
 - lockfileありのfrozen installは、default branchが進んでいてもlockfile上の同じcommitを再現する。
 - 既存Stanzaリポジトリを新しい `main` へ更新する手順が、npmとpnpmの両方で確認されている。
