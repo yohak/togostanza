@@ -32,6 +32,7 @@ const localCorsOrigin = "http://127.0.0.1:5173";
 const localhostCorsOrigin = "http://localhost:5173";
 const localCompatibilityIt = process.env.TOGOSTANZA_RUN_LOCAL_COMPAT === "1" ? it : it.skip;
 const releaseDependencySpec = "git+file:///tmp/togostanza-release-smoke#phase-12";
+const statusTimestampPattern = String.raw`\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}\]`;
 
 const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");
@@ -908,7 +909,7 @@ describe("CLI router", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("Built Stanza repository: repo");
     expect(result.stdout).toContain("Output: dist");
-    expect(result.stdout).toMatch(/Duration: \d+ ms/);
+    expect(result.stdout).toMatch(new RegExp(`${statusTimestampPattern} Duration: \\d+ ms`));
     expect(result.stdout).toContain("Next step:");
     expect(result.stdout).toContain("  pnpm exec togostanza serve");
     expect(existsSync(join(cwd, "dist", "build-probe.js"))).toBe(true);
@@ -1190,7 +1191,7 @@ describe("CLI router", () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("Built Stanza repository: repo");
     expect(result.stdout).toContain("Output: dist");
-    expect(result.stdout).toMatch(/Duration: \d+ ms/);
+    expect(result.stdout).toMatch(new RegExp(`${statusTimestampPattern} Duration: \\d+ ms`));
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.mjs");
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.js");
     expect(result.stderr).toContain("togostanza.config.ts");
@@ -1549,10 +1550,12 @@ describe("CLI router", () => {
     expect(readText(join(cwd, "dist", "recover-probe.css"))).toContain("green");
   });
 
-  it("serves built artifacts without writing dist", async () => {
+  it("serves built artifacts without writing or clearing dist", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "serveProbe"], { cwd, currentDate });
     writeFileSync(join(cwd, "stanzas", "serve-probe", "assets", "data.custom"), "custom\n", "utf8");
+    mkdirSync(join(cwd, "dist"));
+    writeFileSync(join(cwd, "dist", "manual-file.txt"), "manual\n", "utf8");
     const port = await findAvailablePort();
 
     const result = await routeCliAsync(["serve", "--port", String(port)], {
@@ -1569,12 +1572,12 @@ describe("CLI router", () => {
         [
           "^Serving Stanza repository: repo",
           `URL: http://127\\.0\\.0\\.1:${port}/`,
-          "Initial build completed in \\d+ ms\\.",
+          `${statusTimestampPattern} Initial build completed in \\d+ ms\\.`,
           "Press Ctrl-C to stop\\.$",
         ].join("\n"),
       ),
     );
-    expect(existsSync(join(cwd, "dist"))).toBe(false);
+    expect(readText(join(cwd, "dist", "manual-file.txt"))).toBe("manual\n");
 
     const index = await fetchText(port, "/");
     expect(index.status).toBe(200);
@@ -1642,7 +1645,11 @@ describe("CLI router", () => {
       return css.body.includes("rgb(4, 5, 6)");
     });
     expect(
-      progressMessages.some((message) => /^Rebuilt stanza watch-probe in \d+ ms\.$/.test(message)),
+      progressMessages.some((message) =>
+        new RegExp(`^${statusTimestampPattern} Rebuilt stanza watch-probe in \\d+ ms\\.$`).test(
+          message,
+        ),
+      ),
     ).toBe(true);
   });
 
@@ -1716,7 +1723,9 @@ describe("CLI router", () => {
       );
     });
     expect(
-      progressMessages.some((message) => /^Rebuilt all stanzas in \d+ ms\.$/.test(message)),
+      progressMessages.some((message) =>
+        new RegExp(`^${statusTimestampPattern} Rebuilt all stanzas in \\d+ ms\\.$`).test(message),
+      ),
     ).toBe(true);
   });
 

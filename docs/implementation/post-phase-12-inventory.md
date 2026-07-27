@@ -20,7 +20,7 @@
 - リメイク版のGitHub dependency経路では、npm registryへのpublishはまだ行っていない。一方、現行版 `togostanza` はnpm registry公開済みである。
 - 現行版の `init` が生成するStanzaリポジトリは、`dependencies.togostanza` にタグ無しGitHub dependencyを持つ。リメイク版も、短期の `yohak` 経路では `github:yohak/togostanza` を通常生成する。
 - `engines.node` は `>=24.5.0` から `>=24.0.0` へ緩和済みである。開発・検証の標準実行環境はroot `mise.toml` のNode 24.5.0を維持する。
-- `init`、`generate stanza`、`build`、`serve` の成功メッセージ、`serve` の初回ビルド・再ビルド完了時間、`build` の対話的な出力先clearは整備済みである。
+- `init`、`generate stanza`、`build`、`serve` の成功メッセージ、`build` / `serve` の更新時刻つきビルド所要時間、`build` の対話的な出力先clearは整備済みである。
 - `develop` / `main` / immutable tagの役割方針は採用済みである。local / remote `develop` branchは作成済みで、`dist/` はGit追跡対象から外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済み。ただし、branch protectionと、最新 `develop` から `main` へ反映する実作業は未実施である。
 - GitHub dependencyのtagは不変として扱う方針に変更済みである。修正版は新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
 - GitHub dependency経路は短期配布経路として成立しているが、公開運用、Stanza開発者向けDX、プレビュー、診断、正式版マージ後のnpm registry配布には未整理の項目が残る。
