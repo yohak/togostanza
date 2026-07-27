@@ -61,7 +61,7 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | generated repo `dependencies.togostanza` | 通常生成では `github:yohak/togostanza` を生成する。正式版マージ後は `github:togostanza/togostanza` へ切り替える候補として扱う。 |
 | concrete dependency spec injection | release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体tagまたはcommit SHAを注入できる。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
-| `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
+| `engines.node` | `>=24.0.0` へ緩和した。開発・検証の標準実行環境は引き続きroot `mise.toml` のNode 24.5.0とする。 |
 | branch roles | local `develop` branchを作成し、通常開発branchとして `dist/` を追跡対象から外した。remote `develop` も作成済み。`main` はinstall可能な公開入口、tagは検証・固定refとして扱う。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。branch protectionと、`main` への反映実行は後続で実装する。 |
 | GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。タグ無しGitHub dependencyが読む `main` もinstall可能にする方針で、`develop` から `main` への反復可能な公開反映手順はrelease checklistに記録済み。実際の `main` 反映は後続で行う。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使った。今後の修正では既存tagを上書きせず、新しいrelease branch / tagを作る。 |
@@ -169,4 +169,4 @@ git diff --check
 - GitHub dependencyのtagは不変として扱う。修正版を出す場合は新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
 - `pnpm store prune` と `~/Library/Caches/pnpm/dlx` の削除は、過去の初期調整や切り分けで古いcacheを疑う場合のローカル対処であり、公開済みtagの更新手順としては扱わない。
 - Sass `@import` 非推奨警告は既知制約であり、Phase 12では失敗扱いにしない。
-- `engines.node >=24.5.0` は現状維持だが、公開前にStanza開発者の実環境と照合する。
+- `engines.node` は `>=24.0.0` へ緩和済み。Node 20 / 22系まで広げるかどうかは、標準Node.jsをNode 24 LTSとする現在の方針では扱わない。

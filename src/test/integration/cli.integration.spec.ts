@@ -196,6 +196,9 @@ describe("CLI smoke", () => {
       dependencies: {
         togostanza: "github:yohak/togostanza",
       },
+      engines: {
+        node: ">=24.0.0",
+      },
       name: "generated-repo",
       scripts: {
         build: "togostanza build",

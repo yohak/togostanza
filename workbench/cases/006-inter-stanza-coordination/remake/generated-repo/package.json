@@ -16,7 +16,7 @@
     "togostanza": "link:../../../../.."
   },
   "engines": {
-    "node": ">=24.5.0"
+    "node": ">=24.0.0"
   },
   "private": true
 }

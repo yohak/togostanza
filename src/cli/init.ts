@@ -296,7 +296,7 @@ function createPackageJson(input: {
       togostanza: input.dependencySpec,
     },
     engines: {
-      node: ">=24.5.0",
+      node: ">=24.0.0",
     },
   };
 }

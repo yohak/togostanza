@@ -148,6 +148,7 @@ describe("CLI router", () => {
 
     const packageJson = readJson(join(cwd, "generated-repo", "package.json")) as {
       dependencies: Record<string, string>;
+      engines: Record<string, string>;
       license: string;
       packageManager?: string;
       pnpm?: unknown;
@@ -161,6 +162,7 @@ describe("CLI router", () => {
 
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza");
+    expect(packageJson.engines.node).toBe(">=24.0.0");
     expect(packageJson.packageManager).toBeUndefined();
     expect(packageJson.pnpm).toBeUndefined();
     expect(existsSync(join(cwd, "generated-repo", "pnpm-workspace.yaml"))).toBe(false);

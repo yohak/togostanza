@@ -19,6 +19,7 @@
 - TogoMedium実リポジトリで `dependencies.togostanza` をGitHub dependencyへ差し替え、意図通り動くことを人間確認済み。
 - リメイク版のGitHub dependency経路では、npm registryへのpublishはまだ行っていない。一方、現行版 `togostanza` はnpm registry公開済みである。
 - 現行版の `init` が生成するStanzaリポジトリは、`dependencies.togostanza` にタグ無しGitHub dependencyを持つ。リメイク版も、短期の `yohak` 経路では `github:yohak/togostanza` を通常生成する。
+- `engines.node` は `>=24.5.0` から `>=24.0.0` へ緩和済みである。開発・検証の標準実行環境はroot `mise.toml` のNode 24.5.0を維持する。
 - `develop` / `main` / immutable tagの役割方針は採用済みである。local / remote `develop` branchは作成済みで、`dist/` はGit追跡対象から外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済み。ただし、branch protectionと、最新 `develop` から `main` へ反映する実作業は未実施である。
 - GitHub dependencyのtagは不変として扱う方針に変更済みである。修正版は新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
 - GitHub dependency経路は短期配布経路として成立しているが、公開運用、Stanza開発者向けDX、プレビュー、診断、正式版マージ後のnpm registry配布には未整理の項目が残る。
@@ -56,7 +57,6 @@
 | ---- | ---------------- | -------- | ------ | ---------------- |
 | `develop` から `main` への公開反映手順 | 正式版の生成repoはタグ無しGitHub dependencyを既定にする。つまり `main` は一般の人が見る公開入口であり、package managerがinstallする対象にもなる。install時buildを行わない限り、`main` と検証tagにはbuild済み `dist/` が必須。一方、通常開発branchで `dist/` を追跡し続けると、ソース変更と生成物変更が混ざる。local / remote `develop` は作成済みで、`dist/` 追跡も外した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済みだが、最新 `develop` の `7742f9b` はまだ `main` へ反映していない。 | 採用済み方針として、`develop` を通常開発branch、`main` をinstall可能な公開入口、tagを開発中の検証・固定refとして扱う。公開remoteのdefault branchは `main` として確認済み。release checklistに公開反映手順を記録済み。次はbranch protectionと、最新 `develop` の `main` 反映を行う。 | 高 | 必須 |
 | タグ無しGitHub dependencyのlockfile更新手順 | タグ無しGitHub dependencyも、install後はlockfileが解決commitを固定する。`main` が更新されても既存Stanzaリポジトリは自動追従しない。 | local smokeでfresh install、frozen install、同じdependency specでの明示更新を確認する。Stanza開発者向け手順は `docs/guides/github-dependency.md` に記録済み。 | 中 | 推奨 |
-| `engines.node >=24.5.0` 見直し | 要求Nodeが新しい。正式版として現行版リポジトリへ中期的にマージされる可能性を考えると、Stanza開発者の導入入口に直撃する。 | 最優先で確認する。下げられるなら下げ、下げられない場合は理由を文書化する。詳細調査と実装は別作業で行う。 | 高 | 必須 |
 | CLI status / result messages | `build` 成功時のduration表示はあるが、`init`、`build`、`serve` の成功・失敗・次に開くURLなどの案内は全体設計していない。 | 普段の開発導線でよく触るため、次に扱う第一候補にする。詳細な文言や対象範囲は実装計画時に決める。 | 高 | 必須 |
 | リッチなプレビュー / ヘルプページ | 現行版の `index.html` / `-togostanza/` 相当のリッチなプレビュー構造は復元していない。正式版として見たときに、Stanza開発者向けの開発支援体験の劣化として見えやすい。 | 後続DXでは最優先候補にする。現行版のDOM完全再現ではなく、正式版として許容できるプレビュー体験を定義して実装する。 | 高 | 必須 |
 | GitHub Pages live deploy確認 | workflow構造はあるが、公開GitHub Pages環境でのlive deployは未確認。 | 生成repoをpushして、install、build、artifact upload、deployまで通るかを見る。ローカル開発導線よりは一段下だが、現行版にもある公開体験として高優先に残す。 | 高 | 必須 |
@@ -110,9 +110,8 @@
 現時点のおすすめは、次の順である。
 
 1. branch protection・`main` 反映
-2. `engines.node >=24.5.0` 見直し
-3. CLI status / result messages
-4. リッチなプレビュー / ヘルプページの方向付け
-5. GitHub Pages live deploy確認
-6. menu / About UI polish
-7. 正式版マージ準備
+2. CLI status / result messages
+3. リッチなプレビュー / ヘルプページの方向付け
+4. GitHub Pages live deploy確認
+5. menu / About UI polish
+6. 正式版マージ準備

@@ -35,7 +35,7 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | root export | なし | Phase 12時点では追加しない。 |
 | main / top-level types | なし | Phase 12時点では追加しない。 |
 | license | `MIT` | 現行版package metadataと生成雛形の既定licenseに合わせる。 |
-| engines.node | `>=24.5.0` | Phase 12時点では維持する。GitHub dependency運用前に利用者環境と再確認する。 |
+| engines.node | `>=24.0.0` | GitHub dependency運用前の見直しで、Node 24系の範囲内で下限を緩和した。開発・検証の標準実行環境はroot `mise.toml` のNode 24.5.0とする。 |
 | packageManager | rootの `package.json` で固定 | 開発パッケージの固定として維持する。 |
 | generated repo `dependencies.togostanza` | `github:yohak/togostanza` | 正式生成仕様ではタグ無しGitHub dependencyを既定にする。開発中の検証では `TOGOSTANZA_DEPENDENCY_SPEC` でtagまたはcommit SHAを注入してよい。 |
 | generated repo `packageManager` field | なし | `init` は生成しない。pnpm workflowはpnpm 11系を明示する。 |
