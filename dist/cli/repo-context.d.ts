@@ -6,6 +6,7 @@ export type StanzaRepoContext = {
     packageManager: PackageManager;
     packageName: string;
     rootDirectory: string;
+    scripts: Record<string, string>;
 };
 export type StanzaRepoContextResult = {
     context: StanzaRepoContext;

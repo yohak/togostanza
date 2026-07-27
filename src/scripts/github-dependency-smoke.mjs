@@ -20,6 +20,7 @@ const packageJson = JSON.parse(readFileSync(join(packageDirectory, "package.json
 const tscBinary = join(packageDirectory, "node_modules", ".bin", "tsc");
 const temporaryRoot = mkdtempSync(join(tmpdir(), "togostanza-github-dependency-smoke-"));
 const keepTemporaryRoot = process.env["TOGOSTANZA_KEEP_GITHUB_DEPENDENCY_SMOKE"] === "1";
+const expectedGithubMainSha = process.env["TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA"];
 const releaseRef = "phase-12-local-release-smoke";
 
 try {
@@ -28,7 +29,8 @@ try {
   const releaseRepository = join(temporaryRoot, "release-repository");
   createLocalReleaseRepository(releaseRepository);
 
-  const gitSpec = `git+${pathToFileURL(releaseRepository).href}#${releaseRef}`;
+  const defaultBranchGitSpec = `git+${pathToFileURL(releaseRepository).href}`;
+  const gitSpec = `${defaultBranchGitSpec}#${releaseRef}`;
   runGitDependencyBootstrapSmoke({
     gitSpec,
     packageManager: "npm",
@@ -44,13 +46,51 @@ try {
     gitSpec,
     packageManager: "npm",
     projectDirectory: join(temporaryRoot, "npm-project"),
+    verifyDefaultInit: true,
   });
   runGitDependencyInstallSmoke({
     binaryName: "togostanza",
     gitSpec,
     packageManager: "pnpm",
     projectDirectory: join(temporaryRoot, "pnpm-project"),
+    verifyDefaultInit: true,
   });
+  runGitDependencyInstallSmoke({
+    binaryName: "togostanza",
+    gitSpec: defaultBranchGitSpec,
+    packageManager: "npm",
+    projectDirectory: join(temporaryRoot, "npm-main-project"),
+    verifyDefaultInit: false,
+  });
+  runGitDependencyInstallSmoke({
+    binaryName: "togostanza",
+    gitSpec: defaultBranchGitSpec,
+    packageManager: "pnpm",
+    projectDirectory: join(temporaryRoot, "pnpm-main-project"),
+    verifyDefaultInit: false,
+  });
+  runTaglessLockfileSmoke({
+    gitSpec: defaultBranchGitSpec,
+    packageManager: "npm",
+    projectDirectory: join(temporaryRoot, "npm-lockfile-project"),
+    releaseRepository,
+  });
+  runTaglessLockfileSmoke({
+    gitSpec: defaultBranchGitSpec,
+    packageManager: "pnpm",
+    projectDirectory: join(temporaryRoot, "pnpm-lockfile-project"),
+    releaseRepository,
+  });
+  if (expectedGithubMainSha) {
+    runPublicGithubMainLockfileSmoke({
+      packageManager: "npm",
+      projectDirectory: join(temporaryRoot, "npm-public-main-project"),
+    });
+    runPublicGithubMainLockfileSmoke({
+      packageManager: "pnpm",
+      projectDirectory: join(temporaryRoot, "pnpm-public-main-project"),
+    });
+  }
 
   console.log(
     `Git dependency smoke passed: ${packageJson.name}@${packageJson.version} (${gitSpec})`,
@@ -107,6 +147,15 @@ function createLocalReleaseRepository(releaseRepository) {
   }
 }
 
+function commitReleaseRepositoryPackageVersion(releaseRepository, version) {
+  const packageJsonPath = join(releaseRepository, "package.json");
+  const releasePackageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+  releasePackageJson.version = version;
+  writeFileSync(packageJsonPath, `${JSON.stringify(releasePackageJson, null, 2)}\n`, "utf8");
+  run("git", ["add", "package.json"], { cwd: releaseRepository });
+  run("git", ["commit", "-m", `release smoke ${version}`], { cwd: releaseRepository });
+}
+
 function copyTrackedWorkingTree(destination) {
   const trackedFiles = run("git", ["ls-files"], { cwd: packageDirectory })
     .stdout.trim()
@@ -119,6 +168,107 @@ function copyTrackedWorkingTree(destination) {
     mkdirSync(dirname(destinationPath), { recursive: true });
     cpSync(sourcePath, destinationPath);
   }
+}
+
+function runTaglessLockfileSmoke(input) {
+  const initialVersion = readReleaseRepositoryPackageVersion(input.releaseRepository);
+  const updatedVersion = nextPatchVersion(initialVersion);
+
+  mkdirSync(input.projectDirectory, { recursive: true });
+  writeFileSync(
+    join(input.projectDirectory, "package.json"),
+    `${JSON.stringify(
+      {
+        dependencies: {
+          togostanza: input.gitSpec,
+        },
+        name: `${input.packageManager}-tagless-lockfile-smoke`,
+        private: true,
+        type: "module",
+        version: "0.0.0",
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  if (input.packageManager === "pnpm") {
+    writeFileSync(
+      join(input.projectDirectory, "pnpm-workspace.yaml"),
+      formatPnpmWorkspace(),
+      "utf8",
+    );
+  }
+
+  installProject(input);
+  assertInstalledPackageVersion(input.projectDirectory, initialVersion);
+
+  commitReleaseRepositoryPackageVersion(input.releaseRepository, updatedVersion);
+
+  rmSync(join(input.projectDirectory, "node_modules"), { force: true, recursive: true });
+  installProjectFrozen(input);
+  assertInstalledPackageVersion(input.projectDirectory, initialVersion);
+
+  updateProjectDependency(input);
+  assertInstalledPackageVersion(input.projectDirectory, updatedVersion);
+}
+
+function runPublicGithubMainLockfileSmoke(input) {
+  mkdirSync(input.projectDirectory, { recursive: true });
+  writeFileSync(
+    join(input.projectDirectory, "package.json"),
+    `${JSON.stringify(
+      {
+        dependencies: {
+          togostanza: "github:yohak/togostanza",
+        },
+        name: `${input.packageManager}-public-main-lockfile-smoke`,
+        private: true,
+        type: "module",
+        version: "0.0.0",
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  if (input.packageManager === "pnpm") {
+    writeFileSync(
+      join(input.projectDirectory, "pnpm-workspace.yaml"),
+      formatPnpmWorkspace(),
+      "utf8",
+    );
+  }
+
+  installProject(input);
+  assertLockfileContains(input.projectDirectory, expectedGithubMainSha);
+  assertInstalledPackageContents(input.projectDirectory);
+  run(join(input.projectDirectory, "node_modules", ".bin", "togostanza"), ["--version"], {
+    cwd: input.projectDirectory,
+  });
+
+  rmSync(join(input.projectDirectory, "node_modules"), { force: true, recursive: true });
+  installProjectFrozen(input);
+  assertLockfileContains(input.projectDirectory, expectedGithubMainSha);
+  run(join(input.projectDirectory, "node_modules", ".bin", "togostanza"), ["--version"], {
+    cwd: input.projectDirectory,
+  });
+}
+
+function readReleaseRepositoryPackageVersion(releaseRepository) {
+  const releasePackageJson = JSON.parse(
+    readFileSync(join(releaseRepository, "package.json"), "utf8"),
+  );
+  return releasePackageJson.version;
+}
+
+function nextPatchVersion(version) {
+  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+  if (!match) {
+    throw new Error(`Cannot increment release smoke package version: ${version}`);
+  }
+
+  return `${match[1]}.${match[2]}.${Number(match[3]) + 1}`;
 }
 
 function runGitDependencyBootstrapSmoke(input) {
@@ -175,6 +325,38 @@ function runGitDependencyBootstrapSmoke(input) {
   }
 }
 
+function installProject(input) {
+  if (input.packageManager === "npm") {
+    run("npm", ["install", "--no-audit", "--no-fund"], {
+      cwd: input.projectDirectory,
+    });
+  } else {
+    run("pnpm", ["install"], { cwd: input.projectDirectory });
+  }
+}
+
+function installProjectFrozen(input) {
+  if (input.packageManager === "npm") {
+    run("npm", ["ci", "--no-audit", "--no-fund"], {
+      cwd: input.projectDirectory,
+    });
+  } else {
+    run("pnpm", ["install", "--frozen-lockfile"], { cwd: input.projectDirectory });
+  }
+}
+
+function updateProjectDependency(input) {
+  if (input.packageManager === "npm") {
+    run("npm", ["install", "--no-audit", "--no-fund", `togostanza@${input.gitSpec}`], {
+      cwd: input.projectDirectory,
+    });
+  } else {
+    run("pnpm", ["update", "togostanza", "--latest", "--force"], {
+      cwd: input.projectDirectory,
+    });
+  }
+}
+
 function runGitDependencyInstallSmoke(input) {
   mkdirSync(input.projectDirectory, { recursive: true });
   writeFileSync(
@@ -202,13 +384,7 @@ function runGitDependencyInstallSmoke(input) {
     );
   }
 
-  if (input.packageManager === "npm") {
-    run("npm", ["install", "--no-audit", "--no-fund"], {
-      cwd: input.projectDirectory,
-    });
-  } else {
-    run("pnpm", ["install"], { cwd: input.projectDirectory });
-  }
+  installProject(input);
 
   assertInstalledPackageContents(input.projectDirectory);
   const binaryPath = join(input.projectDirectory, "node_modules", ".bin", input.binaryName);
@@ -241,41 +417,51 @@ function runGitDependencyInstallSmoke(input) {
     );
   }
 
-  // pnpm resolves github: shorthand through GitHub's codeload endpoint, so this
-  // path intentionally verifies the public tagless dependency instead of the
-  // local release ref used by the fixed-ref smoke above.
-  const defaultStanzaRepoName = `${input.packageManager}-default-stanza`;
-  run(
-    binaryPath,
-    [
-      "init",
-      "--name",
-      defaultStanzaRepoName,
-      "--package-manager",
-      input.packageManager,
-      "--skip-git",
-    ],
-    {
-      cwd: input.projectDirectory,
-    },
-  );
-
-  const defaultStanzaRepository = join(input.projectDirectory, defaultStanzaRepoName);
-  const defaultStanzaPackageJson = JSON.parse(
-    readFileSync(join(defaultStanzaRepository, "package.json"), "utf8"),
-  );
-  if (defaultStanzaPackageJson.dependencies?.togostanza !== "github:yohak/togostanza") {
-    throw new Error(
+  if (input.verifyDefaultInit) {
+    // pnpm resolves github: shorthand through GitHub's codeload endpoint, so
+    // this path intentionally verifies the public tagless dependency instead of
+    // the local release ref used by the fixed-ref smoke above.
+    const defaultStanzaRepoName = `${input.packageManager}-default-stanza`;
+    run(
+      binaryPath,
       [
-        "Generated Stanza repository did not use the default tagless dependency spec.",
-        "expected: github:yohak/togostanza",
-        `actual: ${defaultStanzaPackageJson.dependencies?.togostanza}`,
-      ].join("\n"),
+        "init",
+        "--name",
+        defaultStanzaRepoName,
+        "--package-manager",
+        input.packageManager,
+        "--skip-git",
+      ],
+      {
+        cwd: input.projectDirectory,
+      },
     );
-  }
 
-  const defaultBinaryPath = join(defaultStanzaRepository, "node_modules", ".bin", input.binaryName);
-  run(defaultBinaryPath, ["--version"], { cwd: defaultStanzaRepository });
+    const defaultStanzaRepository = join(input.projectDirectory, defaultStanzaRepoName);
+    const defaultStanzaPackageJson = JSON.parse(
+      readFileSync(join(defaultStanzaRepository, "package.json"), "utf8"),
+    );
+    if (defaultStanzaPackageJson.dependencies?.togostanza !== "github:yohak/togostanza") {
+      throw new Error(
+        [
+          "Generated Stanza repository did not use the default tagless dependency spec.",
+          "expected: github:yohak/togostanza",
+          `actual: ${defaultStanzaPackageJson.dependencies?.togostanza}`,
+        ].join("\n"),
+      );
+    }
+
+    const defaultBinaryPath = join(
+      defaultStanzaRepository,
+      "node_modules",
+      ".bin",
+      input.binaryName,
+    );
+    run(defaultBinaryPath, ["--version"], { cwd: defaultStanzaRepository });
+    if (expectedGithubMainSha) {
+      assertLockfileContains(defaultStanzaRepository, expectedGithubMainSha);
+    }
+  }
 
   run(binaryPath, ["generate", "stanza", "hello"], { cwd: stanzaRepository });
   run(binaryPath, ["build"], { cwd: stanzaRepository });
@@ -289,6 +475,46 @@ function runGitDependencyInstallSmoke(input) {
     if (!existsSync(outputPath)) {
       throw new Error(`Expected build output was not created: ${outputPath}`);
     }
+  }
+}
+
+function assertInstalledPackageVersion(projectDirectory, expectedVersion) {
+  const installedPackageJsonPath = join(
+    projectDirectory,
+    "node_modules",
+    "togostanza",
+    "package.json",
+  );
+  const installedPackageJson = JSON.parse(readFileSync(installedPackageJsonPath, "utf8"));
+  if (installedPackageJson.version !== expectedVersion) {
+    throw new Error(
+      [
+        "Installed Git dependency version did not match the expected resolved commit.",
+        `expected version: ${expectedVersion}`,
+        `actual version: ${installedPackageJson.version}`,
+      ].join("\n"),
+    );
+  }
+}
+
+function assertLockfileContains(projectDirectory, expectedText) {
+  const lockfilePaths = ["package-lock.json", "pnpm-lock.yaml"].map((fileName) =>
+    join(projectDirectory, fileName),
+  );
+  const lockfilePath = lockfilePaths.find((candidate) => existsSync(candidate));
+  if (!lockfilePath) {
+    throw new Error(`Expected a lockfile in ${projectDirectory}`);
+  }
+
+  const lockfileText = readFileSync(lockfilePath, "utf8");
+  if (!lockfileText.includes(expectedText)) {
+    throw new Error(
+      [
+        "Generated Stanza lockfile did not resolve the expected GitHub main commit.",
+        `expected text: ${expectedText}`,
+        `lockfile: ${lockfilePath}`,
+      ].join("\n"),
+    );
   }
 }
 

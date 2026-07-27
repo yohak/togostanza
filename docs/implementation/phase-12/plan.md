@@ -335,6 +335,6 @@ GitHub dependency install smokeの具体コマンドは、Phase 12-1で実装す
 
 ## 残す論点
 
-- `engines.node >=24.5.0` を維持するか。
+- Node 20 / 22系まで `engines.node` を広げるかどうか。Phase 12後の見直しではNode 24系の範囲内で `>=24.0.0` へ緩和した。
 
 Phase 12後の残作業は [Phase 12後の残作業](./remaining-work.md) を正とする。

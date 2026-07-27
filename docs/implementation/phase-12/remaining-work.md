@@ -13,9 +13,11 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 | 項目 | 状態 |
 | ---- | ---- |
 | GitHub dependency install | `github:yohak/togostanza#yohak-github-20260723` でnpm / pnpmのsmoke確認済み。 |
+| 公開 `main` のタグ無しGitHub dependency | `github:yohak/togostanza` がremote `main` の `c60faa2` を解決し、npm / pnpmのlockfileなしfresh installとlockfileありfrozen installが通ることを確認済み。 |
 | 実プロジェクト確認 | TogoMedium実リポジトリで `dependencies.togostanza` をGitHub dependencyへ差し替え、意図通り動くことを人間確認済み。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使用。 |
 | 生成repoのタグ無しGitHub dependency | `init` は通常生成で `github:yohak/togostanza` を書く。検証時だけ `TOGOSTANZA_DEPENDENCY_SPEC` でtagまたはcommit SHAを注入できる。 |
+| local `develop` branch | 作成済み。`dist/` はGit追跡対象から外し、通常開発branchでは生成物差分をcommitしない。 |
 | install対象 | `files` により `bin/` と `dist/` へ限定済み。 |
 | npm publish | Phase 12では行わない。 |
 
@@ -23,11 +25,11 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 | 項目 | 現在の状態 | 分類 | 影響 | 推奨 |
 | ---- | ---------- | ---- | ---- | ---- |
-| `develop` / `main` / tag の役割実装 | 方針は採用済み。現在は `main` に `dist/` が追跡されているが、`develop` branchはまだ無い。install時buildを行わない限り、`main` と検証tagにはbuild済み `dist/` が必須。 | 次にやる候補 | Stanza開発者がタグ無しGitHub dependencyでinstallできるか、通常開発で生成物差分が混ざらないかに影響する。 | 次の実装計画でbranch作成、default branch設定、`develop` から `main` への反映方法、`dist/` 生成・検証、rollbackを定義する。 |
-| タグ無しGitHub dependencyのlockfile更新手順 | lockfileなしの新規installはdefault branchを解決し、lockfileありのfrozen installは記録commitを再現する。既存repo更新手順は未整理。 | 次にやる候補 | `main` 更新後に既存Stanzaリポジトリがいつ・どう追従するかに影響する。 | fresh install、frozen install、依存更新、forward-fixをREADMEとsmokeに含める。 |
+| `develop` から `main` への公開反映手順 | local / remote `develop` は作成済みで、`dist/` 追跡も外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済み。一方、最新 `develop` の `7742f9b` はまだ `main` へ反映していない。`main` 側で `develop` をmergeし、同じworktreeでbuild済み `dist/` をcommitする反復可能な手順はrelease checklistに記録済み。branch protectionと、最新 `develop` の `main` 反映は未実施。 | 次にやる候補 | Stanza開発者がタグ無しGitHub dependencyでinstallできるか、通常開発で生成物差分が混ざらないかに影響する。 | 必要ならbranch protectionを設定してから、手順に従って `main` を更新する。 |
+| タグ無しGitHub dependencyのlockfile更新手順 | local smokeでは、lockfileなしfresh install、lockfileありfrozen install、同じdependency specでの明示更新を確認する。Stanza開発者向けの短い更新手順は `docs/guides/github-dependency.md` に記録済み。 | documented constraint | `main` 更新後に既存Stanzaリポジトリがいつ・どう追従するかに影響する。 | 実利用で不足が見えたら、生成README側にも要約を追加する。 |
 | GitHub Pages live deploy確認 | workflow構造は生成済みだが、公開GitHub Pages環境でのlive deployは未実行。 | 次にやる候補 | Stanza開発者が生成repoをpushした後の公開導線に影響する。 | GitHub dependency運用の次の実地確認として優先度高め。 |
-| CLI status / result messages | `build` 成功時の所要時間表示は追加済み。全体の文言体系は未整理。 | 後続改善 | Stanza開発者が失敗原因を把握しやすくなる。 | GitHub dependency運用後、利用時に分かりにくい箇所から整理する。 |
-| `engines.node >=24.5.0` | 現状維持。 | 公開前判断 | Stanza開発者のローカル環境と合わない場合、installや実行の入口で止まる。 | 利用者範囲を広げる前に実環境と照合する。 |
+| CLI status / result messages | `init`、`generate stanza`、`build`、`serve` の成功メッセージ、`serve` の初回ビルド・再ビルド完了時間、`build` の対話的な出力先clearは整備済み。失敗時の診断体系や細かい文言磨きは未整理。 | 後続改善 | Stanza開発者が失敗原因を把握しやすくなる。 | 実利用で分かりにくい失敗が見えた箇所から整理する。 |
+| `engines.node` | `>=24.0.0` へ緩和済み。開発・検証の標準実行環境はroot `mise.toml` のNode 24.5.0とする。 | documented constraint | Stanza開発者のローカル環境と合わない場合、installや実行の入口で止まる。 | Node 20 / 22系まで広げるかどうかは、標準Node.jsをNode 24 LTSとする現在の方針では扱わない。 |
 | npm publish | `private: true` を維持し、npm registryへは公開していない。 | npm公開時だけ | `npm exec togostanza@latest` / `pnpm dlx togostanza@latest` の公式導線に関わる。 | 短期GitHub dependency運用では着手しない。npm公開へ進む判断時に再計画する。 |
 | package metadata | `description`、`license`、`keywords` は追加済み。`version`、`private`、repository、homepage、bugsは公開前判断として残る。 | npm公開時だけ | npm registryやpackage metadata表示に影響する。 | npm publishを行う場合だけ確定する。 |
 | GitHub release作成 | release branch / tagはあるが、GitHub releaseは未作成。 | 任意 | Stanza開発者へ配布refや変更内容を案内しやすくなる。 | 必要になった時点で作る。GitHub dependency install自体には必須ではない。 |
@@ -49,6 +51,6 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 ## 次の候補
 
-次に実装作業として進むなら、`develop` / `main` / tag の役割実装と、タグ無しGitHub dependencyのlockfile更新手順を先に整理するのが自然である。
+次に実装作業として進むなら、branch protectionと `main` 反映を先に行うのが自然である。
 
 一方、すぐに実装を増やさない場合は、TogoMedium実リポジトリでの確認範囲をもう少し具体化して記録する。たとえば、install、build、serve、Webアプリ連携のどこまで確認したかを追記する。

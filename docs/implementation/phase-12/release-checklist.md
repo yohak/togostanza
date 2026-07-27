@@ -25,17 +25,17 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | root package layout | Phase 12-0で移行 | repo rootをinstallable packageにする。 |
 | workspace | なし | `docs/`、`workbench/`、`references/` をroot packageのworkspace対象にしない。 |
 | install時build | なし | `prepare` やinstall scriptで `dist/` を作らない。 |
-| branch roles | 採用方針 / 未実装 | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。branch作成、default branch設定、反映手順は後続で実装する。 |
-| `develop` の `dist/` | なし | 通常開発branchでは `dist/` をcommitしない。 |
+| branch roles | local / remote `develop` 作成済み | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。local / remote `develop` は作成済み。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。branch protectionと、`main` への反映実行は後続で実装する。 |
+| `develop` の `dist/` | 追跡なし | local `develop` では `dist/` をGit追跡対象から外した。通常開発branchでは `dist/` をcommitしない。 |
 | `main` の `dist/` | 必須 | タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能な状態を保つ。install時buildを使わない限り、build済み `dist/` を必ず含める。 |
-| `.gitignore` と `dist/` | 要再確認 | `develop` では無視し、`main` やrelease tagでは明示的に同梱する。 |
+| `.gitignore` と `dist/` | local確認済み / main反映未実装 | `develop` では無視し、`main` やrelease tagでは明示的に同梱する。 |
 | files | `bin/`, `dist/` | install対象を実行入口とcompiled JSへ絞る。 |
 | bin | `togostanza` -> `./bin/togostanza.mjs` | root直下の `bin/` で維持する。 |
 | exports | `./config`, `./stanza` | Stanza開発者向けの開発契約として維持する。 |
 | root export | なし | Phase 12時点では追加しない。 |
 | main / top-level types | なし | Phase 12時点では追加しない。 |
 | license | `MIT` | 現行版package metadataと生成雛形の既定licenseに合わせる。 |
-| engines.node | `>=24.5.0` | Phase 12時点では維持する。GitHub dependency運用前に利用者環境と再確認する。 |
+| engines.node | `>=24.0.0` | GitHub dependency運用前の見直しで、Node 24系の範囲内で下限を緩和した。開発・検証の標準実行環境はroot `mise.toml` のNode 24.5.0とする。 |
 | packageManager | rootの `package.json` で固定 | 開発パッケージの固定として維持する。 |
 | generated repo `dependencies.togostanza` | `github:yohak/togostanza` | 正式生成仕様ではタグ無しGitHub dependencyを既定にする。開発中の検証では `TOGOSTANZA_DEPENDENCY_SPEC` でtagまたはcommit SHAを注入してよい。 |
 | generated repo `packageManager` field | なし | `init` は生成しない。pnpm workflowはpnpm 11系を明示する。 |
@@ -69,13 +69,100 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 
 ## タグ無しGitHub dependencyの確認観点
 
-正式版の生成repo仕様では、タグ無しGitHub dependencyを既定にする。`develop` / `main` / tag の役割実装時には、tag指定smokeとは別に次を確認する。
+正式版の生成repo仕様では、タグ無しGitHub dependencyを既定にする。`develop` から `main` への公開反映手順を定義するときは、tag指定smokeとは別に次を確認する。
 
-- `github:yohak/togostanza` のようなタグ無しdependencyで、npmとpnpmのfresh installがその時点のdefault branchを解決する。
+- `git+file://...` のref指定なしdependencyで、npmとpnpmのfresh installがlocal release repositoryのdefault branch `main` を解決する。
+- `github:yohak/togostanza` のようなタグ無しdependencyで、npmとpnpmのfresh installが公開remoteのdefault branch `main` を解決する。
 - fresh install後のlockfileには、解決されたcommitが記録される。
 - lockfileありのfrozen installは、default branchが進んでいてもlockfile上の同じcommitを再現する。
 - 既存Stanzaリポジトリを新しい `main` へ更新する手順が、npmとpnpmの両方で確認されている。
 - 問題のある `main` を公開した場合は、既存tagの置き換えではなくforward-fixする。必要に応じて、検証用の新しいtagまたはcommit SHAを案内する。
+
+`test:github-dependency:local` は、local release repositoryのrefなし `git+file://...` dependencyで、lockfileなしfresh install、lockfileありfrozen install、同じdependency specでの明示更新を確認する。公開remoteの `github:yohak/togostanza` 経路は、実際の `main` へ反映した後に別途確認する。
+
+公開remoteの `main` 反映後は、`TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA` に公開したcommit SHAを渡して `test:github-dependency:local` を実行する。これにより、生成リポジトリのlockfileが期待した `main` commitを解決したことを確認する。
+
+## `develop` から `main` への公開反映手順
+
+正式版のbranch運用では、`develop` を通常開発branch、`main` をinstall可能な公開入口として扱う。`develop` には `dist/` をcommitしない。`main` へ公開反映するときだけ、対応するsourceからbuildした `dist/` を明示的に含める。
+
+1. remote stateを取得し、公開remoteのdefault branchが `main` であることを確認する。
+
+```sh
+REMOTE=yohak-github
+DEVELOP_BRANCH=develop
+PUBLIC_BRANCH=main
+
+git fetch --prune --tags ${REMOTE}
+git remote show ${REMOTE}
+git rev-parse ${DEVELOP_BRANCH}
+git rev-parse ${PUBLIC_BRANCH}
+git rev-parse ${REMOTE}/${PUBLIC_BRANCH}
+git ls-remote --heads ${REMOTE} ${DEVELOP_BRANCH}
+```
+
+`git remote show` で `HEAD branch: main` と表示されることを確認する。`main` がremote-tracking branchと同じcommitを指していない場合は、どのcommitを公開対象にするかを人間が判断してから進める。remote `develop` がまだ存在しない場合は、`develop` の最終確認後に人間承認を受けてpushする。
+
+2. `develop` で最終確認を行う。
+
+```sh
+git switch ${DEVELOP_BRANCH}
+git status --short
+git ls-files dist
+test -z "$(git status --porcelain)"
+mise exec -- pnpm run check-all
+mise exec -- pnpm run test:compat:local
+mise exec -- pnpm run test:distribution:local
+mise exec -- pnpm run test:github-dependency:local
+```
+
+`git ls-files dist` が何も出力しないこと、`git status --short` が空であることを確認する。
+
+remote `develop` が存在しない、またはlocal `develop` のcommitを公開remoteへ反映する必要がある場合は、人間承認後にpushする。
+
+```sh
+git push -u ${REMOTE} ${DEVELOP_BRANCH}
+```
+
+3. `main` へ `develop` をmergeし、build済み `dist/` を追加する。
+
+```sh
+git switch ${PUBLIC_BRANCH}
+test -z "$(git status --porcelain)"
+git merge --no-ff --no-commit ${DEVELOP_BRANCH}
+mise exec -- pnpm run build
+git add -f dist
+git status --short
+git commit -m "release: publish main from ${DEVELOP_BRANCH}"
+git ls-tree -r --name-only HEAD -- bin dist package.json
+```
+
+`main` は公開入口branchなので、過去の `dist/` 公開commitを保持する。`develop` は `main` の `dist/` commitを取り込まない。反復可能にするため、`main` 側で `develop` を `--no-commit` でmergeし、そのmerge結果から `dist/` をbuildして、source mergeと `dist/` 更新を1つの公開merge commitとして記録する。`dist/` が対応するsourceから生成されたことを保つため、merge後に同じworktreeでbuildし、すぐcommitする。
+
+4. push前に、local `main` のinstall経路を確認する。
+
+```sh
+mise exec -- pnpm run test:github-dependency:local
+```
+
+このsmokeはlocal release repositoryのdefault branch `main` をref指定なしでinstallする経路を含む。
+
+5. 人間承認後に `main` をpushし、公開GitHub dependencyを確認する。
+
+```sh
+git push ${REMOTE} ${PUBLIC_BRANCH}
+TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA=$(git rev-parse ${PUBLIC_BRANCH}) mise exec -- pnpm run test:github-dependency:local
+```
+
+push後のsmokeでは、`github:yohak/togostanza` が公開remoteのdefault branch `main` を解決する経路も確認対象になる。
+
+`main` にbranch protectionを設定する場合は、この手順と矛盾しないようにする。直接pushを許容する場合は、release担当者だけが明示承認後にpushできるようにする。PR必須にする場合は、公開merge commitの内容を変えないmerge方式を使い、merge後に上記の公開GitHub dependency smokeを必ず再実行する。force pushは許可しない。
+
+6. 問題が見つかった場合は、既存tagを置き換えずforward-fixする。
+
+- push前なら、`main` を `${REMOTE}/${PUBLIC_BRANCH}` へ戻してやり直す。
+- push後なら、`develop` で修正し、同じ手順で新しい `main` commitを公開する。
+- Stanzaリポジトリ側はlockfileが解決commitを固定するため、必要に応じてdependency更新とlockfile再生成を案内する。
 
 ## release ref作成手順
 

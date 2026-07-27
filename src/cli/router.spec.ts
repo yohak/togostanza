@@ -145,9 +145,22 @@ describe("CLI router", () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stderr).toBeUndefined();
+    expect(result.stdout).toBe(
+      [
+        "Created Stanza repository: generated-repo",
+        "",
+        "Next steps:",
+        "  cd generated-repo",
+        "  npm install",
+        "  npm exec togostanza generate stanza hello",
+        "  npm run build",
+        "  npm run serve",
+      ].join("\n"),
+    );
 
     const packageJson = readJson(join(cwd, "generated-repo", "package.json")) as {
       dependencies: Record<string, string>;
+      engines: Record<string, string>;
       license: string;
       packageManager?: string;
       pnpm?: unknown;
@@ -161,6 +174,7 @@ describe("CLI router", () => {
 
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza");
+    expect(packageJson.engines.node).toBe(">=24.0.0");
     expect(packageJson.packageManager).toBeUndefined();
     expect(packageJson.pnpm).toBeUndefined();
     expect(existsSync(join(cwd, "generated-repo", "pnpm-workspace.yaml"))).toBe(false);
@@ -179,6 +193,8 @@ describe("CLI router", () => {
     expect(readme).toContain(
       "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA",
     );
+    expect(readme).toContain("npm install togostanza@github:yohak/togostanza");
+    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
     expect(readme).toContain("npm ci");
     expect(readme).toContain("package-lock.json");
     expect(readme).toContain("--skip-install");
@@ -234,6 +250,20 @@ describe("CLI router", () => {
       );
 
       expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain(`Created Stanza repository: ${packageManager}-repo`);
+      expect(result.stdout).toBe(
+        [
+          `Created Stanza repository: ${packageManager}-repo`,
+          "",
+          "Next steps:",
+          `  cd ${packageManager}-repo`,
+          packageManager === "pnpm"
+            ? "  pnpm exec togostanza generate stanza hello"
+            : "  npm exec togostanza generate stanza hello",
+          packageManager === "pnpm" ? "  pnpm build" : "  npm run build",
+          packageManager === "pnpm" ? "  pnpm serve" : "  npm run serve",
+        ].join("\n"),
+      );
       expect(calls).toEqual([`${packageManager} install @ ${join(cwd, `${packageManager}-repo`)}`]);
       const packageJson = readJson(join(cwd, `${packageManager}-repo`, "package.json")) as {
         dependencies: Record<string, string>;
@@ -340,6 +370,8 @@ describe("CLI router", () => {
     expect(readme).toContain("pnpm ci");
     expect(readme).toContain("pnpm-lock.yaml");
     expect(readme).toContain("pnpm 11");
+    expect(readme).toContain("pnpm update togostanza --latest --force");
+    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
   });
 
   it("uses --name as a package name override for init .", () => {
@@ -698,11 +730,30 @@ describe("CLI router", () => {
     const result = routeCli(["g", "stanza", "aliasProbe"], { cwd, currentDate });
 
     expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Created stanza: alias-probe");
+    expect(result.stdout).toContain("Next steps:");
+    expect(result.stdout).toContain("  pnpm exec togostanza build");
+    expect(result.stdout).toContain("  pnpm exec togostanza serve");
     expect(readJson(join(cwd, "stanzas", "alias-probe", "metadata.json"))).toMatchObject({
       "@id": "alias-probe",
       "stanza:label": "Alias Probe",
       "stanza:created": "2026-06-30",
     });
+  });
+
+  it("uses existing Stanza package scripts in generate stanza next steps", () => {
+    const cwd = makeStanzaRepoRoot({
+      scripts: {
+        "stanza:build": "togostanza build",
+        "stanza:server": "togostanza serve",
+      },
+    });
+    const result = routeCli(["generate", "stanza", "scriptProbe"], { cwd, currentDate });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Created stanza: script-probe");
+    expect(result.stdout).toContain("  pnpm stanza:build");
+    expect(result.stdout).toContain("  pnpm stanza:server");
   });
 
   it("uses default generate stanza options", () => {
@@ -855,9 +906,11 @@ describe("CLI router", () => {
     const result = await routeCliAsync(["b"], { cwd });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toMatch(
-      /^Built Stanza repository: repo \(output: dist, duration: \d+ ms\)\.$/,
-    );
+    expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stdout).toContain("Output: dist");
+    expect(result.stdout).toMatch(/Duration: \d+ ms/);
+    expect(result.stdout).toContain("Next step:");
+    expect(result.stdout).toContain("  pnpm exec togostanza serve");
     expect(existsSync(join(cwd, "dist", "build-probe.js"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe.js.map"))).toBe(true);
     expect(existsSync(join(cwd, "dist", "build-probe.css"))).toBe(true);
@@ -873,6 +926,21 @@ describe("CLI router", () => {
     expect(script).toContain("stanza.html.hbs");
     expect(script).toContain("Hello, ");
     expect(readText(join(cwd, "dist", "build-probe.html"))).toContain("./build-probe.js");
+  });
+
+  it("uses an existing serve package script in build next steps", async () => {
+    const cwd = makeStanzaRepoRoot({
+      scripts: {
+        serve: "togostanza serve",
+      },
+    });
+    routeCli(["generate", "stanza", "scriptBuildProbe"], { cwd, currentDate });
+
+    const result = await routeCliAsync(["build"], { cwd });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stdout).toContain("  pnpm serve");
   });
 
   it("builds custom output assets, sass root alias, and clean output", async () => {
@@ -1120,9 +1188,9 @@ describe("CLI router", () => {
     const result = await routeCliAsync(["build"], { cwd });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toMatch(
-      /^Built Stanza repository: repo \(output: dist, duration: \d+ ms\)\.$/,
-    );
+    expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stdout).toContain("Output: dist");
+    expect(result.stdout).toMatch(/Duration: \d+ ms/);
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.mjs");
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.js");
     expect(result.stderr).toContain("togostanza.config.ts");
@@ -1341,6 +1409,119 @@ describe("CLI router", () => {
     expect(readText(join(cwd, "public", "manual.txt"))).toBe("manual\n");
   });
 
+  it("cleans a non-owned output directory after interactive confirmation", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "confirmProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+    const confirmations: string[] = [];
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], {
+      confirmCleanOutput: ({ outputDirectory, warning }) => {
+        confirmations.push(`${outputDirectory}\n${warning}`);
+        return true;
+      },
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(confirmations).toHaveLength(1);
+    expect(confirmations[0]).toContain(join(cwd, "public"));
+    expect(confirmations[0]).toContain("not marked as a TogoStanza build output");
+    expect(existsSync(join(cwd, "public", "manual.txt"))).toBe(false);
+    expect(existsSync(join(cwd, "public", "confirm-probe.js"))).toBe(true);
+  });
+
+  it("keeps a non-owned output directory after interactive confirmation is declined", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "abortProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], {
+      confirmCleanOutput: () => false,
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Refusing to clean output directory");
+    expect(readText(join(cwd, "public", "manual.txt"))).toBe("manual\n");
+  });
+
+  it("returns a build failure when output cleanup confirmation fails", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "promptFailureProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], {
+      confirmCleanOutput: () => {
+        throw new Error("prompt unavailable");
+      },
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Build failed: prompt unavailable");
+    expect(readText(join(cwd, "public", "manual.txt"))).toBe("manual\n");
+  });
+
+  it("rejects output paths that escape the repository through a symlink", async () => {
+    const cwd = makeStanzaRepoRoot();
+    const outsideDirectory = makeNamedTemporaryDirectory("outside");
+    routeCli(["generate", "stanza", "symlinkProbe"], { cwd, currentDate });
+    mkdirSync(join(outsideDirectory, "generated"));
+    writeFileSync(join(outsideDirectory, "generated", "manual.txt"), "manual\n", "utf8");
+    symlinkSync(outsideDirectory, join(cwd, "public"), "dir");
+
+    const result = await routeCliAsync(["build", "--output-path", "public/generated"], {
+      confirmCleanOutput: () => true,
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("resolves outside the Stanza repository root");
+    expect(readText(join(outsideDirectory, "generated", "manual.txt"))).toBe("manual\n");
+  });
+
+  it("rejects output paths that resolve to source or control directories through a symlink", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "protectedSymlinkProbe"], { cwd, currentDate });
+    symlinkSync(cwd, join(cwd, "public"), "dir");
+
+    const result = await routeCliAsync(["build", "--output-path", "public/.git"], {
+      confirmCleanOutput: () => true,
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("resolves to source or control directory .git");
+    expect(existsSync(join(cwd, ".git"))).toBe(false);
+  });
+
+  it("rechecks the output path after interactive confirmation before cleaning", async () => {
+    const cwd = makeStanzaRepoRoot();
+    const outsideDirectory = makeNamedTemporaryDirectory("outside");
+    routeCli(["generate", "stanza", "raceProbe"], { cwd, currentDate });
+    mkdirSync(join(cwd, "public"));
+    writeFileSync(join(cwd, "public", "manual.txt"), "manual\n", "utf8");
+    mkdirSync(join(outsideDirectory, "public"));
+    writeFileSync(join(outsideDirectory, "public", "outside.txt"), "outside\n", "utf8");
+
+    const result = await routeCliAsync(["build", "--output-path", "public"], {
+      confirmCleanOutput: () => {
+        rmSync(join(cwd, "public"), { force: true, recursive: true });
+        symlinkSync(join(outsideDirectory, "public"), join(cwd, "public"), "dir");
+        return true;
+      },
+      cwd,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("resolves outside the Stanza repository root");
+    expect(readText(join(outsideDirectory, "public", "outside.txt"))).toBe("outside\n");
+  });
+
   it("recovers from a failed build on the next build", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "recoverProbe"], { cwd, currentDate });
@@ -1382,10 +1563,17 @@ describe("CLI router", () => {
       serveWatch: false,
     });
 
-    expect(result).toEqual({
-      exitCode: 0,
-      stdout: `Serving Stanza repository: repo at http://127.0.0.1:${port}/`,
-    });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toMatch(
+      new RegExp(
+        [
+          "^Serving Stanza repository: repo",
+          `URL: http://127\\.0\\.0\\.1:${port}/`,
+          "Initial build completed in \\d+ ms\\.",
+          "Press Ctrl-C to stop\\.$",
+        ].join("\n"),
+      ),
+    );
     expect(existsSync(join(cwd, "dist"))).toBe(false);
 
     const index = await fetchText(port, "/");
@@ -1429,11 +1617,15 @@ describe("CLI router", () => {
       "utf8",
     );
     const port = await findAvailablePort();
+    const progressMessages: string[] = [];
 
     await routeCliAsync(["serve", "--port", String(port)], {
       cwd,
       onServeSession: (session) => {
         serveSessions.push(session);
+      },
+      progressOutput: (message) => {
+        progressMessages.push(message);
       },
     });
 
@@ -1449,6 +1641,9 @@ describe("CLI router", () => {
       const css = await fetchText(port, "/watch-probe.css");
       return css.body.includes("rgb(4, 5, 6)");
     });
+    expect(
+      progressMessages.some((message) => /^Rebuilt stanza watch-probe in \d+ ms\.$/.test(message)),
+    ).toBe(true);
   });
 
   it("rebuilds all stanzas after shared source or root asset changes", async () => {
@@ -1490,11 +1685,15 @@ describe("CLI router", () => {
     }
 
     const port = await findAvailablePort();
+    const progressMessages: string[] = [];
 
     await routeCliAsync(["serve", "--port", String(port)], {
       cwd,
       onServeSession: (session) => {
         serveSessions.push(session);
+      },
+      progressOutput: (message) => {
+        progressMessages.push(message);
       },
     });
 
@@ -1516,6 +1715,9 @@ describe("CLI router", () => {
         rootAsset.body === "after-asset\n"
       );
     });
+    expect(
+      progressMessages.some((message) => /^Rebuilt all stanzas in \d+ ms\.$/.test(message)),
+    ).toBe(true);
   });
 
   it("returns HTTP 500 for a failed stanza rebuild and recovers after a fix", async () => {
@@ -1560,11 +1762,19 @@ describe("CLI router", () => {
     return directory;
   }
 
-  function makeStanzaRepoRoot(): string {
+  function makeStanzaRepoRoot(input: { scripts?: Record<string, string> } = {}): string {
     const directory = makeNamedTemporaryDirectory("repo");
     writeFileSync(
       join(directory, "package.json"),
-      `${JSON.stringify({ dependencies: { togostanza: "^0.0.0" }, name: "repo" }, null, 2)}\n`,
+      `${JSON.stringify(
+        {
+          dependencies: { togostanza: "^0.0.0" },
+          name: "repo",
+          ...(input.scripts ? { scripts: input.scripts } : {}),
+        },
+        null,
+        2,
+      )}\n`,
       "utf8",
     );
     return directory;

@@ -187,7 +187,18 @@ describe("CLI smoke", () => {
 
     expect(result.code).toBe(0);
     expect(result.stderr).toBe("");
-    expect(result.stdout).toContain("Created Stanza repository: generated-repo");
+    expect(result.stdout).toContain(
+      [
+        "Created Stanza repository: generated-repo",
+        "",
+        "Next steps:",
+        "  cd generated-repo",
+        "  npm install",
+        "  npm exec togostanza generate stanza hello",
+        "  npm run build",
+        "  npm run serve",
+      ].join("\n"),
+    );
     const readme = readFileSync(resolve(cwd, "generated-repo", "README.md"), "utf8");
     const tsConfig = readJson(resolve(cwd, "generated-repo", "tsconfig.json")) as {
       compilerOptions: Record<string, unknown>;
@@ -195,6 +206,9 @@ describe("CLI smoke", () => {
     expect(readJson(resolve(cwd, "generated-repo", "package.json"))).toMatchObject({
       dependencies: {
         togostanza: "github:yohak/togostanza",
+      },
+      engines: {
+        node: ">=24.0.0",
       },
       name: "generated-repo",
       scripts: {
@@ -208,6 +222,8 @@ describe("CLI smoke", () => {
     expect(readme).toContain(
       "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA",
     );
+    expect(readme).toContain("npm install togostanza@github:yohak/togostanza");
+    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
     expect(readme).toContain("GitHub Pages");
     expect(readme).toContain("package-lock.json");
     expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");
@@ -242,7 +258,18 @@ describe("CLI smoke", () => {
 
     expect(result.code).toBe(0);
     expect(result.stderr).toBe("");
-    expect(result.stdout).toContain("Created Stanza repository: current-repo");
+    expect(result.stdout).toContain(
+      [
+        "Created Stanza repository: current-repo",
+        "",
+        "Next steps:",
+        "  pnpm install",
+        "  pnpm exec togostanza generate stanza hello",
+        "  pnpm build",
+        "  pnpm serve",
+      ].join("\n"),
+    );
+    expect(result.stdout).not.toContain("  cd current-repo");
     expect(readJson(resolve(cwd, "package.json"))).toMatchObject({
       name: "current-repo",
     });
@@ -426,6 +453,9 @@ describe("CLI smoke", () => {
 
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("Built Stanza repository: repo");
+    expect(result.stdout).toContain("Output: public");
+    expect(result.stdout).toMatch(/Duration: \d+ ms/);
+    expect(result.stdout).toContain("  pnpm serve");
     expect(result.stderr).toBe("");
     expect(existsSync(resolve(cwd, "public", "hello-world.js"))).toBe(true);
     expect(existsSync(resolve(cwd, "public", "hello-world.js.map"))).toBe(true);

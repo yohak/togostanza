@@ -4,7 +4,10 @@ const consoleOutput = {
     stdout: console.log,
 };
 export function runCli(args = process.argv.slice(2), output = consoleOutput, options = {}) {
-    return Promise.resolve(routeCli(args, options)).then((result) => {
+    return Promise.resolve(routeCli(args, {
+        progressOutput: output.stdout,
+        ...options,
+    })).then((result) => {
         if (result.stdout) {
             output.stdout(result.stdout);
         }

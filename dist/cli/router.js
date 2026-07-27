@@ -31,17 +31,24 @@ function routeCommand(command, args, options) {
         return handleGenerateStanza(args, options);
     }
     if (command.canonicalName === "build") {
-        return handleBuild(args, options);
+        return handleBuild(args, withBuildOptions(options));
     }
     if (command.canonicalName === "serve") {
         return handleServe(args, withServeOptions(options));
     }
     return failure(`Command is not implemented yet: ${command.canonicalName}`);
 }
+function withBuildOptions(options) {
+    return {
+        ...(options.confirmCleanOutput ? { confirmCleanOutput: options.confirmCleanOutput } : {}),
+        ...(options.cwd ? { cwd: options.cwd } : {}),
+    };
+}
 function withServeOptions(options) {
     return {
         ...(options.cwd ? { cwd: options.cwd } : {}),
         ...(options.onServeSession ? { onServeSession: options.onServeSession } : {}),
+        ...(options.progressOutput ? { progressOutput: options.progressOutput } : {}),
         ...(typeof options.serveWatch === "boolean" ? { watch: options.serveWatch } : {}),
     };
 }

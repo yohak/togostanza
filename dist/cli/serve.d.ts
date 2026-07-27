@@ -6,6 +6,7 @@ export type ServeSession = {
 export type ServeOptions = {
     cwd?: string;
     onServeSession?: (session: ServeSession) => void;
+    progressOutput?: (message: string) => void;
     watch?: boolean;
 };
 export declare function handleServe(args: readonly string[], options?: ServeOptions): Promise<CliResult>;

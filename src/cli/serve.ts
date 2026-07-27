@@ -10,6 +10,7 @@ import {
 import { createServer, type Server, type ServerResponse } from "node:http";
 import { tmpdir } from "node:os";
 import { extname, isAbsolute, join, relative, resolve } from "node:path";
+import { performance } from "node:perf_hooks";
 import { buildStanzaArtifacts, type StanzaDefinition } from "./build.js";
 import { getStringOption, parseOptions } from "./options.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
@@ -23,6 +24,7 @@ export type ServeSession = {
 export type ServeOptions = {
   cwd?: string;
   onServeSession?: (session: ServeSession) => void;
+  progressOutput?: (message: string) => void;
   watch?: boolean;
 };
 
@@ -86,7 +88,8 @@ export async function handleServe(
 
   const rootDirectory = repoContextResult.context.rootDirectory;
   const outputDirectories = new Set<string>();
-  let state = await buildAll(rootDirectory, outputDirectories);
+  const initialBuild = await buildAll(rootDirectory, outputDirectories);
+  let state = initialBuild.state;
   let closed = false;
   let rebuildTimer: NodeJS.Timeout | undefined;
   let rebuildInProgress = false;
@@ -170,7 +173,12 @@ export async function handleServe(
 
   return {
     exitCode: 0,
-    stdout: `Serving Stanza repository: ${repoContextResult.context.packageName} at http://${listenHost}:${listenResult.port}/`,
+    stdout: [
+      `Serving Stanza repository: ${repoContextResult.context.packageName}`,
+      `URL: http://${listenHost}:${listenResult.port}/`,
+      formatInitialBuildStatus(initialBuild),
+      "Press Ctrl-C to stop.",
+    ].join("\n"),
   };
 
   async function closeServeSession(): Promise<void> {
@@ -214,7 +222,9 @@ export async function handleServe(
       if (pendingAll || state.kind !== "ready") {
         pendingAll = false;
         pendingStanzaIds.clear();
-        state = await buildAll(rootDirectory, outputDirectories);
+        const rebuild = await buildAll(rootDirectory, outputDirectories);
+        state = rebuild.state;
+        options.progressOutput?.(formatAllRebuildStatus(rebuild));
         return;
       }
 
@@ -223,7 +233,9 @@ export async function handleServe(
 
       for (const stanzaId of stanzaIds) {
         // eslint-disable-next-line no-await-in-loop -- each rebuild updates the serve state used by the next rebuild.
-        state = await rebuildStanza(rootDirectory, outputDirectories, state, stanzaId);
+        const rebuild = await rebuildStanza(rootDirectory, outputDirectories, state, stanzaId);
+        state = rebuild.state;
+        options.progressOutput?.(formatStanzaRebuildStatus(stanzaId, rebuild));
       }
     } finally {
       rebuildInProgress = false;
@@ -260,25 +272,33 @@ function installSignalHandlers(session: ServeSession): () => void {
 async function buildAll(
   rootDirectory: string,
   outputDirectories: Set<string>,
-): Promise<ServeState> {
+): Promise<{ durationMs: number; state: ServeState }> {
+  const startedAt = performance.now();
   const outputDirectory = createServeOutputDirectory(outputDirectories);
   const result = await buildStanzaArtifacts({ outputDirectory, rootDirectory });
+  const durationMs = elapsedMs(startedAt);
 
   if ("error" in result) {
     removeOutputDirectory(outputDirectory, outputDirectories);
     return {
-      error: result.error,
-      kind: "error",
+      durationMs,
+      state: {
+        error: result.error,
+        kind: "error",
+      },
     };
   }
 
   removeOtherOutputDirectories(outputDirectory, outputDirectories);
 
   return {
-    kind: "ready",
-    outputDirectory,
-    stanzaErrors: new Map(),
-    stanzas: result.allStanzas,
+    durationMs,
+    state: {
+      kind: "ready",
+      outputDirectory,
+      stanzaErrors: new Map(),
+      stanzas: result.allStanzas,
+    },
   };
 }
 
@@ -287,7 +307,8 @@ async function rebuildStanza(
   outputDirectories: Set<string>,
   state: Extract<ServeState, { kind: "ready" }>,
   stanzaId: string,
-): Promise<Extract<ServeState, { kind: "ready" }>> {
+): Promise<{ durationMs: number; state: Extract<ServeState, { kind: "ready" }> }> {
+  const startedAt = performance.now();
   const outputDirectory = createServeOutputDirectory(outputDirectories);
 
   cpSync(state.outputDirectory, outputDirectory, { recursive: true });
@@ -306,8 +327,11 @@ async function rebuildStanza(
     nextErrors.set(stanzaId, result.error);
 
     return {
-      ...state,
-      stanzaErrors: nextErrors,
+      durationMs: elapsedMs(startedAt),
+      state: {
+        ...state,
+        stanzaErrors: nextErrors,
+      },
     };
   }
 
@@ -317,11 +341,39 @@ async function rebuildStanza(
   nextErrors.delete(stanzaId);
 
   return {
-    kind: "ready",
-    outputDirectory,
-    stanzaErrors: nextErrors,
-    stanzas: result.allStanzas,
+    durationMs: elapsedMs(startedAt),
+    state: {
+      kind: "ready",
+      outputDirectory,
+      stanzaErrors: nextErrors,
+      stanzas: result.allStanzas,
+    },
   };
+}
+
+function formatInitialBuildStatus(input: { durationMs: number; state: ServeState }): string {
+  return input.state.kind === "ready"
+    ? `Initial build completed in ${input.durationMs} ms.`
+    : `Initial build failed in ${input.durationMs} ms.`;
+}
+
+function formatAllRebuildStatus(input: { durationMs: number; state: ServeState }): string {
+  return input.state.kind === "ready"
+    ? `Rebuilt all stanzas in ${input.durationMs} ms.`
+    : `Rebuild failed in ${input.durationMs} ms.`;
+}
+
+function formatStanzaRebuildStatus(
+  stanzaId: string,
+  input: { durationMs: number; state: Extract<ServeState, { kind: "ready" }> },
+): string {
+  return input.state.stanzaErrors.has(stanzaId)
+    ? `Rebuild failed for stanza ${stanzaId} in ${input.durationMs} ms.`
+    : `Rebuilt stanza ${stanzaId} in ${input.durationMs} ms.`;
+}
+
+function elapsedMs(startedAt: number): number {
+  return Math.max(0, Math.round(performance.now() - startedAt));
 }
 
 function removeStanzaOutputs(outputDirectory: string, stanzaId: string): void {

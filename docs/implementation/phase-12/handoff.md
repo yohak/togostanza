@@ -61,9 +61,9 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | generated repo `dependencies.togostanza` | 通常生成では `github:yohak/togostanza` を生成する。正式版マージ後は `github:togostanza/togostanza` へ切り替える候補として扱う。 |
 | concrete dependency spec injection | release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体tagまたはcommit SHAを注入できる。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
-| `engines.node` | `>=24.5.0` を維持する。公開直前に利用者環境と再確認する。 |
-| branch roles | 後続で `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして定義する。 |
-| GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。後続ではタグ無しGitHub dependencyが読む `main` もinstall可能にする。 |
+| `engines.node` | `>=24.0.0` へ緩和した。開発・検証の標準実行環境は引き続きroot `mise.toml` のNode 24.5.0とする。 |
+| branch roles | local `develop` branchを作成し、通常開発branchとして `dist/` を追跡対象から外した。remote `develop` も作成済み。`main` はinstall可能な公開入口、tagは検証・固定refとして扱う。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。branch protectionと、`main` への反映実行は後続で実装する。 |
+| GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。タグ無しGitHub dependencyが読む `main` もinstall可能にする方針で、`develop` から `main` への反復可能な公開反映手順はrelease checklistに記録済み。実際の `main` 反映は後続で行う。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使った。今後の修正では既存tagを上書きせず、新しいrelease branch / tagを作る。 |
 
 ## 確認結果
@@ -92,6 +92,8 @@ mise exec -- pnpm run test:compat:local
   - pnpm tarball install smoke: pass
 - `test:github-dependency:local`: pass
   - local release ref smoke: pass
+  - local release repositoryのdefault branch `main` をref指定なし `git+file://...` でinstallするsmoke: pass
+  - ref指定なし `git+file://...` のlockfileなしfresh install / lockfileありfrozen install / 明示更新smoke: pass
   - npm / pnpm Git ref bootstrap smoke: pass
   - bootstrapしたCLIが生成するrepoのタグ無しGitHub dependency: pass
   - npm Git dependency install smoke: pass
@@ -104,8 +106,6 @@ mise exec -- pnpm run test:compat:local
 - generated repo tagless dependency smoke: pass
   - ローカルCLIから `init --package-manager npm` を実行し、生成repoの既定installが `github:yohak/togostanza` で通ることを確認した。
   - ローカルCLIから `init --package-manager pnpm` を実行し、生成repoの既定installが `github:yohak/togostanza` で通ることを確認した。
-- TogoMedium実リポジトリ確認: pass
-  - 人間確認として、`dependencies.togostanza` を `github:yohak/togostanza#yohak-github-20260723` へ変更し、意図通り動くことを確認した。
 - `test:compat:local`: pass
   - local compatibility unit: 3 passed
   - local compatibility browser: 5 passed
@@ -114,6 +114,33 @@ mise exec -- pnpm run test:compat:local
     - TogoMedium全15 Stanza direct embed smoke
     - TogoMedium Web local serve連携 smoke
     - 実 `togostanza-utils` package smoke
+- TogoMedium実リポジトリ確認: pass
+  - 人間確認として、`dependencies.togostanza` を `github:yohak/togostanza#yohak-github-20260723` へ変更し、意図通り動くことを確認した。
+
+追加確認日: 2026-07-27
+
+```sh
+mise exec -- pnpm run check-all
+mise exec -- pnpm run test:distribution:local
+mise exec -- pnpm run test:github-dependency:local
+TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA=c60faa284cb4f9e21a7f737c06312f8a4a753a39 mise exec -- pnpm run test:github-dependency:local
+git diff --check
+```
+
+結果:
+
+- `check-all`: pass
+  - unit test: 85 passed, 2 skipped
+  - integration test: 23 passed
+  - browser test: 10 passed
+- `test:distribution:local`: pass
+- `test:github-dependency:local`: pass
+  - local release repositoryのdefault branch `main` をref指定なし `git+file://...` でinstallするsmoke: pass
+  - ref指定なし `git+file://...` のlockfileなしfresh install / lockfileありfrozen install / 明示更新smoke: pass
+- `TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA=c60faa284cb4f9e21a7f737c06312f8a4a753a39 mise exec -- pnpm run test:github-dependency:local`: pass
+  - 公開 `github:yohak/togostanza` がremote `main` の `c60faa2` を解決することを確認した。
+  - 公開 `github:yohak/togostanza` のlockfileなしfresh install / lockfileありfrozen installをnpm / pnpm双方で確認した。
+- `git diff --check`: pass
 
 確認時に、既知制約であるSass `@import` deprecation warningは再度出た。Phase 12では失敗扱いにしない。
 
@@ -142,4 +169,4 @@ mise exec -- pnpm run test:compat:local
 - GitHub dependencyのtagは不変として扱う。修正版を出す場合は新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
 - `pnpm store prune` と `~/Library/Caches/pnpm/dlx` の削除は、過去の初期調整や切り分けで古いcacheを疑う場合のローカル対処であり、公開済みtagの更新手順としては扱わない。
 - Sass `@import` 非推奨警告は既知制約であり、Phase 12では失敗扱いにしない。
-- `engines.node >=24.5.0` は現状維持だが、公開前にStanza開発者の実環境と照合する。
+- `engines.node` は `>=24.0.0` へ緩和済み。Node 20 / 22系まで広げるかどうかは、標準Node.jsをNode 24 LTSとする現在の方針では扱わない。

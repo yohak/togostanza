@@ -1,8 +1,9 @@
-import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync, } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync, } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
+import { createInterface } from "node:readline/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import vue from "@vitejs/plugin-vue";
 import Handlebars from "handlebars";
@@ -10,6 +11,7 @@ import { compileString } from "sass";
 import { build as viteBuild, mergeConfig } from "vite";
 import { loadTogoStanzaBuildConfig } from "./build-config.js";
 import { getStringOption, parseOptions } from "./options.js";
+import { formatTogoStanzaCommand } from "./package-command.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure } from "./result.js";
 import { isValidStanzaId, titleCaseStanzaId } from "./stanza-id.js";
@@ -45,6 +47,7 @@ export async function handleBuild(args, options = {}) {
     }
     const startedAt = performance.now();
     const buildResult = await buildStanzaArtifacts({
+        ...(options.confirmCleanOutput ? { confirmCleanOutput: options.confirmCleanOutput } : {}),
         outputDirectory: outputDirectoryResult.outputDirectory,
         prepareOutputDirectory: true,
         rootDirectory,
@@ -56,7 +59,18 @@ export async function handleBuild(args, options = {}) {
     return {
         exitCode: 0,
         ...(buildResult.warnings.length > 0 ? { stderr: buildResult.warnings.join("\n") } : {}),
-        stdout: `Built Stanza repository: ${repoContextResult.context.packageName} (output: ${outputPath}, duration: ${durationMs} ms).`,
+        stdout: [
+            `Built Stanza repository: ${repoContextResult.context.packageName}`,
+            `Output: ${outputPath}`,
+            `Duration: ${durationMs} ms`,
+            "",
+            "Next step:",
+            `  ${formatTogoStanzaCommand({
+                commandName: "serve",
+                packageManager: repoContextResult.context.packageManager,
+                scripts: repoContextResult.context.scripts,
+            })}`,
+        ].join("\n"),
     };
 }
 export async function buildStanzaArtifacts(input) {
@@ -72,9 +86,15 @@ export async function buildStanzaArtifacts(input) {
     if ("error" in buildConfigResult) {
         return { error: buildConfigResult.error };
     }
+    const cleanPermissionResult = await resolveOutputDirectoryCleanPermission(input);
+    if ("error" in cleanPermissionResult) {
+        return { error: cleanPermissionResult.error };
+    }
     try {
         if (input.prepareOutputDirectory) {
-            prepareOutputDirectory(input.outputDirectory, input.rootDirectory);
+            prepareOutputDirectory(input.outputDirectory, input.rootDirectory, {
+                allowUnmarkedOutputDirectory: cleanPermissionResult.allowUnmarkedOutputDirectory,
+            });
             writeOutputMarker(input.outputDirectory);
         }
         else {
@@ -231,21 +251,129 @@ function resolveEntrypoint(stanzaDirectory, stanzaId) {
         error: `Missing stanza entrypoint for ${stanzaId}: expected index.tsx, index.ts, or index.js in ${stanzaDirectory}.`,
     };
 }
-function prepareOutputDirectory(outputDirectory, rootDirectory) {
+function outputDirectoryCleanStatus(outputDirectory, rootDirectory) {
+    const realpathStatus = outputDirectoryRealpathStatus(outputDirectory, rootDirectory);
+    if ("error" in realpathStatus) {
+        return realpathStatus;
+    }
     if (existsSync(outputDirectory)) {
         if (!pathIsDirectory(outputDirectory)) {
-            throw new Error(`Output path exists and is not a directory: ${outputDirectory}`);
+            return { error: `Output path exists and is not a directory: ${outputDirectory}` };
         }
         const entries = readdirSync(outputDirectory);
         const markerPath = join(outputDirectory, outputMarkerFileName);
         if (entries.length > 0 && !pathIsFile(markerPath)) {
-            throw new Error(`Refusing to clean output directory without ${outputMarkerFileName}: ${outputDirectory}`);
+            return {
+                kind: "needs-confirmation",
+                refusal: `Refusing to clean output directory without ${outputMarkerFileName}: ${outputDirectory}`,
+                warning: [
+                    `Output directory is not marked as a TogoStanza build output: ${outputDirectory}`,
+                    "Clearing it may delete files not created by this version of TogoStanza.",
+                ].join("\n"),
+            };
+        }
+    }
+    if (!pathIsDirectory(rootDirectory)) {
+        return { error: `Stanza repository root is not a directory: ${rootDirectory}` };
+    }
+    return { kind: "ok" };
+}
+function outputDirectoryRealpathStatus(outputDirectory, rootDirectory) {
+    const rootRealPath = realpathSync(rootDirectory);
+    const { ancestor, canonicalPath } = canonicalizeThroughExistingAncestor(outputDirectory);
+    if (!pathIsInsideOrEqual(rootRealPath, canonicalPath)) {
+        return {
+            error: `Invalid output path: ${outputDirectory} resolves outside the Stanza repository root through ${ancestor}.`,
+        };
+    }
+    const relativeCanonicalPath = relative(rootRealPath, canonicalPath);
+    if (relativeCanonicalPath === "" || relativeCanonicalPath === ".") {
+        return { error: `Invalid output path: ${outputDirectory} resolves to the repository root.` };
+    }
+    const [firstPart] = relativeCanonicalPath.split(/[/\\]+/);
+    if (firstPart && knownSourceOrControlDirectories.has(firstPart)) {
+        return {
+            error: `Invalid output path: ${outputDirectory} resolves to source or control directory ${firstPart}.`,
+        };
+    }
+    return { kind: "ok" };
+}
+function canonicalizeThroughExistingAncestor(path) {
+    let candidate = path;
+    const missingParts = [];
+    while (!existsSync(candidate)) {
+        missingParts.unshift(basename(candidate));
+        const parent = dirname(candidate);
+        if (parent === candidate) {
+            return { ancestor: candidate, canonicalPath: candidate };
+        }
+        candidate = parent;
+    }
+    return {
+        ancestor: candidate,
+        canonicalPath: resolve(realpathSync(candidate), ...missingParts),
+    };
+}
+function prepareOutputDirectory(outputDirectory, rootDirectory, options) {
+    const outputDirectoryStatus = outputDirectoryCleanStatus(outputDirectory, rootDirectory);
+    if ("error" in outputDirectoryStatus) {
+        throw new Error(outputDirectoryStatus.error);
+    }
+    if (outputDirectoryStatus.kind === "needs-confirmation" &&
+        !options.allowUnmarkedOutputDirectory) {
+        throw new Error(outputDirectoryStatus.refusal);
+    }
+    if (existsSync(outputDirectory)) {
+        if (!pathIsDirectory(outputDirectory)) {
+            throw new Error(`Output path exists and is not a directory: ${outputDirectory}`);
         }
         rmSync(outputDirectory, { force: true, recursive: true });
     }
     mkdirSync(outputDirectory, { recursive: true });
     if (!pathIsDirectory(rootDirectory)) {
         throw new Error(`Stanza repository root is not a directory: ${rootDirectory}`);
+    }
+}
+async function resolveOutputDirectoryCleanPermission(input) {
+    let allowUnmarkedOutputDirectory = input.allowUnmarkedOutputDirectory ?? false;
+    if (!input.prepareOutputDirectory || allowUnmarkedOutputDirectory) {
+        return { allowUnmarkedOutputDirectory };
+    }
+    try {
+        const outputDirectoryStatus = outputDirectoryCleanStatus(input.outputDirectory, input.rootDirectory);
+        if ("error" in outputDirectoryStatus) {
+            return { error: outputDirectoryStatus.error };
+        }
+        if (outputDirectoryStatus.kind === "needs-confirmation") {
+            const confirmed = await (input.confirmCleanOutput ?? confirmCleanOutputInteractively)({
+                outputDirectory: input.outputDirectory,
+                warning: outputDirectoryStatus.warning,
+            });
+            if (!confirmed) {
+                return { error: outputDirectoryStatus.refusal };
+            }
+            allowUnmarkedOutputDirectory = true;
+        }
+    }
+    catch (error) {
+        return { error: formatBuildError(error, input.rootDirectory) };
+    }
+    return { allowUnmarkedOutputDirectory };
+}
+async function confirmCleanOutputInteractively(input) {
+    if (!process.stdin.isTTY || !process.stderr.isTTY) {
+        return false;
+    }
+    const readline = createInterface({
+        input: process.stdin,
+        output: process.stderr,
+    });
+    try {
+        const answer = await readline.question(`${input.warning}\nClear and overwrite this directory? [y/N] `);
+        return answer.trim().toLowerCase() === "y" || answer.trim().toLowerCase() === "yes";
+    }
+    finally {
+        readline.close();
     }
 }
 function writeOutputMarker(outputDirectory) {
@@ -581,6 +709,12 @@ function pathIsDirectory(path) {
         }
         throw error;
     }
+}
+function pathIsInsideOrEqual(rootDirectory, candidatePath) {
+    const relativePath = relative(rootDirectory, candidatePath);
+    return (relativePath === "" ||
+        relativePath === "." ||
+        (!relativePath.startsWith("..") && !isAbsolute(relativePath)));
 }
 function pathIsFile(path) {
     try {

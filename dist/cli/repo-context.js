@@ -36,6 +36,7 @@ export function resolveStanzaRepoContext(rootDirectory) {
             packageManager: packageManagerResult.packageManager,
             packageName,
             rootDirectory,
+            scripts: readPackageScripts(packageJson),
         }),
     };
 }
@@ -83,6 +84,19 @@ function readStringProperty(value, propertyName) {
     const propertyValue = value[propertyName];
     return typeof propertyValue === "string" ? propertyValue : undefined;
 }
+function readPackageScripts(packageJson) {
+    const scripts = packageJson.scripts;
+    if (!isRecord(scripts)) {
+        return {};
+    }
+    const result = {};
+    for (const [name, command] of Object.entries(scripts)) {
+        if (typeof command === "string") {
+            result[name] = command;
+        }
+    }
+    return result;
+}
 function withOptionalLockfilePath(input) {
     if (input.lockfilePath) {
         return {
@@ -92,6 +106,7 @@ function withOptionalLockfilePath(input) {
             packageManager: input.packageManager,
             packageName: input.packageName,
             rootDirectory: input.rootDirectory,
+            scripts: input.scripts,
         };
     }
     return {
@@ -100,6 +115,7 @@ function withOptionalLockfilePath(input) {
         packageManager: input.packageManager,
         packageName: input.packageName,
         rootDirectory: input.rootDirectory,
+        scripts: input.scripts,
     };
 }
 function isRecord(value) {

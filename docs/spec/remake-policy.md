@@ -221,6 +221,8 @@ Stanza stylesheetは `style.scss` を正とする。`stanza.scss` は旧ドキ�
 
 CLI exit codeは、成功時 `0`、失敗時non-zeroを維持する。細かいerror code分類は今回の仕様スコープでは扱わない。
 
+CLIの成功・状態メッセージは再設計可能だが、Stanza開発者が日常的に触る開発契約として扱う。`serve` の初回ビルドと再ビルド完了時には、更新完了と所要時間が分かるメッセージを出す。`build` の出力先に現在のリメイク版が安全に上書きできると識別できない生成物がある場合は、いきなり削除せず、対話可能な端末ではwarningと確認promptを出してclear / abortを選べるようにする。非対話環境では自動clearしない。
+
 ### `serve` の実装方式
 
 リメイク版の `serve` は、`build` と同じビルドパイプラインを一時ディレクトリへ実行し、その生成物を専用のHTTPサーバーで配信する方式を採用する。Vite dev server、`vite build --watch`、`vite preview` の組み合わせは採用しない。

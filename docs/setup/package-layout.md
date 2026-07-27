@@ -36,7 +36,9 @@ workbench/
 `bin/` には配布時に使うCLI入口を置く。
 `dist/` は通常開発branchではgitignore対象とし、build済み成果物として生成する。
 
-正式版のbranch運用では、`develop` を通常開発branch、`main` を一般公開入口、tagを検証・固定refとして扱う方針を採用した。タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能である必要がある。install時buildを行わない方針を維持する限り、`main` は `dist/` を必ず含める。一方、`develop` では `dist/` を追跡しない。現時点では、branch作成、default branch設定、`develop` から `main` への反映方法は未実装であり、後続作業で定義する。
+正式版のbranch運用では、`develop` を通常開発branch、`main` を一般公開入口、tagを検証・固定refとして扱う方針を採用した。タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能である必要がある。install時buildを行わない方針を維持する限り、`main` は `dist/` を必ず含める。一方、`develop` では `dist/` を追跡しない。
+
+localでは `develop` branchを作成し、`dist/` をGit追跡対象から外した。remote `develop` も作成済みである。タグ無しGitHub dependencyはdefault branchを解決するため、公開remoteのdefault branchは `main` として維持する。公開remoteのdefault branchが `main` であることは2026-07-27に確認した。branch protectionと、`develop` から `main` への反映実行は後続作業で扱う。
 
 ## 将来の分割
 

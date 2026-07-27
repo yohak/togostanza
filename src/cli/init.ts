@@ -1,6 +1,7 @@
 import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getBooleanOption, getStringOption, parseOptions } from "./options.js";
+import { formatPackageExecCommand, formatPackageScriptCommand } from "./package-command.js";
 import { resolvePackageManager, type PackageManager } from "./package-manager.js";
 import { failure, success, type CliResult } from "./result.js";
 import { runCommand, type CommandRunner } from "./runner.js";
@@ -137,7 +138,14 @@ export function handleInit(args: readonly string[], options: InitOptions = {}): 
     }
   }
 
-  return success(`Created Stanza repository: ${packageName}`);
+  return success(
+    formatInitSuccessMessage({
+      initCurrentDirectory,
+      installSkipped: getBooleanOption(parsed, "--skip-install"),
+      packageManager: packageManagerResult.packageManager,
+      packageName,
+    }),
+  );
 }
 
 export function formatInstallCommand(packageManager: PackageManager): {
@@ -148,6 +156,28 @@ export function formatInstallCommand(packageManager: PackageManager): {
     args: ["install"],
     command: packageManager,
   };
+}
+
+function formatInitSuccessMessage(input: {
+  initCurrentDirectory: boolean;
+  installSkipped: boolean;
+  packageManager: PackageManager;
+  packageName: string;
+}): string {
+  const installCommand = formatInstallCommand(input.packageManager);
+
+  return [
+    `Created Stanza repository: ${input.packageName}`,
+    "",
+    "Next steps:",
+    ...(input.initCurrentDirectory ? [] : [`  cd ${input.packageName}`]),
+    ...(input.installSkipped
+      ? [`  ${installCommand.command} ${installCommand.args.join(" ")}`]
+      : []),
+    `  ${formatPackageExecCommand(input.packageManager, "generate stanza hello")}`,
+    `  ${formatPackageScriptCommand(input.packageManager, "build")}`,
+    `  ${formatPackageScriptCommand(input.packageManager, "serve")}`,
+  ].join("\n");
 }
 
 function createScaffold(input: {
@@ -218,6 +248,10 @@ function formatReadme(input: {
   const dependencyGuidance = `This repository depends on \`${input.dependencySpec}\`.`;
   const fixedDependencyGuidance =
     "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA such as `github:yohak/togostanza#yohak-github-YYYYMMDD-label`.";
+  const dependencyUpdateCommand =
+    input.packageManager === "pnpm"
+      ? "pnpm update togostanza --latest --force"
+      : "npm install togostanza@github:yohak/togostanza";
 
   return [
     `# ${input.name}`,
@@ -226,6 +260,13 @@ function formatReadme(input: {
     "",
     dependencyGuidance,
     fixedDependencyGuidance,
+    "The lockfile records the resolved Git commit. To update to the latest public `main`, run:",
+    "",
+    "```sh",
+    dependencyUpdateCommand,
+    "```",
+    "",
+    "Then review the lockfile diff and run the build command below.",
     "",
     "## Development",
     "",
@@ -285,7 +326,7 @@ function createPackageJson(input: {
       togostanza: input.dependencySpec,
     },
     engines: {
-      node: ">=24.5.0",
+      node: ">=24.0.0",
     },
   };
 }
