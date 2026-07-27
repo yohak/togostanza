@@ -477,8 +477,9 @@ describe("CLI smoke", () => {
     expect(readJson(resolve(cwd, "public", "hello-world", "metadata.json"))).toMatchObject({
       "@id": "hello-world",
     });
-    expect(existsSync(resolve(cwd, "public", "index.html"))).toBe(false);
-    expect(existsSync(resolve(cwd, "public", "-togostanza"))).toBe(false);
+    expect(existsSync(resolve(cwd, "public", "index.html"))).toBe(true);
+    expect(existsSync(resolve(cwd, "public", "-togostanza", "help-app.js"))).toBe(true);
+    expect(existsSync(resolve(cwd, "public", "-togostanza", "help-app.css"))).toBe(true);
   });
 
   it("serves generated stanza artifacts through the bin entry", async () => {

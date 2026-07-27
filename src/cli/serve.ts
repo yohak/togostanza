@@ -403,12 +403,9 @@ function respond(requestPath: string, response: ServerResponse, state: ServeStat
     return;
   }
 
-  if (requestPath === "/") {
-    writeHtml(response, 200, formatIndexHtml(state.stanzas, state.stanzaErrors));
-    return;
-  }
+  const resolvedRequestPath = requestPath === "/" ? "/index.html" : requestPath;
 
-  const requestStanzaId = stanzaIdFromRequestPath(requestPath, state.stanzas);
+  const requestStanzaId = stanzaIdFromRequestPath(resolvedRequestPath, state.stanzas);
 
   if (requestStanzaId) {
     const stanzaError = state.stanzaErrors.get(requestStanzaId);
@@ -419,16 +416,7 @@ function respond(requestPath: string, response: ServerResponse, state: ServeStat
     }
   }
 
-  if (requestPath.endsWith(".html") && requestStanzaId) {
-    const stanza = state.stanzas.find((candidate) => candidate.id === requestStanzaId);
-
-    if (stanza) {
-      writeHtml(response, 200, formatPreviewHtml(stanza));
-      return;
-    }
-  }
-
-  const filePath = resolve(state.outputDirectory, `.${requestPath}`);
+  const filePath = resolve(state.outputDirectory, `.${resolvedRequestPath}`);
 
   if (!pathIsInside(state.outputDirectory, filePath) || !pathIsFile(filePath)) {
     writePlainText(response, 404, "Not found.");
@@ -437,54 +425,6 @@ function respond(requestPath: string, response: ServerResponse, state: ServeStat
 
   response.writeHead(200, { "content-type": contentType(filePath) });
   createReadStream(filePath).pipe(response);
-}
-
-function formatIndexHtml(
-  stanzas: readonly StanzaDefinition[],
-  stanzaErrors: Map<string, string>,
-): string {
-  const links = stanzas
-    .map((stanza) => {
-      const suffix = stanzaErrors.has(stanza.id) ? " (build error)" : "";
-      return `      <li><a href="./${escapeHtml(stanza.id)}.html">${escapeHtml(stanza.label)}</a>${suffix}</li>`;
-    })
-    .join("\n");
-
-  return [
-    "<!doctype html>",
-    '<html lang="en">',
-    "  <head>",
-    '    <meta charset="utf-8">',
-    '    <meta name="viewport" content="width=device-width, initial-scale=1">',
-    "    <title>TogoStanza development server</title>",
-    "  </head>",
-    "  <body>",
-    "    <h1>Stanzas</h1>",
-    "    <ul>",
-    links,
-    "    </ul>",
-    "  </body>",
-    "</html>",
-    "",
-  ].join("\n");
-}
-
-function formatPreviewHtml(stanza: StanzaDefinition): string {
-  return [
-    "<!doctype html>",
-    '<html lang="en">',
-    "  <head>",
-    '    <meta charset="utf-8">',
-    '    <meta name="viewport" content="width=device-width, initial-scale=1">',
-    `    <title>${escapeHtml(stanza.label)}</title>`,
-    `    <script type="module" src="./${escapeHtml(stanza.id)}.js"></script>`,
-    "  </head>",
-    "  <body>",
-    `    <togostanza-${escapeHtml(stanza.id)}></togostanza-${escapeHtml(stanza.id)}>`,
-    "  </body>",
-    "</html>",
-    "",
-  ].join("\n");
 }
 
 function stanzaIdFromRequestPath(

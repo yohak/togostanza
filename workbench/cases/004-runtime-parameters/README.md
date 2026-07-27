@@ -265,3 +265,19 @@ pnpm run serve:fixture
 ```
 
 確認URLは `http://127.0.0.1:4174/fixtures/runtime-parameters.html` とする。`build:local` / `serve:local` はrepo-local CLIを呼ぶworkbench用scriptであり、生成repo利用者向けの `build` / `serve` とは分けている。
+
+## Phase 13 ヘルププレビュー観測
+
+- 確認日: 2026-07-27
+- 確認対象: `src/test/browser/custom-element.smoke.spec.ts`
+- 確認コマンド: `mise exec -- pnpm run test:browser`
+
+リメイク版のリッチなヘルププレビューで、次を確認した。
+
+- `stanza:parameter` からtext、number、boolean、single-choice、date、datetime、jsonのフォームが生成される。
+- パラメーター初期値は `stanza:default` を優先し、無い場合は `stanza:example` を使う。
+- query parameterを付けてヘルプページを開いても、フォーム初期値は上書きされない。
+- フォーム値の変更はプレビュー対象custom elementの属性へ反映され、Stanzaの再描画へつながる。
+- booleanがfalseの場合は対象属性を付けず、trueにした場合だけ属性を付ける。
+- `stanza:style` の既定値からフォームを生成し、変更値をcustom elementのCSS custom propertyへ反映する。
+- HTML snippetは現在のparameter値を反映し、既定値から変更されたstyleだけをstyle blockへ含める。

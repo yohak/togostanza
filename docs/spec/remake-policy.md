@@ -202,7 +202,7 @@ Stanza stylesheetは `style.scss` を正とする。`stanza.scss` は旧ドキ�
 
 `${id}.js.map` は開発支援寄りの生成物として扱い、必須互換には置かない。
 
-`index.html`、`-togostanza/help-app.js` などのヘルププレビュー側生成物は `再設計` 可能とする。`${id}.html` はmenuのAbout導線から参照されるため存在は維持するが、内容は再設計可能とする。
+`index.html`、`-togostanza/help-app.js` などのヘルププレビュー側生成物は `再設計` 可能とする。`${id}.html` はmenuのAbout導線から参照されるため存在を維持し、Stanza開発者がパラメーターとstyleを変更できるリッチなヘルププレビューを提供する。実装にはVue 3とBootstrap 5 CSSを採用し、Bootstrap JSは使わない。query parameterによる初期値上書きは採用しない。具体的なDOM構造、CSS class、内部bundle名は固定しない。
 
 既存Stanzaソースからのasset importが壊れないことも開発契約として見る。ただし、data URL inline、別ファイルemit、hash名、size thresholdなどのasset処理詳細は実装時に判断する。
 
@@ -317,4 +317,4 @@ Svelteなど、旧ドキュメントに例はあるが実プロジェクトで�
 - Vite 8実装設計。
 - `togostanza.config.ts` の具体schema。
 - 実プロジェクトregression testの設計。
-- ヘルププレビューの再設計範囲。
+- ヘルププレビューの追加改善範囲。

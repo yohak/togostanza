@@ -111,3 +111,17 @@
 Phase 6では、011用の `remake/generated-repo/` は新規作成しない。`serve` の実挙動はPhase 3でpackage automated testとして確認済みであり、watcher、HTTP server、一時ディレクトリcleanupを含むため、現時点ではpackage testを正本の確認入口とする。
 
 011をworkbench入力として独立させる場合は、後続で `remake/generated-repo/` に `serve:local` を置き、Stanza entrypoint、metadata、template、stylesheet、asset、設定、共有ソースの変更を人間が再実行できる形へ切り出す。
+
+## リメイク版観測: Phase 13
+
+- 確認日: 2026-07-27
+- 確認対象: `src/cli/router.spec.ts`、`src/test/browser/custom-element.smoke.spec.ts`
+- 確認コマンド: `mise exec -- pnpm run test:unit`、`mise exec -- pnpm run test:browser`
+
+Phase 13では、Phase 3のserve専用最小HTMLを廃止し、`buildStanzaArtifacts()` が一時出力ディレクトリへ生成した `index.html` と `{id}.html` をそのまま配信する形へ変更した。
+
+- `/` はbuild生成物と同じStanza一覧を返し、`/{id}.html` へ遷移できる。
+- `/{id}.html` はbuild生成物と同じVue 3 + Bootstrap 5 CSSのリッチなヘルププレビューを返す。
+- parameter / style UI、custom elementプレビュー、HTML snippet、Events、About、Download JSON導線がbuildとserveで共通になる。
+- `serve` は引き続きStanzaリポジトリ外の一時出力ディレクトリを使い、`dist/` を作成、clear、上書きしない。
+- stanza別再ビルド失敗中は対象stanzaのURLへHTTP 500を返し、正常な生成物へ復帰する既存挙動を維持する。

@@ -394,3 +394,17 @@ pnpm run build:local
 - 生成workflowのAction major tagは、Phase 2-6で確認済みのtagを使う。Action versionは外部互換契約にはせず、tag更新やlive validationはPhase 12または保守更新で扱う。
 - `packageManager` fieldはPhase 10では生成しない。pnpm workflowはpnpm 11系を明示する。
 - 実スキャフォールドからそのままpushしてGitHub Actions deployまで通ることは、`main` がinstall可能な公開入口として整った後に確認する。
+
+## Phase 13 リメイク版観測
+
+- 確認日: 2026-07-27
+- 確認対象: `src/cli/router.spec.ts`、`src/test/integration/cli.integration.spec.ts`、`src/test/browser/custom-element.smoke.spec.ts`
+- 確認コマンド: `mise exec -- pnpm run test:unit`、`mise exec -- pnpm run test:browser`
+
+`init` で作成したStanzaリポジトリをリメイク版CLIでビルドし、次を確認した。
+
+- `dist/index.html` が生成され、ビルド対象stanzaの一覧と各 `{id}.html` への導線を持つ。
+- `dist/{id}.html` が対象stanzaのリッチなヘルププレビューを起動する。
+- `dist/-togostanza/help-app.js` と `dist/-togostanza/help-app.css` が生成される。
+- ヘルププレビューのapp生成物は相対URLで参照されるため、GitHub Pagesのサブパス配信でもリポジトリrootを前提にしない。
+- `-togostanza/` 配下のbundle名や内部チャンク構造は外部契約として固定しない。

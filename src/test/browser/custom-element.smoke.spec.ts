@@ -507,6 +507,44 @@ test("maps runtime parameters in built Stanza custom elements", async ({ page })
   }
 });
 
+test("provides the same rich help preview after build and through serve", async ({ page }) => {
+  const cwd = makeTemporaryDirectory();
+  await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+  writeHelpPreviewProbe(cwd);
+  await runCli(["build", "--output-path", "public"], cwd);
+  const staticServer = await startStaticServer(cwd, []);
+
+  try {
+    const port = addressPort(staticServer);
+    await assertRichHelpPreview(
+      page,
+      `http://127.0.0.1:${port}/public/help-preview-probe.html?label=query-override`,
+    );
+
+    await page.goto(`http://127.0.0.1:${port}/public/index.html`);
+    await expect(page.getByRole("link", { name: "Help Preview Probe" })).toHaveAttribute(
+      "href",
+      "./help-preview-probe.html",
+    );
+  } finally {
+    await closeServer(staticServer);
+  }
+
+  const servePort = await findAvailablePort();
+  const serve = startServeCli(["serve", "--port", String(servePort)], cwd);
+
+  try {
+    await serve.waitForStdout(`http://127.0.0.1:${servePort}/`);
+    await page.goto(`http://127.0.0.1:${servePort}/`);
+    await page.getByRole("link", { name: "Help Preview Probe" }).click();
+    await expect(page).toHaveURL(`http://127.0.0.1:${servePort}/help-preview-probe.html`);
+    await expect(page.locator('[data-togostanza-parameter="label"]')).toHaveValue("default-label");
+    await expect.poll(() => readHelpPreviewProbeValue(page, "label")).toBe("default-label");
+  } finally {
+    await serve.close();
+  }
+});
+
 test("supports Phase 2-3 Stanza source APIs in built custom elements", async ({ page }) => {
   const cwd = makeTemporaryDirectory();
   await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
@@ -2055,6 +2093,272 @@ function formatAttributeChange(change) {
   <dt>render count</dt><dd data-probe="render-count">{{renderCount}}</dd>
 </dl>
 `,
+    "utf8",
+  );
+}
+
+async function assertRichHelpPreview(page: Page, url: string): Promise<void> {
+  await page.goto(url);
+  await page.waitForFunction(() => customElements.get("togostanza-help-preview-probe"));
+
+  const preview = page.locator(
+    '[data-togostanza-preview="help-preview-probe"] togostanza-help-preview-probe',
+  );
+  const labelInput = page.locator('[data-togostanza-parameter="label"]');
+  const countInput = page.locator('[data-togostanza-parameter="count"]');
+  const widthInput = page.locator('[data-togostanza-parameter="width"]');
+  const emptyTextInput = page.locator('[data-togostanza-parameter="empty-text"]');
+  const flagInput = page.locator('[data-togostanza-parameter="flag"]');
+  const modeInput = page.locator('[data-togostanza-parameter="mode"]');
+  const dateInput = page.locator('[data-togostanza-parameter="day"]');
+  const datetimeInput = page.locator('[data-togostanza-parameter="moment"]');
+  const payloadInput = page.locator('[data-togostanza-parameter="payload"]');
+  const snippet = page.locator("[data-togostanza-snippet]");
+
+  await expect(labelInput).toHaveValue("default-label");
+  await expect(countInput).toHaveAttribute("type", "number");
+  await expect(countInput).toHaveValue("2");
+  await expect(widthInput).toHaveValue("");
+  await expect(emptyTextInput).toHaveValue("");
+  await expect(flagInput).not.toBeChecked();
+  await expect(modeInput).toHaveValue("compact");
+  await expect(dateInput).toHaveAttribute("type", "date");
+  await expect(datetimeInput).toHaveAttribute("type", "datetime-local");
+  await expect(payloadInput).toHaveAttribute("type", "text");
+  await expect(preview).not.toHaveAttribute("flag");
+  await expect(preview).not.toHaveAttribute("width");
+  await expect(preview).toHaveAttribute("empty-text", "");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "label")).toBe("default-label");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "width")).toBe("null");
+  await expect(snippet).not.toContainText("\n  width=");
+  await expect(snippet).toContainText('empty-text=""');
+  await expect(snippet).not.toContainText("--help-preview-accent");
+
+  await labelInput.fill("updated-label");
+  await countInput.fill("7");
+  await widthInput.fill("640");
+  await modeInput.selectOption("expanded");
+  await dateInput.fill("2026-08-01");
+  await datetimeInput.fill("2026-08-01T09:30");
+  await payloadInput.fill('{"updated":true}');
+  await flagInput.check();
+
+  await expect.poll(() => readHelpPreviewProbeValue(page, "label")).toBe("updated-label");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "count")).toBe("7");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "width")).toBe("640");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "mode")).toBe("expanded");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "day")).toBe("2026-08-01");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "moment")).toBe("2026-08-01T09:30");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "payload")).toBe('{"updated":true}');
+  await expect.poll(() => readHelpPreviewProbeValue(page, "flag")).toBe("true");
+  await expect(preview).toHaveAttribute("width", "640");
+  await expect(preview).toHaveAttribute("flag", "");
+
+  await flagInput.uncheck();
+  await expect.poll(() => readHelpPreviewProbeValue(page, "flag")).toBe("false");
+  await expect(preview).not.toHaveAttribute("flag");
+
+  await page.locator('[data-togostanza-tab="styles"]').click();
+  const colorInput = page.locator('[data-togostanza-style="--help-preview-accent"]');
+  await expect(colorInput).toHaveValue("#245c73");
+  await colorInput.fill("#ff0000");
+  await expect
+    .poll(() =>
+      preview.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue("--help-preview-accent").trim(),
+      ),
+    )
+    .toBe("#ff0000");
+  await expect
+    .poll(() =>
+      preview.evaluate((element) => {
+        const main = element.shadowRoot?.querySelector<HTMLElement>("main");
+        return main ? getComputedStyle(main).borderLeftColor : "";
+      }),
+    )
+    .toBe("rgb(255, 0, 0)");
+
+  await expect(snippet).toContainText(
+    '<script type="module" src="./help-preview-probe.js"></script>',
+  );
+  await expect(snippet).toContainText('label="updated-label"');
+  await expect(snippet).toContainText('width="640"');
+  await expect(snippet).toContainText('day="2026-08-01"');
+  await expect(snippet).toContainText('moment="2026-08-01T09:30"');
+  await expect(snippet).toContainText('payload="{&quot;updated&quot;:true}"');
+  await expect(snippet).not.toContainText("\n  flag");
+  await expect(snippet).toContainText("--help-preview-accent: #ff0000;");
+
+  await page.locator('[data-togostanza-tab="events"]').click();
+  await expect(page.getByText("selectedValue")).toBeVisible();
+  await page.locator('[data-togostanza-tab="about"]').click();
+  await expect(page.getByRole("link", { name: "Download JSON" })).toHaveAttribute(
+    "href",
+    "./help-preview-probe/metadata.json",
+  );
+}
+
+function readHelpPreviewProbeValue(page: Page, key: string): Promise<string> {
+  return page
+    .locator('[data-togostanza-preview="help-preview-probe"] togostanza-help-preview-probe')
+    .evaluate((element, probeKey) => {
+      return (
+        element.shadowRoot?.querySelector<HTMLElement>(`[data-probe="${probeKey}"]`)?.textContent ??
+        ""
+      );
+    }, key);
+}
+
+function writeHelpPreviewProbe(cwd: string): void {
+  const stanzaDirectory = resolve(cwd, "stanzas", "help-preview-probe");
+  mkdirSync(resolve(stanzaDirectory, "templates"), { recursive: true });
+  mkdirSync(resolve(stanzaDirectory, "assets"), { recursive: true });
+  writeFileSync(
+    resolve(stanzaDirectory, "metadata.json"),
+    `${JSON.stringify(
+      {
+        "@context": { stanza: "http://togostanza.org/resource/stanza#" },
+        "@id": "help-preview-probe",
+        "stanza:author": "Codex",
+        "stanza:definition": "Browser probe for the rich help preview.",
+        "stanza:incomingEvent": [
+          {
+            "stanza:description": "Receives a selected value.",
+            "stanza:key": "selectedValue",
+          },
+        ],
+        "stanza:label": "Help Preview Probe",
+        "stanza:license": "MIT",
+        "stanza:menu-placement": "none",
+        "stanza:outgoingEvent": [],
+        "stanza:parameter": [
+          {
+            "stanza:default": "default-label",
+            "stanza:description": "Text label.",
+            "stanza:example": "example-label",
+            "stanza:key": "label",
+            "stanza:type": "string",
+          },
+          {
+            "stanza:example": "2",
+            "stanza:key": "count",
+            "stanza:type": "number",
+          },
+          {
+            "stanza:description": "Number without a default or example.",
+            "stanza:key": "width",
+            "stanza:type": "number",
+          },
+          {
+            "stanza:default": "",
+            "stanza:description": "Text with an explicit empty default.",
+            "stanza:key": "empty-text",
+            "stanza:type": "string",
+          },
+          {
+            "stanza:default": false,
+            "stanza:key": "flag",
+            "stanza:type": "boolean",
+          },
+          {
+            "stanza:choice": ["compact", "expanded"],
+            "stanza:example": "compact",
+            "stanza:key": "mode",
+            "stanza:type": "single-choice",
+          },
+          {
+            "stanza:example": "2026-07-27",
+            "stanza:key": "day",
+            "stanza:type": "date",
+          },
+          {
+            "stanza:example": "2026-07-27T17:00",
+            "stanza:key": "moment",
+            "stanza:type": "datetime",
+          },
+          {
+            "stanza:example": '{"initial":true}',
+            "stanza:key": "payload",
+            "stanza:type": "json",
+          },
+        ],
+        "stanza:style": [
+          {
+            "stanza:default": "#245c73",
+            "stanza:key": "--help-preview-accent",
+            "stanza:type": "color",
+          },
+        ],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "index.js"),
+    `import Stanza from "togostanza/stanza";
+
+export default class HelpPreviewProbe extends Stanza {
+  render() {
+    this.renderTemplate({
+      template: "stanza.html.hbs",
+      parameters: {
+        count: String(this.params.count),
+        day: formatDate(this.params.day),
+        flag: String(this.params.flag),
+        label: String(this.params.label),
+        mode: String(this.params.mode),
+        moment: formatDatetime(this.params.moment),
+        payload: JSON.stringify(this.params.payload),
+        width: String(this.params.width),
+      },
+    });
+  }
+}
+
+function formatDate(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    return String(value);
+  }
+
+  return value.toISOString().slice(0, 10);
+}
+
+function formatDatetime(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    return String(value);
+  }
+
+  return \`\${[
+    value.getFullYear(),
+    String(value.getMonth() + 1).padStart(2, "0"),
+    String(value.getDate()).padStart(2, "0"),
+  ].join("-")}T\${String(value.getHours()).padStart(2, "0")}:\${String(
+    value.getMinutes(),
+  ).padStart(2, "0")}\`;
+}
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "templates", "stanza.html.hbs"),
+    `<dl>
+  <dt>label</dt><dd data-probe="label">{{label}}</dd>
+  <dt>count</dt><dd data-probe="count">{{count}}</dd>
+  <dt>width</dt><dd data-probe="width">{{width}}</dd>
+  <dt>flag</dt><dd data-probe="flag">{{flag}}</dd>
+  <dt>mode</dt><dd data-probe="mode">{{mode}}</dd>
+  <dt>day</dt><dd data-probe="day">{{day}}</dd>
+  <dt>moment</dt><dd data-probe="moment">{{moment}}</dd>
+  <dt>payload</dt><dd data-probe="payload">{{payload}}</dd>
+</dl>
+`,
+    "utf8",
+  );
+  writeFileSync(
+    resolve(stanzaDirectory, "style.scss"),
+    "main { border-left: 4px solid var(--help-preview-accent); }\n",
     "utf8",
   );
 }
