@@ -81,6 +81,16 @@ try {
     projectDirectory: join(temporaryRoot, "pnpm-lockfile-project"),
     releaseRepository,
   });
+  if (expectedGithubMainSha) {
+    runPublicGithubMainLockfileSmoke({
+      packageManager: "npm",
+      projectDirectory: join(temporaryRoot, "npm-public-main-project"),
+    });
+    runPublicGithubMainLockfileSmoke({
+      packageManager: "pnpm",
+      projectDirectory: join(temporaryRoot, "pnpm-public-main-project"),
+    });
+  }
 
   console.log(
     `Git dependency smoke passed: ${packageJson.name}@${packageJson.version} (${gitSpec})`,
@@ -201,6 +211,48 @@ function runTaglessLockfileSmoke(input) {
 
   updateProjectDependency(input);
   assertInstalledPackageVersion(input.projectDirectory, updatedVersion);
+}
+
+function runPublicGithubMainLockfileSmoke(input) {
+  mkdirSync(input.projectDirectory, { recursive: true });
+  writeFileSync(
+    join(input.projectDirectory, "package.json"),
+    `${JSON.stringify(
+      {
+        dependencies: {
+          togostanza: "github:yohak/togostanza",
+        },
+        name: `${input.packageManager}-public-main-lockfile-smoke`,
+        private: true,
+        type: "module",
+        version: "0.0.0",
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  if (input.packageManager === "pnpm") {
+    writeFileSync(
+      join(input.projectDirectory, "pnpm-workspace.yaml"),
+      formatPnpmWorkspace(),
+      "utf8",
+    );
+  }
+
+  installProject(input);
+  assertLockfileContains(input.projectDirectory, expectedGithubMainSha);
+  assertInstalledPackageContents(input.projectDirectory);
+  run(join(input.projectDirectory, "node_modules", ".bin", "togostanza"), ["--version"], {
+    cwd: input.projectDirectory,
+  });
+
+  rmSync(join(input.projectDirectory, "node_modules"), { force: true, recursive: true });
+  installProjectFrozen(input);
+  assertLockfileContains(input.projectDirectory, expectedGithubMainSha);
+  run(join(input.projectDirectory, "node_modules", ".bin", "togostanza"), ["--version"], {
+    cwd: input.projectDirectory,
+  });
 }
 
 function readReleaseRepositoryPackageVersion(releaseRepository) {

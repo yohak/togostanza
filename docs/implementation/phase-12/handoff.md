@@ -123,6 +123,7 @@ mise exec -- pnpm run test:compat:local
 mise exec -- pnpm run check-all
 mise exec -- pnpm run test:distribution:local
 mise exec -- pnpm run test:github-dependency:local
+TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA=c60faa284cb4f9e21a7f737c06312f8a4a753a39 mise exec -- pnpm run test:github-dependency:local
 git diff --check
 ```
 
@@ -136,6 +137,9 @@ git diff --check
 - `test:github-dependency:local`: pass
   - local release repositoryのdefault branch `main` をref指定なし `git+file://...` でinstallするsmoke: pass
   - ref指定なし `git+file://...` のlockfileなしfresh install / lockfileありfrozen install / 明示更新smoke: pass
+- `TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA=c60faa284cb4f9e21a7f737c06312f8a4a753a39 mise exec -- pnpm run test:github-dependency:local`: pass
+  - 公開 `github:yohak/togostanza` がremote `main` の `c60faa2` を解決することを確認した。
+  - 公開 `github:yohak/togostanza` のlockfileなしfresh install / lockfileありfrozen installをnpm / pnpm双方で確認した。
 - `git diff --check`: pass
 
 確認時に、既知制約であるSass `@import` deprecation warningは再度出た。Phase 12では失敗扱いにしない。
