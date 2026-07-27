@@ -21,6 +21,7 @@ const packageJson = JSON.parse(readFileSync(resolve(packageRoot, "package.json")
   version: string;
 };
 const temporaryDirectories: string[] = [];
+const statusTimestampPattern = String.raw`\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}\]`;
 
 function runCli(
   args: string[],
@@ -454,7 +455,7 @@ describe("CLI smoke", () => {
     expect(result.code).toBe(0);
     expect(result.stdout).toContain("Built Stanza repository: repo");
     expect(result.stdout).toContain("Output: public");
-    expect(result.stdout).toMatch(/Duration: \d+ ms/);
+    expect(result.stdout).toMatch(new RegExp(`${statusTimestampPattern} Duration: \\d+ ms`));
     expect(result.stdout).toContain("  pnpm serve");
     expect(result.stderr).toBe("");
     expect(existsSync(resolve(cwd, "public", "hello-world.js"))).toBe(true);

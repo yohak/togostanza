@@ -7,6 +7,7 @@ import { buildStanzaArtifacts } from "./build.js";
 import { getStringOption, parseOptions } from "./options.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure } from "./result.js";
+import { formatStatusTimestamp } from "./status-time.js";
 const defaultPort = 8080;
 const listenHost = "127.0.0.1";
 const watchDebounceMs = 80;
@@ -238,19 +239,22 @@ async function rebuildStanza(rootDirectory, outputDirectories, state, stanzaId) 
     };
 }
 function formatInitialBuildStatus(input) {
+    const timestamp = formatStatusTimestamp();
     return input.state.kind === "ready"
-        ? `Initial build completed in ${input.durationMs} ms.`
-        : `Initial build failed in ${input.durationMs} ms.`;
+        ? `${timestamp} Initial build completed in ${input.durationMs} ms.`
+        : `${timestamp} Initial build failed in ${input.durationMs} ms.`;
 }
 function formatAllRebuildStatus(input) {
+    const timestamp = formatStatusTimestamp();
     return input.state.kind === "ready"
-        ? `Rebuilt all stanzas in ${input.durationMs} ms.`
-        : `Rebuild failed in ${input.durationMs} ms.`;
+        ? `${timestamp} Rebuilt all stanzas in ${input.durationMs} ms.`
+        : `${timestamp} Rebuild failed in ${input.durationMs} ms.`;
 }
 function formatStanzaRebuildStatus(stanzaId, input) {
+    const timestamp = formatStatusTimestamp();
     return input.state.stanzaErrors.has(stanzaId)
-        ? `Rebuild failed for stanza ${stanzaId} in ${input.durationMs} ms.`
-        : `Rebuilt stanza ${stanzaId} in ${input.durationMs} ms.`;
+        ? `${timestamp} Rebuild failed for stanza ${stanzaId} in ${input.durationMs} ms.`
+        : `${timestamp} Rebuilt stanza ${stanzaId} in ${input.durationMs} ms.`;
 }
 function elapsedMs(startedAt) {
     return Math.max(0, Math.round(performance.now() - startedAt));

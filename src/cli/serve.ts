@@ -15,6 +15,7 @@ import { buildStanzaArtifacts, type StanzaDefinition } from "./build.js";
 import { getStringOption, parseOptions } from "./options.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure, type CliResult } from "./result.js";
+import { formatStatusTimestamp } from "./status-time.js";
 
 export type ServeSession = {
   close(): Promise<void>;
@@ -352,24 +353,30 @@ async function rebuildStanza(
 }
 
 function formatInitialBuildStatus(input: { durationMs: number; state: ServeState }): string {
+  const timestamp = formatStatusTimestamp();
+
   return input.state.kind === "ready"
-    ? `Initial build completed in ${input.durationMs} ms.`
-    : `Initial build failed in ${input.durationMs} ms.`;
+    ? `${timestamp} Initial build completed in ${input.durationMs} ms.`
+    : `${timestamp} Initial build failed in ${input.durationMs} ms.`;
 }
 
 function formatAllRebuildStatus(input: { durationMs: number; state: ServeState }): string {
+  const timestamp = formatStatusTimestamp();
+
   return input.state.kind === "ready"
-    ? `Rebuilt all stanzas in ${input.durationMs} ms.`
-    : `Rebuild failed in ${input.durationMs} ms.`;
+    ? `${timestamp} Rebuilt all stanzas in ${input.durationMs} ms.`
+    : `${timestamp} Rebuild failed in ${input.durationMs} ms.`;
 }
 
 function formatStanzaRebuildStatus(
   stanzaId: string,
   input: { durationMs: number; state: Extract<ServeState, { kind: "ready" }> },
 ): string {
+  const timestamp = formatStatusTimestamp();
+
   return input.state.stanzaErrors.has(stanzaId)
-    ? `Rebuild failed for stanza ${stanzaId} in ${input.durationMs} ms.`
-    : `Rebuilt stanza ${stanzaId} in ${input.durationMs} ms.`;
+    ? `${timestamp} Rebuild failed for stanza ${stanzaId} in ${input.durationMs} ms.`
+    : `${timestamp} Rebuilt stanza ${stanzaId} in ${input.durationMs} ms.`;
 }
 
 function elapsedMs(startedAt: number): number {

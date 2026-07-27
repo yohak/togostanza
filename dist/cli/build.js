@@ -15,6 +15,7 @@ import { formatTogoStanzaCommand } from "./package-command.js";
 import { resolveStanzaRepoContext } from "./repo-context.js";
 import { failure } from "./result.js";
 import { isValidStanzaId, titleCaseStanzaId } from "./stanza-id.js";
+import { formatStatusTimestamp } from "./status-time.js";
 const require = createRequire(import.meta.url);
 const outputMarkerFileName = ".togostanza-build-output";
 const knownSourceOrControlDirectories = new Set([
@@ -62,7 +63,7 @@ export async function handleBuild(args, options = {}) {
         stdout: [
             `Built Stanza repository: ${repoContextResult.context.packageName}`,
             `Output: ${outputPath}`,
-            `Duration: ${durationMs} ms`,
+            `${formatStatusTimestamp()} Duration: ${durationMs} ms`,
             "",
             "Next step:",
             `  ${formatTogoStanzaCommand({

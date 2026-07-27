@@ -31,8 +31,9 @@
 - build相当URLをサーバrootから配信すること。
 - loopback originからの `GET` と `OPTIONS` preflightにCORS headerを返すこと。
 - `serve` が `dist/` を書き換えないこと。
+- `serve` は永続出力先をclearしないため、`build --output-path` の出力先clear promptを出さないこと。
 - 変更後にページ再読み込みで反映されること。
-- 初回ビルドと再ビルド完了時に、更新完了とビルド所要時間が標準出力へ表示されること。
+- 初回ビルドと再ビルド完了時に、更新完了、更新時刻、ビルド所要時間が標準出力へ表示されること。
 - stanza固有入力の変更では対象stanzaだけが再ビルドされること。
 - 依存グラフ上の変更では影響を受けるstanzaがinvalidateされること。
 - 安全に特定できない変更では全体invalidateされること。
@@ -44,7 +45,7 @@
 - 必須URLが配信される。
 - loopback originからのCORS確認ができる。
 - Stanza entrypoint、metadata、template、stylesheet、asset、設定、共有ソースの変更が反映される。
-- 初回ビルドと再ビルド完了時に、ビルド所要時間を含むstatus messageが確認できる。
+- 初回ビルドと再ビルド完了時に、更新時刻とビルド所要時間を含むstatus messageが確認できる。
 - 再ビルド失敗時にプロセスが終了しない。
 - ビルド失敗中の対象URLでエラー内容が分かる。
 - 修正後に通常のプレビューとbuild相当URLへ復帰する。
@@ -90,6 +91,7 @@
 - loopback originからの `GET /{id}.js` で `Access-Control-Allow-Origin` が返り、`OPTIONS /{id}.js` がHTTP 204で返る。
 - 未知拡張子の実在assetは、`application/octet-stream` でHTTP 200として配信される。
 - `serve` はStanzaリポジトリの `dist/` を作成しない。
+- `dist/` に既存生成物があっても、`serve` はそれをclear / overwrite対象にしない。
 - stanza固有入力である `style.scss` の変更後、対象stanzaのCSSが再ビルドされ、ページ再読み込みで反映される。
 - 共有ソース変更後、共有ソースを使う複数stanzaのbundleが全体rebuildで更新される。
 - root asset変更後、serve経由のroot asset URLが全体rebuildで更新される。
@@ -101,7 +103,7 @@
 現行版との差分:
 
 - リメイク版Phase 3の `/{id}.html` は、ヘルププレビューの完全復元ではなく、custom elementを確認するための最小プレビューである。
-- リメイク版Phase 3は `dist/` を書き換えず、一時出力ディレクトリ上のbuild相当生成物を配信する。
+- リメイク版Phase 3は `dist/` を書き換えず、一時出力ディレクトリ上のbuild相当生成物を配信する。これは、`serve` 実行だけで公開用 `dist/` を削除・更新しないためと、再ビルド中の書きかけ生成物を配信しないための意図的な差分である。
 - 共有ソース変更時の精密な影響stanza特定、HMR、自動ブラウザreloadは未実装である。
 
 ## Phase 6 リメイク版workbench入力

@@ -58,7 +58,7 @@ Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行す�
 
 CLIは成功時にexit code `0` を返す。失敗時はnon-zeroを返す。細かいerror code分類とstdout/stderrの詳細な文言は互換対象にしない。ただし、入力不備、設定移行、ビルド失敗は、Stanza IDやファイルパスなど修正に必要な情報が分かる診断を出す。
 
-CLIは、Stanza開発者が次に何を確認すればよいか分かる状態メッセージを出す。文言そのものは固定しないが、`build` と `serve` のビルド完了メッセージには所要時間を含める。
+CLIは、Stanza開発者が次に何を確認すればよいか分かる状態メッセージを出す。文言そのものは固定しないが、`build` と `serve` のビルド完了メッセージには更新時刻と所要時間を含める。
 
 ## Stanzaリポジトリ
 
@@ -173,6 +173,8 @@ GitHub Pages公開導線は、Stanzaリポジトリそのものを公開する�
 
 `serve` は、開発中のStanzaリポジトリを監視し、変更に応じてbuild相当の生成物を更新しながらHTTPで配信する。`serve` は `dist/` を書き換えない。ファイルとして公開用生成物を作る場合は `build` を使う。
 
+`serve` はStanzaリポジトリ外の一時ディレクトリへbuild相当生成物を作るため、`build --output-path` のような出力先clear promptは発生しない。`serve` 実行時に既存の `dist/` があっても、`serve` はそれを削除、更新、配信対象として利用しない。
+
 `serve` はlocalhostのみでlistenする。TogoMedium Webのような別のlocalhost開発サーバーからmodule scriptを読み込んで確認できるように、loopback originからの開発用CORSは許可する。ただし、外部Webアプリ向けの汎用配信サーバーとしては扱わない。
 
 `serve` はbuild相当生成物をサーバrootから配信する。少なくとも次のURLを提供する。
@@ -196,7 +198,7 @@ Stanza entrypoint、stylesheet、template、metadata、stanza別assetの変更�
 
 `serve` は初回ビルドや再ビルドに失敗しても終了しない。ビルド失敗中の対象URLには、エラー内容が分かるHTMLをHTTP 500で返す。入力が修正された場合は再ビルドし、通常のプレビューとbuild相当URLへ復帰する。
 
-`serve` は、初回ビルドとファイル変更ごとの再ビルドが完了するたびに、更新が完了したこととビルド所要時間を標準出力へ表示する。文言は固定しないが、Stanza開発者が「変更が反映されたか」と「どれくらい時間がかかったか」を確認できることを維持する。
+`serve` は、初回ビルドとファイル変更ごとの再ビルドが完了するたびに、更新が完了したこと、更新時刻、ビルド所要時間を標準出力へ表示する。文言は固定しないが、Stanza開発者が「いつ変更が反映されたか」と「どれくらい時間がかかったか」を確認できることを維持する。
 
 ## ランタイム埋め込み
 
