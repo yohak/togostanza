@@ -32,7 +32,7 @@ const localCorsOrigin = "http://127.0.0.1:5173";
 const localhostCorsOrigin = "http://localhost:5173";
 const localCompatibilityIt = process.env.TOGOSTANZA_RUN_LOCAL_COMPAT === "1" ? it : it.skip;
 const releaseDependencySpec = "git+file:///tmp/togostanza-release-smoke#phase-12";
-const statusTimestampPattern = String.raw`\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}\]`;
+const statusTimestampPattern = String.raw`\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]`;
 
 const failingInstallRunner: CommandRunner = () => {
   throw new Error("install runner should not be called");

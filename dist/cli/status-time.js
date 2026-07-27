@@ -4,7 +4,8 @@ export function formatStatusTimestamp(date = new Date()) {
     const day = padDatePart(date.getDate());
     const hours = padDatePart(date.getHours());
     const minutes = padDatePart(date.getMinutes());
-    return `[${year}-${month}-${day} ${hours}:${minutes}]`;
+    const seconds = padDatePart(date.getSeconds());
+    return `[${year}-${month}-${day} ${hours}:${minutes}:${seconds}]`;
 }
 function padDatePart(value) {
     return String(value).padStart(2, "0");

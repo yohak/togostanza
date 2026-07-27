@@ -4,8 +4,9 @@ export function formatStatusTimestamp(date = new Date()): string {
   const day = padDatePart(date.getDate());
   const hours = padDatePart(date.getHours());
   const minutes = padDatePart(date.getMinutes());
+  const seconds = padDatePart(date.getSeconds());
 
-  return `[${year}-${month}-${day} ${hours}:${minutes}]`;
+  return `[${year}-${month}-${day} ${hours}:${minutes}:${seconds}]`;
 }
 
 function padDatePart(value: number): string {
