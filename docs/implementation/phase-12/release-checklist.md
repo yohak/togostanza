@@ -25,10 +25,10 @@ Phase 12の短期配布経路は、npm registryへのpublishではなくGitHub d
 | root package layout | Phase 12-0で移行 | repo rootをinstallable packageにする。 |
 | workspace | なし | `docs/`、`workbench/`、`references/` をroot packageのworkspace対象にしない。 |
 | install時build | なし | `prepare` やinstall scriptで `dist/` を作らない。 |
-| branch roles | local / remote `develop` 作成済み | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。local / remote `develop` は作成済み。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。branch protectionと、`main` への反映実行は後続で実装する。 |
+| branch roles | `main` への公開反映を1回実施済み | `develop` を通常開発branch、`main` をinstall可能な公開入口、tagを検証・固定refとして扱う。Phase 13とPhase 14は `develop` から `main` へ反映済みで、`main` はbuild済み `dist/` を含む。local `develop` はremote `develop` より6 commit進んでいる。branch protectionとremote `develop` の同期は後続で扱う。 |
 | `develop` の `dist/` | 追跡なし | local `develop` では `dist/` をGit追跡対象から外した。通常開発branchでは `dist/` をcommitしない。 |
 | `main` の `dist/` | 必須 | タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能な状態を保つ。install時buildを使わない限り、build済み `dist/` を必ず含める。 |
-| `.gitignore` と `dist/` | local確認済み / main反映未実装 | `develop` では無視し、`main` やrelease tagでは明示的に同梱する。 |
+| `.gitignore` と `dist/` | local確認済み / `main` 反映済み | `develop` では無視し、`main` やrelease tagでは明示的に同梱する。 |
 | files | `bin/`, `dist/` | install対象を実行入口とcompiled JSへ絞る。 |
 | bin | `togostanza` -> `./bin/togostanza.mjs` | root直下の `bin/` で維持する。 |
 | exports | `./config`, `./stanza` | Stanza開発者向けの開発契約として維持する。 |

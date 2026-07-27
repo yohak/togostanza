@@ -21,7 +21,7 @@
 - 現行版の `init` が生成するStanzaリポジトリは、`dependencies.togostanza` にタグ無しGitHub dependencyを持つ。リメイク版も、短期の `yohak` 経路では `github:yohak/togostanza` を通常生成する。
 - `engines.node` は `>=24.5.0` から `>=24.0.0` へ緩和済みである。開発・検証の標準実行環境はroot `mise.toml` のNode 24.5.0を維持する。
 - `init`、`generate stanza`、`build`、`serve` の成功メッセージ、`build` / `serve` の更新時刻つきビルド所要時間、`build` の対話的な出力先clearは整備済みである。
-- `develop` / `main` / immutable tagの役割方針は採用済みである。local / remote `develop` branchは作成済みで、`dist/` はGit追跡対象から外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済みbaselineである。ただし、branch protectionと、その後の `develop` から `main` へ反映する実作業は未実施である。
+- `develop` / `main` / immutable tagの役割方針は採用済みである。Phase 13とPhase 14は、`develop` から `main` へsourceをmergeし、同じworktreeでbuildした `dist/` を含める手順で公開反映済みである。local / remote `main` は `96722c8` で一致している。local `develop` headは `main` へmerge済みだが、remote `develop` より6 commit進んでいる。branch protectionと現在の公開 `main` に対するGitHub dependency smokeは未実施または未記録である。
 - GitHub dependencyのtagは不変として扱う方針に変更済みである。修正版は新しいtagを作り、Stanzaリポジトリ側のdependency spec更新とlockfile再生成を案内する。
 - GitHub dependency経路は短期配布経路として成立している。Phase 13でリッチなヘルププレビュー、Phase 14でmenu UI polishも復元済みである。一方、公開運用、Stanza開発者向けドキュメント、診断、正式版マージ後のnpm registry配布には未整理の項目が残る。
 
@@ -56,7 +56,7 @@
 
 | 項目 | 気になっていること | 対応方針 | 優先度 | 正式版マージ前 |
 | ---- | ---------------- | -------- | ------ | ---------------- |
-| `develop` から `main` への公開反映手順 | 正式版の生成repoはタグ無しGitHub dependencyを既定にする。つまり `main` は一般の人が見る公開入口であり、package managerがinstallする対象にもなる。install時buildを行わない限り、`main` と検証tagにはbuild済み `dist/` が必須。一方、通常開発branchで `dist/` を追跡し続けると、ソース変更と生成物変更が混ざる。local / remote `develop` は作成済みで、`dist/` 追跡も外した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済みbaselineだが、その後の `develop` headはまだ `main` へ反映していない。 | 採用済み方針として、`develop` を通常開発branch、`main` をinstall可能な公開入口、tagを開発中の検証・固定refとして扱う。公開remoteのdefault branchは `main` として確認済み。release checklistに公開反映手順を記録済み。次はbranch protectionと、`develop` から `main` への反映を行う。 | 高 | 必須 |
+| `main` 公開後確認とbranch運用 | 正式版の生成repoはタグ無しGitHub dependencyを既定にするため、`main` は一般の人が見る公開入口であり、package managerがinstallする対象にもなる。Phase 13とPhase 14はbuild済み `dist/` とともに `main` へ反映済みで、local / remote `main` は一致している。一方、local `develop` はremote `develop` より6 commit進んでおり、branch protectionと現在の公開 `main` に対するGitHub dependency smokeは未実施または未記録である。 | release checklistの公開反映手順は維持する。次は現在の `main` を期待SHA付きで公開remote smokeし、branch protectionとremote `develop` の同期方針を確認する。 | 高 | 必須 |
 | タグ無しGitHub dependencyのlockfile更新手順 | タグ無しGitHub dependencyも、install後はlockfileが解決commitを固定する。`main` が更新されても既存Stanzaリポジトリは自動追従しない。 | local smokeでfresh install、frozen install、同じdependency specでの明示更新を確認する。Stanza開発者向け手順は `docs/guides/github-dependency.md` に記録済み。 | 中 | 推奨 |
 | CLI diagnostic messages | 成功メッセージは一巡したが、validation、migration warning、environment warningなどの失敗時診断はまだ散っている。 | 現行版にはない改善機能に近いため、優先度は下げる。必要な局所改善は各作業で拾う。 | 低 | 後続 |
 | GitHub Pages live deploy確認 | workflow構造はあるが、公開GitHub Pages環境でのlive deployは未確認。 | 生成repoをpushして、install、build、artifact upload、deployまで通るかを見る。ローカル開発導線よりは一段下だが、現行版にもある公開体験として高優先に残す。 | 高 | 必須 |
@@ -107,7 +107,7 @@
 
 現時点のおすすめは、次の順である。
 
-1. branch protection・`main` 反映
+1. 現在の公開 `main` のGitHub dependency smoke・branch protection・remote `develop` の同期確認
 2. GitHub Pages live deploy確認
 3. 正式版マージ準備
 4. Stanza開発者向けドキュメント充実

@@ -38,7 +38,9 @@ workbench/
 
 正式版のbranch運用では、`develop` を通常開発branch、`main` を一般公開入口、tagを検証・固定refとして扱う方針を採用した。タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能である必要がある。install時buildを行わない方針を維持する限り、`main` は `dist/` を必ず含める。一方、`develop` では `dist/` を追跡しない。
 
-localでは `develop` branchを作成し、`dist/` をGit追跡対象から外した。remote `develop` も作成済みである。タグ無しGitHub dependencyはdefault branchを解決するため、公開remoteのdefault branchは `main` として維持する。公開remoteのdefault branchが `main` であることは2026-07-27に確認した。branch protectionと、`develop` から `main` への反映実行は後続作業で扱う。
+localでは `develop` branchを作成し、`dist/` をGit追跡対象から外した。remote `develop` も作成済みである。タグ無しGitHub dependencyはdefault branchを解決するため、公開remoteのdefault branchは `main` として維持する。公開remoteのdefault branchが `main` であることは2026-07-27に確認した。
+
+`develop` から `main` へsourceをmergeし、同じworktreeでbuildした `dist/` を公開merge commitへ含める手順は、Phase 13とPhase 14の公開反映で実施済みである。現在のlocal `develop` headは `main` にmerge済みだが、remote `develop` はlocal `develop` より6 commit遅れている。これは `main` の公開内容不足ではなく、通常開発branchのremote-tracking stateの差として扱う。branch protection、remote `develop` の同期、現在の公開 `main` に対するGitHub dependency smokeは後続作業として残る。
 
 ## 将来の分割
 

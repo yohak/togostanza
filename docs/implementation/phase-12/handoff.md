@@ -6,6 +6,8 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 
 その後の整理で、正式版の生成repo仕様は現行版に寄せ、タグ無しGitHub dependencyを既定にする方針にした。Phase 12で確認した `github:yohak/togostanza#yohak-github-20260723` は、開発中の検証と固定点のためのrefとして扱う。
 
+この文書の完了事項とpackage surface判断は、Phase 12終了時点の記録である。Phase 13とPhase 14の `main` 反映後を含む現在地は、[Phase 12後の残作業](./remaining-work.md)を参照する。
+
 ## 完了したこと
 
 - ローカルtarballを使った `pack -> install -> 実行` smokeを追加した。
@@ -62,8 +64,8 @@ Phase 12では短期方針をnpm publishではなくGitHub dependency distributi
 | concrete dependency spec injection | release手順やlocal smokeでは `TOGOSTANZA_DEPENDENCY_SPEC` で具体tagまたはcommit SHAを注入できる。 |
 | generated repo `packageManager` field | 生成しない。pnpm workflow側でpnpm 11系を明示する。 |
 | `engines.node` | `>=24.0.0` へ緩和した。開発・検証の標準実行環境は引き続きroot `mise.toml` のNode 24.5.0とする。 |
-| branch roles | local `develop` branchを作成し、通常開発branchとして `dist/` を追跡対象から外した。remote `develop` も作成済み。`main` はinstall可能な公開入口、tagは検証・固定refとして扱う。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。branch protectionと、`main` への反映実行は後続で実装する。 |
-| GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。タグ無しGitHub dependencyが読む `main` もinstall可能にする方針で、`develop` から `main` への反復可能な公開反映手順はrelease checklistに記録済み。実際の `main` 反映は後続で行う。 |
+| branch roles | Phase 12終了時点でlocal `develop` branchを作成し、通常開発branchとして `dist/` を追跡対象から外した。remote `develop` も作成済み。`main` はinstall可能な公開入口、tagは検証・固定refとして扱う。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。Phase 12終了時点では、branch protectionと `main` への反映実行を後続作業として残した。 |
+| GitHub dependency release ref | Phase 12では `git add -f dist/` でbuild済み `dist/` を含めるrefを確認した。タグ無しGitHub dependencyが読む `main` もinstall可能にする方針で、`develop` から `main` への反復可能な公開反映手順はrelease checklistに記録した。Phase 12終了時点では、実際の `main` 反映を後続作業として残した。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使った。今後の修正では既存tagを上書きせず、新しいrelease branch / tagを作る。 |
 
 ## 確認結果

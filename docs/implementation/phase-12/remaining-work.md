@@ -13,11 +13,11 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 | 項目 | 状態 |
 | ---- | ---- |
 | GitHub dependency install | `github:yohak/togostanza#yohak-github-20260723` でnpm / pnpmのsmoke確認済み。 |
-| 公開 `main` のタグ無しGitHub dependency | `github:yohak/togostanza` がremote `main` の `c60faa2` を解決し、npm / pnpmのlockfileなしfresh installとlockfileありfrozen installが通ることを確認済み。 |
+| 公開 `main` のタグ無しGitHub dependency | `c60faa2` を公開baselineとしてnpm / pnpmのsmoke確認済み。その後、Phase 13とPhase 14を含む `96722c8` をbuild済み `dist/` とともにremote `main` へ反映済み。現在の `main` に対する公開remote smokeは未記録。 |
 | 実プロジェクト確認 | TogoMedium実リポジトリで `dependencies.togostanza` をGitHub dependencyへ差し替え、意図通り動くことを人間確認済み。 |
 | release branch / tag | `release/yohak-github-dependency-20260723` と `yohak-github-20260723` を使用。 |
 | 生成repoのタグ無しGitHub dependency | `init` は通常生成で `github:yohak/togostanza` を書く。検証時だけ `TOGOSTANZA_DEPENDENCY_SPEC` でtagまたはcommit SHAを注入できる。 |
-| local `develop` branch | 作成済み。`dist/` はGit追跡対象から外し、通常開発branchでは生成物差分をcommitしない。 |
+| local `develop` branch | 作成済み。`dist/` はGit追跡対象から外し、通常開発branchでは生成物差分をcommitしない。local `develop` headは `main` へmerge済みだが、remote `develop` より6 commit進んでいる。 |
 | install対象 | `files` により `bin/` と `dist/` へ限定済み。 |
 | npm publish | Phase 12では行わない。 |
 
@@ -25,7 +25,7 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 | 項目 | 現在の状態 | 分類 | 影響 | 推奨 |
 | ---- | ---------- | ---- | ---- | ---- |
-| `develop` から `main` への公開反映手順 | local / remote `develop` は作成済みで、`dist/` 追跡も外した。公開remoteのdefault branchは `main` であることを2026-07-27に確認した。公開 `main` の `c60faa2` はタグ無しGitHub dependencyで検証済みbaselineである。一方、その後の `develop` headはまだ `main` へ反映していない。`main` 側で `develop` をmergeし、同じworktreeでbuild済み `dist/` をcommitする反復可能な手順はrelease checklistに記録済み。branch protectionと、`develop` から `main` への反映は未実施。 | 次にやる候補 | Stanza開発者がタグ無しGitHub dependencyでinstallできるか、通常開発で生成物差分が混ざらないかに影響する。 | 必要ならbranch protectionを設定してから、手順に従って `main` を更新する。 |
+| `main` 公開後確認とbranch運用 | `develop` から `main` へsourceをmergeし、同じworktreeでbuildした `dist/` を含める反映手順は、Phase 13とPhase 14の公開で実施済み。local / remote `main` は `96722c8` で一致している。local `develop` headは `main` へmerge済みだが、remote `develop` より6 commit進んでいる。branch protectionと現在の公開 `main` に対するGitHub dependency smokeは未実施または未記録。 | 次にやる候補 | 公開 `main` の再現性と、通常開発branchの共有状態に影響する。 | `TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA=96722c8206551e26140dab464d5184862d06dda3` を使って公開remote smokeを行い、branch protectionとremote `develop` の同期方針を確認する。 |
 | タグ無しGitHub dependencyのlockfile更新手順 | local smokeでは、lockfileなしfresh install、lockfileありfrozen install、同じdependency specでの明示更新を確認する。Stanza開発者向けの短い更新手順は `docs/guides/github-dependency.md` に記録済み。 | documented constraint | `main` 更新後に既存Stanzaリポジトリがいつ・どう追従するかに影響する。 | 実利用で不足が見えたら、生成README側にも要約を追加する。 |
 | GitHub Pages live deploy確認 | workflow構造は生成済みだが、公開GitHub Pages環境でのlive deployは未実行。 | 次にやる候補 | Stanza開発者が生成repoをpushした後の公開導線に影響する。 | GitHub dependency運用の次の実地確認として優先度高め。 |
 | CLI status / result messages | `init`、`generate stanza`、`build`、`serve` の成功メッセージ、`build` / `serve` の更新時刻つきビルド所要時間、`build` の対話的な出力先clearは整備済み。失敗時の診断体系や細かい文言磨きは未整理。 | 後続改善 | Stanza開発者が失敗原因を把握しやすくなる。 | 実利用で分かりにくい失敗が見えた箇所から整理する。 |
@@ -53,6 +53,6 @@ Phase 12は、短期配布経路として `github:yohak/togostanza#yohak-github-
 
 ## 次の候補
 
-次に実装作業として進むなら、branch protectionと `main` 反映を先に行うのが自然である。
+次の公開運用作業として進むなら、現在の `main` に対する公開remote smoke、branch protection、remote `develop` の同期確認を先に行うのが自然である。
 
 一方、すぐに実装を増やさない場合は、TogoMedium実リポジトリでの確認範囲をもう少し具体化して記録する。たとえば、install、build、serve、Webアプリ連携のどこまで確認したかを追記する。

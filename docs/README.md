@@ -13,8 +13,9 @@
 - [GitHub dependency 運用ガイド](./guides/github-dependency.md): 短期GitHub dependency経路でのインストール、lockfile、更新の案内。
 - [既存挙動調査](./investigation/README.md): 現行版 `togostanza` と実プロジェクトの既存挙動調査。
 - [リメイク方針](./spec/remake-policy.md): 現行版の挙動を維持、再設計、破棄のどれとして扱うかの判断。
-- [リメイク版仕様](./spec/index.md): 将来作るリメイク版の実装仕様の入口。
-- [実装計画](./implementation/index.md): リメイク版実装のフェーズと進め方。
+- [リメイク版仕様](./spec/index.md): リメイク版の外部仕様の入口。
+- [実装計画](./implementation/index.md): リメイク版実装のフェーズ、完了状況、進め方。
+- [Phase 12後の全体棚卸し](./implementation/post-phase-12-inventory.md): 現在地と正式版マージ前の残作業候補。
 
 ## 読む順番
 
@@ -27,11 +28,12 @@
 7. リメイク版の採用判断を行うときだけ [リメイク方針](./spec/remake-policy.md) を使う。
 8. 実装仕様として確定した内容を整理するときに [リメイク版仕様](./spec/index.md) を使う。
 9. 実装に入る前に [実装計画](./implementation/index.md) を読む。
+10. 現在地と次の候補を確認するときは [Phase 12後の全体棚卸し](./implementation/post-phase-12-inventory.md) を読む。
 
 ## 記録範囲
 
 - `docs/investigation/spec/` は、観測した現行版の挙動を記録する。
 - `docs/spec/remake-policy.md` は、ある挙動を必須、再設計、破棄のどれとして扱うかの採用判断を記録する。
-- `docs/spec/index.md` は、今後作るリメイク版そのものの仕様の入口として使う。
+- `docs/spec/index.md` は、リメイク版そのものの仕様の入口として使う。
 - `docs/implementation/` は、リメイク版の実装順序とフェーズごとの詳細計画を記録する。
 - `docs/guides/` は、Stanza開発者向けの移行案内や作業手順を記録する。

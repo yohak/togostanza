@@ -379,6 +379,7 @@ APIごとの細かいedge caseや出力バイト列の完全一致は、`togosta
 | [010 togostanza-utils compatibility](../../workbench/cases/010-togostanza-utils-compat/) | `togostanza-utils` |
 | [011 Serve development server](../../workbench/cases/011-serve-development-server/) | `serve` / watch / 差分invalidate |
 | [012 Real project regression](../../workbench/cases/012-real-project-regression/) | 実プロジェクト回帰 |
+| [013 Metadata validation](../../workbench/cases/013-metadata-validation/) | メタデータ異常系 / 最小validation |
 
 `serve` の初回ビルド失敗からの復帰、差分再ビルド、全体invalidate、ページ再読み込み、HTTP 500エラーページと復帰は、専用のserve検証ケースで確認する。
 
