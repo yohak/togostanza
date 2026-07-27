@@ -218,6 +218,10 @@ function formatReadme(input: {
   const dependencyGuidance = `This repository depends on \`${input.dependencySpec}\`.`;
   const fixedDependencyGuidance =
     "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA such as `github:yohak/togostanza#yohak-github-YYYYMMDD-label`.";
+  const dependencyUpdateCommand =
+    input.packageManager === "pnpm"
+      ? "pnpm update togostanza --latest --force"
+      : "npm install togostanza@github:yohak/togostanza";
 
   return [
     `# ${input.name}`,
@@ -226,6 +230,13 @@ function formatReadme(input: {
     "",
     dependencyGuidance,
     fixedDependencyGuidance,
+    "The lockfile records the resolved Git commit. To update to the latest public `main`, run:",
+    "",
+    "```sh",
+    dependencyUpdateCommand,
+    "```",
+    "",
+    "Then review the lockfile diff and run the build command below.",
     "",
     "## Development",
     "",

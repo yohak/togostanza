@@ -208,6 +208,8 @@ describe("CLI smoke", () => {
     expect(readme).toContain(
       "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA",
     );
+    expect(readme).toContain("npm install togostanza@github:yohak/togostanza");
+    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
     expect(readme).toContain("GitHub Pages");
     expect(readme).toContain("package-lock.json");
     expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");

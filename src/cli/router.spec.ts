@@ -179,6 +179,8 @@ describe("CLI router", () => {
     expect(readme).toContain(
       "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA",
     );
+    expect(readme).toContain("npm install togostanza@github:yohak/togostanza");
+    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
     expect(readme).toContain("npm ci");
     expect(readme).toContain("package-lock.json");
     expect(readme).toContain("--skip-install");
@@ -340,6 +342,8 @@ describe("CLI router", () => {
     expect(readme).toContain("pnpm ci");
     expect(readme).toContain("pnpm-lock.yaml");
     expect(readme).toContain("pnpm 11");
+    expect(readme).toContain("pnpm update togostanza --latest --force");
+    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
   });
 
   it("uses --name as a package name override for init .", () => {

@@ -388,6 +388,7 @@ pnpm run build:local
 - `dependencies.togostanza` は通常生成では `github:yohak/togostanza` として生成される。
 - 生成READMEは、GitHub dependencyとlockfileの関係を書く。
 - 生成READMEは、通常開発ではタグ無しGitHub dependencyを使い、検証や固定化が必要な場合だけtagまたはcommit SHAを使うことを書く。
+- 生成READMEは、タグ無しGitHub dependencyを新しい `main` へ更新するnpm / pnpmコマンドと、lockfile差分確認の必要性を書く。
 - release手順やlocal smokeでは、`TOGOSTANZA_DEPENDENCY_SPEC` で具体dependency specを注入できる。
 - overrideに `<tag-or-sha>` のようなplaceholderが残ったまま `init` の既定installへ進む場合は、scaffold作成前に明示診断で失敗する。`--skip-install` または具体dependency specの注入が必要。
 - 生成workflowのAction major tagは、Phase 2-6で確認済みのtagを使う。Action versionは外部互換契約にはせず、tag更新やlive validationはPhase 12または保守更新で扱う。
