@@ -59,15 +59,15 @@
 
 ## 配布と生成repo依存
 
-現行版の `init` は、生成repoの `dependencies.togostanza` に `github:togostanza/togostanza` のタグ無しGitHub dependencyを書き込む。この形は、Stanza開発者が生成直後のリポジトリでrelease tagを手作業で選ばなくても依存をインストールできる開発契約として維持する。
+現行版の `init` は、生成repoの `dependencies.togostanza` に `github:togostanza/togostanza` のタグ無しGitHub dependencyを書き込む。v4では、この依存配置と更新経路を維持対象にしない。
 
-リメイク版でも、正式版の生成repo仕様ではタグ無しGitHub dependencyを既定にする。短期の `yohak` 経路では `github:yohak/togostanza`、正式版マージ後は `github:togostanza/togostanza` を既定候補にする。
+v4 alphaは `yohak/togostanza` の不変Git tagから配布する。alphaを利用するStanzaリポジトリは、`devDependencies.togostanza` を `github:yohak/togostanza#v4.0.0-alpha.*` のような具体tagへ完全固定する。`main` やタグ無しGitHub dependencyは、alphaの配布単位として使わない。
 
-一方、開発中の検証、TogoMedium確認、固定点の記録では不変tagまたはcommit SHAを使う。tagは既存refを動かさず、修正版では新しいtagを作る。
+alpha tagは既存refを動かさず、修正版ではversionを上げて新しいtagを作る。`init` の内部プレビューでは `TOGOSTANZA_DEPENDENCY_SPEC` を使い、CLIの起動元と生成repoの依存を同じtagへ揃える。
 
-タグ無しGitHub dependencyは、lockfileなしの新規installではその時点のdefault branchを解決する。install後はnpm / pnpmのlockfileが解決commitを固定するため、既存Stanzaリポジトリが新しい `main` へ追従するには、依存更新とlockfile再生成が必要になる。この再現性とのトレードオフは受け入れ、現行版と同じ生成repo体験を優先する。
+正式版リポジトリへ統合した後は、v4 betaをnpm registryから配布する。beta版の `init` は、実行中のCLIと同じnpm versionを生成repoの `devDependencies.togostanza` へ完全固定する。専用の `upgrade` commandは追加せず、更新は明示的なpackage更新とlockfile差分の確認として案内する。
 
-問題のある `main` を公開した場合は、既存tagを動かすのではなく、`main` のforward-fixを基本にする。固定refが必要な検証や一時運用では、新しいtagまたはcommit SHAを案内する。
+alpha、beta、stableのいずれでも、公開済みversionやtagを置き換えず、新しいversionでforward-fixする。
 
 ## Runtime
 

@@ -2,11 +2,13 @@
 
 このリポジトリでは、現行版リポジトリ [`togostanza`](https://github.com/togostanza/togostanza) を参考に、TogoStanza CLI / runtime のリメイク実装を進める。
 
-現時点では短期配布経路としてGitHub dependencyを使い、正式版マージに向けた互換性確認と開発者向け体験の整理を続けている。
+現時点ではv4 alphaの内部プレビュー準備を進めている。alphaは `yohak/togostanza` の不変Git tagから配布し、正式版リポジトリへ統合した後にbetaとしてnpm公開する。
 
 ## 最初に読むもの
 
 セットアップ、調査範囲、仕様整理の方針は、[ドキュメント](./docs/README.md)を参照する。
+
+v4 alphaを試す場合は、[alpha内部プレビュー手順](./docs/guides/alpha-testing.md)を参照する。
 
 ## フォルダ構造
 

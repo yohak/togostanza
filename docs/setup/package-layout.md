@@ -15,7 +15,7 @@
 - `references/*/package.json` はリファレンスリポジトリ側のものとして扱う。
 - `workbench/cases/<case>/<env>/package.json` や `workbench/cases/<case>/<env>/<generated-repo>/package.json` は検証環境側のものとして扱う。
 
-この方針は、GitHub dependencyとして本リポジトリを直接installする短期配布経路を成立させるためのものとする。
+この方針は、GitHub dependencyとして本リポジトリを直接installするV4 alpha配布経路を成立させるためのものとする。
 `references/`、`workbench/`、`sandbox/` は、ルートパッケージの一部ではなく、調査・検証用の周辺領域として扱う。
 
 ## 想定レイアウト
@@ -36,11 +36,11 @@ workbench/
 `bin/` には配布時に使うCLI入口を置く。
 `dist/` は通常開発branchではgitignore対象とし、build済み成果物として生成する。
 
-正式版のbranch運用では、`develop` を通常開発branch、`main` を一般公開入口、tagを検証・固定refとして扱う方針を採用した。タグ無しGitHub dependencyがdefault branchを読むため、`main` はinstall可能である必要がある。install時buildを行わない方針を維持する限り、`main` は `dist/` を必ず含める。一方、`develop` では `dist/` を追跡しない。
+Phase 12からPhase 14までは、`develop` を通常開発branch、`main` をタグ無しGitHub dependencyの公開入口、tagを検証・固定refとして扱った。V4 alphaではこの短期運用を引き継がず、不変tagを配布単位にする。alpha tagが指すcommitには、同じsourceからbuildした `dist/` を含める。`main` や `develop` の先端はalphaの依存specに使わない。
 
-localでは `develop` branchを作成し、`dist/` をGit追跡対象から外した。remote `develop` も作成済みである。タグ無しGitHub dependencyはdefault branchを解決するため、公開remoteのdefault branchは `main` として維持する。公開remoteのdefault branchが `main` であることは2026-07-27に確認した。
+localでは `develop` branchを作成し、`dist/` をGit追跡対象から外した。remote `develop` も作成済みである。公開remoteのdefault branchが `main` であることは2026-07-27に確認したが、V4 alphaの利用者はdefault branchではなく明示されたtagを参照する。
 
-`develop` から `main` へsourceをmergeし、同じworktreeでbuildした `dist/` を公開merge commitへ含める手順は、Phase 13とPhase 14の公開反映で実施済みである。現在のlocal `develop` headは `main` にmerge済みだが、remote `develop` はlocal `develop` より6 commit遅れている。これは `main` の公開内容不足ではなく、通常開発branchのremote-tracking stateの差として扱う。branch protection、remote `develop` の同期、現在の公開 `main` に対するGitHub dependency smokeは後続作業として残る。
+`develop` から `main` へsourceをmergeし、同じworktreeでbuildした `dist/` を公開merge commitへ含める手順は、Phase 13とPhase 14の公開反映で実施済みである。これは過去の公開手順の記録であり、V4 alphaのrelease手順には [V4 Alpha Release Checklist](../implementation/v4-alpha-release-checklist.md) を使う。
 
 ## 将来の分割
 

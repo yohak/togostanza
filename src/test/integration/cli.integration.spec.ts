@@ -205,8 +205,8 @@ describe("CLI smoke", () => {
       compilerOptions: Record<string, unknown>;
     };
     expect(readJson(resolve(cwd, "generated-repo", "package.json"))).toMatchObject({
-      dependencies: {
-        togostanza: "github:yohak/togostanza",
+      devDependencies: {
+        togostanza: "github:yohak/togostanza#<tag-or-sha>",
       },
       engines: {
         node: ">=24.0.0",
@@ -219,12 +219,9 @@ describe("CLI smoke", () => {
     });
     expect(readme).toContain("npm run build");
     expect(readme).toContain("npm run serve");
-    expect(readme).toContain("This repository depends on `github:yohak/togostanza`.");
-    expect(readme).toContain(
-      "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA",
-    );
-    expect(readme).toContain("npm install togostanza@github:yohak/togostanza");
-    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
+    expect(readme).toContain("This repository depends on `github:yohak/togostanza#<tag-or-sha>`.");
+    expect(readme).toContain("TogoStanza is a development dependency.");
+    expect(readme).toContain("replace the version or Git ref with an explicitly selected release");
     expect(readme).toContain("GitHub Pages");
     expect(readme).toContain("package-lock.json");
     expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");

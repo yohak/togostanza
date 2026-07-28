@@ -10,11 +10,14 @@
 - [開発用ノート](./development-notes.md): 作業時の考え方と、標準手順から外れやすい点。
 - [セットアップ](./setup/index.md): リファレンス、サンドボックス、検証領域をローカルに準備する手順。
 - [Source / config 移行ガイド](./guides/source-config-migration.md): 既存stanzaリポジトリをリメイク版へ移すための手動移行案内。
+- [v4 alpha内部プレビュー](./guides/alpha-testing.md): 不変Git tagからv4 alphaをnpmまたはpnpmで試す手順。
 - [GitHub dependency 運用ガイド](./guides/github-dependency.md): 短期GitHub dependency経路でのインストール、lockfile、更新の案内。
 - [既存挙動調査](./investigation/README.md): 現行版 `togostanza` と実プロジェクトの既存挙動調査。
 - [リメイク方針](./spec/remake-policy.md): 現行版の挙動を維持、再設計、破棄のどれとして扱うかの判断。
 - [リメイク版仕様](./spec/index.md): リメイク版の外部仕様の入口。
 - [実装計画](./implementation/index.md): リメイク版実装のフェーズ、完了状況、進め方。
+- [正式版統合計画](./implementation/official-integration-plan.md): yohak版alpha、正式版beta、npm公開、リメイクリポジトリArchiveまでの進め方。
+- [v4 alpha公開チェックリスト](./implementation/v4-alpha-release-checklist.md): alpha tagを内部プレビューへ出す前後の確認手順。
 - [Phase 12後の全体棚卸し](./implementation/post-phase-12-inventory.md): 現在地と正式版マージ前の残作業候補。
 
 ## 読む順番
@@ -28,7 +31,8 @@
 7. リメイク版の採用判断を行うときだけ [リメイク方針](./spec/remake-policy.md) を使う。
 8. 実装仕様として確定した内容を整理するときに [リメイク版仕様](./spec/index.md) を使う。
 9. 実装に入る前に [実装計画](./implementation/index.md) を読む。
-10. 現在地と次の候補を確認するときは [Phase 12後の全体棚卸し](./implementation/post-phase-12-inventory.md) を読む。
+10. 正式版統合準備では [正式版統合計画](./implementation/official-integration-plan.md) を読む。
+11. 現在地と次の候補を確認するときは [Phase 12後の全体棚卸し](./implementation/post-phase-12-inventory.md) を読む。
 
 ## 記録範囲
 

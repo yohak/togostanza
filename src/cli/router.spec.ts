@@ -160,7 +160,7 @@ describe("CLI router", () => {
     );
 
     const packageJson = readJson(join(cwd, "generated-repo", "package.json")) as {
-      dependencies: Record<string, string>;
+      devDependencies: Record<string, string>;
       engines: Record<string, string>;
       license: string;
       packageManager?: string;
@@ -174,7 +174,7 @@ describe("CLI router", () => {
     const readme = readText(join(cwd, "generated-repo", "README.md"));
 
     expect(packageJson.license).toBe("MIT");
-    expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza");
+    expect(packageJson.devDependencies.togostanza).toBe("github:yohak/togostanza#<tag-or-sha>");
     expect(packageJson.engines.node).toBe(">=24.0.0");
     expect(packageJson.packageManager).toBeUndefined();
     expect(packageJson.pnpm).toBeUndefined();
@@ -190,12 +190,9 @@ describe("CLI router", () => {
     expect(readme).toContain("npm run build");
     expect(readme).toContain("npm run serve");
     expect(readme).toContain("npm exec togostanza generate stanza hello");
-    expect(readme).toContain("This repository depends on `github:yohak/togostanza`.");
-    expect(readme).toContain(
-      "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA",
-    );
-    expect(readme).toContain("npm install togostanza@github:yohak/togostanza");
-    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
+    expect(readme).toContain("This repository depends on `github:yohak/togostanza#<tag-or-sha>`.");
+    expect(readme).toContain("TogoStanza is a development dependency.");
+    expect(readme).toContain("replace the version or Git ref with an explicitly selected release");
     expect(readme).toContain("npm ci");
     expect(readme).toContain("package-lock.json");
     expect(readme).toContain("--skip-install");
@@ -227,53 +224,34 @@ describe("CLI router", () => {
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBeUndefined();
       const packageJson = readJson(join(cwd, "generated-repo", "package.json")) as {
-        dependencies: Record<string, string>;
+        devDependencies: Record<string, string>;
       };
 
-      expect(packageJson.dependencies.togostanza).toBe(releaseDependencySpec);
+      expect(packageJson.devDependencies.togostanza).toBe(releaseDependencySpec);
     });
   });
 
   for (const packageManager of ["npm", "pnpm"] as const) {
-    it(`runs default ${packageManager} install with the tagless GitHub dependency`, () => {
+    it(`requires an explicit alpha dependency before ${packageManager} install`, () => {
       const cwd = makeTemporaryDirectory();
-      const calls: string[] = [];
-      const installRunner: CommandRunner = (command, args, options) => {
-        calls.push(`${command} ${args.join(" ")} @ ${options.cwd}`);
-        return { exitCode: 0 };
-      };
       const result = routeCli(
         ["init", "--name", `${packageManager}-repo`, "--package-manager", packageManager],
         {
           cwd,
-          installRunner,
+          installRunner: failingInstallRunner,
         },
       );
 
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain(`Created Stanza repository: ${packageManager}-repo`);
-      expect(result.stdout).toBe(
-        [
-          `Created Stanza repository: ${packageManager}-repo`,
-          "",
-          "Next steps:",
-          `  cd ${packageManager}-repo`,
-          packageManager === "pnpm"
-            ? "  pnpm exec togostanza generate stanza hello"
-            : "  npm exec togostanza generate stanza hello",
-          packageManager === "pnpm" ? "  pnpm build" : "  npm run build",
-          packageManager === "pnpm" ? "  pnpm serve" : "  npm run serve",
-        ].join("\n"),
-      );
-      expect(calls).toEqual([`${packageManager} install @ ${join(cwd, `${packageManager}-repo`)}`]);
-      const packageJson = readJson(join(cwd, `${packageManager}-repo`, "package.json")) as {
-        dependencies: Record<string, string>;
-      };
-      expect(packageJson.dependencies.togostanza).toBe("github:yohak/togostanza");
+      expect(result).toEqual({
+        exitCode: 1,
+        stderr:
+          "Cannot install placeholder dependency github:yohak/togostanza#<tag-or-sha>. Replace <tag-or-sha>, set TOGOSTANZA_DEPENDENCY_SPEC to a concrete GitHub dependency, or rerun init with --skip-install.",
+      });
+      expect(existsSync(join(cwd, `${packageManager}-repo`))).toBe(false);
     });
   }
 
-  it("rejects placeholder dependency installs when the verification override is not concrete", () => {
+  it("rejects an explicit placeholder dependency override", () => {
     const cwd = makeTemporaryDirectory();
 
     withTogoStanzaDependencySpec("github:yohak/togostanza#<tag-or-sha>", () => {
@@ -314,9 +292,9 @@ describe("CLI router", () => {
 
       expect(calls).toEqual([`${packageManager} install @ ${join(cwd, `${packageManager}-repo`)}`]);
       const packageJson = readJson(join(cwd, `${packageManager}-repo`, "package.json")) as {
-        dependencies: Record<string, string>;
+        devDependencies: Record<string, string>;
       };
-      expect(packageJson.dependencies.togostanza).toBe(releaseDependencySpec);
+      expect(packageJson.devDependencies.togostanza).toBe(releaseDependencySpec);
     });
   }
 
@@ -371,8 +349,8 @@ describe("CLI router", () => {
     expect(readme).toContain("pnpm ci");
     expect(readme).toContain("pnpm-lock.yaml");
     expect(readme).toContain("pnpm 11");
-    expect(readme).toContain("pnpm update togostanza --latest --force");
-    expect(readme).toContain("Then review the lockfile diff and run the build command below.");
+    expect(readme).toContain("TogoStanza is a development dependency.");
+    expect(readme).toContain("review the lockfile diff");
   });
 
   it("uses --name as a package name override for init .", () => {

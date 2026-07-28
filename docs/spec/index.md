@@ -33,14 +33,14 @@ TogoStanzaリメイク版は、Stanzaを作成、開発、ビルドし、Webペ�
 
 Stanza開発者側で公式サポートするパッケージマネージャーは `npm` と `pnpm` とする。`yarn` は公式サポート対象にしない。
 
-短期的なGitHub dependency配布では、初回の `init` はGitHub refからCLIを直接起動できる。開発中の検証や固定点の記録では、不変tagまたはcommit SHAを使ってよい。
+v4 alphaは、`yohak/togostanza` の不変Git tagからCLIを直接起動する。`TOGOSTANZA_DEPENDENCY_SPEC` に同じtagを指定し、生成されるStanzaリポジトリの依存も固定する。
 
 ```sh
-npm exec --package github:yohak/togostanza#<tag-or-sha> -- togostanza init --name <dir> --skip-install
-pnpm --package github:yohak/togostanza#<tag-or-sha> dlx togostanza init --name <dir> --skip-install
+TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.0 npm exec --package github:yohak/togostanza#v4.0.0-alpha.0 -- togostanza init --name <dir>
+TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.0 pnpm --package github:yohak/togostanza#v4.0.0-alpha.0 dlx togostanza init --name <dir>
 ```
 
-npm registryへ公開する場合は、`npm exec togostanza@latest init --name <dir>`、`pnpm dlx togostanza@latest init --name <dir>` のようなregistry経由の起動方法をあらためて確認する。
+正式版リポジトリへ統合した後は、v4 betaをnpm registryの `beta` dist-tagから配布する。beta版では `npm exec togostanza@beta init --name <dir>`、`pnpm dlx togostanza@beta init --name <dir>` のregistry経路を使う。
 
 Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行する場合は、選択したパッケージマネージャー経由で実行する。たとえば `npm exec togostanza build`、`pnpm exec togostanza build`、または `package.json` のscripts経由で実行する。グローバルインストールされた `togostanza` は前提にしない。
 
@@ -48,9 +48,9 @@ Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行す�
 
 `package-lock.json` がある場合は `npm`、`pnpm-lock.yaml` がある場合は `pnpm` とみなす。`package-lock.json` と `pnpm-lock.yaml` が同時に存在する場合、または `--package-manager` の指定と既存lockfileが矛盾する場合はエラーにする。エラー文言そのものは固定しないが、開発者がlockfileの整理や指定の修正を行える診断を出す。
 
-`init` は生成repoの `dependencies.togostanza` にGitHub dependencyを書き込む。正式版の生成repo仕様では、現行版に寄せてタグ無しGitHub dependencyを既定にする。短期の `yohak` 経路では `github:yohak/togostanza`、正式版マージ後は `github:togostanza/togostanza` を既定候補にする。開発中の検証や固定化が必要な場合は、不変tagまたはcommit SHAを `TOGOSTANZA_DEPENDENCY_SPEC` などの検証用入口から注入してよい。
+`init` は生成repoの `devDependencies.togostanza` にTogoStanzaの依存specを書き込む。alpha内部プレビューでは、不変Git tagを `TOGOSTANZA_DEPENDENCY_SPEC` から注入する。npm公開後は、実行中のCLIと同じnpm versionを完全固定する。caret rangeとタグ無しGitHub dependencyは正式生成仕様にしない。
 
-`init` は既定で依存関係のインストールまで実行する。ただし、生成される `dependencies.togostanza` が `<tag-or-sha>` のような未確定placeholderを含む場合は、自動インストールへ進まず、`--skip-install` または具体dependency specの指定を促す診断を返す。`--skip-install` が指定された場合はインストールを実行せず、lockfileも生成しない。`pnpm` を使う場合、開発者環境で `pnpm` コマンドが利用できることを前提にする。TogoStanza CLIは `pnpm` 自体を自動導入しない。
+`init` は既定で依存関係のインストールまで実行する。ただし、生成される `devDependencies.togostanza` が `<tag-or-sha>` のような未確定placeholderを含む場合は、自動インストールへ進まず、`--skip-install` または具体dependency specの指定を促す診断を返す。`--skip-install` が指定された場合はインストールを実行せず、lockfileも生成しない。`pnpm` を使う場合、開発者環境で `pnpm` コマンドが利用できることを前提にする。TogoStanza CLIは `pnpm` 自体を自動導入しない。
 
 `init` は既定でgit初期化を行う。`--skip-git` が指定された場合はgit初期化を行わない。GitHub Pages workflow生成はgit初期化の有無とは独立して扱う。
 
@@ -88,11 +88,11 @@ togostanza.config.ts
 
 `package.json` はStanzaリポジトリのpackage定義として扱う。`build`、`serve`、`generate stanza` はStanzaリポジトリのルートで実行されることを前提にし、`package.json` からリポジトリ名、依存、scripts、実行環境を確認できる。
 
-Stanzaリポジトリは `togostanza` を依存として持つ。依存の置き方は、公開時のnpm package、GitHub参照、workspace / linkなど、実行環境に応じて許容する。リメイク版CLIは、正しいリポジトリでない場合や必要な依存が利用できない場合に分かりやすい診断を出す。
+Stanzaリポジトリは `togostanza` を開発依存として持つ。配布済みversion、alphaの不変Git tag、workspace / linkなど、実行環境に応じた依存specを `devDependencies.togostanza` に置く。リメイク版CLIは、既存repoとの互換のため `dependencies.togostanza` も認識する。正しいリポジトリでない場合や必要な依存が利用できない場合は、分かりやすい診断を出す。
 
 lockfileは、使用するパッケージマネージャーの依存解決結果として扱う。`init` がどのlockfileを生成するか、また既存lockfileをどう更新するかは、選択されたパッケージマネージャーに従う。`--skip-install` で初期化した場合、lockfileは開発者が後から `npm install` または `pnpm install` を実行したときに生成される。
 
-タグ無しGitHub dependencyは、lockfileなしの新規installではその時点のdefault branchを解決する。lockfileありのfrozen installでは、lockfileに記録されたcommitを再現する。既存Stanzaリポジトリを新しい `main` へ更新する場合は、依存更新コマンドを実行してlockfileを再生成し、そのlockfileをcommitする。問題のある `main` を公開した場合は、既存tagの置き換えではなくforward-fixを基本とする。
+alphaのGitHub dependencyは不変tagへ固定し、lockfileにも解決commitを記録する。別のalphaへ更新する場合はdependency specを新しいtagへ変更し、lockfileを再生成して同じcommitに含める。公開済みtagは置き換えず、新しいversionでforward-fixする。
 
 `README.md` はStanzaリポジトリまたは各stanzaの説明として扱う。ヘルプページや一覧で参照してよいが、本文のDOM構造や表示UIは固定しない。
 

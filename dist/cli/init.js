@@ -5,7 +5,7 @@ import { formatPackageExecCommand, formatPackageScriptCommand } from "./package-
 import { resolvePackageManager } from "./package-manager.js";
 import { failure, success } from "./result.js";
 import { runCommand } from "./runner.js";
-const defaultTogoStanzaDependencySpec = "github:yohak/togostanza";
+const defaultTogoStanzaDependencySpec = "github:yohak/togostanza#<tag-or-sha>";
 export function handleInit(args, options = {}) {
     const parsedResult = parseOptions(args, [
         { kind: "value", name: "--name" },
@@ -149,30 +149,20 @@ function formatReadme(input) {
     const workflowInstall = input.packageManager === "pnpm" ? "pnpm ci" : "npm ci";
     const workflowBuild = input.packageManager === "pnpm" ? "pnpm exec togostanza build" : "npm exec togostanza build";
     const lockfileGuidance = input.packageManager === "pnpm"
-        ? `Commit \`${lockfile}\` generated with pnpm 11 so the workflow can run reproducible installs with \`${workflowInstall}\`. The GitHub dependency is resolved to a commit in the lockfile.`
-        : `Commit \`${lockfile}\` so the workflow can run reproducible installs with \`${workflowInstall}\`. The GitHub dependency is resolved to a commit in the lockfile.`;
+        ? `Commit \`${lockfile}\` generated with pnpm 11 so the workflow can run reproducible installs with \`${workflowInstall}\`.`
+        : `Commit \`${lockfile}\` so the workflow can run reproducible installs with \`${workflowInstall}\`.`;
     const skipInstallGuidance = input.packageManager === "pnpm"
         ? "If this repository was initialized with `--skip-install`, run the install command locally with pnpm 11 and commit the generated lockfile before pushing to `main`."
         : "If this repository was initialized with `--skip-install`, run the install command locally and commit the generated lockfile before pushing to `main`.";
     const dependencyGuidance = `This repository depends on \`${input.dependencySpec}\`.`;
-    const fixedDependencyGuidance = "Use the tagless GitHub dependency for normal development. If you need a fixed TogoStanza version for verification, use a tag or commit SHA such as `github:yohak/togostanza#yohak-github-YYYYMMDD-label`.";
-    const dependencyUpdateCommand = input.packageManager === "pnpm"
-        ? "pnpm update togostanza --latest --force"
-        : "npm install togostanza@github:yohak/togostanza";
+    const dependencyUpdateGuidance = "TogoStanza is a development dependency. To update it, replace the version or Git ref with an explicitly selected release, install dependencies, and review the lockfile diff.";
     return [
         `# ${input.name}`,
         "",
         "A TogoStanza repository.",
         "",
         dependencyGuidance,
-        fixedDependencyGuidance,
-        "The lockfile records the resolved Git commit. To update to the latest public `main`, run:",
-        "",
-        "```sh",
-        dependencyUpdateCommand,
-        "```",
-        "",
-        "Then review the lockfile diff and run the build command below.",
+        dependencyUpdateGuidance,
         "",
         "## Development",
         "",
@@ -223,7 +213,7 @@ function createPackageJson(input) {
             build: "togostanza build",
             serve: "togostanza serve",
         },
-        dependencies: {
+        devDependencies: {
             togostanza: input.dependencySpec,
         },
         engines: {

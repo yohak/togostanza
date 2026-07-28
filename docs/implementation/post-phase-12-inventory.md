@@ -1,5 +1,8 @@
 # Post Phase 12 Brain Dump
 
+> [!NOTE]
+> この文書はPhase 12終了時点の棚卸しを保存する履歴資料である。V4 alpha以降の配布・正式版統合方針には、[Official Integration Plan](official-integration-plan.md) と [V4 Alpha Release Checklist](v4-alpha-release-checklist.md) を使用する。
+
 この文書では、Phase 12後のプロジェクト全体の残作業、改善案、気になる点を一度フラットに整理する。
 
 過去のPhase番号には寄せない。ここでは「今後の関心領域」と「簡単な対応方針」を並べ、次に何を計画化するかを判断するための材料にする。

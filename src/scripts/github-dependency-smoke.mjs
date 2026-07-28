@@ -21,7 +21,7 @@ const tscBinary = join(packageDirectory, "node_modules", ".bin", "tsc");
 const temporaryRoot = mkdtempSync(join(tmpdir(), "togostanza-github-dependency-smoke-"));
 const keepTemporaryRoot = process.env["TOGOSTANZA_KEEP_GITHUB_DEPENDENCY_SMOKE"] === "1";
 const expectedGithubMainSha = process.env["TOGOSTANZA_EXPECTED_GITHUB_MAIN_SHA"];
-const releaseRef = "phase-12-local-release-smoke";
+const releaseRef = `v${packageJson.version}-local-smoke`;
 
 try {
   run("pnpm", ["run", "build"], { cwd: packageDirectory });
@@ -46,28 +46,24 @@ try {
     gitSpec,
     packageManager: "npm",
     projectDirectory: join(temporaryRoot, "npm-project"),
-    verifyDefaultInit: true,
   });
   runGitDependencyInstallSmoke({
     binaryName: "togostanza",
     gitSpec,
     packageManager: "pnpm",
     projectDirectory: join(temporaryRoot, "pnpm-project"),
-    verifyDefaultInit: true,
   });
   runGitDependencyInstallSmoke({
     binaryName: "togostanza",
     gitSpec: defaultBranchGitSpec,
     packageManager: "npm",
     projectDirectory: join(temporaryRoot, "npm-main-project"),
-    verifyDefaultInit: false,
   });
   runGitDependencyInstallSmoke({
     binaryName: "togostanza",
     gitSpec: defaultBranchGitSpec,
     packageManager: "pnpm",
     projectDirectory: join(temporaryRoot, "pnpm-main-project"),
-    verifyDefaultInit: false,
   });
   runTaglessLockfileSmoke({
     gitSpec: defaultBranchGitSpec,
@@ -263,12 +259,17 @@ function readReleaseRepositoryPackageVersion(releaseRepository) {
 }
 
 function nextPatchVersion(version) {
-  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
-  if (!match) {
-    throw new Error(`Cannot increment release smoke package version: ${version}`);
+  const alphaMatch = /^(\d+\.\d+\.\d+-alpha\.)(\d+)$/.exec(version);
+  if (alphaMatch) {
+    return `${alphaMatch[1]}${Number(alphaMatch[2]) + 1}`;
   }
 
-  return `${match[1]}.${match[2]}.${Number(match[3]) + 1}`;
+  const stableMatch = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+  if (stableMatch) {
+    return `${stableMatch[1]}.${stableMatch[2]}.${Number(stableMatch[3]) + 1}`;
+  }
+
+  throw new Error(`Cannot increment release smoke package version: ${version}`);
 }
 
 function runGitDependencyBootstrapSmoke(input) {
@@ -301,6 +302,9 @@ function runGitDependencyBootstrapSmoke(input) {
     });
     run("npm", ["exec", "--yes", "--package", input.gitSpec, "--", "togostanza", ...initArgs], {
       cwd: input.projectDirectory,
+      env: {
+        TOGOSTANZA_DEPENDENCY_SPEC: input.gitSpec,
+      },
     });
   } else {
     run("pnpm", ["--package", input.gitSpec, "dlx", "togostanza", "--version"], {
@@ -308,18 +312,21 @@ function runGitDependencyBootstrapSmoke(input) {
     });
     run("pnpm", ["--package", input.gitSpec, "dlx", "togostanza", ...initArgs], {
       cwd: input.projectDirectory,
+      env: {
+        TOGOSTANZA_DEPENDENCY_SPEC: input.gitSpec,
+      },
     });
   }
 
   const generatedPackageJson = JSON.parse(
     readFileSync(join(input.projectDirectory, "bootstrap-stanza", "package.json"), "utf8"),
   );
-  if (generatedPackageJson.dependencies?.togostanza !== "github:yohak/togostanza") {
+  if (generatedPackageJson.devDependencies?.togostanza !== input.gitSpec) {
     throw new Error(
       [
-        "Git dependency bootstrap init did not generate the tagless dependency spec.",
-        "expected: github:yohak/togostanza",
-        `actual: ${generatedPackageJson.dependencies?.togostanza}`,
+        "Git dependency bootstrap init did not preserve the fixed dependency spec.",
+        `expected: ${input.gitSpec}`,
+        `actual: ${generatedPackageJson.devDependencies?.togostanza}`,
       ].join("\n"),
     );
   }
@@ -407,60 +414,14 @@ function runGitDependencyInstallSmoke(input) {
   const stanzaPackageJson = JSON.parse(
     readFileSync(join(stanzaRepository, "package.json"), "utf8"),
   );
-  if (stanzaPackageJson.dependencies?.togostanza !== input.gitSpec) {
+  if (stanzaPackageJson.devDependencies?.togostanza !== input.gitSpec) {
     throw new Error(
       [
         "Generated Stanza repository did not use the smoke dependency spec.",
         `expected: ${input.gitSpec}`,
-        `actual: ${stanzaPackageJson.dependencies?.togostanza}`,
+        `actual: ${stanzaPackageJson.devDependencies?.togostanza}`,
       ].join("\n"),
     );
-  }
-
-  if (input.verifyDefaultInit) {
-    // pnpm resolves github: shorthand through GitHub's codeload endpoint, so
-    // this path intentionally verifies the public tagless dependency instead of
-    // the local release ref used by the fixed-ref smoke above.
-    const defaultStanzaRepoName = `${input.packageManager}-default-stanza`;
-    run(
-      binaryPath,
-      [
-        "init",
-        "--name",
-        defaultStanzaRepoName,
-        "--package-manager",
-        input.packageManager,
-        "--skip-git",
-      ],
-      {
-        cwd: input.projectDirectory,
-      },
-    );
-
-    const defaultStanzaRepository = join(input.projectDirectory, defaultStanzaRepoName);
-    const defaultStanzaPackageJson = JSON.parse(
-      readFileSync(join(defaultStanzaRepository, "package.json"), "utf8"),
-    );
-    if (defaultStanzaPackageJson.dependencies?.togostanza !== "github:yohak/togostanza") {
-      throw new Error(
-        [
-          "Generated Stanza repository did not use the default tagless dependency spec.",
-          "expected: github:yohak/togostanza",
-          `actual: ${defaultStanzaPackageJson.dependencies?.togostanza}`,
-        ].join("\n"),
-      );
-    }
-
-    const defaultBinaryPath = join(
-      defaultStanzaRepository,
-      "node_modules",
-      ".bin",
-      input.binaryName,
-    );
-    run(defaultBinaryPath, ["--version"], { cwd: defaultStanzaRepository });
-    if (expectedGithubMainSha) {
-      assertLockfileContains(defaultStanzaRepository, expectedGithubMainSha);
-    }
   }
 
   run(binaryPath, ["generate", "stanza", "hello"], { cwd: stanzaRepository });

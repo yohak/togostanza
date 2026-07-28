@@ -59,11 +59,12 @@ describe("package identity", () => {
     expect(packageJson.files).toEqual(["bin/", "dist/"]);
   });
 
-  it("declares the minimal npm metadata that can be fixed before publishing", () => {
+  it("declares the alpha package metadata without enabling npm publication", () => {
     expect(packageJson).toMatchObject({
       description: "CLI and runtime for building TogoStanza repositories.",
       license: "MIT",
       private: true,
+      version: "4.0.0-alpha.0",
     });
     expect(packageJson.keywords).toContain("togostanza");
     expect(packageJson.keywords).toContain("stanza");
