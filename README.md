@@ -10,6 +10,25 @@ The project is currently releasing Alpha versions and checking builds, display, 
 
 After Alpha verification, the planned steps are integration into the official repository, a Beta release on npm, and the stable `4.0.0` release. See the [release roadmap](./docs/for-maintainers/release/official-integration-plan.md) for the conditions at each stage.
 
+## Motivation
+
+The existing toolchain was aging: builds were slow, an older Sass version produced frequent warnings, and pnpm support was unreliable. The rewrite also provided a practical project for AI-assisted development, with existing knowledge to build on and behavior that could be verified against the original implementation.
+
+## Goals and Approach
+
+Refresh the development environment around Vite 8 and pnpm while aiming for drop-in compatibility of the generated Web Components. Existing pages should work by replacing their embedding code, while stanza developers may make minimal configuration or source adjustments. These are migration goals; Alpha testing checks how they hold up in real projects.
+
+## Results and Benchmarks
+
+TogoMedium and metastanza built successfully during development of the V4 rewrite, with TogoMedium confirmed to work fully in visual checks. The development experience when using `serve` and reloading the browser also improved substantially.
+
+Build measurements from development of the V4 rewrite:
+
+| Project | Before | After (Vite 8) | Speedup |
+| --- | ---: | ---: | ---: |
+| TogoMedium | 10,000 ms | 300 ms | About 33× |
+| metastanza | 8,000 ms | 600 ms | About 13× |
+
 ## Try the Alpha
 
 The following steps use JavaScript to create stanzas. Using V4 does not require rewriting existing stanzas in TypeScript.
