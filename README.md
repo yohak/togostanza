@@ -6,7 +6,7 @@ TogoStanza is a tool for creating stanzas, such as data visualizations, and dist
 
 V4 is Yohak's redesign of the CLI, build environment, and runtime based on the [original TogoStanza](https://github.com/togostanza/togostanza). It updates the toolchain to Node.js 24 and Vite 8 while preserving existing stanza source and embedding methods where possible. Existing projects may need some configuration or source changes.
 
-The project is currently releasing Alpha versions and checking builds, display, interaction, and migration procedures in real projects ahead of the official release. This README explains how to try the published `v4.0.0-alpha.0`. Install Alpha from Git tags in `yohak/togostanza`, not from the npm registry.
+The project is currently releasing Alpha versions and checking builds, display, interaction, and migration procedures in real projects ahead of the official release. These instructions target `v4.0.0-alpha.1` and can be used once that tag is available on GitHub. Install Alpha from Git tags in `yohak/togostanza`, not from the npm registry.
 
 After Alpha verification, the planned steps are integration into the official repository, a Beta release on npm, and the stable `4.0.0` release. See the [release roadmap](./docs/for-maintainers/release/official-integration-plan.md) for the conditions at each stage.
 
@@ -33,7 +33,7 @@ Change `devDependencies.togostanza` in `package.json` to the following Git tag. 
 ```json
 {
   "devDependencies": {
-    "togostanza": "github:yohak/togostanza#v4.0.0-alpha.0"
+    "togostanza": "github:yohak/togostanza#v4.0.0-alpha.1"
   }
 }
 ```
@@ -54,18 +54,16 @@ pnpm install
 pnpm exec togostanza --version
 ```
 
-Confirm that the displayed version is `4.0.0-alpha.0`.
+Confirm that the displayed version is `4.0.0-alpha.1`.
 
 **2. Review Existing Configuration**
 
 If either condition applies, follow the [source and configuration migration guide](./docs/for-developers/guides/v3-to-v4.md):
 
-- If you use `togostanza-build.js` / `togostanza-build.mjs`, move the configuration to `togostanza.config.ts`.
+- If you use `togostanza-build.js` / `togostanza-build.mjs`, move the configuration to `togostanza.config.js`.
 - If you use `paths` in `tsconfig.json` or custom import aliases, define aliases needed for the build in `vite.resolve.alias`.
 
-For the published `v4.0.0-alpha.0` installed by this README, write any required build configuration in `togostanza.config.ts`, even for JavaScript stanzas. Type annotations and conversion of stanza source to TypeScript are unnecessary. If no additional configuration is needed, no configuration file is required.
-
-The upcoming `4.0.0-alpha.1` uses `togostanza.config.js` as the standard and supports `.mjs` and optional `.ts` configuration. Its Git tag has not been published, and this JavaScript configuration support is not included in `alpha.0`. To use the [migration guide's](./docs/for-developers/guides/v3-to-v4.md) JavaScript configuration examples with `alpha.0`, use the filename `togostanza.config.ts` instead.
+Use `togostanza.config.js` as the standard configuration filename. `togostanza.config.mjs` and optional `togostanza.config.ts` are also supported; keep only one configuration file in the project root. JavaScript configuration uses ES module syntax without requiring `type: "module"` in `package.json`. If no additional configuration is needed, no configuration file is required. See the [migration guide](./docs/for-developers/guides/v3-to-v4.md) for examples and loading rules.
 
 > TypeScript supplement: `index.ts` / `index.tsx` are also supported. See the migration guide's [TypeScript supplement](./docs/for-developers/guides/v3-to-v4.md#supplement-using-typescript) for type-resolution settings.
 
@@ -95,13 +93,13 @@ Choose either npm or pnpm and follow its steps below. Replace `my-stanza-reposit
 
 `init` creates the project scaffold, initializes Git, and installs dependencies. `TOGOSTANZA_DEPENDENCY_SPEC` pins the generated TogoStanza dependency to the same Alpha version as the CLI being run.
 
-The `alpha.0` scaffold includes `tsconfig.json`, but generated stanzas can be used in JavaScript. The upcoming `alpha.1` stops generating this configuration automatically; add it only if you use TypeScript.
+Generated stanzas use JavaScript. `init` does not generate `tsconfig.json`; add it only if you use TypeScript.
 
 With npm:
 
 ```sh
-TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.0 \
-npm exec --yes --package github:yohak/togostanza#v4.0.0-alpha.0 -- \
+TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.1 \
+npm exec --yes --package github:yohak/togostanza#v4.0.0-alpha.1 -- \
   togostanza init --name my-stanza-repository --package-manager npm
 
 cd my-stanza-repository
@@ -114,8 +112,8 @@ npm run serve
 With pnpm:
 
 ```sh
-TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.0 \
-pnpm --package github:yohak/togostanza#v4.0.0-alpha.0 dlx togostanza \
+TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.1 \
+pnpm --package github:yohak/togostanza#v4.0.0-alpha.1 dlx togostanza \
   init --name my-stanza-repository --package-manager pnpm
 
 cd my-stanza-repository

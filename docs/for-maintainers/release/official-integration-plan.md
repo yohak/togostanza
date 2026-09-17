@@ -285,4 +285,4 @@ This is a user-requested follow-up for the Beta transition. It is excluded from 
 2. Restructure self-contained tests for transfer, using V4 contracts as their basis.
 3. Prepare Alpha dependency generation and usage instructions.
 4. Inventory the detailed official documentation structure and its source materials.
-5. Proceed to quality checks and tag creation for `4.0.0-alpha.0`.
+5. Prepare `4.0.0-alpha.1` for stakeholder trials through quality checks and release-tag preparation. Publication and stakeholder verification remain separate steps; preparing this release does not establish completion of the Alpha phase.

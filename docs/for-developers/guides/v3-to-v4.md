@@ -14,7 +14,7 @@ The work applies to configuration and source files in your own stanza project. I
 
 Follow [Try in an Existing Project](../../../README.md#try-in-an-existing-project) in the README to install V4 Alpha. Preserve the pre-migration state on a working branch, install the V4 dependency, and then review the configuration below.
 
-The JavaScript configuration examples in this guide require the support being prepared for `4.0.0-alpha.1`. Its Git tag has not been published yet. The published `v4.0.0-alpha.0` supports only the configuration filename `togostanza.config.ts`. To use these examples with `alpha.0`, keep the contents and use the `.ts` filename. Do not rename an `alpha.0` configuration file before `alpha.1` is announced as available.
+This guide targets `4.0.0-alpha.1`; use the README's installation commands once its Git tag is available. The earlier `v4.0.0-alpha.0` supports only the configuration filename `togostanza.config.ts`. If you remain on `alpha.0`, keep the examples' contents but use the `.ts` filename; switch to a JavaScript configuration filename only after upgrading.
 
 ## Identify Required Changes
 
@@ -49,7 +49,7 @@ Write the configuration with JavaScript `import` / `export`. Loading it does not
 
 JavaScript configuration uses ES modules. CommonJS `module.exports` is not supported.
 
-The upcoming `alpha.1` supports three configuration formats. Keep only one in the project root.
+`alpha.1` supports three configuration formats. Keep only one in the project root.
 
 | Filename | Purpose |
 | --- | --- |
@@ -59,7 +59,7 @@ The upcoming `alpha.1` supports three configuration formats. Keep only one in th
 
 If multiple candidates exist, loading fails before any is read. When renaming the file, do not leave the previous candidate in the same directory. A loading failure also stops processing; it does not fall back to another file or to no configuration.
 
-For the published `alpha.0`, save this example as `togostanza.config.ts`.
+If you remain on `alpha.0`, save this example as `togostanza.config.ts`.
 
 ```js
 import { defineTogoStanzaConfig } from "togostanza/config";
@@ -176,7 +176,7 @@ Directory names and nesting vary by project; do not assume this example's layout
 
 V4 supports stanza sources in `index.ts` / `index.tsx` as well as `index.js`. Review this section if you use existing TypeScript source or type-check a TypeScript configuration file. These settings are unnecessary for simply creating and building JavaScript stanzas.
 
-In the upcoming `alpha.1`, `init` does not generate `tsconfig.json` automatically. Add it for your source only if you use TypeScript. Existing TypeScript configuration can remain in use. The published `alpha.0` generates the file automatically, but that does not require writing stanzas in TypeScript.
+In `alpha.1`, `init` does not generate `tsconfig.json` automatically. Add it for your source only if you use TypeScript. Existing TypeScript configuration can remain in use. The earlier `alpha.0` generates the file automatically, but that does not require writing stanzas in TypeScript.
 
 ### Resolve TogoStanza Types
 
