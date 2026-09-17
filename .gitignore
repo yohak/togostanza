@@ -10,6 +10,9 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Local Codex execution rules
+/.codex/rules/
+
 # Logs
 *.log
 npm-debug.log*
