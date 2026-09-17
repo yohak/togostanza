@@ -201,9 +201,6 @@ describe("CLI smoke", () => {
       ].join("\n"),
     );
     const readme = readFileSync(resolve(cwd, "generated-repo", "README.md"), "utf8");
-    const tsConfig = readJson(resolve(cwd, "generated-repo", "tsconfig.json")) as {
-      compilerOptions: Record<string, unknown>;
-    };
     expect(readJson(resolve(cwd, "generated-repo", "package.json"))).toMatchObject({
       devDependencies: {
         togostanza: "github:yohak/togostanza#<tag-or-sha>",
@@ -224,7 +221,7 @@ describe("CLI smoke", () => {
     expect(readme).toContain("replace the version or Git ref with an explicitly selected release");
     expect(readme).toContain("GitHub Pages");
     expect(readme).toContain("package-lock.json");
-    expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");
+    expect(existsSync(resolve(cwd, "generated-repo", "tsconfig.json"))).toBe(false);
     expectNpmPagesWorkflow(
       readFileSync(resolve(cwd, "generated-repo", ".github", "workflows", "publish.yml"), "utf8"),
     );

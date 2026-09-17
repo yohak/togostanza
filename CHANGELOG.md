@@ -2,7 +2,25 @@
 
 All notable changes to TogoStanza v4 will be documented in this file.
 
-## [4.0.0-alpha.0] - Unreleased
+## [4.0.0-alpha.1] - Unreleased
+
+### Added
+
+- JavaScript configuration through `togostanza.config.js` and `togostanza.config.mjs`, using ES module syntax without requiring `type: "module"` in the project package.
+- A JavaScript-first [V3-to-V4 source and configuration migration guide](./docs/for-developers/guides/v3-to-v4.md), with optional TypeScript guidance.
+
+### Changed
+
+- Updated the development test framework to Vitest 5.0.1.
+- JavaScript is the standard configuration format; existing `togostanza.config.ts` files remain supported.
+- Multiple configuration candidates are rejected before any is loaded. Configuration load failures stop the build without falling back to another file or to no configuration.
+- `init` no longer generates `tsconfig.json`. TypeScript projects can add their own configuration; existing TypeScript settings are preserved.
+
+### Notes
+
+- This version is being prepared and its Git tag has not been published. The README installation commands continue to use the published `v4.0.0-alpha.0` tag.
+
+## [4.0.0-alpha.0]
 
 ### Added
 

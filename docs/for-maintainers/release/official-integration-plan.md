@@ -273,6 +273,14 @@ Archive後の本リポジトリは、正式版のDecision Recordから参照で�
 
 ## 次の作業
 
+### Beta移行に向けた残タスク
+
+- [ ] `init` 時にJavaScript / TypeScriptを選べる機能を検討・実装する。JavaScriptを既定、TypeScriptを任意とする方向で進め、生成内容や選択の保持方法などは[検討事項](../../v4-migration/investigation/follow-ups.md#init時のjavascript--typescript選択)で整理する。
+
+この項目は、ユーザー指定のBeta移行に向けた後続タスクとして扱う。`alpha.1` の実装対象には含めず、今回の機能固定対象と分けて管理する。詳細仕様と着手時期は未決定で、現在のAlpha完了条件には追加しない。
+
+### 統合準備
+
 1. v4仕様を、正式版向けの外部契約として再構成する。
 2. v4仕様を根拠に、正式版へ移す自己完結テストを再構成する。
 3. alpha向けdependency生成と利用手順を整える。

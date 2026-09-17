@@ -7,7 +7,9 @@
 ## 対応する方針
 
 - 現行の `togostanza-build.mjs/js` によるRollup plugin注入は再設計する。
-- 新しい設定ファイル名は `togostanza.config.ts` を第一候補とする。
+- 設定は `togostanza.config.js` を標準とし、`.mjs` と任意の `.ts` に対応する。
+- 複数候補が存在する場合は読み込み前にエラーにし、読み込み失敗時は他候補や設定なしへフォールバックしない。
+- 設定なしは正常とし、JavaScript利用にTypeScript化、`tsconfig.json` 新設、`type: "module"` 追加を要求しない。
 - 旧設定ファイルは無条件に実行せず、検出して移行メモへ誘導する。
 - 既存Stanzaソースからのasset importが壊れないことを見る。
 - alias互換は実装時判断とするが、既存Stanzaソースを壊さないことを優先する。
@@ -181,7 +183,12 @@ mise exec -- pnpm run serve:fixture
 ## リメイク版で観測すること
 
 - 旧設定ファイルを検出したときの警告/エラー。
-- `togostanza.config.ts` の読み込み。
+- `togostanza.config.js`、`.mjs`、`.ts` をそれぞれ単独で置いた場合の読み込み。
+- 複数候補があるとき、どの設定も実行せずエラーにすること。
+- 設定の読み込み失敗でビルドが失敗し、設定なしでは正常に進むこと。
+- `type: "module"` と `tsconfig.json` のないJavaScriptプロジェクトで設定を使えること。
+- `import` 向けの公開入口だけを持つES modulesプラグインをJavaScript設定から読み込めること。
+- `serve` 中の設定変更が反映され、設定候補の競合でエラーになった後も、競合を解消すると正常な配信へ復帰すること。
 - Vite plugin/Vite configのescape hatch。
 - `tsconfig.json` がTypeScript / TSXビルド設定として尊重されること。
 - asset importとpublic asset参照が壊れていないこと。
@@ -194,7 +201,7 @@ mise exec -- pnpm run serve:fixture
 ### リメイク版の期待観測
 
 - `togostanza-build.mjs` / `togostanza-build.js` は無条件実行しない。
-- 旧設定ファイルを検出した場合、`togostanza.config.ts` など移行先が分かる移行メモを出す。
+- 旧設定ファイルを検出した場合、標準の移行先 `togostanza.config.js` が分かる移行メモを出す。
 - asset importとpublic asset参照は、既存Stanzaソースを大きく変えずに移行できる。
 - Sass `@/` aliasはSass限定の契約として維持する。
 - `tsconfig.json` は尊重するが、paths合成順やVite aliasとの優先順位は固定しない。
@@ -255,6 +262,8 @@ dist/
 
 ### リメイク版の設定ファイル結果
 
+以下はPhase 2-4時点の観測記録。現在のJavaScript標準の設定方針と確認対象は、上記「対応する方針」「リメイク版で観測すること」に従う。
+
 - `togostanza-build.mjs` / `togostanza-build.js` は検出するが、import、eval、spawnしない。
 - 旧設定ファイルが存在してもbuildは続行し、`togostanza.config.ts` への移行を促すwarningを出す。
 - `togostanza.config.ts` はViteの `loadConfigFromFile()` 経由で読み込む。
@@ -301,6 +310,8 @@ Phase 2-4では、npm公開向けの `exports` / `files` 全体整理は扱わ�
 
 ## 合格条件
 
+- `.js`、`.mjs`、`.ts` の単独設定を読み込み、複数候補は読み込み前に拒否する。
+- 読み込み失敗時にフォールバックせず、設定なしのJavaScriptプロジェクトは正常に処理する。
 - 旧設定ファイルを無条件に実行しない。
 - 移行先が分かる診断が出る。
 - 既存Stanzaソースのasset参照が壊れない。

@@ -256,6 +256,8 @@ Vite dev serverを採用しない理由:
 
 `togostanza init` はStanza repositoryを作る入口として維持する。
 
+標準のJavaScript利用に不要な設定を増やさないため、`init` では `tsconfig.json` を自動生成しない。TypeScriptを使う開発者が任意に設定し、既存プロジェクトのTypeScript設定は維持する。
+
 生成内容は再設計可能だが、いたずらに変更しない。生成後に `build`、`serve`、`generate stanza` が自然に動くことを重視する。
 
 現行版の `init` は `.github/workflows/publish.yml` を生成し、GitHub Actions上で `togostanza build` を実行して `dist/` をGitHub Pagesへdeployする導線を持つ。このGitHub Pages公開導線は、Stanza開発者が生成物を静的ホスティングへ配置するための開発契約として維持する。ActionのバージョンやYAMLの細部は再設計可能とする。
@@ -277,11 +279,15 @@ Vite dev serverを採用しない理由:
 
 実プロジェクトでは `metastanza` の `togostanza-build.mjs` が確認されている。`TogoMedium Stanza` の `togostanza-build.js` は存在するが、現行版で実際に有効だったかは区別して扱う。
 
-新しい設定ファイル名は `togostanza.config.ts` を第一候補とする。
+JavaScriptでstanzaを作成する手順を標準とし、設定ファイル名も `togostanza.config.js` を標準とする。`togostanza.config.mjs` にも対応し、既存の `togostanza.config.ts` は任意のTypeScript設定として維持する。設定の読み込みのためにstanzaソースのTypeScript化、`tsconfig.json` の新設、`package.json` への `type: "module"` 追加を要求しない。
+
+設定候補が複数ある場合は、形式による優先順位で選ばず、読み込み前にエラーにする。読み込みに失敗した設定を無視したり、他の形式へフォールバックしたりしない。設定がない場合は追加設定なしで処理する。これにより、開発者が意図しない設定でビルドが進むことを避ける。
+
+JavaScript設定はES modulesの `import` / `export` 形式を対象にする。CommonJSの `module.exports` 形式への対応は今回追加しない。
 
 `defineTogoStanzaConfig()` を提供し、TogoStanza専用設定を中心にする。必要な範囲でVite pluginやVite configを渡せるescape hatchを用意する。
 
-旧 `togostanza-build.mjs/js` を無条件に実行しない。検出した場合は、現行版で有効だった可能性を踏まえて、分かりやすいwarningまたはerrorを出し、移行メモで移行先を案内する。
+旧 `togostanza-build.mjs/js` を自動実行しない。検出した場合は、現行版で有効だった可能性を踏まえて、分かりやすいwarningまたはerrorを出し、標準の移行先 `togostanza.config.js` を案内する。
 
 ### ビルド基盤としてのVite
 
@@ -289,7 +295,7 @@ Vite dev serverを採用しない理由:
 
 `serve` がVite dev serverを使わないことは、Viteを外す理由にしない。リメイク版がViteから使っているものはdev serverではなく、plugin機構とビルドパイプラインである。
 
-- framework対応は、Stanza開発者が `togostanza.config.ts` へVite pluginを追加する方式を開発契約にしている。`@vitejs/plugin-vue` のようにVite専用フックへ依存するpluginがあり、Rolldownの直接利用ではこの契約を維持できない。
+- framework対応は、Stanza開発者がTogoStanza設定の `vite.plugins` へVite pluginを追加する方式を開発契約にしている。`@vitejs/plugin-vue` のようにVite専用フックへ依存するpluginがあり、Rolldownの直接利用ではこの契約を維持できない。
 - CSS処理（importされたCSSの収集とマージ、`url()` の書き換え）、`.env` と `import.meta.env`、assetのemitは、Vite層の機能として使っている。
 - 使用中のVite 8は、内部バンドラとしてRolldownを使う。バンドル性能の利益はVite経由でも得られており、Rolldownの直接利用で追加の性能利益はほぼない。
 - Rolldown本体のバージョン追従とAPI変化は、Vite経由で吸収する。
@@ -321,6 +327,6 @@ Svelteなど、旧ドキュメントに例はあるが実プロジェクトで�
 
 - 移行メモの具体化。
 - Vite 8実装設計。
-- `togostanza.config.ts` の具体schema。
+- TogoStanza設定の具体schema。
 - 実プロジェクトregression testの設計。
 - ヘルププレビューの追加改善範囲。

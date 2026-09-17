@@ -1267,7 +1267,7 @@ function formatBuildError(error: unknown, rootDirectory: string): string {
   const message = errorMessage(error);
   const hint =
     isUnresolvedImportError(message) && tsconfigLikelyDefinesPaths(rootDirectory)
-      ? " If this import relies on tsconfig compilerOptions.paths, configure the equivalent alias in togostanza.config.ts via vite.resolve.alias. Phase 2-4 does not resolve tsconfig paths directly."
+      ? " If this import relies on tsconfig compilerOptions.paths, configure the equivalent alias in togostanza.config.js via vite.resolve.alias. TogoStanza does not resolve tsconfig paths directly."
       : "";
 
   return `Build failed: ${message}${hint}`;

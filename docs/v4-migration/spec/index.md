@@ -56,6 +56,8 @@ Stanzaリポジトリ内で `build`、`serve`、`generate stanza` を実行す�
 
 `init` は既定でgit初期化を行う。`--skip-git` が指定された場合はgit初期化を行わない。GitHub Pages workflow生成はgit初期化の有無とは独立して扱う。
 
+`init` の標準雛形はJavaScriptでの利用を前提とし、`tsconfig.json` を自動生成しない。TypeScriptを使う場合は、開発者が対象ソースに合わせて設定を任意に追加する。既存プロジェクトのTypeScript設定を削除・変換するものではない。
+
 `generate stanza` / `g stanza` は、引数 `[id]` と、`--label`、`--definition`、`--license`、`--author`、`--timestamp` を受け付ける。`id` はStanza IDとして使えるkebab-caseへ正規化する。生成されるstanzaは、少なくとも `stanzas/{id}/metadata.json`、`index.js`、`style.scss`、`templates/stanza.html.hbs` を持つ。
 
 CLIは成功時にexit code `0` を返す。失敗時はnon-zeroを返す。細かいerror code分類とstdout/stderrの詳細な文言は互換対象にしない。ただし、入力不備、設定移行、ビルド失敗は、Stanza IDやファイルパスなど修正に必要な情報が分かる診断を出す。
@@ -85,7 +87,7 @@ stanzas/
 assets/
   *
 common.scss
-togostanza.config.ts
+togostanza.config.js | togostanza.config.mjs | togostanza.config.ts
 ```
 
 `package.json` はStanzaリポジトリのpackage定義として扱う。`build`、`serve`、`generate stanza` はStanzaリポジトリのルートで実行されることを前提にし、`package.json` からリポジトリ名、依存、scripts、実行環境を確認できる。
@@ -314,11 +316,15 @@ Stanza間連携を再設計する場合は、目的、影響範囲、既存HTML�
 
 ## 設定と解決
 
-リメイク版の設定ファイル名は `togostanza.config.ts` を第一候補とする。
+設定ファイルの標準名は `togostanza.config.js` とする。`togostanza.config.mjs` も対応し、既存の `togostanza.config.ts` はTypeScriptを使う場合の任意の形式として維持する。JavaScriptの設定ファイルはES modulesの `import` / `export` 形式を使い、CommonJSの `module.exports` 形式は対応対象に含めない。設定の読み込みだけを理由に `package.json` へ `type: "module"` を追加する必要はない。
+
+プロジェクトルートに置く設定ファイルは、この3候補のうち1つとする。複数候補がある場合は、いずれも読み込む前にエラーにする。選択した設定の読み込みに失敗した場合は、別の形式や設定なしへフォールバックせず、対象ファイルと原因を示して失敗する。設定ファイルがなければ、追加設定なしで正常に処理する。
+
+JavaScriptのstanzaを使うプロジェクトに、TypeScriptへの書き換えや `tsconfig.json` の新設を要求しない。
 
 設定APIとして `defineTogoStanzaConfig()` を提供する。設定はTogoStanza専用の項目を中心にし、必要な範囲でVite pluginやVite configを渡せるescape hatchを持つ。
 
-旧 `togostanza-build.mjs` / `togostanza-build.js` は無条件に実行しない。検出した場合は、旧設定ファイルがあることと、移行先の `togostanza.config.ts` が分かるwarningまたはerrorを出す。
+旧 `togostanza-build.mjs` / `togostanza-build.js` は自動実行しない。検出した場合は、旧設定ファイルがあることと、標準の移行先である `togostanza.config.js` が分かるwarningまたはerrorを出す。
 
 Stanzaソースの相対import、stanza内asset import、package内asset import、Sassからの共通stylesheet参照は、既存Stanzaソースを大きく変えずに移行できることを重視する。
 

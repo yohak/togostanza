@@ -13,7 +13,7 @@ export type BuildConfigLoadResult =
       error: string;
     };
 
-const configFileName = "togostanza.config.ts";
+const configFileNames = ["togostanza.config.js", "togostanza.config.mjs", "togostanza.config.ts"];
 const legacyConfigFileNames = ["togostanza-build.mjs", "togostanza-build.js"];
 
 export async function loadTogoStanzaBuildConfig(
@@ -23,12 +23,21 @@ export async function loadTogoStanzaBuildConfig(
     .filter((filename) => existsSync(join(rootDirectory, filename)))
     .map(
       (filename) =>
-        `Warning: Legacy TogoStanza config ${filename} was found and was not executed. Move supported settings to ${configFileName}.`,
+        `Warning: Legacy TogoStanza config ${filename} was found and was not executed. Rewrite supported settings in togostanza.config.js using the V4 config format.`,
     );
 
-  const configPath = join(rootDirectory, configFileName);
+  const configPaths = configFileNames
+    .map((filename) => join(rootDirectory, filename))
+    .filter((path) => existsSync(path));
 
-  if (!existsSync(configPath)) {
+  if (configPaths.length > 1) {
+    return {
+      error: `Invalid TogoStanza config: multiple config files found: ${configPaths.join(", ")}. Keep only one config file.`,
+    };
+  }
+
+  const configPath = configPaths[0];
+  if (!configPath) {
     return {
       config: {},
       warnings,
@@ -36,6 +45,9 @@ export async function loadTogoStanzaBuildConfig(
   }
 
   try {
+    // JS configs use ESM syntax without requiring a package-wide module type.
+    // Preserve the existing bundled loader for TypeScript configs.
+    const configLoader = configPath.endsWith(".ts") ? "bundle" : "runner";
     const loaded = await loadConfigFromFile(
       {
         command: "build",
@@ -44,6 +56,8 @@ export async function loadTogoStanzaBuildConfig(
       configPath,
       rootDirectory,
       "silent",
+      undefined,
+      configLoader,
     );
 
     if (!loaded) {

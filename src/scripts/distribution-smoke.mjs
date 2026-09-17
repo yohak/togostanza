@@ -107,7 +107,27 @@ function runInstallSmoke(input) {
 
   const stanzaRepository = join(input.projectDirectory, stanzaRepoName);
   run(binaryPath, ["generate", "stanza", "hello"], { cwd: stanzaRepository });
+  if (existsSync(join(stanzaRepository, "tsconfig.json"))) {
+    throw new Error("JavaScript scaffold must not require tsconfig.json");
+  }
+  writeFileSync(
+    join(stanzaRepository, "togostanza.config.js"),
+    [
+      'import { defineTogoStanzaConfig } from "togostanza/config";',
+      'export default defineTogoStanzaConfig({ vite: { define: { __JS_CONFIG__: JSON.stringify("js-config-from-package") } } });',
+      "",
+    ].join("\n"),
+  );
+  const stanzaEntry = join(stanzaRepository, "stanzas", "hello", "index.js");
+  writeFileSync(stanzaEntry, `${readFileSync(stanzaEntry, "utf8")}\nconsole.log(__JS_CONFIG__);\n`);
   run(binaryPath, ["build"], { cwd: stanzaRepository });
+  if (
+    !readFileSync(join(stanzaRepository, "dist", "hello.js"), "utf8").includes(
+      "js-config-from-package",
+    )
+  ) {
+    throw new Error("Installed package did not apply JavaScript config");
+  }
 
   for (const outputPath of [
     join(stanzaRepository, "dist", "hello.js"),

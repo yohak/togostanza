@@ -63,7 +63,9 @@ pnpm exec togostanza --version
 - `togostanza-build.js` / `togostanza-build.mjs` を使っている場合は、設定を `togostanza.config.ts` へ移す。
 - `tsconfig.json` の `paths` や独自のimport別名を使っている場合は、ビルドに必要な別名を `vite.resolve.alias` に指定する。
 
-JavaScriptのstanzaでも、ビルド設定が必要な場合のファイル名は `togostanza.config.ts` を使う。設定例に型注釈は不要で、stanzaソースをTypeScriptへ変える必要もない。設定の追加が不要なら、このファイルは作らなくてよい。
+このREADMEで導入する公開済みの `v4.0.0-alpha.0` では、JavaScriptのstanzaでも、必要なビルド設定は `togostanza.config.ts` に書く。型注釈やstanzaソースのTypeScript化は不要で、設定を追加しない場合はファイルも不要。
+
+公開準備中の `4.0.0-alpha.1` では `togostanza.config.js` を標準とし、`.mjs` と任意の `.ts` に対応する。`alpha.1` のGitタグはまだ公開しておらず、これらのJavaScript設定対応は `alpha.0` には含まれない。[移行ガイド](./docs/for-developers/guides/v3-to-v4.md)のJavaScript設定例を `alpha.0` で使う場合は、ファイル名を `togostanza.config.ts` に読み替える。
 
 > TypeScriptを使う場合の補足: `index.ts` / `index.tsx` も使用できる。型解決の設定は、移行ガイドの[TypeScriptの補足](./docs/for-developers/guides/v3-to-v4.md#補足typescriptを使う場合)を参照する。
 
@@ -92,6 +94,8 @@ pnpm exec togostanza serve
 npmとpnpmのどちらか一方を選び、次の手順を実行する。`my-stanza-repository` は作成するディレクトリ名に置き換えられる。
 
 `init` はプロジェクトの雛形作成、Git初期化、依存関係のインストールまで行う。`TOGOSTANZA_DEPENDENCY_SPEC` は、生成先のTogoStanza依存を、起動するCLIと同じAlpha版へ固定するために指定する。
+
+`alpha.0` の雛形には `tsconfig.json` も含まれるが、生成するstanzaはJavaScriptで利用できる。公開準備中の `alpha.1` ではこの設定ファイルの自動生成を廃止し、TypeScriptを使う場合だけ追加する。
 
 npmの場合:
 

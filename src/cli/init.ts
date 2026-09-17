@@ -202,7 +202,6 @@ function createScaffold(input: {
     "utf8",
   );
   writeFileSync(join(input.destination, "README.md"), formatReadme(input), "utf8");
-  writeFileSync(join(input.destination, "tsconfig.json"), formatJson(createTsConfig()), "utf8");
   if (input.packageManager === "pnpm") {
     writeFileSync(join(input.destination, "pnpm-workspace.yaml"), formatPnpmWorkspace(), "utf8");
   }
@@ -326,22 +325,6 @@ function resolveTogoStanzaDependencySpec(): string {
 
 function isPlaceholderDependencySpec(dependencySpec: string): boolean {
   return dependencySpec.includes("<tag-or-sha>");
-}
-
-function createTsConfig(): Record<string, unknown> {
-  return {
-    compilerOptions: {
-      allowJs: true,
-      checkJs: false,
-      module: "ESNext",
-      moduleResolution: "bundler",
-      noEmit: true,
-      skipLibCheck: true,
-      strict: true,
-      target: "ES2022",
-    },
-    include: ["stanzas/**/*", "lib/**/*", "togostanza.config.ts"],
-  };
 }
 
 function formatPnpmWorkspace(): string {

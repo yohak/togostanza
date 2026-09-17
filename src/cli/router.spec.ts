@@ -167,10 +167,6 @@ describe("CLI router", () => {
       pnpm?: unknown;
       scripts: Record<string, string>;
     };
-    const tsConfig = readJson(join(cwd, "generated-repo", "tsconfig.json")) as {
-      compilerOptions: Record<string, unknown>;
-      include: string[];
-    };
     const readme = readText(join(cwd, "generated-repo", "README.md"));
 
     expect(packageJson.license).toBe("MIT");
@@ -183,10 +179,7 @@ describe("CLI router", () => {
       build: "togostanza build",
       serve: "togostanza serve",
     });
-    expect(tsConfig.compilerOptions.moduleResolution).toBe("bundler");
-    expect(tsConfig.compilerOptions.allowJs).toBe(true);
-    expect(tsConfig.compilerOptions.checkJs).toBe(false);
-    expect(tsConfig.include).toContain("stanzas/**/*");
+    expect(existsSync(join(cwd, "generated-repo", "tsconfig.json"))).toBe(false);
     expect(readme).toContain("npm run build");
     expect(readme).toContain("npm run serve");
     expect(readme).toContain("npm exec togostanza generate stanza hello");
@@ -1180,69 +1173,105 @@ describe("CLI router", () => {
     expect(result.stdout).toMatch(new RegExp(`${statusTimestampPattern} Duration: \\d+ ms`));
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.mjs");
     expect(result.stderr).toContain("Legacy TogoStanza config togostanza-build.js");
-    expect(result.stderr).toContain("togostanza.config.ts");
+    expect(result.stderr).toContain("togostanza.config.js");
   });
 
-  it("applies togostanza.config.ts Vite settings through the togostanza/config import path", async () => {
-    const cwd = makeStanzaRepoRoot();
-    routeCli(["generate", "stanza", "configProbe"], { cwd, currentDate });
-    mkdirSync(join(cwd, "lib"));
-    writeFileSync(
-      join(cwd, "lib", "config-label.js"),
-      'export const configLabel = "config-alias-label";\n',
-      "utf8",
-    );
-    writeFileSync(
-      join(cwd, "stanzas", "config-probe", "index.js"),
-      [
-        'import Stanza from "togostanza/stanza";',
-        'import { configLabel } from "@shared/config-label.js";',
-        "",
-        "const configProbe = __TOGOSTANZA_CONFIG_PROBE__;",
-        "",
-        "export default class ConfigProbe extends Stanza {",
-        "  render() {",
-        '    const main = this.root.querySelector("main");',
-        "    if (main) {",
-        "      main.textContent = `${configLabel}:${configProbe}`;",
-        "    }",
-        "  }",
-        "}",
-        "",
-      ].join("\n"),
-      "utf8",
-    );
-    writeConfigImportFixture(cwd);
-    writeFileSync(
-      join(cwd, "togostanza.config.ts"),
-      [
-        'import { defineTogoStanzaConfig } from "togostanza/config";',
-        "",
-        "export default defineTogoStanzaConfig({",
-        "  vite: {",
-        "    define: {",
-        '      __TOGOSTANZA_CONFIG_PROBE__: JSON.stringify("config-from-vite"),',
-        "    },",
-        "    resolve: {",
-        "      alias: {",
-        `        "@shared": ${JSON.stringify(join(cwd, "lib"))},`,
-        "      },",
-        "    },",
-        "  },",
-        "});",
-        "",
-      ].join("\n"),
-      "utf8",
-    );
+  it.each(["js", "mjs", "ts"])(
+    "applies togostanza.config.%s settings without a module type or tsconfig",
+    async (extension) => {
+      const cwd = makeStanzaRepoRoot();
+      routeCli(["generate", "stanza", "configProbe"], { cwd, currentDate });
+      mkdirSync(join(cwd, "lib"));
+      writeFileSync(
+        join(cwd, "lib", "config-label.js"),
+        'export const configLabel = "config-alias-label";\n',
+        "utf8",
+      );
+      writeFileSync(
+        join(cwd, "stanzas", "config-probe", "index.js"),
+        [
+          'import Stanza from "togostanza/stanza";',
+          'import { configLabel } from "@shared/config-label.js";',
+          "",
+          "const configProbe = __TOGOSTANZA_CONFIG_PROBE__ + __CONFIG_PLUGIN__;",
+          "",
+          "export default class ConfigProbe extends Stanza {",
+          "  render() {",
+          '    const main = this.root.querySelector("main");',
+          "    if (main) {",
+          "      main.textContent = `${configLabel}:${configProbe}`;",
+          "    }",
+          "  }",
+          "}",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
+      writeConfigImportFixture(cwd);
+      const pluginDirectory = join(cwd, "node_modules", "config-plugin");
+      mkdirSync(pluginDirectory, { recursive: true });
+      writeFileSync(
+        join(pluginDirectory, "package.json"),
+        JSON.stringify({
+          name: "config-plugin",
+          type: "module",
+          exports: extension === "ts" ? "./index.js" : { import: "./index.js" },
+        }),
+      );
+      writeFileSync(
+        join(pluginDirectory, "index.js"),
+        'export default { name: "config-plugin", config() { return { define: { __CONFIG_PLUGIN__: JSON.stringify("esm-plugin-value") } }; } };\n',
+      );
+      writeFileSync(
+        join(cwd, `togostanza.config.${extension}`),
+        [
+          'import { defineTogoStanzaConfig } from "togostanza/config";',
+          'import configPlugin from "config-plugin";',
+          "",
+          "export default defineTogoStanzaConfig({",
+          "  vite: {",
+          "    plugins: [configPlugin],",
+          "    define: {",
+          '      __TOGOSTANZA_CONFIG_PROBE__: JSON.stringify("config-from-vite"),',
+          "    },",
+          "    resolve: {",
+          "      alias: {",
+          `        "@shared": ${JSON.stringify(join(cwd, "lib"))},`,
+          "      },",
+          "    },",
+          "  },",
+          "});",
+          "",
+        ].join("\n"),
+        "utf8",
+      );
 
-    const result = await routeCliAsync(["build"], { cwd });
+      const result = await routeCliAsync(["build"], { cwd });
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stderr).toBeUndefined();
-    expect(existsSync(join(cwd, "dist", "config-probe.js"))).toBe(true);
-    expect(readText(join(cwd, "dist", "config-probe.js"))).toContain("config-alias-label");
-    expect(readText(join(cwd, "dist", "config-probe.js"))).toContain("config-from-vite");
-  });
+      expect(result.exitCode).toBe(0);
+      expect(result.stderr).toBeUndefined();
+      expect(existsSync(join(cwd, "dist", "config-probe.js"))).toBe(true);
+      expect(readText(join(cwd, "dist", "config-probe.js"))).toContain("config-alias-label");
+      expect(readText(join(cwd, "dist", "config-probe.js"))).toContain("config-from-vite");
+      expect(readText(join(cwd, "dist", "config-probe.js"))).toContain("esm-plugin-value");
+      expect(existsSync(join(cwd, "tsconfig.json"))).toBe(false);
+      expect(readJson(join(cwd, "package.json"))).not.toHaveProperty("type");
+
+      const port = await findAvailablePort();
+      const served = await routeCliAsync(["serve", "--port", String(port)], {
+        cwd,
+        onServeSession: (session) => {
+          serveSessions.push(session);
+        },
+        serveWatch: false,
+      });
+      expect(served.exitCode, served.stderr).toBe(0);
+      const script = await fetchText(port, "/config-probe.js");
+      expect(script.body).toContain("config-alias-label");
+      expect(script.body).toContain("config-from-vite");
+      expect(script.body).toContain("esm-plugin-value");
+    },
+  );
 
   it("returns a diagnostic when togostanza.config.ts cannot be loaded", async () => {
     const cwd = makeStanzaRepoRoot();
@@ -1321,7 +1350,7 @@ describe("CLI router", () => {
     expect(existsSync(join(cwd, "dist", "allow-js-probe.js"))).toBe(true);
   });
 
-  it("explains the togostanza.config.ts migration path when tsconfig paths are unresolved", async () => {
+  it("explains the togostanza.config.js migration path when tsconfig paths are unresolved", async () => {
     const cwd = makeStanzaRepoRoot();
     routeCli(["generate", "stanza", "tsconfigPathsProbe"], { cwd, currentDate });
     mkdirSync(join(cwd, "lib"));
@@ -1365,7 +1394,7 @@ describe("CLI router", () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("tsconfig compilerOptions.paths");
-    expect(result.stderr).toContain("togostanza.config.ts");
+    expect(result.stderr).toContain("togostanza.config.js");
     expect(result.stderr).toContain("vite.resolve.alias");
   });
 
@@ -1595,6 +1624,72 @@ describe("CLI router", () => {
     expect(unknownAsset.status).toBe(200);
     expect(unknownAsset.contentType).toContain("application/octet-stream");
     expect(unknownAsset.body).toBe("custom\n");
+  });
+
+  it("reloads JS config and helpers, and recovers from added or removed config files while serving", async () => {
+    const cwd = makeStanzaRepoRoot();
+    routeCli(["generate", "stanza", "configWatch"], { cwd, currentDate });
+    const entry = join(cwd, "stanzas", "config-watch", "index.js");
+    writeFileSync(entry, `${readText(entry)}\nconsole.log(__WATCH_CONFIG__);\n`);
+    const port = await findAvailablePort();
+    const progress: string[] = [];
+    const result = await routeCliAsync(["serve", "--port", String(port)], {
+      cwd,
+      onServeSession: (session) => {
+        serveSessions.push(session);
+      },
+      progressOutput: (message) => {
+        progress.push(message);
+      },
+    });
+    expect(result.exitCode, result.stderr).toBe(0);
+    const config = join(cwd, "togostanza.config.js");
+    const helper = join(cwd, "config-value.js");
+    writeFileSync(helper, 'export const value = "first-watch-value";');
+    writeFileSync(
+      config,
+      'import { value } from "./config-value.js"; export default { vite: { define: { __WATCH_CONFIG__: JSON.stringify(value) } } };',
+    );
+    await waitFor(async () =>
+      (await fetchText(port, "/config-watch.js")).body.includes("first-watch-value"),
+    );
+
+    writeFileSync(helper, 'export const value = "second-watch-value";');
+    await waitFor(async () =>
+      (await fetchText(port, "/config-watch.js")).body.includes("second-watch-value"),
+    );
+    writeFileSync(
+      config,
+      'export default { vite: { define: { __WATCH_CONFIG__: JSON.stringify("edited-config-value") } } };',
+    );
+    await waitFor(async () =>
+      (await fetchText(port, "/config-watch.js")).body.includes("edited-config-value"),
+    );
+
+    const duplicate = join(cwd, "togostanza.config.mjs");
+    writeFileSync(duplicate, 'throw new Error("duplicate must not execute");');
+    await waitFor(async () =>
+      (await fetchText(port, "/config-watch.js")).body.includes("multiple config files"),
+    );
+    expect((await fetchText(port, "/config-watch.js")).body).not.toContain(
+      "duplicate must not execute",
+    );
+    rmSync(config);
+    writeFileSync(
+      duplicate,
+      'export default { vite: { define: { __WATCH_CONFIG__: JSON.stringify("mjs-recovered-value") } } };',
+    );
+    await waitFor(async () =>
+      (await fetchText(port, "/config-watch.js")).body.includes("mjs-recovered-value"),
+    );
+    // A runner load writes no config bundle beside the source, so watch must settle.
+    const count = progress.length;
+    await new Promise((resolveWait) => setTimeout(resolveWait, 300));
+    expect(progress).toHaveLength(count);
+    rmSync(duplicate);
+    await waitFor(async () =>
+      (await fetchText(port, "/config-watch.js")).body.includes("__WATCH_CONFIG__"),
+    );
   });
 
   it("rebuilds a changed stanza while serving", async () => {
