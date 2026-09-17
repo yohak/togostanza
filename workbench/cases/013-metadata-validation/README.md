@@ -171,4 +171,4 @@ pnpm run build:local
 - [Phase 8設計](../../../docs/v4-migration/implementation/phase-8/plan.md)
 - [リメイク版仕様](../../../docs/v4-migration/spec/index.md)
 - [リメイク方針](../../../docs/v4-migration/spec/remake-policy.md)
-- [source / config移行ガイド](../../../docs/for-developers/guides/source-config-migration.md)
+- [source / config移行ガイド](../../../docs/v4-migration/guides/source-config-migration.md)

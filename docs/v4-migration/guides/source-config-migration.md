@@ -1,5 +1,7 @@
 # Source / config 移行ガイド
 
+> この文書は、V4移行作業時点の案内を履歴資料として保持している。V3のstanzaプロジェクトをV4へ移す場合は、[V3からV4へのソース・設定の移行ガイド](../../for-developers/guides/v3-to-v4.md)を参照する。
+
 この文書では、既存stanzaリポジトリのsource / configをリメイク版へ移すときの手動移行方針を扱う。
 
 この文書はリメイク版仕様そのものではない。Stanza開発者が、既存の `tsconfig.json`、旧設定ファイル、実プロジェクト固有aliasを `togostanza.config.ts` へ移すための案内である。
@@ -151,7 +153,7 @@ Phase 8では、次を自動対応しない。
 
 ## 関連文書
 
-- [リメイク版仕様](../../v4-migration/spec/index.md)
-- [Phase 8設計](../../v4-migration/implementation/phase-8/plan.md)
+- [リメイク版仕様](../spec/index.md)
+- [Phase 8設計](../implementation/phase-8/plan.md)
 - [007 config and resolution](../../../workbench/cases/007-config-and-resolution/README.md)
 - [012 real project regression](../../../workbench/cases/012-real-project-regression/README.md)

@@ -116,7 +116,7 @@ Phase 9では、全15 Stanzaのbuild checkをbaselineとして扱う。全15 Sta
 
 TogoMedium固有aliasは、Phase 8の方針どおり自動吸収しない。Phase 9のTogoMedium確認では、`togostanza.config.ts` の `vite.resolve.alias` へ明示して確認する。
 
-`tsconfig paths` だけに依存するimportは、Phase 9では失敗してよい。必要なaliasは [source / config移行ガイド](../../../for-developers/guides/source-config-migration.md) に従って `togostanza.config.ts` へ移す。
+`tsconfig paths` だけに依存するimportは、Phase 9では失敗してよい。必要なaliasは [source / config移行ガイド](../../guides/source-config-migration.md) に従って `togostanza.config.ts` へ移す。
 
 ## browser smokeの範囲
 
@@ -226,6 +226,6 @@ package配下のコマンドは、`package/mise.toml` を正として `cd packag
 - [Phase 5棚卸し](../phase-5/inventory.md)
 - [Phase 5引き継ぎ](../phase-5/handoff.md)
 - [Phase 8引き継ぎ](../phase-8/handoff.md)
-- [source / config移行ガイド](../../../for-developers/guides/source-config-migration.md)
+- [source / config移行ガイド](../../guides/source-config-migration.md)
 - [012 Real project regression](../../../../workbench/cases/012-real-project-regression/README.md)
 - [実装計画](../index.md)

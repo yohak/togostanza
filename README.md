@@ -12,6 +12,8 @@ V4は、[従来のTogoStanza](https://github.com/togostanza/togostanza)をもと
 
 ## Alpha版を試す
 
+以下はJavaScriptでstanzaを作成する手順。V4を使うために、既存のstanzaをTypeScriptへ書き換える必要はない。
+
 ### 前提条件
 
 - Node.js 24以上。
@@ -56,11 +58,14 @@ pnpm exec togostanza --version
 
 **2. 既存の設定を確認する**
 
-次に該当する場合は、[ソース・設定の移行ガイド](./docs/for-developers/guides/source-config-migration.md)に沿って変更する。
+次に該当する場合は、[ソース・設定の移行ガイド](./docs/for-developers/guides/v3-to-v4.md)に沿って変更する。
 
 - `togostanza-build.js` / `togostanza-build.mjs` を使っている場合は、設定を `togostanza.config.ts` へ移す。
 - `tsconfig.json` の `paths` や独自のimport別名を使っている場合は、ビルドに必要な別名を `vite.resolve.alias` に指定する。
-- TypeScriptで `togostanza/stanza` や `togostanza/config` の型を解決する場合は、`moduleResolution` の設定を確認する。
+
+JavaScriptのstanzaでも、ビルド設定が必要な場合のファイル名は `togostanza.config.ts` を使う。設定例に型注釈は不要で、stanzaソースをTypeScriptへ変える必要もない。設定の追加が不要なら、このファイルは作らなくてよい。
+
+> TypeScriptを使う場合の補足: `index.ts` / `index.tsx` も使用できる。型解決の設定は、移行ガイドの[TypeScriptの補足](./docs/for-developers/guides/v3-to-v4.md#補足typescriptを使う場合)を参照する。
 
 **3. ビルドとブラウザ表示を確認する**
 
@@ -118,7 +123,7 @@ pnpm serve
 
 起動後に [http://localhost:8080/hello.html](http://localhost:8080/hello.html) を開き、`Hello, world!` の表示を確認する。パラメーター `say-to` を変更すると、挨拶の相手が変わる。
 
-生成したstanzaは `stanzas/hello/` にある。ソースやスタイルを編集し、再ビルド後にブラウザを再読み込みすると変更を確認できる。サーバーは `Ctrl+C` で停止する。
+生成したstanzaは `stanzas/hello/` にあり、JavaScriptのソースは `index.js`。ソースやスタイルを編集し、再ビルド後にブラウザを再読み込みすると変更を確認できる。サーバーは `Ctrl+C` で停止する。
 
 `package.json` と、npmでは `package-lock.json`、pnpmでは `pnpm-lock.yaml` を同じコミットに含める。
 

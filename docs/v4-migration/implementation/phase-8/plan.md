@@ -28,7 +28,7 @@ Phase 8は、Stanzaソースとbuild設定の移行可能性を整えるフェ�
 
 ## 含めるもの
 
-- `docs/for-developers/guides/source-config-migration.md` の追加。
+- `docs/v4-migration/guides/source-config-migration.md` の追加。
 - `docs/v4-migration/implementation/phase-8/plan.md` の追加。
 - `workbench/cases/013-metadata-validation/README.md` の追加。
 - `docs/v4-migration/implementation/index.md` へのPhase 8追加。
@@ -113,7 +113,7 @@ Phase 8で観測候補にするmetadata異常系:
 
 ### ドキュメント
 
-`docs/for-developers/guides/source-config-migration.md` を新設する。この文書は、Stanza開発者が既存stanzaリポジトリをリメイク版へ移すときの案内であり、リメイク版仕様そのものではない。
+`docs/v4-migration/guides/source-config-migration.md` を新設する。この文書は、Stanza開発者が既存stanzaリポジトリをリメイク版へ移すときの案内であり、リメイク版仕様そのものではない。
 
 最低限、次を含める。
 
@@ -178,7 +178,7 @@ package配下のコマンドは、`package/mise.toml` を正として `cd packag
 ## 成果物
 
 - `docs/v4-migration/implementation/phase-8/plan.md`
-- `docs/for-developers/guides/source-config-migration.md`
+- `docs/v4-migration/guides/source-config-migration.md`
 - `workbench/cases/013-metadata-validation/README.md`
 - `docs/v4-migration/implementation/index.md` のPhase 8追加
 - `workbench/cases/README.md` の013追加
@@ -190,6 +190,6 @@ package配下のコマンドは、`package/mise.toml` を正として `cd packag
 - [Phase 5棚卸し](../phase-5/inventory.md)
 - [Phase 5引き継ぎ](../phase-5/handoff.md)
 - [Phase 7引き継ぎ](../phase-7/handoff.md)
-- [source / config移行ガイド](../../../for-developers/guides/source-config-migration.md)
+- [source / config移行ガイド](../../guides/source-config-migration.md)
 - [013 metadata validation](../../../../workbench/cases/013-metadata-validation/README.md)
 - [実装計画](../index.md)

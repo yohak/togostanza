@@ -273,7 +273,7 @@ Phase 8では、`tsconfig.json` の `compilerOptions.paths` を自動でVite ali
 - 全体的な診断メッセージ体系の整理。
 - pack install smoke。
 
-Phase 8の設計は [Phase 8: source and config readiness 設計](./phase-8/plan.md) に置く。Stanza開発者向けの移行案内は [source / config移行ガイド](../../for-developers/guides/source-config-migration.md) に置く。metadata異常系の観測は [013 metadata validation](../../../workbench/cases/013-metadata-validation/) で扱う。完了後の状態とPhase 9以降への引き継ぎは [Phase 8: source and config readiness 引き継ぎ](./phase-8/handoff.md) に置く。
+Phase 8の設計は [Phase 8: source and config readiness 設計](./phase-8/plan.md) に置く。Stanza開発者向けの移行案内は [source / config移行ガイド](../guides/source-config-migration.md) に置く。metadata異常系の観測は [013 metadata validation](../../../workbench/cases/013-metadata-validation/) で扱う。完了後の状態とPhase 9以降への引き継ぎは [Phase 8: source and config readiness 引き継ぎ](./phase-8/handoff.md) に置く。
 
 ## Phase 9: local compatibility baseline
 

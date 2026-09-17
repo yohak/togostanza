@@ -18,7 +18,7 @@
 - [プロジェクト憲章](./v4-migration/project-charter.md): リメイク版の目的、互換性方針、実プロジェクトの扱い。
 - [開発用ノート](./v4-migration/development-notes.md): 作業時の考え方と、標準手順から外れやすい点。
 - [セットアップ](./v4-migration/setup/index.md): リファレンス、サンドボックス、検証領域をローカルに準備する手順。
-- [Source / config 移行ガイド](./for-developers/guides/source-config-migration.md): 既存stanzaリポジトリをリメイク版へ移すための手動移行案内。
+- [V3からV4へのソース・設定の移行ガイド](./for-developers/guides/v3-to-v4.md): V3のstanzaプロジェクトで必要になる設定変更と確認手順。
 - [Alpha版の導入手順](../README.md#alpha版を試す): 不変GitタグからV4 Alphaをnpmまたはpnpmで試す手順と更新方法。
 - [GitHub dependency 運用ガイド](./v4-migration/guides/github-dependency.md): 短期GitHub dependency経路でのインストール、lockfile、更新の案内。
 - [既存挙動調査](./v4-migration/investigation/README.md): 現行版 `togostanza` と実プロジェクトの既存挙動調査。
