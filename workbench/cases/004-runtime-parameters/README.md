@@ -226,7 +226,7 @@ Phase 11-4では、`references/togostanza` commit `2e5982d` の `stanza.ts` を�
 - `json` は `JSON.parse(value)` で変換する。invalid JSONは例外になる。リメイク版もPhase 11-4でこの挙動へ寄せた。
 - `single-choice`、`text`、未知の `stanza:type` はstringとして扱う。
 
-invalid値の細かいfallbackや警告条件は、引き続きリメイク版仕様の外部契約としては固定しない。集約結果は `docs/implementation/phase-11/runtime-edge-semantics.md` に記録した。
+invalid値の細かいfallbackや警告条件は、引き続きリメイク版仕様の外部契約としては固定しない。集約結果は `docs/v4-migration/implementation/phase-11/runtime-edge-semantics.md` に記録した。
 
 ## 合格条件
 

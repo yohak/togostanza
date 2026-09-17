@@ -5,27 +5,27 @@
 ## 最初に読むもの
 
 - `docs/README.md`
-- `docs/project-charter.md`
-- `docs/setup/package-layout.md`
-- `docs/investigation/follow-ups.md`
-- `docs/investigation/open-questions.md`
+- `docs/v4-migration/project-charter.md`
+- `docs/v4-migration/setup/package-layout.md`
+- `docs/v4-migration/investigation/follow-ups.md`
+- `docs/v4-migration/investigation/open-questions.md`
 - 文書、仕様、調査メモを読む、または直す場合は `docs/UBIQUITOUS_LANGUAGE.md`
-- 仕様や方針に触る場合は `docs/spec/index.md` と `docs/spec/remake-policy.md`
-- 調査や検証に触る場合は `docs/investigation/README.md` と該当する `workbench/cases/*/README.md`
+- 仕様や方針に触る場合は `docs/v4-migration/spec/index.md` と `docs/v4-migration/spec/remake-policy.md`
+- 調査や検証に触る場合は `docs/v4-migration/investigation/README.md` と該当する `workbench/cases/*/README.md`
 
 ## 必要なときに読むもの
 
 - 文書を書く、または直す場合は `docs/writing-style.md`
-- セットアップや検証環境を触る場合は `docs/setup/index.md`
+- セットアップや検証環境を触る場合は `docs/v4-migration/setup/index.md`
 
 ## 基準文書の扱い
 
-- 観測事実は `docs/investigation/` に記録する。
-- 採用判断は `docs/spec/remake-policy.md` に記録する。
-- リメイク版仕様は `docs/spec/index.md` に記録する。
+- 観測事実は `docs/v4-migration/investigation/` に記録する。
+- 採用判断は `docs/v4-migration/spec/remake-policy.md` に記録する。
+- リメイク版仕様は `docs/v4-migration/spec/index.md` に記録する。
 - 用語は `docs/UBIQUITOUS_LANGUAGE.md` に従う。
 - 文体は `docs/writing-style.md` に従う。
-- 未固定事項は `docs/investigation/follow-ups.md` と `docs/investigation/open-questions.md` に記録する。
+- 未固定事項は `docs/v4-migration/investigation/follow-ups.md` と `docs/v4-migration/investigation/open-questions.md` に記録する。
 
 ## 作業前チェック
 

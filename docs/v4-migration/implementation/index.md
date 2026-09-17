@@ -1,0 +1,446 @@
+# 実装計画
+
+この文書では、リメイク版の実装順序とフェーズごとのゴールを定義する。
+
+詳細な仕様は [リメイク版仕様](../spec/index.md) を正とする。採用判断は [リメイク方針](../spec/remake-policy.md) を正とする。この文書では、各フェーズの細かなAPI設計や実装方針は固定しない。
+
+各フェーズでは、開始時に詳細計画を作り、その詳細計画に基づいて実装と検証を行う。検証ケースはフェーズを縛るものではなく、各フェーズの完了判定に紐づくゴールとして扱う。再設計や破棄を含むフェーズでは、必要な移行メモ、差分説明、未固定事項の整理も詳細計画の成果物に含める。
+
+## 現在地
+
+2026-07-27時点で、Phase 0からPhase 14までの実装と引き継ぎは完了している。Phase 13のリッチなヘルププレビューとPhase 14のmenu UI polishは、build済み `dist/` とともに公開remoteの `main` へ反映済みである。
+
+現在の次フェーズは、[正式版統合計画](../../release/official-integration-plan.md)に基づくv4 alpha準備である。過去の残作業候補は、[Phase 12後の全体棚卸し](./post-phase-12-inventory.md)と[Phase 12後の残作業](./phase-12/remaining-work.md)を参照する。
+
+以下の各Phase節は、そのPhaseを計画・実施した時点の対象範囲を記録している。Phase 0からPhase 11までにある `package/` 配置など、後続Phaseで変更された内容は履歴として残し、現在の配置は[パッケージ配置](../setup/package-layout.md)を正とする。
+
+## フェーズ一覧
+
+| フェーズ | ゴール | 主な検証・成果物 | 関連文書 |
+| ---- | ---- | ---- | ---- |
+| Phase 0: skeleton | リメイク版パッケージとCLI土台を固める。 | パッケージ内のsmoke test | [設計](./phase-0/plan.md)、[引き継ぎ](./phase-0/handoff.md) |
+| Phase 1: scaffold生成 | StanzaリポジトリとStanzaソースを生成できるようにする。 | [001](../../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-1/plan.md)、[引き継ぎ](./phase-1/handoff.md) |
+| Phase 2: build + runtime | 生成物、直接埋め込み、Stanza source APIを縦断して動かす。 | [001](../../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../../workbench/cases/002-build-artifacts/)、[003](../../../workbench/cases/003-runtime-embedding/)、[004](../../../workbench/cases/004-runtime-parameters/)、[005](../../../workbench/cases/005-stanza-source-api/)、[006](../../../workbench/cases/006-inter-stanza-coordination/)、[007](../../../workbench/cases/007-config-and-resolution/) | [サブフェーズ計画](./phase-2/index.md)、[引き継ぎ](./phase-2/handoff.md) |
+| Phase 3: serve | ローカル開発サーバーとして確認と変更反映を成立させる。 | [011](../../../workbench/cases/011-serve-development-server/) | [設計](./phase-3/plan.md)、[引き継ぎ](./phase-3/handoff.md) |
+| Phase 4: compatibility | React、Vue、`togostanza-utils`、実プロジェクト回帰を確認する。 | [008](../../../workbench/cases/008-react-runtime/)、[009](../../../workbench/cases/009-vue-runtime/)、[010](../../../workbench/cases/010-togostanza-utils-compat/)、[012](../../../workbench/cases/012-real-project-regression/) | [設計](./phase-4/plan.md)、[引き継ぎ](./phase-4/handoff.md) |
+| Phase 5: readiness inventory | Phase 0からPhase 4までの成果物、残課題、未固定事項を棚卸しし、Phase 6以降へ再編する。 | 棚卸し表、Phase 6以降の再編案 | [設計](./phase-5/plan.md)、[棚卸し](./phase-5/inventory.md)、[引き継ぎ](./phase-5/handoff.md) |
+| Phase 6: workbench executability | workbenchの検証ケースを、repo-local CLIで再現できる入力として整える。 | workbench `remake/generated-repo`、repo-local CLI scripts | [設計](./phase-6/plan.md)、[引き継ぎ](./phase-6/handoff.md) |
+| Phase 7: package runtime readiness | リメイク版パッケージのsubpath export、型解決、dependency分類を整える。 | package automated test、型解決確認 | [設計](./phase-7/plan.md)、[引き継ぎ](./phase-7/handoff.md) |
+| Phase 8: source and config readiness | 既存stanzaリポジトリのsource / config移行とmetadata異常系の扱いを整理する。 | 移行ガイド、[013](../../../workbench/cases/013-metadata-validation/) | [設計](./phase-8/plan.md)、[引き継ぎ](./phase-8/handoff.md) |
+| Phase 9: local compatibility baseline | 実プロジェクト群を使ったローカルcompatibility確認を、後続フェーズへ再利用できるbaselineとして整える。 | [012](../../../workbench/cases/012-real-project-regression/)、`test:compat:local` | [設計](./phase-9/plan.md)、[引き継ぎ](./phase-9/handoff.md) |
+| Phase 10: developer experience and internal cleanup | Stanza開発者向けの案内と、外部契約にしない内部面を整理する。 | 生成README、内部面整理、[001](../../../workbench/cases/001-cli-scaffold-and-generate/) | [設計](./phase-10/plan.md)、[引き継ぎ](./phase-10/handoff.md) |
+| Phase 11: compatibility verification | 全Stanza browser smoke、TogoMedium Webアプリ本体E2E、runtime edge semanticsを検証する。 | [012](../../../workbench/cases/012-real-project-regression/)、runtime edge確認 | [設計](./phase-11/plan.md)、[引き継ぎ](./phase-11/handoff.md) |
+| Phase 12: GitHub dependency distribution | GitHub dependency installを短期配布経路として成立させる。 | root package layout、GitHub dependency install smoke、release branch / tag運用 | [設計](./phase-12/plan.md)、[引き継ぎ](./phase-12/handoff.md)、[残作業](./phase-12/remaining-work.md) |
+| Phase 13: rich preview / help page | buildとserveで、パラメーターやstyleを変更できるリッチなヘルププレビューを提供する。 | `index.html`、`{id}.html`、ヘルププレビューapp、browser test | [設計](./phase-13/plan.md)、[引き継ぎ](./phase-13/handoff.md) |
+| Phase 14: Menu UI polish | 埋め込み後のmenu UIを現行版の観測可能な挙動に近づける。 | `togostanza--menu`、`this.menu()` item、`togostanza-utils` menu helper、browser test | [設計](./phase-14/plan.md)、[引き継ぎ](./phase-14/handoff.md) |
+
+## Phase 0: skeleton
+
+ゴールは、`package/` 直下の単一パッケージとしてリメイク版の開発土台を固めることである。Phase 0の設計は [Phase 0: skeleton 設計](./phase-0/plan.md) に置き、完了後の状態とPhase 1への引き継ぎは [Phase 0: skeleton 引き継ぎ](./phase-0/handoff.md) に置く。
+
+含める範囲:
+
+- `package/` の単一パッケージ構成。
+- compiled JSとして実行できる `bin` 入口。
+- CLI起動、command routing、終了コードの基本構造。
+- format、lint、type-check、unit、integration、browser testの実行入口。
+- package buildと、buildを含む完了前確認。
+- 後続フェーズで実装を足せるディレクトリ構成。
+
+含めない範囲:
+
+- `init`、`generate stanza`、`build`、`serve` の実挙動。
+- Stanzaリポジトリの生成、ビルド生成物、ランタイム実装。
+- 互換性確認。
+
+Phase 0完了後は、引き継ぎメモを確認してからPhase 1の詳細計画を作る。
+
+## Phase 1: scaffold生成
+
+ゴールは、Stanza開発者が `init` と `generate stanza` で作業を開始できる状態を作ることである。Phase 1の設計は [Phase 1: scaffold生成 設計](./phase-1/plan.md) に置き、完了後の状態とPhase 2への引き継ぎは [Phase 1: scaffold生成 引き継ぎ](./phase-1/handoff.md) に置く。
+
+含める範囲:
+
+- `togostanza init`。
+- `togostanza generate stanza` / `togostanza g stanza`。
+- npmとpnpmの初期化方針。
+- npmとpnpmのinstall command組み立て確認。
+- `--skip-install`、`--skip-git`。
+- GitHub Pages workflow placeholder生成。
+- 生成直後に後続フェーズの `build` / `serve` へ進める雛形。
+
+含めない範囲:
+
+- `togostanza init .`。
+- 既存ディレクトリへのmerge、上書き、空ディレクトリ再利用。
+- lockfile同時存在や `--package-manager` 指定矛盾の診断。
+- ローカルtarballを使ったnpm/pnpmの実インストール確認。
+- 実deploy可能なGitHub Pages workflow。
+- 実際の `build` 生成物の完成。
+- ランタイム動作。
+- React、Vue、`togostanza-utils` 互換。
+
+対応する主な検証ケースは [001 CLIの雛形生成とgenerate](../../../workbench/cases/001-cli-scaffold-and-generate/) とする。
+
+## Phase 2: build + runtime
+
+ゴールは、Phase 1で作ったStanzaリポジトリをビルドし、一般Webサイトへ直接埋め込める生成物として動かすことである。
+
+含める範囲:
+
+- `togostanza build` / `togostanza b`。
+- `build --output-path <dir>` と未指定時の `dist` 出力。
+- Stanza検出、metadata検証、entrypoint、stylesheet、template、asset解決。
+- `togostanza.config.ts`、旧 `togostanza-build.mjs` / `togostanza-build.js` の検出と診断、Sass `@/` alias、`tsconfig.json`、ルートassetとstanza別asset。
+- Stanza entrypointからimportされる共有ソースと、そのimport graph。
+- `${id}.js`、`${id}.css`、`${id}.html`、metadata、asset、共有チャンク。
+- GitHub Pagesのサブパス配信で壊れない生成物URL。
+- 実deploy可能なGitHub Pages workflow。
+- module scriptとcustom elementによる直接埋め込み。
+- open Shadow DOM、Shadow DOM内 `main`。
+- `stanza:style` からCSS custom propertyの既定値への反映。
+- `stanza:menu-placement`、`togostanza-menu-placement` 属性、`none`、`togostanza-menu_placement` の拒否。
+- `this.params`、`renderTemplate()`、`query()`、`importWebFontCSS()`、`menu()`、`handleAttributeChange()`、`handleEvent()`。
+- `togostanza--container`、CustomEvent、incoming eventとoutgoing event。
+- `togostanza--event-map` と `togostanza--data-source` の再設計、実装、移行メモ。
+- `togostanza--data-container` を持ち込まないことの確認。
+
+含めない範囲:
+
+- `serve` のwatch、差分invalidate、HTTP 500復帰。
+- React、Vue固有のcompatibility。
+- `togostanza-utils` compatibility。
+
+対応する主な検証ケースは [001](../../../workbench/cases/001-cli-scaffold-and-generate/)、[002](../../../workbench/cases/002-build-artifacts/)、[003](../../../workbench/cases/003-runtime-embedding/)、[004](../../../workbench/cases/004-runtime-parameters/)、[005](../../../workbench/cases/005-stanza-source-api/)、[006](../../../workbench/cases/006-inter-stanza-coordination/)、[007](../../../workbench/cases/007-config-and-resolution/) とする。GitHub Pages workflowの実deploy導線は、`dist/` 生成とサブパス配信を確認できるPhase 2でplaceholderから置き換え、001のPhase 2合格条件として確認する。Phase 2の詳細は [Phase 2: build + runtime サブフェーズ計画](./phase-2/index.md) で扱い、完了後の状態は [Phase 2: build + runtime 引き継ぎ](./phase-2/handoff.md) に置く。Phase 2では、最小のbuild + runtime契約を先に成立させ、その後に `togostanza--event-map` と `togostanza--data-source` の具体APIを固定して実装する順序を切る。
+
+## Phase 3: serve
+
+ゴールは、Stanza開発者がlocalhostで開発中のStanzaを確認し、変更を反映できる状態を作ることである。
+
+含める範囲:
+
+- `togostanza serve` / `togostanza s`。
+- `serve --port <port>` と未指定時のport `8080`。
+- localhostでの配信。
+- loopback originからの開発用CORS。
+- build相当URLの提供。
+- stanza一覧と最小プレビュー。
+- watch、stanza固有入力の対象stanza再ビルド、依存グラフベースのinvalidate分類、安全に特定できない変更の全体invalidate。
+- Phase 3ではstanza固有入力の変更は対象stanzaだけを再ビルドする。共有ソース、設定、安全に特定できない変更では全体rebuildを許容する。
+- 初回ビルド失敗、再ビルド失敗、修正後復帰。
+- ビルド失敗時のHTTP 500エラーページ。
+
+含めない範囲:
+
+- 外部Webアプリ向け配信サーバーとしての利用契約。
+- HMR。
+- React、Vue、`togostanza-utils` の追加互換。
+
+serve用検証は、専用検証ケース `workbench/cases/011-serve-development-server/` で扱う。Phase 3の設計は [Phase 3: serve 設計](./phase-3/plan.md) に置き、完了後の状態とPhase 4への引き継ぎは [Phase 3: serve 引き継ぎ](./phase-3/handoff.md) に置く。
+
+## Phase 4: compatibility
+
+ゴールは、重点compatibility対象を既存Stanzaソースに近い形で動かすことである。
+
+含める範囲:
+
+- React TSX Stanzaソース。
+- Vue SFC Stanzaソース。
+- `togostanza-utils` のうち、TogoStanza runtime API、runtime menu contract、生成DOM構造に触れるAPI。
+- `togostanza-utils/apply-filter` のimport path解決。
+- compatibilityのために必要なruntime compat property。
+- **実プロジェクト群**であるmetastanzaとTogoMedium Stanzaの回帰検証。
+
+含めない範囲:
+
+- React、Vue以外のframework support。
+- `togostanza-utils` 全APIの挙動互換。
+- `Data` class、tree / graph helperの挙動互換。
+- SVG/PNG download出力の完全なバイト列一致。
+- npm package公開。
+
+対応する主な検証ケースは [008 React runtime](../../../workbench/cases/008-react-runtime/)、[009 Vue runtime](../../../workbench/cases/009-vue-runtime/)、[010 togostanza-utils compatibility](../../../workbench/cases/010-togostanza-utils-compat/)、[012 Real project regression](../../../workbench/cases/012-real-project-regression/) とする。実プロジェクト回帰では `references/metastanza` と `references/togomedium-web` を入力として参照し、観測結果と差分を012ケースへ記録する。Phase 4の設計は [Phase 4: compatibility 設計](./phase-4/plan.md) に置き、完了後の状態とPhase 5のreadiness inventoryへの引き継ぎは [Phase 4: compatibility 引き継ぎ](./phase-4/handoff.md) に置く。
+
+## Phase 5: readiness inventory
+
+ゴールは、Phase 0からPhase 4までの成果物、仕様、検証、handoff、残課題を棚卸しし、Phase 6以降へ再編できる状態を作ることである。
+
+Phase 5は実装フェーズではない。既存実装を広げることではなく、ブロッカー、未固定事項、既知制約、後続判断を分類し、それぞれの扱いと提案先フェーズを明らかにする。
+
+含める範囲:
+
+- Phase 0からPhase 4までのplan / handoffの読み直し。
+- `docs/v4-migration/spec/`、`docs/v4-migration/investigation/follow-ups.md`、`docs/v4-migration/investigation/open-questions.md`、各workbenchケースREADMEに残った未固定事項の棚卸し。
+- Phase 4 handoffで後続判断として残した事項の分類。
+- 各項目の分類、根拠、影響範囲、提案先フェーズの記録。
+- Phase 6以降の仮ロードマップ作成。
+- distributionへ進む前に閉じるべき事項と、Phase 12まで送れる事項の切り分け。
+
+含めない範囲:
+
+- 新規機能実装。
+- 既存実装の広範な修正。
+- ローカルtarballを使ったnpm/pnpmの実インストール確認。
+- `npm publish` の実行。
+- tag作成。
+- GitHub release作成。
+- `latest` として公開されたpackageの実利用確認。
+
+Phase 5の設計は [Phase 5: readiness inventory 設計](./phase-5/plan.md) に置き、棚卸し結果は [Phase 5: readiness inventory 棚卸し](./phase-5/inventory.md)、Phase 6以降への入口メモは [Phase 5: readiness inventory 引き継ぎ](./phase-5/handoff.md) に置く。
+
+## Phase 6: workbench executability
+
+ゴールは、`workbench` の検証ケースを、リメイク版CLIで再現できるケース入力として整えることである。
+
+Phase 6はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase 12へ送る。Phase 6では、repo-localの `bin/togostanza.mjs` を `node` で呼ぶscriptsを基本にする。
+
+含める範囲:
+
+- `workbench/cases/*/remake/generated-repo/` の整備。
+- repo-local CLIを呼ぶworkbench用scripts。
+- 対象ケースREADMEのリメイク版実行手順。
+- generated repoの `scripts.build` / `scripts.serve` 追加判断と、必要な実装。
+- package automated testとworkbench入力の役割分担の明記。
+
+含めない範囲:
+
+- pack install smoke。
+- package公開面の `files`、`exports`、`private` 解除、公開metadata整理。
+- `togostanza/stanza` exportと型定義。
+- dependency分類の最終整理。
+- 実プロジェクト全Stanzaのbuild checkやbrowser smoke。
+- TogoMedium Webアプリ本体E2E。
+
+Phase 6の設計は [Phase 6: workbench executability 設計](./phase-6/plan.md) に置く。完了後は、Phase 7へ進む前にPhase 6 handoffを作る。
+
+## Phase 7: package runtime readiness
+
+ゴールは、Stanza開発者から見た開発契約として、リメイク版パッケージのsubpath export、型解決、dependency分類を整えることである。
+
+Phase 7はdistribution準備ではない。ローカルtarballを作ってinstallする確認や、公開packageとしての `npm exec` / `pnpm dlx` 確認はPhase 12へ送る。Phase 7では、本リポジトリ内で確認できるリメイク版パッケージ内部面を扱う。
+
+含める範囲:
+
+- `togostanza/stanza` の `./stanza` subpath export。
+- `togostanza/stanza` をStanza base classの公開用wrapperに絞り、内部ランタイムAPIを公開しないこと。
+- 既存の `togostanza/config` subpath exportの維持。
+- `exports` が指す `dist` ファイルの実在確認。
+- Stanza開発者から見た開発契約としての `togostanza/stanza` と `togostanza/config` の型解決確認。
+- package側integration testでの一時的なstanzaリポジトリ風入力による `tsc --noEmit` 確認。
+- 型解決確認用の `tsconfig.json` では、`exports` subpathを読む `moduleResolution` を明示すること。
+- build実行時dependencyと開発・検証用dependencyの分類。
+- `private: true` を維持する判断の明記。
+
+含めない範囲:
+
+- pack install smoke。
+- tarball生成。
+- `npm exec togostanza@latest` / `pnpm dlx togostanza@latest` の実解決。
+- npm公開metadataの整理。
+- `private`解除。
+- `files` の最終整理。
+- root export、`main`、top-level `types`。
+- GitHub Actions live deploy。
+- 検証領域への新しい検証ケース追加。
+- 既存stanzaリポジトリの `moduleResolution: "node"` からの移行案内や未解決時診断。
+
+Phase 7の設計は [Phase 7: package runtime readiness 設計](./phase-7/plan.md) に置き、完了後の状態とPhase 8への引き継ぎは [Phase 7: package runtime readiness 引き継ぎ](./phase-7/handoff.md) に置く。
+
+## Phase 8: source and config readiness
+
+ゴールは、既存stanzaリポジトリのsource / configをリメイク版へ移行できる状態にすることである。
+
+Phase 8では、`tsconfig.json` の `compilerOptions.paths` を自動でVite aliasへ合成しない。TogoMedium固有aliasも自動吸収しない。必要なaliasは、Stanza開発者が `togostanza.config.ts` の `vite.resolve.alias` へ手動で移す方針とする。
+
+含める範囲:
+
+- `tsconfig paths` から `togostanza.config.ts` への手動移行案内。
+- TogoMedium固有aliasの手動移行案内。
+- `moduleResolution: "bundler"` を推奨する理由の記録。
+- 旧 `togostanza-build.js` / `togostanza-build.mjs` から `togostanza.config.ts` への移行方針。
+- metadata異常系の観測。固定済み最小validationについては、現行版観測は差分説明用でありPhase 8完了条件にしない。
+- `013-metadata-validation` 検証ケース。
+- 必要に応じた局所的なbuild診断改善。
+
+含めない範囲:
+
+- `tsconfig paths` の自動解決。
+- TogoMedium固有aliasの自動吸収。
+- 既存workbench全体の `tsconfig.json` 一括更新。
+- `init` 雛形への `tsconfig.json` 追加。
+- 旧設定ファイルの自動実行。
+- 広範なmetadata schema validation。
+- 全体的な診断メッセージ体系の整理。
+- pack install smoke。
+
+Phase 8の設計は [Phase 8: source and config readiness 設計](./phase-8/plan.md) に置く。Stanza開発者向けの移行案内は [source / config移行ガイド](../../guides/source-config-migration.md) に置く。metadata異常系の観測は [013 metadata validation](../../../workbench/cases/013-metadata-validation/) で扱う。完了後の状態とPhase 9以降への引き継ぎは [Phase 8: source and config readiness 引き継ぎ](./phase-8/handoff.md) に置く。
+
+## Phase 9: local compatibility baseline
+
+ゴールは、**実プロジェクト群**を使ったローカルcompatibility確認を、後続フェーズへ再利用できるbaselineとして整えることである。
+
+Phase 9では、`references/` 配下のローカルリファレンスを使い、metastanzaとTogoMedium Stanzaの全Stanza build check、代表Stanza browser smoke、React / Vue検証済みversionの記録を行う。CI化、配布検証、全Stanza browser smoke、TogoMedium Webアプリ本体E2Eは扱わない。
+
+含める範囲:
+
+- `references/metastanza`、`references/togomedium-web`、`references/togostanza-utils` のローカル再現手順。
+- referencesが存在しない、または依存が未インストールの場合の前提条件記録。
+- referencesを直接変更しない一時rootまたはcopy / symlinkによる確認手順。
+- 計画で列挙したStanza名とローカル `references/` の現在checkoutの再照合。
+- metastanza全10 Stanzaのbuild check。
+- TogoMedium Stanza全15 Stanzaのbuild check。
+- 代表Stanza browser smoke。
+- React / Vue / Emotion / MUI / `togostanza-utils` の検証済みversionを012 READMEへ記録すること。
+- references依存確認用の専用入口。default `check-all` にはreferences依存確認を含めない。
+- 012 READMEへのPhase 9観測結果追記。
+
+含めない範囲:
+
+- `references/` のCI化。
+- `references/` の自動取得、更新、submodule化。
+- pack install smoke。
+- npm package公開面の最終整理。
+- 全Stanza browser smoke。
+- TogoMedium Webアプリ本体E2E。
+- React / Vueの広いversion matrix。
+- default `check-all` へのreferences依存確認の混入。
+- TogoMedium固有aliasの自動吸収。
+- `tsconfig paths` の自動解決。
+
+Phase 9の設計は [Phase 9: local compatibility baseline 設計](./phase-9/plan.md) に置く。実プロジェクト回帰の観測は [012 Real project regression](../../../workbench/cases/012-real-project-regression/) で扱う。完了後の状態とPhase 10以降への引き継ぎは [Phase 9: local compatibility baseline 引き継ぎ](./phase-9/handoff.md) に置く。
+
+## Phase 10: developer experience and internal cleanup
+
+ゴールは、Stanza開発者向けの案内と、外部契約にしない内部実装面を整理することである。
+
+Phase 10では、Phase 6とPhase 7で既に解消済みの事項を再実装しない。生成README、GitHub Pages workflowの運用制約、scaffold / CLI UXの残項目、internal runtime / build surfaceの整理判断を扱う。全Stanza browser smoke、Runtime edge semantics、配布検証は扱わない。
+
+含める範囲:
+
+- `init` が生成するREADME本文の改善。
+- 生成repoの `build` / `serve` script、GitHub Pages workflow、lockfile前提、pnpm 11前提、`--skip-install` 時の注意をStanza開発者向けに説明すること。
+- `index.ts` / `index.tsx` 生成option、bare `init` prompt、CLI library採用、細かいerror code分類を、Phase 10で実装するか後続へ送るかの明示。
+- build wrapper末尾の `export default StanzaClass`、`.togostanza-build-output` marker、menu shell、`metadata.json` のDownload JSON導線など、内部面または未固定面の整理判断。
+- 001 READMEへのPhase 10観測または差分記録。
+
+含めない範囲:
+
+- 全Stanza browser smoke。
+- TogoMedium Webアプリ本体E2E。
+- Runtime edge semanticsの現行版調査と固定。
+- ヘルププレビューUIのリッチ化。
+- pack install smoke。
+- npm package公開面の最終整理。
+- GitHub Actions上でのlive deploy確認。
+
+Phase 10の設計は [Phase 10: developer experience and internal cleanup 設計](./phase-10/plan.md) に置く。完了後の状態とPhase 11以降への引き継ぎは [Phase 10: developer experience and internal cleanup 引き継ぎ](./phase-10/handoff.md) に置く。
+
+## Phase 11: compatibility verification
+
+ゴールは、Phase 9で作ったlocal compatibility baselineを広げ、互換性確認の残りを実プロジェクトとruntime edge semanticsで回収することである。
+
+Phase 11では、metastanza全10 StanzaとTogoMedium Stanza全15 Stanzaのbrowser smoke、TogoMedium Webアプリ本体E2E、Runtime edge semanticsを扱う。
+
+Phase 11の設計は [Phase 11: compatibility verification 設計](./phase-11/plan.md) に置き、完了後の状態とPhase 12 / 後続への引き継ぎは [Phase 11: compatibility verification 引き継ぎ](./phase-11/handoff.md) に置く。
+
+## Phase 12: GitHub dependency distribution
+
+ゴールは、Stanza開発者が `package.json` にGitHub dependencyを書き、`npm install` または `pnpm install` で `togostanza` を解決できる短期配布経路を成立させることである。
+
+Phase 12は、Phase 5で棚卸ししたdistribution blockerと、Phase 6からPhase 11までで回収したcompatibility確認を受けて着手する。Phase 12前半ではローカルtarballによる `pack -> install -> 実行` smokeを確認済みであり、その結果は [Phase 12: distribution 引き継ぎ](./phase-12/handoff.md) に記録している。
+
+Phase 12後半では、短期方針をnpm publishではなくGitHub dependency installへ切り替える。詳細計画は [Phase 12: GitHub dependency distribution 設計](./phase-12/plan.md) に置き、公開前に人間が確認する項目は [Phase 12 release checklist](./phase-12/release-checklist.md) に置く。完了後の状態は [Phase 12: distribution 引き継ぎ](./phase-12/handoff.md)、外部公開前に残す作業は [Phase 12後の残作業](./phase-12/remaining-work.md) に置く。
+
+含める範囲:
+
+- root package layoutへの移行。
+- 実装、test、scriptsの `src/` 配下への集約。
+- root実行の品質確認手順。
+- ローカルtarball smokeの維持。
+- GitHub dependency install smoke。
+- GitHub dependency向けrelease branch / tag運用。
+- generated repoの `dependencies.togostanza` GitHub dependency spec判断。
+- install対象を `files` で最小化するpackage surface確認。
+
+含めない範囲:
+
+- `npm publish` の実行。
+- GitHub release作成。
+- `latest` として公開されたpackageの実利用確認。
+- GitHub Packages npm registryへの公開。
+- ワークスペース化。
+- install時build。
+
+## Phase 13: rich preview / help page
+
+ゴールは、Stanza開発者がbuild生成物やserve上のページから、パラメーターやstyleを変更しながら対象stanzaを確認できるリッチなヘルププレビューを提供することである。
+
+Phase 13では、現行版のヘルププレビュー体験を参考にしつつ、内部DOM構造や `-togostanza/` 配下のbundle構造の完全互換は固定しない。`index.html` と `{id}.html` の存在、Stanza開発者がブラウザで確認できるUI、About導線、Download JSON導線、HTML snippet導線を重視する。
+
+Phase 13の設計は [Phase 13: リッチなヘルププレビュー計画](./phase-13/plan.md) に置き、完了後の状態と残論点は [Phase 13: rich preview / help page 引き継ぎ](./phase-13/handoff.md) に置く。
+
+含める範囲:
+
+- `build` が生成する `index.html` と `{id}.html` のリッチ化。
+- `serve` で同じヘルププレビューUIを確認できること。
+- Vue 3によるヘルププレビューapp。
+- Bootstrap 5 CSSによるフォーム、タブ、ボタン、snippet表示。
+- `stanza:parameter` と `stanza:style` 由来の型別フォーム。
+- custom elementプレビュー、HTML snippet、About、Download JSON導線。
+
+含めない範囲:
+
+- query parameterによる初期値上書き。
+- プレビュー状態をURLで共有する機能。
+- 現行版のDOM構造、CSS class、bundle名の完全互換。
+- Bootstrap JS。
+- JSON専用editor。
+- menu UIのリッチ化。
+
+## Phase 14: Menu UI polish
+
+ゴールは、StanzaをWebページへ埋め込んだ後のmenu UIを、現行版の観測可能な挙動に近づけることである。
+
+Phase 14では、現行版と同じ実装技術を採用することではなく、Stanza利用者とStanza開発者から見える挙動を優先する。`togostanza--menu` custom element、info icon、popup、placement、`this.menu()` item / divider、Copy HTML snippet、About this stanza、`togostanza-utils` のdownload系menu helperを扱う。
+
+Phase 14の設計は [Phase 14: Menu UI polish 計画](./phase-14/plan.md) に置き、完了後の状態は [Phase 14: Menu UI polish 引き継ぎ](./phase-14/handoff.md) に置く。
+
+含める範囲:
+
+- `<togostanza--menu>` custom elementの復元。
+- `<main>` と `<togostanza--menu>` を同じ相対配置コンテナへ置くこと。
+- `metadata["stanza:menu-placement"]` と `togostanza-menu-placement` 属性。
+- `top-left`、`top-right`、`bottom-left`、`bottom-right`、`none`。
+- info icon、popup、開閉、`Escape`、外側click。
+- `this.menu()` のitem / divider表示とhandler実行。
+- `Copy HTML snippet to clipboard`。
+- `About this stanza`。
+- `togostanza-utils` のdownload系menu helperが使えることの確認。
+
+含めない範囲:
+
+- Lit、Popper、Primer Octicons packageの追加。
+- Popper相当の画面端自動flip。
+- 現行版Shadow DOM内部のclass名、id、DOM階層の完全一致。
+- `togostanza-menu_placement` の復活。
+- 実ファイル保存まで含むdownload E2E。
+
+## 詳細計画の扱い
+
+各フェーズでは、全体の実装フローを成立させる判断を優先して固定する。
+
+全体の実装フローに影響しないが、細かい仕様を詰める必要がある事項は、そのフェーズの主目的に直接必要でなければ後続判断へ回してよい。後続判断へ回す場合は、対象外、未決定事項、または引き継ぎ事項として明記し、暗黙に採用した扱いにしない。
+
+例として、Phase 1では `init` と `generate stanza` の入口成立を優先する。`togostanza init .` のように便利だが既存ファイルのmerge、上書き、衝突検出まで決める必要がある入口は、Phase 1の主目的を妨げる場合は後続判断へ回す。
+
+各フェーズの詳細計画では、次を決めてから実装に入る。
+
+- そのフェーズで満たす仕様項目。
+- そのフェーズで満たす検証ケースの観測契約。
+- 実装対象の主要モジュール。
+- 失敗時の診断方針。
+- 実行する確認コマンド。
+- そのフェーズで扱わない事項。
+- 必要な移行メモ、差分説明、未固定事項。
+
+詳細計画は、実装前に作成し、必要なレビューを受けてから実装する。フェーズ完了時には、対応する検証ケースにリメイク版の観測結果を記録する。

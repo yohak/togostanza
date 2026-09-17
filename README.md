@@ -8,7 +8,7 @@ V4は、[従来のTogoStanza](https://github.com/togostanza/togostanza)をもと
 
 現在は、正式公開に向けてAlpha版を公開し、実プロジェクトでのビルド、表示、操作、移行手順を確認する段階にある。このREADMEでは、公開済みの `v4.0.0-alpha.0` を試す手順を示す。Alpha版はnpmレジストリではなく、`yohak/togostanza` のGitタグから導入する。
 
-今後はAlpha版での確認を経て、正式版リポジトリへの統合、npmでのBeta版公開、正式版 `4.0.0` の公開へ進む予定。各段階の条件は[正式公開までのロードマップ](./docs/implementation/official-integration-plan.md)を参照する。
+今後はAlpha版での確認を経て、正式版リポジトリへの統合、npmでのBeta版公開、正式版 `4.0.0` の公開へ進む予定。各段階の条件は[正式公開までのロードマップ](./docs/release/official-integration-plan.md)を参照する。
 
 ## Alpha版を試す
 
@@ -143,5 +143,5 @@ Gitタグは固定して使い、タグ無し参照やブランチ指定へ戻�
 ## 開発ドキュメント
 
 - [開発ドキュメント一覧](./docs/README.md): 計画、設計、調査記録の入口。
-- [V4仕様](./docs/spec/index.md): CLI、設定、stanzaソースAPI、ランタイムなどの仕様。
-- [正式公開までのロードマップ](./docs/implementation/official-integration-plan.md): Alpha、Beta、正式版への移行条件と進め方。
+- [V4仕様](./docs/v4-migration/spec/index.md): CLI、設定、stanzaソースAPI、ランタイムなどの仕様。
+- [正式公開までのロードマップ](./docs/release/official-integration-plan.md): Alpha、Beta、正式版への移行条件と進め方。

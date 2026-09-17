@@ -168,7 +168,7 @@ pnpm run build:local
 
 ## 関連文書
 
-- [Phase 8設計](../../../docs/implementation/phase-8/plan.md)
-- [リメイク版仕様](../../../docs/spec/index.md)
-- [リメイク方針](../../../docs/spec/remake-policy.md)
+- [Phase 8設計](../../../docs/v4-migration/implementation/phase-8/plan.md)
+- [リメイク版仕様](../../../docs/v4-migration/spec/index.md)
+- [リメイク方針](../../../docs/v4-migration/spec/remake-policy.md)
 - [source / config移行ガイド](../../../docs/guides/source-config-migration.md)

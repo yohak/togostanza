@@ -308,7 +308,7 @@ Phase 11-4では、`references/togostanza` commit `2e5982d` の `stanza.ts`、`s
 - `query()` はmethod未指定時に `POST` を使い、`Content-Type: application/x-www-form-urlencoded` を明示する。リメイク版もPhase 11-4でContent-Typeを明示した。
 - `menu()` のitem / divider / handlerはAPIとして維持する。ただし、現行版のLitElementベースのDOM構造、Copy HTML snippet、見た目、keyboard interactionは本開発では固定しない。
 
-集約結果は `docs/implementation/phase-11/runtime-edge-semantics.md` に記録した。
+集約結果は `docs/v4-migration/implementation/phase-11/runtime-edge-semantics.md` に記録した。
 
 ## Phase 6 リメイク版workbench入力
 
