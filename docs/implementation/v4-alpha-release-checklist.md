@@ -22,7 +22,7 @@ dependency spec: github:yohak/togostanza#v4.0.0-alpha.0
 - [ ] `package.json.version` と公開予定tagが一致している。
 - [ ] `package.json.private` が `true` のままであり、npm公開を有効にしていない。
 - [ ] `CHANGELOG.md` の対象versionが更新されている。
-- [ ] [alpha内部プレビュー手順](../guides/alpha-testing.md)のversionとコマンドが一致している。
+- [ ] [Alpha版の導入手順](../../README.md#alpha版を試す)のversionとコマンドが一致している。
 - [ ] `init` は具体dependency specなしのインストールを拒否する。
 - [ ] `TOGOSTANZA_DEPENDENCY_SPEC` で、生成repoの `devDependencies.togostanza` に同じalpha tagを固定できる。
 - [ ] 生成repoに `packageManager` fieldを追加していない。
@@ -83,7 +83,7 @@ git push yohak-github ${ALPHA_TAG}
 
 ## 公開後
 
-npmとpnpmの両方で、公開tagから新しいStanzaリポジトリを生成する。[alpha内部プレビュー手順](../guides/alpha-testing.md)のコマンドをそのまま使う。
+npmとpnpmの両方で、公開tagから新しいStanzaリポジトリを生成する。[新規プロジェクトの導入手順](../../README.md#新規プロジェクトで試す)のコマンドをそのまま使う。
 
 次を確認する。
 

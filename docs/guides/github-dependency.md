@@ -5,7 +5,7 @@
 この文書はnpm registry公開手順ではない。短期的な `github:yohak/togostanza` 経路で、インストール、lockfile、更新の扱いを揃えるための案内である。
 
 > [!NOTE]
-> この文書のタグ無しGitHub dependency運用は、Phase 12までの短期配布経路を記録している。v4 alphaの内部プレビューではタグ無し参照を使わず、[v4 alpha内部プレビュー](./alpha-testing.md)に従って不変の `v4.0.0-alpha.*` tagへ固定する。
+> この文書のタグ無しGitHub dependency運用は、Phase 12までの短期配布経路を記録している。v4 alphaの内部プレビューではタグ無し参照を使わず、[Alpha版の導入手順](../../README.md#alpha版を試す)に従って不変の `v4.0.0-alpha.*` tagへ固定する。
 
 ## 基本方針
 

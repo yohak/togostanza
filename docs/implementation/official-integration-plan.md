@@ -67,7 +67,7 @@ alphaを利用するStanzaリポジトリは、TogoStanzaを `devDependencies` �
 }
 ```
 
-`init` では `TOGOSTANZA_DEPENDENCY_SPEC` を使い、CLIの起動元と生成先の依存を同じtagへ揃える。npmとpnpmの完全なalpha利用手順は、別途 `docs/guides/alpha-testing.md` に記録する。この環境変数はalpha検証と保守用のoverrideとして維持し、正式版の一般利用手順には載せない。
+`init` では `TOGOSTANZA_DEPENDENCY_SPEC` を使い、CLIの起動元と生成先の依存を同じtagへ揃える。npmとpnpmのalpha利用手順は、READMEの[Alpha版の導入手順](../../README.md#alpha版を試す)に記録する。この環境変数はalpha検証と保守用のoverrideとして維持し、正式版の一般利用手順には載せない。
 
 ### beta
 

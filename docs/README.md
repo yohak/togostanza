@@ -10,7 +10,7 @@
 - [開発用ノート](./development-notes.md): 作業時の考え方と、標準手順から外れやすい点。
 - [セットアップ](./setup/index.md): リファレンス、サンドボックス、検証領域をローカルに準備する手順。
 - [Source / config 移行ガイド](./guides/source-config-migration.md): 既存stanzaリポジトリをリメイク版へ移すための手動移行案内。
-- [v4 alpha内部プレビュー](./guides/alpha-testing.md): 不変Git tagからv4 alphaをnpmまたはpnpmで試す手順。
+- [Alpha版の導入手順](../README.md#alpha版を試す): 不変GitタグからV4 Alphaをnpmまたはpnpmで試す手順と更新方法。
 - [GitHub dependency 運用ガイド](./guides/github-dependency.md): 短期GitHub dependency経路でのインストール、lockfile、更新の案内。
 - [既存挙動調査](./investigation/README.md): 現行版 `togostanza` と実プロジェクトの既存挙動調査。
 - [リメイク方針](./spec/remake-policy.md): 現行版の挙動を維持、再設計、破棄のどれとして扱うかの判断。
