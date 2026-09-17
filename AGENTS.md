@@ -5,6 +5,8 @@
 ## 最初に読むもの
 
 - `docs/README.md`
+- stanza作成者向け文書を扱う場合は `docs/for-developers/README.md`
+- TogoStanza本体の開発・保守・公開を扱う場合は `docs/for-maintainers/README.md`
 - `docs/v4-migration/project-charter.md`
 - `docs/v4-migration/setup/package-layout.md`
 - `docs/v4-migration/investigation/follow-ups.md`
@@ -22,7 +24,8 @@
 
 - 観測事実は `docs/v4-migration/investigation/` に記録する。
 - 採用判断は `docs/v4-migration/spec/remake-policy.md` に記録する。
-- リメイク版仕様は `docs/v4-migration/spec/index.md` に記録する。
+- リメイク版仕様は、文書の整理と引き継ぎが完了するまで `docs/v4-migration/spec/index.md` を正本として記録する。
+- stanza作成者向けの案内は `docs/for-developers/`、TogoStanza本体の開発・保守文書は `docs/for-maintainers/` に置く。
 - 用語は `docs/UBIQUITOUS_LANGUAGE.md` に従う。
 - 文体は `docs/writing-style.md` に従う。
 - 未固定事項は `docs/v4-migration/investigation/follow-ups.md` と `docs/v4-migration/investigation/open-questions.md` に記録する。

@@ -6,7 +6,7 @@ Phase 8の設計は [plan.md](./plan.md) を正とする。この文書は設計
 
 ## 完了したこと
 
-- Stanza開発者向けの [source / config移行ガイド](../../../guides/source-config-migration.md) を追加した。
+- Stanza開発者向けの [source / config移行ガイド](../../../for-developers/guides/source-config-migration.md) を追加した。
 - `tsconfig.json` の `compilerOptions.paths` は自動でVite aliasへ合成せず、`togostanza.config.ts` の `vite.resolve.alias` へ手動移行する方針を記録した。
 - TogoMedium固有aliasは自動吸収せず、TogoMedium側の `togostanza.config.ts` へ明示する方針を記録した。
 - `moduleResolution: "node"` の限界と、`moduleResolution: "bundler"` 推奨を移行ガイドに記録した。
@@ -90,7 +90,7 @@ current / remakeの両方に、次のscenario入力を置いた。
 ## 関連文書
 
 - [Phase 8設計](./plan.md)
-- [source / config移行ガイド](../../../guides/source-config-migration.md)
+- [source / config移行ガイド](../../../for-developers/guides/source-config-migration.md)
 - [013 metadata validation](../../../../workbench/cases/013-metadata-validation/README.md)
 - [Phase 7引き継ぎ](../phase-7/handoff.md)
 - [実装計画](../index.md)

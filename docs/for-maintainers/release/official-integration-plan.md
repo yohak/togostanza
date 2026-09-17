@@ -67,7 +67,7 @@ alphaを利用するStanzaリポジトリは、TogoStanzaを `devDependencies` �
 }
 ```
 
-`init` では `TOGOSTANZA_DEPENDENCY_SPEC` を使い、CLIの起動元と生成先の依存を同じtagへ揃える。npmとpnpmのalpha利用手順は、READMEの[Alpha版の導入手順](../../README.md#alpha版を試す)に記録する。この環境変数はalpha検証と保守用のoverrideとして維持し、正式版の一般利用手順には載せない。
+`init` では `TOGOSTANZA_DEPENDENCY_SPEC` を使い、CLIの起動元と生成先の依存を同じtagへ揃える。npmとpnpmのalpha利用手順は、READMEの[Alpha版の導入手順](../../../README.md#alpha版を試す)に記録する。この環境変数はalpha検証と保守用のoverrideとして維持し、正式版の一般利用手順には載せない。
 
 ### beta
 
@@ -87,7 +87,7 @@ beta版の `init` は、実行中のCLIと同じnpm versionを生成リポジト
 
 beta利用で重大な互換性問題がなく、文書、移行、公開運用、保守体制を固定できた時点で `4.0.0` を公開し、npmの `latest` をv4へ切り替える。
 
-alpha、beta、stableの昇格条件は状態を基準にする。正式版オーナーと相談したうえで、正式版の `maintainer-docs/` にチェックリストとして記録する。
+alpha、beta、stableの昇格条件は状態を基準にする。正式版オーナーと相談したうえで、正式版の `docs/for-maintainers/` にチェックリストとして記録する。
 
 ## alpha準備
 
@@ -143,20 +143,21 @@ alpha、beta、stableの昇格条件は状態を基準にする。正式版オ�
 ```text
 README.md
 docs/
-maintainer-docs/
+  for-developers/
+  for-maintainers/
 CONTRIBUTING.md
 CHANGELOG.md
 ```
 
-`docs/` はTogoStanzaを使うための公開文書を扱う。Getting Started、ガイド、外部リファレンス、v3からv4へのmigration guideを含める。
+`docs/for-developers/` はTogoStanzaを使ってstanzaを作成するdeveloper向けの公開文書を扱う。Getting Started、ガイド、外部リファレンス、v3からv4へのmigration guideを含める。
 
-`maintainer-docs/` はTogoStanza本体を保守するための文書を扱う。内部仕様、アーキテクチャ、v4 update policy、Decision Record、品質方針、リリース手順を含める。
+`docs/for-maintainers/` はTogoStanza本体を保守するための文書を扱う。内部仕様、アーキテクチャ、v4 update policy、Decision Record、品質方針、リリース手順を含める。
 
-外部から観測できる契約は `docs/` を正本にする。内部の不変条件は `maintainer-docs/` に置き、外部仕様を重複記載せずリンクする。
+外部から観測できる契約は `docs/for-developers/` を正本にする。内部の不変条件は `docs/for-maintainers/` に置き、外部仕様を重複記載せずリンクする。
 
 重要な判断は、仕様へ理由を混ぜず、Decision Recordとして分ける。Decision Recordは少なくとも `Status`、`Context`、`Decision`、`Consequences` を持つ。必要な場合は、本リポジトリの固定refを `Evidence` として参照する。
 
-利用者向けの `docs/migration/v3-to-v4.md` と、保守者向けの `maintainer-docs/v4-update-policy.md` は分ける。正式版では `Remake` を主要な呼称にしない。
+stanza作成者向けの `docs/for-developers/migration/v3-to-v4.md` と、保守者向けの `docs/for-maintainers/v4-update-policy.md` は分ける。正式版では `Remake` を主要な呼称にしない。
 
 現行版の `doc/` は削除し、転送用stubは残さない。専用ドキュメントサイトとドキュメント専用CIは導入しない。
 
@@ -192,7 +193,7 @@ alpha完了の中心条件は、`metastanza` とTogoMedium Stanzaの各オーナ
 ## alpha完了条件
 
 - v4外部仕様と自己完結テストが揃っている。
-- 公開用 `docs/` と `maintainer-docs/` の初版が揃っている。
+- 公開用 `docs/for-developers/` と `docs/for-maintainers/` の初版が揃っている。
 - npmとpnpmの両方でalpha tagから `init`、インストール、ビルドが成立する。
 - `metastanza` とTogoMedium Stanzaの各オーナー確認が記録されている。
 - 実プロジェクト確認で見つかった統合阻害事項が解消されている。
@@ -247,7 +248,7 @@ dist-tagは手入力せず、`package.json.version` から決定する。
 
 認証にはnpm Trusted PublishingによるOIDCを推奨する。正式版オーナーがnpm側の信頼設定を行い、GitHub Actionsでは長期のpublish tokenを持たない。OIDCを採用できるかは、正式版オーナーへの確認事項として残す。
 
-通常リリースのversion規則、changelog、workflow、OIDC、失敗時の復旧、betaからstableへの昇格条件は、正式版の `maintainer-docs/` に記録する。
+通常リリースのversion規則、changelog、workflow、OIDC、失敗時の復旧、betaからstableへの昇格条件は、正式版の `docs/for-maintainers/` に記録する。
 
 ## 公開後確認とArchive
 

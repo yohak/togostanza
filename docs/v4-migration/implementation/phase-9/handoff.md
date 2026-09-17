@@ -39,7 +39,7 @@ Phase 9では、`references/` に依存する実プロジェクト確認を、de
 - `test:compat:local` は `references/metastanza`、`references/togomedium-web`、`references/togostanza-utils` がローカルに存在することを前提にする。
 - Phase 9では `references/` を直接変更しない。
 - TogoMedium固有aliasは自動吸収しない。local compatibility確認では、`togostanza.config.ts` の `vite.resolve.alias` へ明示している。
-- `tsconfig paths` の自動解決はしない。必要なaliasは [source / config移行ガイド](../../../guides/source-config-migration.md) に従って `togostanza.config.ts` へ移す。
+- `tsconfig paths` の自動解決はしない。必要なaliasは [source / config移行ガイド](../../../for-developers/guides/source-config-migration.md) に従って `togostanza.config.ts` へ移す。
 - Sass `@import` の非推奨警告は現行ソース由来の警告として許容する。
 
 ## 次の候補

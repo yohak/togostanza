@@ -8,7 +8,7 @@ V4は、[従来のTogoStanza](https://github.com/togostanza/togostanza)をもと
 
 現在は、正式公開に向けてAlpha版を公開し、実プロジェクトでのビルド、表示、操作、移行手順を確認する段階にある。このREADMEでは、公開済みの `v4.0.0-alpha.0` を試す手順を示す。Alpha版はnpmレジストリではなく、`yohak/togostanza` のGitタグから導入する。
 
-今後はAlpha版での確認を経て、正式版リポジトリへの統合、npmでのBeta版公開、正式版 `4.0.0` の公開へ進む予定。各段階の条件は[正式公開までのロードマップ](./docs/release/official-integration-plan.md)を参照する。
+今後はAlpha版での確認を経て、正式版リポジトリへの統合、npmでのBeta版公開、正式版 `4.0.0` の公開へ進む予定。各段階の条件は[正式公開までのロードマップ](./docs/for-maintainers/release/official-integration-plan.md)を参照する。
 
 ## Alpha版を試す
 
@@ -56,7 +56,7 @@ pnpm exec togostanza --version
 
 **2. 既存の設定を確認する**
 
-次に該当する場合は、[ソース・設定の移行ガイド](./docs/guides/source-config-migration.md)に沿って変更する。
+次に該当する場合は、[ソース・設定の移行ガイド](./docs/for-developers/guides/source-config-migration.md)に沿って変更する。
 
 - `togostanza-build.js` / `togostanza-build.mjs` を使っている場合は、設定を `togostanza.config.ts` へ移す。
 - `tsconfig.json` の `paths` や独自のimport別名を使っている場合は、ビルドに必要な別名を `vite.resolve.alias` に指定する。
@@ -142,6 +142,8 @@ Gitタグは固定して使い、タグ無し参照やブランチ指定へ戻�
 
 ## 開発ドキュメント
 
+- [stanza作成者向け文書](./docs/for-developers/README.md): 導入、設定移行、現行V4仕様への案内。
+- [TogoStanza本体の開発・保守文書](./docs/for-maintainers/README.md): 品質確認、開発環境、公開手順への案内。
 - [開発ドキュメント一覧](./docs/README.md): 計画、設計、調査記録の入口。
 - [V4仕様](./docs/v4-migration/spec/index.md): CLI、設定、stanzaソースAPI、ランタイムなどの仕様。
-- [正式公開までのロードマップ](./docs/release/official-integration-plan.md): Alpha、Beta、正式版への移行条件と進め方。
+- [正式公開までのロードマップ](./docs/for-maintainers/release/official-integration-plan.md): Alpha、Beta、正式版への移行条件と進め方。

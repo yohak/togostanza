@@ -40,7 +40,7 @@ Phase 12からPhase 14までは、`develop` を通常開発branch、`main` を�
 
 localでは `develop` branchを作成し、`dist/` をGit追跡対象から外した。remote `develop` も作成済みである。公開remoteのdefault branchが `main` であることは2026-07-27に確認したが、V4 alphaの利用者はdefault branchではなく明示されたtagを参照する。
 
-`develop` から `main` へsourceをmergeし、同じworktreeでbuildした `dist/` を公開merge commitへ含める手順は、Phase 13とPhase 14の公開反映で実施済みである。これは過去の公開手順の記録であり、V4 alphaのrelease手順には [V4 Alpha Release Checklist](../../release/v4-alpha-release-checklist.md) を使う。
+`develop` から `main` へsourceをmergeし、同じworktreeでbuildした `dist/` を公開merge commitへ含める手順は、Phase 13とPhase 14の公開反映で実施済みである。これは過去の公開手順の記録であり、V4 alphaのrelease手順には [V4 Alpha Release Checklist](../../for-maintainers/release/v4-alpha-release-checklist.md) を使う。
 
 ## 将来の分割
 

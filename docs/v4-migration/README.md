@@ -12,4 +12,4 @@ V3の調査、互換性判断、V4の実装と比較検証を行うための文�
 - [開発用ノート](./development-notes.md)
 - [短期GitHub dependency運用](./guides/github-dependency.md)
 
-Alpha公開と正式版統合は、[正式版統合計画](../release/official-integration-plan.md)と[alpha公開チェックリスト](../release/v4-alpha-release-checklist.md)を参照する。
+Alpha公開と正式版統合は、[正式版統合計画](../for-maintainers/release/official-integration-plan.md)と[alpha公開チェックリスト](../for-maintainers/release/v4-alpha-release-checklist.md)を参照する。

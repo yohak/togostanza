@@ -10,7 +10,7 @@
 
 2026-07-27時点で、Phase 0からPhase 14までの実装と引き継ぎは完了している。Phase 13のリッチなヘルププレビューとPhase 14のmenu UI polishは、build済み `dist/` とともに公開remoteの `main` へ反映済みである。
 
-現在の次フェーズは、[正式版統合計画](../../release/official-integration-plan.md)に基づくv4 alpha準備である。過去の残作業候補は、[Phase 12後の全体棚卸し](./post-phase-12-inventory.md)と[Phase 12後の残作業](./phase-12/remaining-work.md)を参照する。
+現在の次フェーズは、[正式版統合計画](../../for-maintainers/release/official-integration-plan.md)に基づくv4 alpha準備である。過去の残作業候補は、[Phase 12後の全体棚卸し](./post-phase-12-inventory.md)と[Phase 12後の残作業](./phase-12/remaining-work.md)を参照する。
 
 以下の各Phase節は、そのPhaseを計画・実施した時点の対象範囲を記録している。Phase 0からPhase 11までにある `package/` 配置など、後続Phaseで変更された内容は履歴として残し、現在の配置は[パッケージ配置](../setup/package-layout.md)を正とする。
 
@@ -273,7 +273,7 @@ Phase 8では、`tsconfig.json` の `compilerOptions.paths` を自動でVite ali
 - 全体的な診断メッセージ体系の整理。
 - pack install smoke。
 
-Phase 8の設計は [Phase 8: source and config readiness 設計](./phase-8/plan.md) に置く。Stanza開発者向けの移行案内は [source / config移行ガイド](../../guides/source-config-migration.md) に置く。metadata異常系の観測は [013 metadata validation](../../../workbench/cases/013-metadata-validation/) で扱う。完了後の状態とPhase 9以降への引き継ぎは [Phase 8: source and config readiness 引き継ぎ](./phase-8/handoff.md) に置く。
+Phase 8の設計は [Phase 8: source and config readiness 設計](./phase-8/plan.md) に置く。Stanza開発者向けの移行案内は [source / config移行ガイド](../../for-developers/guides/source-config-migration.md) に置く。metadata異常系の観測は [013 metadata validation](../../../workbench/cases/013-metadata-validation/) で扱う。完了後の状態とPhase 9以降への引き継ぎは [Phase 8: source and config readiness 引き継ぎ](./phase-8/handoff.md) に置く。
 
 ## Phase 9: local compatibility baseline
 
