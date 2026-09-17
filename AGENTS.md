@@ -1,54 +1,52 @@
-# エージェント作業の入口
+# Agent Instructions
 
-このファイルでは、エージェントがこのリポジトリで作業を始める前に読む文書を示す。詳細な判断基準は各ドキュメントに従う。
+Within this repository, read this file for every task. Read other documents only as needed for the task, focusing on relevant sections rather than entire document sets. Reading requirements from applicable instructions outside this repository still apply.
 
-## 最初に読むもの
+## Working Rules
 
-- `docs/README.md`
-- stanza作成者向け文書を扱う場合は `docs/for-developers/README.md`
-- TogoStanza本体の開発・保守・公開を扱う場合は `docs/for-maintainers/README.md`
-- `docs/v4-migration/project-charter.md`
-- `docs/v4-migration/setup/package-layout.md`
-- `docs/v4-migration/investigation/follow-ups.md`
-- `docs/v4-migration/investigation/open-questions.md`
-- 文書、仕様、調査メモを読む、または直す場合は `docs/UBIQUITOUS_LANGUAGE.md`
-- 仕様や方針に触る場合は `docs/v4-migration/spec/index.md` と `docs/v4-migration/spec/remake-policy.md`
-- 調査や検証に触る場合は `docs/v4-migration/investigation/README.md` と該当する `workbench/cases/*/README.md`
+- Confirm the requested purpose and target files, and check existing changes with `git status --short`.
+- Do not revert existing uncommitted changes without authorization.
+- Do not edit based solely on a question, consultation, or review request.
+- Consult the user before changing the meaning of a specification or policy.
+- Before expanding compatibility scope, check evidence from the existing implementation, real projects, and verification cases.
+- Do not finalize unresolved matters without authorization; retain them as a follow-up or open question.
 
-## 必要なときに読むもの
+## Language
 
-- 文書を書く、または直す場合は `docs/writing-style.md`
-- セットアップや検証環境を触る場合は `docs/v4-migration/setup/index.md`
+- Respond in the language used by the user.
+- Write documents under `docs/v4-migration/` in Japanese, including both existing and newly created documents. This preserves continuity with the V4 migration work, which has been conducted in Japanese.
+- Write documents outside `docs/v4-migration/` in English, including README and AGENTS files.
+- Transition existing documents outside `docs/v4-migration/` to English incrementally. Small updates do not require translating the entire document; use English when creating or fully rewriting one.
+- Preserve quotations in their original language. Keep API names, commands, paths, proper names, and Japanese glossary equivalents where needed.
+- Keep language selection policy in this file; writing-style documents cover structure, terminology, and presentation.
 
-## 基準文書の扱い
+## Documentation Map
 
-- 観測事実は `docs/v4-migration/investigation/` に記録する。
-- 採用判断は `docs/v4-migration/spec/remake-policy.md` に記録する。
-- リメイク版仕様は、文書の整理と引き継ぎが完了するまで `docs/v4-migration/spec/index.md` を正本として記録する。
-- stanza作成者向けの案内は `docs/for-developers/`、TogoStanza本体の開発・保守文書は `docs/for-maintainers/` に置く。
-- 用語は `docs/UBIQUITOUS_LANGUAGE.md` に従う。
-- 文体は `docs/writing-style.md` に従う。
-- 未固定事項は `docs/v4-migration/investigation/follow-ups.md` と `docs/v4-migration/investigation/open-questions.md` に記録する。
+Guidance for stanza authors belongs in `docs/for-developers/`; documentation for developing and maintaining TogoStanza itself belongs in `docs/for-maintainers/`. Use the following map to find the relevant material.
 
-## 作業前チェック
+| Task | Read as needed |
+| --- | --- |
+| Find documentation | [Documentation index](docs/README.md), then the [developer](docs/for-developers/README.md) or [maintainer](docs/for-maintainers/README.md) entry point |
+| Write or edit ongoing-development documentation | [Glossary](docs/UBIQUITOUS_LANGUAGE.md) and [writing guide](docs/writing-style.md) |
+| Write or edit migration documentation or comparative verification records | [Migration glossary](docs/v4-migration/UBIQUITOUS_LANGUAGE.md) and [migration writing style](docs/v4-migration/writing-style.md) |
+| Implement or fix TogoStanza itself | Relevant [specification](docs/v4-migration/spec/index.md) sections and [quality checks](docs/v4-migration/setup/quality.md) |
+| Decide specification or compatibility policy | [Project charter](docs/v4-migration/project-charter.md) and relevant entries in [remake policy](docs/v4-migration/spec/remake-policy.md), [follow-ups](docs/v4-migration/investigation/follow-ups.md), or [open questions](docs/v4-migration/investigation/open-questions.md) |
+| Investigate or compare migration behavior | [Investigation entry point](docs/v4-migration/investigation/README.md) and the relevant `workbench/cases/*/README.md` |
+| Change development environment or package layout | [Package layout](docs/v4-migration/setup/package-layout.md) and [setup](docs/v4-migration/setup/index.md) |
+| Prepare integration or publication | [Official integration plan](docs/for-maintainers/release/official-integration-plan.md) and [Alpha release checklist](docs/for-maintainers/release/v4-alpha-release-checklist.md) |
 
-- 依頼目的と対象ファイルを確認する。
-- `git status --short` で既存変更を確認する。
-- 既存の未コミット変更を勝手に戻さない。
-- 質問、相談、レビュー依頼だけでは編集しない。
+## Development and Validation
 
-## 実装・検証の基本
+- Treat the remake package as a single Node package at the repository root.
+- Use the root `package.json` and `mise.toml` as authoritative, and run Node.js / pnpm commands through `mise exec -- ...`.
+- For quality checks and browser tests, prioritize approved normal execution in the user's local environment over a sandbox execution environment such as Codex's.
+- `docs/`, `references/`, and `workbench/` are not Node workspaces and are not included in the normal scope of quality-check scripts.
+- Treat `references/` as reference material, `workbench/` as the verification area, and `sandbox/` as the temporary verification area.
+- When changing a specification, also check the corresponding verification case's `README.md`.
+- For documentation updates, run at least `git diff --check`.
 
-- リメイク版パッケージはリポジトリルートの単一Nodeパッケージとして扱う。
-- リポジトリルートの `package.json` と `mise.toml` を正として、Node.js / pnpmコマンドは `mise exec -- ...` 経由で実行する。
-- 品質確認やbrowser testは、Codex等のsandbox実行環境ではなく、承認付き通常実行でユーザーのローカル環境を優先して確認する。
-- `docs/`、`references/`、`workbench/` はNodeワークスペースではなく、品質確認scriptの通常対象にも含めない。
-- `references/` はリファレンス、`workbench/` は検証領域、`sandbox/` は一時確認領域として扱う。
-- 仕様変更時は対応する検証ケースの `README.md` も確認する。
-- 文書更新では `git diff --check` を最低限実行する。
+## V4 Migration Constraints
 
-## 判断が必要なとき
-
-- 仕様や方針の意味変更が必要な場合は先に相談する。
-- 互換範囲を広げる場合は、現行版コード、実プロジェクト、検証ケースの根拠を確認する。
-- 未固定事項は勝手に確定せず、`follow-up` または `open question` として残す。
+- Keep `docs/v4-migration/spec/index.md` as the source of truth for the remake specification until documentation organization and handoff are complete.
+- Record observed facts in `docs/v4-migration/investigation/`, adoption decisions in `docs/v4-migration/spec/remake-policy.md`, and unresolved matters in `docs/v4-migration/investigation/follow-ups.md` or `docs/v4-migration/investigation/open-questions.md` as appropriate.
+- Apply the migration glossary and writing style to `docs/v4-migration/` and comparative verification, including the authoritative specification while it remains there. Apply the ongoing-development glossary and writing guide to ongoing-development documentation.

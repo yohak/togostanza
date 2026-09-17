@@ -1,20 +1,22 @@
 # For Maintainers
 
-TogoStanza本体を開発・保守するmaintainer向けの文書。
+Documentation for maintainers developing and maintaining TogoStanza itself.
 
-## 公開と統合
+## Releases and Integration
 
-- [正式版統合計画](./release/official-integration-plan.md): Alpha、Beta、正式版への移行条件と進め方。
-- [Alpha公開チェックリスト](./release/v4-alpha-release-checklist.md): Alphaタグの公開前後に確認すること。
+- [Official Integration Plan](./release/official-integration-plan.md): Conditions and steps for moving through Alpha, Beta, and the stable release.
+- [Alpha Release Checklist](./release/v4-alpha-release-checklist.md): Checks before and after publishing an Alpha tag.
 
-## 開発と品質確認
+## Development and Quality Checks
 
-継続開発向けの本文整理はまだ行わず、現在の文書を参照する。
+The handoff of specifications and development procedures to ongoing documentation is in preparation. Continue to use the current documents.
 
-- [品質確認](../v4-migration/setup/quality.md): format、lint、型確認、テストの手順。
-- [開発用ノート](../v4-migration/development-notes.md): 作業時の考え方と実行環境の注意点。
-- [パッケージ配置](../v4-migration/setup/package-layout.md): リポジトリ構成と開発環境の配置方針。
-- [セットアップ](../v4-migration/setup/index.md): リファレンスと検証環境の準備。
-- [現行V4仕様](../v4-migration/spec/index.md): 文書の整理と引き継ぎが完了するまでの仕様の正本。
+- [V4 Specification Inventory](../v4-migration/investigation/v4-spec-inventory.md): Stated contracts, unresolved items, and verification handoff candidates.
+- [Ongoing Development Glossary](../UBIQUITOUS_LANGUAGE.md) and [Writing Documentation](../writing-style.md): Standards for future documentation.
+- [Quality Checks](../v4-migration/setup/quality.md): Formatting, linting, type checks, and tests.
+- [Development Notes](../v4-migration/development-notes.md): Working practices and execution environment considerations.
+- [Package Layout](../v4-migration/setup/package-layout.md): Repository structure and development environment layout.
+- [Setup](../v4-migration/setup/index.md): Preparing references and verification environments.
+- [Current V4 Specification](../v4-migration/spec/index.md): The authoritative specification until organization and handoff are complete.
 
-過去の調査・判断・実装・検証は[V4 Migration](../v4-migration/README.md)、共通文書は[ドキュメント一覧](../README.md)を参照する。
+See [V4 Migration](../v4-migration/README.md) for investigation, decisions, implementation, and verification records, and the [documentation index](../README.md) for shared documents.

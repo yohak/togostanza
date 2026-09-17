@@ -6,7 +6,7 @@ TogoStanzaリメイク版は、Stanzaを作成、開発、ビルドし、Webペ�
 
 この仕様では、リメイク版が提供するCLI、Stanzaリポジトリの入力構造、ビルド生成物、開発サーバ、ブラウザランタイム、StanzaソースAPIを定義する。
 
-用語の意味は [用語集](../../UBIQUITOUS_LANGUAGE.md) に従う。
+用語の意味は [用語集](../UBIQUITOUS_LANGUAGE.md) に従う。
 
 ## 基本方針
 

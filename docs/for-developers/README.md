@@ -1,11 +1,11 @@
 # For Developers
 
-TogoStanzaを使ってstanzaを作成するdeveloper向けの文書。Webページへの埋め込み、設定、データ連携も扱う。
+Documentation for developers who create stanzas with TogoStanza. It also covers embedding stanzas in web pages, configuration, and data integration.
 
-- [Alpha版を試す](../../README.md#alpha版を試す): 既存プロジェクトへの導入、新規作成、更新の手順。
-- [V3からV4へのソース・設定の移行ガイド](./guides/v3-to-v4.md): 必要な変更の判断、設定例、移行後の確認手順。
-- [現行V4仕様](../v4-migration/spec/index.md): CLI、設定、stanzaソースAPI、ランタイムなどの仕様。
+- [Try the Alpha](../../README.md#try-the-alpha): Install in an existing project, create a new project, and update versions.
+- [Migrate Source and Configuration from V3 to V4](./guides/v3-to-v4.md): Identify required changes, adapt configuration, and verify the migration.
+- [Current V4 Specification](../v4-migration/spec/index.md): CLI, configuration, stanza source APIs, runtime behavior, and other contracts.
 
-仕様文書の整理と引き継ぎが完了するまでは、`docs/v4-migration/spec/index.md` を現行V4仕様の正本として使う。
+Until specification organization and handoff are complete, `docs/v4-migration/spec/index.md` remains the source of truth for the current V4 specification.
 
-文書全体の構成と共通文書は[ドキュメント一覧](../README.md)を参照する。
+See the [documentation index](../README.md) for the overall structure and shared documents.

@@ -123,7 +123,7 @@
 - 状態: 未着手。JavaScriptを既定、TypeScriptを任意で選べる方向は合意済み。以下の詳細は未決定。
 - 背景: 現在の `init` はJavaScript利用を前提にし、TypeScriptを使う場合は開発者が設定を追加する。
 - 目的: `init` 時の選択に応じて、stanzaを作成するための初期設定と案内を用意する。
-- 今回のスコープ: `alpha.1` には含めない。既存の機能固定対象とは分けて、[正式版統合計画の残タスク](../../for-maintainers/release/official-integration-plan.md#beta移行に向けた残タスク)として管理する。現行仕様やAlpha完了条件は変更しない。
+- 今回のスコープ: `alpha.1` には含めない。既存の機能固定対象とは分けて、[正式版統合計画の残タスク](../../for-maintainers/release/official-integration-plan.md#remaining-work-for-the-beta-transition)として管理する。現行仕様やAlpha完了条件は変更しない。
 
 検討する内容:
 

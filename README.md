@@ -1,34 +1,34 @@
 # TogoStanza V4 Alpha
 
-## このプロジェクトについて
+## About This Project
 
-TogoStanzaは、データの可視化などを行うstanzaを作成し、Webページへ埋め込める形で配布するためのツール。stanzaはWeb Componentsとして動作し、HTMLから読み込んで利用できる。
+TogoStanza is a tool for creating stanzas, such as data visualizations, and distributing them for embedding in web pages. Stanzas run as Web Components and can be loaded from HTML.
 
-V4は、[従来のTogoStanza](https://github.com/togostanza/togostanza)をもとに、YohakがCLI・ビルド環境・ランタイムを再設計したもの。既存のstanzaソースとWebページへの埋め込み方法を可能な範囲で活かしながら、Node.js 24とVite 8を使う構成へ更新している。既存プロジェクトでは、一部の設定やソースの移行が必要になる。
+V4 is Yohak's redesign of the CLI, build environment, and runtime based on the [original TogoStanza](https://github.com/togostanza/togostanza). It updates the toolchain to Node.js 24 and Vite 8 while preserving existing stanza source and embedding methods where possible. Existing projects may need some configuration or source changes.
 
-現在は、正式公開に向けてAlpha版を公開し、実プロジェクトでのビルド、表示、操作、移行手順を確認する段階にある。このREADMEでは、公開済みの `v4.0.0-alpha.0` を試す手順を示す。Alpha版はnpmレジストリではなく、`yohak/togostanza` のGitタグから導入する。
+The project is currently releasing Alpha versions and checking builds, display, interaction, and migration procedures in real projects ahead of the official release. This README explains how to try the published `v4.0.0-alpha.0`. Install Alpha from Git tags in `yohak/togostanza`, not from the npm registry.
 
-今後はAlpha版での確認を経て、正式版リポジトリへの統合、npmでのBeta版公開、正式版 `4.0.0` の公開へ進む予定。各段階の条件は[正式公開までのロードマップ](./docs/for-maintainers/release/official-integration-plan.md)を参照する。
+After Alpha verification, the planned steps are integration into the official repository, a Beta release on npm, and the stable `4.0.0` release. See the [release roadmap](./docs/for-maintainers/release/official-integration-plan.md) for the conditions at each stage.
 
-## Alpha版を試す
+## Try the Alpha
 
-以下はJavaScriptでstanzaを作成する手順。V4を使うために、既存のstanzaをTypeScriptへ書き換える必要はない。
+The following steps use JavaScript to create stanzas. Using V4 does not require rewriting existing stanzas in TypeScript.
 
-### 前提条件
+### Prerequisites
 
-- Node.js 24以上。
-- npm、またはpnpm 11以降。既存プロジェクトでは、使用中のパッケージマネージャーを使う。
-- Git。
+- Node.js 24 or later.
+- npm, or pnpm 11 or later. For existing projects, use the package manager already in use.
+- Git.
 
-以下のコマンドは、TogoStanza本体の開発リポジトリではなく、試したいstanzaプロジェクトで実行する。新規作成の場合は、プロジェクトを置きたい親ディレクトリから始める。
+Run these commands in the stanza project you want to try, not in the TogoStanza development repository. For a new project, start in the parent directory where you want to create it.
 
-### 既存プロジェクトで試す
+### Try in an Existing Project
 
-作業用のブランチを作り、移行前の `package.json` とlockfileをGitに残してから進める。既存設定の自動変換は行われないため、依存を更新した後に設定を確認する。
+Create a working branch and commit the pre-migration `package.json` and lockfile to Git before proceeding. Existing configuration is not converted automatically, so review it after updating the dependency.
 
-**1. Alpha版へ依存を更新する**
+**1. Update the Dependency to Alpha**
 
-`package.json` の `devDependencies.togostanza` を、次のGitタグへ書き換える。`dependencies` に `togostanza` がある場合は、`devDependencies` へ移す。他の依存はそのまま残す。
+Change `devDependencies.togostanza` in `package.json` to the following Git tag. If `togostanza` is in `dependencies`, move it to `devDependencies`. Keep other dependencies unchanged.
 
 ```json
 {
@@ -38,66 +38,66 @@ V4は、[従来のTogoStanza](https://github.com/togostanza/togostanza)をもと
 }
 ```
 
-変更後、プロジェクトのルートで、使用中のパッケージマネージャーに合わせてインストールする。
+Then install from the project root with your package manager.
 
-npmの場合:
+With npm:
 
 ```sh
 npm install
 npm exec -- togostanza --version
 ```
 
-pnpmの場合:
+With pnpm:
 
 ```sh
 pnpm install
 pnpm exec togostanza --version
 ```
 
-バージョン表示が `4.0.0-alpha.0` になることを確認する。
+Confirm that the displayed version is `4.0.0-alpha.0`.
 
-**2. 既存の設定を確認する**
+**2. Review Existing Configuration**
 
-次に該当する場合は、[ソース・設定の移行ガイド](./docs/for-developers/guides/v3-to-v4.md)に沿って変更する。
+If either condition applies, follow the [source and configuration migration guide](./docs/for-developers/guides/v3-to-v4.md):
 
-- `togostanza-build.js` / `togostanza-build.mjs` を使っている場合は、設定を `togostanza.config.ts` へ移す。
-- `tsconfig.json` の `paths` や独自のimport別名を使っている場合は、ビルドに必要な別名を `vite.resolve.alias` に指定する。
+- If you use `togostanza-build.js` / `togostanza-build.mjs`, move the configuration to `togostanza.config.ts`.
+- If you use `paths` in `tsconfig.json` or custom import aliases, define aliases needed for the build in `vite.resolve.alias`.
 
-このREADMEで導入する公開済みの `v4.0.0-alpha.0` では、JavaScriptのstanzaでも、必要なビルド設定は `togostanza.config.ts` に書く。型注釈やstanzaソースのTypeScript化は不要で、設定を追加しない場合はファイルも不要。
+For the published `v4.0.0-alpha.0` installed by this README, write any required build configuration in `togostanza.config.ts`, even for JavaScript stanzas. Type annotations and conversion of stanza source to TypeScript are unnecessary. If no additional configuration is needed, no configuration file is required.
 
-公開準備中の `4.0.0-alpha.1` では `togostanza.config.js` を標準とし、`.mjs` と任意の `.ts` に対応する。`alpha.1` のGitタグはまだ公開しておらず、これらのJavaScript設定対応は `alpha.0` には含まれない。[移行ガイド](./docs/for-developers/guides/v3-to-v4.md)のJavaScript設定例を `alpha.0` で使う場合は、ファイル名を `togostanza.config.ts` に読み替える。
+The upcoming `4.0.0-alpha.1` uses `togostanza.config.js` as the standard and supports `.mjs` and optional `.ts` configuration. Its Git tag has not been published, and this JavaScript configuration support is not included in `alpha.0`. To use the [migration guide's](./docs/for-developers/guides/v3-to-v4.md) JavaScript configuration examples with `alpha.0`, use the filename `togostanza.config.ts` instead.
 
-> TypeScriptを使う場合の補足: `index.ts` / `index.tsx` も使用できる。型解決の設定は、移行ガイドの[TypeScriptの補足](./docs/for-developers/guides/v3-to-v4.md#補足typescriptを使う場合)を参照する。
+> TypeScript supplement: `index.ts` / `index.tsx` are also supported. See the migration guide's [TypeScript supplement](./docs/for-developers/guides/v3-to-v4.md#supplement-using-typescript) for type-resolution settings.
 
-**3. ビルドとブラウザ表示を確認する**
+**3. Verify the Build and Browser Display**
 
-npmの場合:
+With npm:
 
 ```sh
 npm exec -- togostanza build
 npm exec -- togostanza serve
 ```
 
-pnpmの場合:
+With pnpm:
 
 ```sh
 pnpm exec togostanza build
 pnpm exec togostanza serve
 ```
 
-起動後に [http://localhost:8080/](http://localhost:8080/) を開き、一覧から確認したいstanzaを選ぶ。代表的なstanzaの表示、パラメーター変更、操作を確認する。既存の埋め込みページがある場合は、そちらの表示とデータ連携も確認する。
+After startup, open [http://localhost:8080/](http://localhost:8080/) and choose a stanza from the index. Check representative stanzas for display, parameter changes, and interaction. If you have existing pages that embed stanzas, check their display and data integration too.
 
-サーバーは `Ctrl+C` で停止できる。移行後の `package.json` とlockfileの差分を確認し、必要になった設定・ソースの修正とともに記録する。
+Stop the server with `Ctrl+C`. Review changes to `package.json` and the lockfile, and record them alongside any required configuration or source changes.
 
-### 新規プロジェクトで試す
+### Try in a New Project
 
-npmとpnpmのどちらか一方を選び、次の手順を実行する。`my-stanza-repository` は作成するディレクトリ名に置き換えられる。
+Choose either npm or pnpm and follow its steps below. Replace `my-stanza-repository` with the directory name you want to create.
 
-`init` はプロジェクトの雛形作成、Git初期化、依存関係のインストールまで行う。`TOGOSTANZA_DEPENDENCY_SPEC` は、生成先のTogoStanza依存を、起動するCLIと同じAlpha版へ固定するために指定する。
+`init` creates the project scaffold, initializes Git, and installs dependencies. `TOGOSTANZA_DEPENDENCY_SPEC` pins the generated TogoStanza dependency to the same Alpha version as the CLI being run.
 
-`alpha.0` の雛形には `tsconfig.json` も含まれるが、生成するstanzaはJavaScriptで利用できる。公開準備中の `alpha.1` ではこの設定ファイルの自動生成を廃止し、TypeScriptを使う場合だけ追加する。
+The `alpha.0` scaffold includes `tsconfig.json`, but generated stanzas can be used in JavaScript. The upcoming `alpha.1` stops generating this configuration automatically; add it only if you use TypeScript.
 
-npmの場合:
+With npm:
 
 ```sh
 TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.0 \
@@ -111,7 +111,7 @@ npm run build
 npm run serve
 ```
 
-pnpmの場合:
+With pnpm:
 
 ```sh
 TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.0 \
@@ -125,34 +125,34 @@ pnpm build
 pnpm serve
 ```
 
-起動後に [http://localhost:8080/hello.html](http://localhost:8080/hello.html) を開き、`Hello, world!` の表示を確認する。パラメーター `say-to` を変更すると、挨拶の相手が変わる。
+After startup, open [http://localhost:8080/hello.html](http://localhost:8080/hello.html) and confirm that `Hello, world!` appears. Changing the `say-to` parameter changes who is greeted.
 
-生成したstanzaは `stanzas/hello/` にあり、JavaScriptのソースは `index.js`。ソースやスタイルを編集し、再ビルド後にブラウザを再読み込みすると変更を確認できる。サーバーは `Ctrl+C` で停止する。
+The generated stanza is in `stanzas/hello/`, with JavaScript source in `index.js`. Edit the source or styles and reload the browser after rebuilding to see the changes. Stop the server with `Ctrl+C`.
 
-`package.json` と、npmでは `package-lock.json`、pnpmでは `pnpm-lock.yaml` を同じコミットに含める。
+Include `package.json` and the lockfile—`package-lock.json` for npm or `pnpm-lock.yaml` for pnpm—in the same commit.
 
-### Alpha版を更新する
+### Update the Alpha Version
 
-別のAlpha版へ更新するときは、`package.json` の `devDependencies.togostanza` を、次に試す公開済みGitタグへ書き換える。その後、`npm install` または `pnpm install` を実行し、バージョン表示、ビルド、代表的なstanzaのブラウザ表示を再確認する。
+To try another Alpha, change `devDependencies.togostanza` in `package.json` to the next published Git tag you want to test. Run `npm install` or `pnpm install`, then recheck the displayed version, the build, and representative stanzas in the browser.
 
-Gitタグは固定して使い、タグ無し参照やブランチ指定へ戻さない。公開済みタグは上書きされず、修正版は新しいバージョンとして公開される。更新後は `package.json` とlockfileの差分を確認し、同じコミットに含める。確認結果と必要になった移行修正も記録する。
+Keep the dependency pinned to a Git tag; do not switch back to a tagless reference or a branch. Published tags are not overwritten; fixes are published as new versions. Review the updated `package.json` and lockfile together and include them in the same commit. Record verification results and any required migration changes.
 
-## 不具合・確認結果のフィードバック
+## Report Issues and Verification Results
 
-不具合や移行時に困った点は、[yohak/togostanzaのIssues](https://github.com/yohak/togostanza/issues)へ報告する。問題なく動いた場合の確認結果も、Alpha版の検証に役立つ。
+Report defects or migration difficulties in [yohak/togostanza Issues](https://github.com/yohak/togostanza/issues). Successful verification results also help evaluate the Alpha.
 
-報告には次を含める。
+Include the following:
 
-- 使用したAlpha版のバージョンとGitタグ。
-- 対象プロジェクトとコミット、Node.jsとパッケージマネージャーのバージョン。
-- 実行したコマンドと、インストール・ビルドの成否。
-- 確認したstanzaやページ、期待した動作と実際の結果。エラーがある場合はログや再現手順。
-- 移行に必要だった設定・ソースの修正。
+- The Alpha version and Git tag used.
+- The target project and commit, and Node.js and package manager versions.
+- Commands run and whether installation and building succeeded.
+- Stanzas or pages checked, expected behavior, and actual results. Include logs or reproduction steps for errors.
+- Configuration or source changes required for migration.
 
-## 開発ドキュメント
+## Development Documentation
 
-- [stanza作成者向け文書](./docs/for-developers/README.md): 導入、設定移行、現行V4仕様への案内。
-- [TogoStanza本体の開発・保守文書](./docs/for-maintainers/README.md): 品質確認、開発環境、公開手順への案内。
-- [開発ドキュメント一覧](./docs/README.md): 計画、設計、調査記録の入口。
-- [V4仕様](./docs/v4-migration/spec/index.md): CLI、設定、stanzaソースAPI、ランタイムなどの仕様。
-- [正式公開までのロードマップ](./docs/for-maintainers/release/official-integration-plan.md): Alpha、Beta、正式版への移行条件と進め方。
+- [Documentation for Stanza Authors](./docs/for-developers/README.md): Installation, configuration migration, and the current V4 specification.
+- [TogoStanza Development and Maintenance](./docs/for-maintainers/README.md): Quality checks, development environments, and release procedures.
+- [Development Documentation Index](./docs/README.md): Entry point for plans, designs, and investigation records.
+- [V4 Specification](./docs/v4-migration/spec/index.md): CLI, configuration, stanza source APIs, runtime behavior, and other contracts.
+- [Release Roadmap](./docs/for-maintainers/release/official-integration-plan.md): Conditions and steps for moving through Alpha, Beta, and the stable release.

@@ -1,83 +1,83 @@
-# V3からV4へのソース・設定の移行ガイド
+# Migrate Source and Configuration from V3 to V4
 
-## このガイドの対象
+## Scope
 
-### 対象プロジェクト
+### Projects Covered
 
-TogoStanza V3を使い、JavaScriptでstanzaを作成しているプロジェクトを、V4でビルド・表示できるようにするための手順を示す。主に、ビルド設定とimportのパス解決を扱う。
+This guide explains how to build and display an existing TogoStanza V3 project with V4 when its stanzas are written in JavaScript. It focuses on build configuration and import path resolution.
 
-`index.js` のstanzaはJavaScriptのまま使える。移行のためにTypeScriptへ書き換えたり、`tsconfig.json` を新しく作ったりする必要はない。TypeScriptを使っている場合の型解決は、[補足](#補足typescriptを使う場合)で扱う。
+Stanzas with `index.js` can remain in JavaScript. Migration does not require rewriting them in TypeScript or creating a `tsconfig.json`. Type resolution for TypeScript projects is covered in the [supplement](#supplement-using-typescript).
 
-作業対象は、自分のstanzaプロジェクトにある設定とソース。TogoStanza本体の実装を移行する作業は含めない。既存ソースを活かし、必要な箇所から変更する。
+The work applies to configuration and source files in your own stanza project. It does not cover migrating TogoStanza's implementation. Keep existing source and change the parts that need adjustment.
 
-### V4の導入手順
+### Install V4
 
-V4 Alphaの導入は、READMEの[既存プロジェクトで試す](../../../README.md#既存プロジェクトで試す)に従う。作業用ブランチに移行前の状態を残し、V4の依存を導入したうえで、以下の設定を確認する。
+Follow [Try in an Existing Project](../../../README.md#try-in-an-existing-project) in the README to install V4 Alpha. Preserve the pre-migration state on a working branch, install the V4 dependency, and then review the configuration below.
 
-このガイドのJavaScript設定例は、公開準備中の `4.0.0-alpha.1` の対応を前提にしている。`alpha.1` のGitタグはまだ公開していない。公開済みの `v4.0.0-alpha.0` では設定ファイル名は `togostanza.config.ts` のみ対応する。`alpha.0` で例を使う場合は、内容はそのままでファイル名を `.ts` に読み替える。`alpha.1` の公開案内が出るまでは、`alpha.0` の設定ファイル名を変更しない。
+The JavaScript configuration examples in this guide require the support being prepared for `4.0.0-alpha.1`. Its Git tag has not been published yet. The published `v4.0.0-alpha.0` supports only the configuration filename `togostanza.config.ts`. To use these examples with `alpha.0`, keep the contents and use the `.ts` filename. Do not rename an `alpha.0` configuration file before `alpha.1` is announced as available.
 
-## 移行が必要な箇所を確認する
+## Identify Required Changes
 
-### そのまま使えるもの
+### What Can Stay the Same
 
-V4では、既存のstanzaソースとWebページへの埋め込み形式を維持することを重視している。次の書き方を、V4への移行だけを理由に一律で変更する必要はない。
+V4 prioritizes preserving existing stanza source and the web-page embedding format. You do not need to change the following solely because you are migrating to V4:
 
-- `import Stanza from "togostanza/stanza"` と、`Stanza` を継承するクラス。
-- `this.params`、`this.root`、`this.renderTemplate()` などのstanzaソースAPI。
-- `templates/*.hbs` のHandlebarsテンプレートと、`style.scss`。
-- `type="module"` のscriptと `<togostanza-{id}>` によるWebページへの埋め込み。
+- `import Stanza from "togostanza/stanza"` and classes extending `Stanza`.
+- Stanza source APIs such as `this.params`, `this.root`, and `this.renderTemplate()`.
+- Handlebars templates in `templates/*.hbs` and `style.scss`.
+- Embedding with a `type="module"` script and `<togostanza-{id}>`.
 
-ただし、プロジェクト固有のビルド設定やimportの解決方法は、以下の確認が必要になる。APIや対応範囲の詳細は[現行V4仕様](../../v4-migration/spec/index.md)を参照する。
+Project-specific build configuration and import resolution still need the checks below. See the [current V4 specification](../../v4-migration/spec/index.md) for API details and supported scope.
 
-### 変更が必要になるもの
+### What May Need Changes
 
-| プロジェクトの状態 | 確認すること |
+| Project condition | What to check |
 | --- | --- |
-| `togostanza-build.mjs` または `togostanza-build.js` がある | V4は実行しないため、必要な設定を `togostanza.config.js` へ移す。 |
-| `tsconfig.json` の `compilerOptions.paths` を使っている | ビルドに必要な別名を `vite.resolve.alias` にも指定する。 |
-| `%stanza/` など、独自の接頭辞でimportしている | どのディレクトリを指すかを確認し、V4の設定へ明示する。 |
+| `togostanza-build.mjs` or `togostanza-build.js` exists | V4 does not execute it; move the required configuration to `togostanza.config.js`. |
+| `compilerOptions.paths` is used in `tsconfig.json` | Also define aliases needed for builds in `vite.resolve.alias`. |
+| Imports use custom prefixes such as `%stanza/` | Identify the directories they refer to and configure them explicitly for V4. |
 
-既存設定やソースの自動変換は行われない。以下の例は必要な項目を示すためのもので、既存の設定ファイル全体を置き換えるものではない。すでに設定がある場合は、その内容へ追記・統合する。
+Existing configuration and source are not converted automatically. The examples below show the relevant settings; they are not replacements for an entire existing configuration file. Merge them with settings you already have.
 
-## ビルド設定を移行する
+## Migrate Build Configuration
 
-### `togostanza.config.js` を用意する
+### Create `togostanza.config.js`
 
-ビルド設定が必要な場合は、stanzaプロジェクトの `package.json` と同じディレクトリに `togostanza.config.js` を置く。JavaScriptのプロジェクトでも、このファイル名を使う。設定を追加する必要がなければ、このファイルを作る必要はない。
+If build configuration is needed, place `togostanza.config.js` next to the stanza project's `package.json`. Use this filename for JavaScript projects as well. If no additional configuration is needed, you do not need to create the file.
 
-設定はJavaScriptの `import` / `export` で記述できる。この設定を読み込むために、stanzaのTypeScript化、`tsconfig.json` の新設、`package.json` への `type: "module"` 追加は必要ない。
+Write the configuration with JavaScript `import` / `export`. Loading it does not require converting stanzas to TypeScript, creating `tsconfig.json`, or adding `type: "module"` to `package.json`.
 
-JavaScript設定にはES modules形式を使う。CommonJSの `module.exports` 形式は対応対象に含まれない。
+JavaScript configuration uses ES modules. CommonJS `module.exports` is not supported.
 
-公開準備中の `alpha.1` で使える設定ファイルは次の3形式。プロジェクトルートに置くファイルは1つだけにする。
+The upcoming `alpha.1` supports three configuration formats. Keep only one in the project root.
 
-| ファイル名 | 用途 |
+| Filename | Purpose |
 | --- | --- |
-| `togostanza.config.js` | JavaScriptで書く標準の設定。 |
-| `togostanza.config.mjs` | ES modulesの拡張子を明示したい場合。 |
-| `togostanza.config.ts` | TypeScriptで設定したい場合、または既存の設定を使い続ける場合。 |
+| `togostanza.config.js` | The standard JavaScript configuration. |
+| `togostanza.config.mjs` | An explicit ES modules extension. |
+| `togostanza.config.ts` | Optional TypeScript configuration or continued use of an existing configuration. |
 
-複数の候補があると、どの設定も読み込む前にエラーになる。ファイル名を変更するときは、古い候補を同じ場所に残さない。読み込みに失敗した場合も、別の設定ファイルや設定なしへ切り替えて処理を続けることはない。
+If multiple candidates exist, loading fails before any is read. When renaming the file, do not leave the previous candidate in the same directory. A loading failure also stops processing; it does not fall back to another file or to no configuration.
 
-公開済みの `alpha.0` で以下の例を使う場合は、`togostanza.config.ts` として保存する。
+For the published `alpha.0`, save this example as `togostanza.config.ts`.
 
 ```js
 import { defineTogoStanzaConfig } from "togostanza/config";
 
 export default defineTogoStanzaConfig({
   vite: {
-    // importの別名や、必要なViteプラグインを指定する。
+    // Define import aliases and any required Vite plugins.
   }
 });
 ```
 
-V4のビルド基盤はVite。設定は `defineTogoStanzaConfig()` に渡し、Viteに関する項目は `vite` の下へ記述する。
+V4 uses Vite as its build foundation. Pass configuration to `defineTogoStanzaConfig()` and place Vite settings under `vite`.
 
-### V3の設定から必要な項目を移す
+### Transfer Required V3 Settings
 
-`togostanza-build.mjs` / `togostanza-build.js` を開き、現在のstanzaで必要な別名やプラグインを確認する。旧設定ファイルを名前だけ変更しても、V4の設定にはならない。
+Open `togostanza-build.mjs` / `togostanza-build.js` and identify aliases and plugins needed by your stanzas. Renaming the legacy file alone does not convert it into V4 configuration.
 
-たとえば、旧設定に次のような別名があり、ソースが `%stanza/` を使っている場合:
+For example, suppose the old configuration defines this alias and the source uses `%stanza/`:
 
 ```js
 export default {
@@ -87,7 +87,7 @@ export default {
 };
 ```
 
-V4では、プロジェクトルートの `src/` を指す別名を次のように記述する。
+In V4, define the alias for the project root's `src/` directory as follows:
 
 ```js
 import { resolve } from "node:path";
@@ -104,27 +104,27 @@ export default defineTogoStanzaConfig({
 });
 ```
 
-`import.meta.dirname` はこの設定ファイルがあるディレクトリを指す。`src` は、自分のプロジェクトで実際にソースが置かれている場所に合わせる。
+`import.meta.dirname` refers to the directory containing this configuration file. Replace `src` with the actual source location in your project.
 
-旧設定ファイルは移行元の記録として残せるが、V4が読み込むことはない。残っている場合は、ビルド時に旧設定を実行しなかった旨の警告が出る。
+You can retain the legacy file as a migration record, but V4 will not load it. If it remains, the build warns that the legacy configuration was not executed.
 
-### プラグインを使っている場合
+### If You Use Plugins
 
-旧設定にプラグインがある場合は、何のために使っていたかを確認し、V4でも必要な処理を `vite.plugins` へ移す。使用するプラグインがViteに対応するか、必要なオプションが変わるかは、そのプラグインのドキュメントで確認する。
+For each plugin in the legacy configuration, identify its purpose and move functionality still needed in V4 to `vite.plugins`. Check the plugin's documentation for Vite compatibility and any changed options.
 
-V3のプラグイン設定がそのまま動くとは限らない。既存の `vite.plugins` がある場合は、必要なプラグインをその配列へ追加し、別名など他の設定も保持する。
+V3 plugin settings may not work unchanged. If `vite.plugins` already exists, add the required plugins to that array and preserve other settings, including aliases.
 
-## importのパスを確認する
+## Check Import Paths
 
-### 相対パスとパッケージ名
+### Relative Paths and Package Names
 
-`./helper.js` や `../lib/helper.js` のような相対パス、インストール済みパッケージ名によるimportは、V4への移行だけを理由に別名へ書き換える必要はない。ビルドで見つからない場合は、参照先ファイルや必要な依存があるかを先に確認する。
+Relative imports such as `./helper.js` or `../lib/helper.js`, and imports by installed package name, do not need to be rewritten as aliases solely for V4. If a build cannot resolve one, first check that the target file or required dependency exists.
 
-### `tsconfig.json` の `paths` を使っている場合
+### If You Use `paths` in `tsconfig.json`
 
-すでに `paths` を使っているプロジェクトだけ、この節を確認する。使っていなければ追加は不要。
+This section applies only to projects already using `paths`. There is no need to add it otherwise.
 
-たとえば、次の設定で `@lib/` をプロジェクトルートの `lib/` に対応させている場合:
+For example, this configuration maps `@lib/` to the project root's `lib/` directory:
 
 ```json
 {
@@ -136,9 +136,9 @@ V3のプラグイン設定がそのまま動くとは限らない。既存の `v
 }
 ```
 
-TypeScriptやエディタでimportを解決できても、その対応はV4のビルド設定へ自動では追加されない。`togostanza.config.js` の `vite.resolve.alias` にも指定する。
+Even if TypeScript or your editor resolves these imports, that mapping is not automatically added to V4's build configuration. Also define it in `vite.resolve.alias` in `togostanza.config.js`.
 
-前節の `%stanza` と併用する場合は、同じ `alias` に追加する。
+To use it alongside `%stanza` from the previous section, add it to the same `alias` object:
 
 ```js
 import { resolve } from "node:path";
@@ -156,37 +156,37 @@ export default defineTogoStanzaConfig({
 });
 ```
 
-この例では `import { label } from "@lib/label.js"` が `lib/label.js` を参照する。`paths` の `@lib/*` に対し、このVite設定では `@lib` をキーにする。TypeScriptやエディタで使う `paths` は残し、ビルド側と同じ参照先になるように揃える。
+Here, `import { label } from "@lib/label.js"` resolves to `lib/label.js`. The `@lib/*` entry in `paths` corresponds to the key `@lib` in this Vite configuration. Keep the `paths` used by TypeScript or your editor and align their targets with the build configuration.
 
-既存の `paths` に `baseUrl` や別の設定ファイルからの継承がある場合は、その設定で実際に指している場所を確認してから別名へ反映する。
+If existing `paths` rely on `baseUrl` or inheritance from another configuration file, identify their resolved locations before adding the aliases.
 
-### 独自の別名を使っている場合
+### If You Use Custom Aliases
 
-`%stanza/`、`%core/` などの接頭辞は、TogoStanzaが自動で解釈する共通の別名ではない。プロジェクト独自の別名として、必要なものを `vite.resolve.alias` に追加する。
+Prefixes such as `%stanza/` and `%core/` are not shared aliases that TogoStanza interprets automatically. Add the ones your project needs to `vite.resolve.alias`.
 
-たとえば `%core/` が設定ファイルから見て `../core/src/` を指す構成なら、同じ `alias` オブジェクトに次の項目を追加する。
+For example, if `%core/` points to `../core/src/` relative to the configuration file, add this entry to the same `alias` object:
 
 ```js
 "%core": resolve(import.meta.dirname, "../core/src")
 ```
 
-ディレクトリ名や階層はプロジェクトごとに異なるため、この例の配置を前提にしない。ソースのimport先が正しく解決できれば、接頭辞を一括で書き換える必要はない。
+Directory names and nesting vary by project; do not assume this example's layout. If imports resolve correctly, you do not need to replace the prefixes throughout your source.
 
-## 補足：TypeScriptを使う場合
+## Supplement: Using TypeScript
 
-V4は `index.js` に加えて、`index.ts` / `index.tsx` のstanzaソースにも対応する。既存のTypeScriptソースを使う場合や、設定ファイルをTypeScriptで型確認する場合は、以下を確認する。JavaScriptでstanzaを作成・ビルドするだけなら、この補足の設定は不要。
+V4 supports stanza sources in `index.ts` / `index.tsx` as well as `index.js`. Review this section if you use existing TypeScript source or type-check a TypeScript configuration file. These settings are unnecessary for simply creating and building JavaScript stanzas.
 
-公開準備中の `alpha.1` では、`init` は `tsconfig.json` を自動生成しない。TypeScriptを使う場合だけ、自分のソースに合わせて追加する。既存のTypeScript設定はそのまま利用できる。公開済みの `alpha.0` では自動生成されるが、それによってstanzaをTypeScriptで書く必要が生じるわけではない。
+In the upcoming `alpha.1`, `init` does not generate `tsconfig.json` automatically. Add it for your source only if you use TypeScript. Existing TypeScript configuration can remain in use. The published `alpha.0` generates the file automatically, but that does not require writing stanzas in TypeScript.
 
-### TogoStanzaの型を解決する
+### Resolve TogoStanza Types
 
-`togostanza/stanza` と `togostanza/config` の型は、TogoStanzaの `package.json` にある `exports` で公開している。従来の `moduleResolution: "node"` では、この形式の型を解決できない場合がある。
+Types for `togostanza/stanza` and `togostanza/config` are exposed through `exports` in TogoStanza's `package.json`. The older `moduleResolution: "node"` may not resolve types exposed this way.
 
-ViteでビルドするTypeScriptのstanzaソースには、`moduleResolution: "bundler"` を推奨する。この設定はパッケージの `exports` に対応する。`nodenext` も対応しているが、Node.js向けのモジュール規則を使うため、すでに採用している場合は `module` との組み合わせを含めて確認する。詳細は[TypeScriptのmoduleResolution](https://www.typescriptlang.org/tsconfig/moduleResolution.html)を参照する。
+For TypeScript stanza source built with Vite, `moduleResolution: "bundler"` is recommended. It supports package `exports`. `nodenext` also supports them, but uses Node.js module rules; if your project already uses it, check its combination with `module`. See the [TypeScript moduleResolution documentation](https://www.typescriptlang.org/tsconfig/moduleResolution.html) for details.
 
-### 既存の `tsconfig.json` に反映する
+### Update Existing `tsconfig.json`
 
-対象のstanzaソースや、任意で使う `togostanza.config.ts` に適用される `tsconfig.json` の `compilerOptions` を確認する。Viteでビルドするソースの設定例は次のとおり。
+Check `compilerOptions` in the `tsconfig.json` applying to your stanza source or optional `togostanza.config.ts`. For source built with Vite, an example is:
 
 ```json
 {
@@ -197,50 +197,50 @@ ViteでビルドするTypeScriptのstanzaソースには、`moduleResolution: "b
 }
 ```
 
-この例に合わせてファイル全体を置き換えず、既存の `include`、`exclude`、`paths` などを保持する。JSXを使っている場合の設定も、プロジェクトに合わせて残す。JavaScriptだけのstanzaに、移行のためだけにJSX設定を追加する必要はない。
+Do not replace the whole file with this example. Preserve existing `include`, `exclude`, `paths`, and other settings. Keep JSX settings appropriate to your project if you use JSX. JavaScript-only stanzas do not need JSX settings solely for migration.
 
-同じリポジトリにNode.jsで直接実行する別のアプリやツールがある場合は、その設定まで一律に変更しない。stanzaソースと設定ファイルに適用される範囲から確認する。
+If the repository also contains applications or tools run directly by Node.js, do not apply the same changes indiscriminately to their configuration. Start with the configuration that applies to stanza source and configuration files.
 
-## 移行後の動作を確認する
+## Verify the Migration
 
-### ビルドとローカル表示
+### Build and Local Preview
 
-READMEの[ビルドとブラウザ表示の確認手順](../../../README.md#既存プロジェクトで試す)に従い、プロジェクトのルートでビルドと開発サーバーを実行する。
+Follow the README's [build and browser verification steps](../../../README.md#try-in-an-existing-project) to run the build and development server from the project root.
 
-ビルド成功を確認し、ローカルの一覧から代表的なstanzaを開く。TypeScriptを使っている場合は、プロジェクトで使っている型確認手順やエディタでも、型解決のエラーが残っていないか確認する。
+Confirm that the build succeeds and open representative stanzas from the local index. If you use TypeScript, also check for remaining type-resolution errors with the project's type-checking procedure or editor.
 
-### 既存ページへの埋め込み
+### Embedding in Existing Pages
 
-stanzaを埋め込んでいる既存ページでも確認する。埋め込み先がV4の生成物を読み込んでいることを確かめ、JavaScript、CSS、画像、データなどの参照先が切れていないかを見る。
+Check existing pages that embed your stanzas. Confirm that they load V4 outputs and that references to JavaScript, CSS, images, data, and other resources remain valid.
 
-### 表示・操作・データ連携
+### Display, Interaction, and Data Integration
 
-- 移行前と同じデータとパラメーターで、必要な表示ができるか。
-- パラメーター変更やメニューなどの操作が動くか。
-- 外部データの読み込みや、利用しているstanza間の連携が動くか。
+- Does the required display work with the same data and parameters as before migration?
+- Do parameter changes, menus, and other interactions work?
+- Do external data loading and any inter-stanza communication you use work?
 
-確認後は、設定・ソースの変更と、依存更新による `package.json`・lockfileの差分を確認する。試したstanzaやページ、結果、必要になった修正を記録する。
+After verification, review configuration and source changes along with dependency changes in `package.json` and the lockfile. Record the stanzas or pages tested, the results, and any required fixes.
 
-## 移行時に困ったとき
+## Troubleshooting
 
-### import先が見つからない
+### An Import Cannot Be Resolved
 
-エラーに出ているimportの文字列を確認する。相対パスならファイルの位置、パッケージ名なら依存のインストール状況、別名なら `vite.resolve.alias` のキーと参照先を確認する。エディタで解決できてもビルドに失敗する場合は、`paths` だけに設定がないかを確認する。
+Inspect the import string in the error. For a relative path, check the file location; for a package name, check dependency installation; for an alias, check the key and target in `vite.resolve.alias`. If the editor resolves an import but the build fails, check whether the mapping exists only in `paths`.
 
-### TogoStanzaの型が見つからない
+### TogoStanza Types Cannot Be Found
 
-V4が導入されていることと、対象ファイルにどの `tsconfig.json` が適用されるかを確認する。`moduleResolution` が古い `node` のままになっていないか、継承元の設定に戻っていないかを見る。
+Confirm that V4 is installed and identify the `tsconfig.json` applying to the file. Check whether `moduleResolution` still uses the older `node` value or inherits it from another configuration.
 
-### V3の設定ファイルについて警告が出る
+### A Warning Mentions a V3 Configuration File
 
-`togostanza-build.mjs` / `togostanza-build.js` が見つかったが、実行していないことを示す警告。必要な項目が `togostanza.config.js` に移っているかを確認する。移行後、記録として残す必要がなくなった旧設定ファイルは削除できる。
+The warning means that `togostanza-build.mjs` / `togostanza-build.js` was found but not executed. Check that required settings have been moved to `togostanza.config.js`. After migration, you can delete legacy configuration files that are no longer needed as records.
 
-`alpha.0` を使用中の場合は、移行先を `togostanza.config.ts` として確認する。
+If you use `alpha.0`, check `togostanza.config.ts` as the migration target instead.
 
-### 設定ファイルが複数ある、または読み込みに失敗する
+### Multiple Configuration Files or a Loading Failure
 
-JavaScript設定に対応したV4で複数候補のエラーが出た場合は、`.js` / `.mjs` / `.ts` のうち使うファイルを1つに絞る。読み込み失敗の場合は、診断にあるファイルと原因を確認し、構文やimport先を修正する。設定なしや別形式へのフォールバックは行われないため、エラーを解消してから再実行する。
+If a V4 version with JavaScript configuration support reports multiple candidates, keep only one of `.js` / `.mjs` / `.ts`. For a loading failure, inspect the file and cause named in the diagnostic and fix the syntax or import target. There is no fallback to another format or to no configuration; resolve the error before retrying.
 
-### 問題を報告する
+### Report a Problem
 
-解決しない場合は、READMEの[フィードバック案内](../../../README.md#不具合確認結果のフィードバック)に従って報告する。バージョンや再現手順に加え、問題が起きるimport、関連する設定、エラーログがあると原因を確認しやすい。
+If the issue persists, follow the README's [feedback instructions](../../../README.md#report-issues-and-verification-results). Along with the version and reproduction steps, include the failing import, related configuration, and error logs to help identify the cause.

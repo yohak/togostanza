@@ -1,53 +1,53 @@
-# 正式版統合計画
+# Official Integration Plan
 
-この文書では、リメイク版を `togostanza/togostanza` のv4正式系へ統合するまでの進め方を定義する。
+This document defines the process for integrating the remake into the official V4 release line in `togostanza/togostanza`.
 
-この計画は、Phase 14完了後の機能固定を前提にする。統合準備では、新機能を追加せず、v4仕様の明文化、仕様に基づくテストの再構成、正式版向け文書、配布経路、統合阻害事項を扱う。
+The plan assumes a feature freeze after Phase 14. Integration preparation covers documenting V4 contracts, restructuring tests around those contracts, preparing official documentation and distribution paths, and resolving integration blockers. It does not add new features.
 
-## ゴール
+## Goals
 
-- `yohak/togostanza` でv4のalphaフェーズを完了する。
-- `togostanza/togostanza` へ1つのPRで統合し、v4のbetaフェーズを開始する。
-- 正式版リポジトリには、製品コード、v4仕様に基づく自己完結テスト、利用者向け文書、保守者向け文書だけを持ち込む。
-- リメイク固有の調査資料、Phase文書、比較検証資産は、本リポジトリをArchiveして参照可能な状態で残す。
+- Complete the V4 Alpha phase in `yohak/togostanza`.
+- Integrate into `togostanza/togostanza` through a single PR and begin the V4 Beta phase.
+- Transfer only product code, self-contained tests based on the V4 specification, developer documentation, and maintainer documentation to the official repository.
+- Archive this repository while keeping remake-specific investigation materials, phase documents, and comparison assets available for reference.
 
-## 基本方針
+## Principles
 
-### 機能固定
+### Feature Freeze
 
-Phase 14完了時点の機能を統合対象とする。alphaと統合PRでは、次だけを変更対象にする。
+Integration targets the features present at the end of Phase 14. During Alpha and the integration PR, limit changes to:
 
-- v4仕様とテストの不一致。
-- 正式版へ持ち込めない外部依存やリメイク固有依存の除去。
-- package metadata、依存生成、CI、配布、文書の正式版対応。
-- alphaの実プロジェクト確認で見つかった統合阻害事項。
-- 正式版PRで表明された懸念への対応。
-- 重大な不具合。
+- Mismatches between the V4 specification and tests.
+- Removal of external or remake-specific dependencies that cannot be transferred to the official repository.
+- Official-release preparation for package metadata, generated dependencies, CI, distribution, and documentation.
+- Integration blockers found through real-project Alpha checks.
+- Concerns raised in the official integration PR.
+- Serious defects.
 
-それ以外の機能追加は、正式版統合後の別作業として扱う。
+Handle other feature additions separately after official integration.
 
-### 書き込み先の切り替え
+### Switch the Editing Destination
 
-alpha完了までは、本リポジトリだけを編集する。正式版PRを作成するときは、`references/togostanza` を使わず、正式版リポジトリの書き込み可能なcheckoutを別に用意する。
+Until Alpha is complete, edit only this repository. When creating the official PR, prepare a separate writable checkout of the official repository instead of using `references/togostanza`.
 
-export元commitを固定した後は、実装の正本を正式版リポジトリへ切り替える。PRレビュー対応は正式版側だけで行い、本リポジトリへ同じ修正を戻し続けない。
+After fixing the export source commit, switch the implementation's source of truth to the official repository. Address PR review only there; do not keep copying the same fixes back to this repository.
 
-### 正式版へ持ち込まないもの
+### Exclude from the Official Repository
 
-- `docs/v4-migration/implementation/` のPhase文書。
-- `docs/v4-migration/investigation/` の調査記録。
-- `workbench/` の比較検証環境。
-- `references/` と `sandbox/`。
-- リメイク作業用の用語集、セットアップ文書、作業ガイド。
-- v3とv4の比較実行を前提にしたテスト。
+- Phase documents in `docs/v4-migration/implementation/`.
+- Investigation records in `docs/v4-migration/investigation/`.
+- Comparison environments in `workbench/`.
+- `references/` and `sandbox/`.
+- The glossary, setup documents, and working guides specific to the remake effort.
+- Tests that require comparative execution of V3 and V4.
 
-正式版のDecision Recordから詳細な根拠を参照する必要がある場合は、本リポジトリの最終tagまたはcommit SHAへの固定リンクを使う。
+When an official Decision Record needs detailed evidence, link to a fixed final tag or commit SHA in this repository.
 
-## リリース段階
+## Release Stages
 
-### alpha
+### Alpha
 
-v4のalphaフェーズは `yohak/togostanza` で行う。npm registryへは公開せず、不変のGit tagから利用する。
+Run the V4 Alpha phase in `yohak/togostanza`. Distribute through immutable Git tags without publishing to the npm registry.
 
 ```text
 v4.0.0-alpha.0
@@ -55,9 +55,9 @@ v4.0.0-alpha.1
 v4.0.0-alpha.2
 ```
 
-各alphaでは、ルート `package.json.version` とGit tagを一致させる。公開済みtagは移動、上書き、再利用しない。
+For each Alpha, align the root `package.json.version` with the Git tag. Do not move, overwrite, or reuse a published tag.
 
-alphaを利用するStanzaリポジトリは、TogoStanzaを `devDependencies` に置き、Git tagへ完全固定する。
+Stanza repositories using Alpha place TogoStanza in `devDependencies`, pinned to an exact Git tag.
 
 ```json
 {
@@ -67,13 +67,13 @@ alphaを利用するStanzaリポジトリは、TogoStanzaを `devDependencies` �
 }
 ```
 
-`init` では `TOGOSTANZA_DEPENDENCY_SPEC` を使い、CLIの起動元と生成先の依存を同じtagへ揃える。npmとpnpmのalpha利用手順は、READMEの[Alpha版の導入手順](../../../README.md#alpha版を試す)に記録する。この環境変数はalpha検証と保守用のoverrideとして維持し、正式版の一般利用手順には載せない。
+For `init`, use `TOGOSTANZA_DEPENDENCY_SPEC` to align the CLI's source tag with the generated dependency. Document npm and pnpm usage in the README's [Alpha installation instructions](../../../README.md#try-the-alpha). Retain this environment variable as an override for Alpha verification and maintenance; do not include it in general usage instructions for the official release.
 
-### beta
+### Beta
 
-alpha完了後、正式版PRではversionを `4.0.0-beta.0` にする。正式版へマージした後、npmの `beta` dist-tagで公開する。
+After Alpha completion, set the version to `4.0.0-beta.0` in the official PR. After merging into the official repository, publish with npm's `beta` dist-tag.
 
-beta版の `init` は、実行中のCLIと同じnpm versionを生成リポジトリの `devDependencies.togostanza` へ完全固定する。
+Beta `init` pins the generated repository's `devDependencies.togostanza` to the exact npm version of the running CLI.
 
 ```json
 {
@@ -83,62 +83,62 @@ beta版の `init` は、実行中のCLIと同じnpm versionを生成リポジト
 }
 ```
 
-### stable
+### Stable
 
-beta利用で重大な互換性問題がなく、文書、移行、公開運用、保守体制を固定できた時点で `4.0.0` を公開し、npmの `latest` をv4へ切り替える。
+Publish `4.0.0` and switch npm's `latest` to V4 once Beta usage shows no serious compatibility issues and documentation, migration, release operations, and maintenance arrangements are settled.
 
-alpha、beta、stableの昇格条件は状態を基準にする。正式版オーナーと相談したうえで、正式版の `docs/for-maintainers/` にチェックリストとして記録する。
+Promotion criteria for Alpha, Beta, and Stable are based on readiness. Agree on them with the official repository owner and record them as checklists in the official `docs/for-maintainers/`.
 
-## alpha準備
+## Alpha Preparation
 
-### 1. v4仕様を整理する
+### 1. Organize the V4 Specification
 
-現行の `docs/v4-migration/spec/index.md` を起点に、正式版で外部契約として維持するv4仕様を整理する。v3と同じ挙動にすること自体をテスト根拠にしない。
+Start from the current `docs/v4-migration/spec/index.md` and organize the V4 external contracts to maintain in the official release. Matching V3 behavior alone is not a test requirement.
 
-正式版へ移す外部仕様には、少なくとも次を含める。
+The transferred external specification must cover at least:
 
-- CLI。
-- Stanzaリポジトリ構成。
-- 設定。
-- メタデータ。
-- StanzaソースAPI。
-- ビルド生成物。
-- ランタイムとcustom element。
-- framework support。
-- 公開と埋め込み。
-- 対応Node.jsとパッケージマネージャー。
-- Supported、Experimental、Internalの安定性。
+- CLI.
+- Stanza repository layout.
+- Configuration.
+- Metadata.
+- Stanza source APIs.
+- Build outputs.
+- Runtime and custom elements.
+- Framework support.
+- Publication and embedding.
+- Supported Node.js versions and package managers.
+- Supported, Experimental, and Internal stability classifications.
 
-### 2. テストを再構成する
+### 2. Restructure Tests
 
-テストは、明文化したv4仕様を実装が満たすことを確認する。
+Tests verify that the implementation satisfies the documented V4 specification.
 
-- v3実装との比較実行は正式版テストへ持ち込まない。
-- `references/` と `workbench/` への依存をなくす。
-- 必要な最小入力だけを自己完結fixtureとして抽出する。
-- fixtureには、確認する仕様または契約が分かる説明を残す。
-- lint、type-check、unit、integration、browser、buildはNode.js 24とpnpm 11で確認する。
-- package tarballのインストール、`init`、ビルドはnpmとpnpmの両方で確認する。
-- yarnとNode.js 22以下は正式サポート対象にしない。
+- Do not transfer comparative execution against V3 into official tests.
+- Remove dependencies on `references/` and `workbench/`.
+- Extract only the minimal required inputs as self-contained fixtures.
+- Describe the specification or contract verified by each fixture.
+- Run lint, type checks, unit, integration, browser, and build checks with Node.js 24 and pnpm 11.
+- Verify package tarball installation, `init`, and builds with both npm and pnpm.
+- Do not officially support yarn or Node.js 22 and earlier.
 
-本リポジトリ内の実プロジェクト確認は、問題発見と事前確認のために実施する。ただし、その成功だけではalpha完了と判定しない。
+Run real-project checks in this repository for issue discovery and preliminary verification. Passing them alone does not establish Alpha completion.
 
-### 3. packageと生成依存を正式版向けにする
+### 3. Prepare the Package and Generated Dependencies
 
-- 対応Node.jsは `>=24.0.0` とする。
-- TogoStanza本体の保守環境はpnpm 11に固定する。
-- 生成されるStanzaリポジトリはnpmとpnpmを選べる。
-- 生成リポジトリへ `packageManager` fieldは書き込まない。
-- 生成リポジトリのTogoStanza依存は `dependencies` ではなく `devDependencies` に置く。
-- npm公開後の生成依存は、caret rangeではなく実行中のCLI versionへ完全固定する。
-- 専用の `upgrade` コマンドは追加しない。更新は通常のパッケージ更新として案内する。
-- ルート `package.json.version` を、CLI表示、生成依存、npm version、Git tag、GitHub Release、changelogの正本にする。
+- Require Node.js `>=24.0.0`.
+- Pin the maintenance environment for TogoStanza itself to pnpm 11.
+- Allow generated stanza repositories to choose npm or pnpm.
+- Do not write a `packageManager` field into generated repositories.
+- Place the generated TogoStanza dependency in `devDependencies`, not `dependencies`.
+- After npm publication, pin generated dependencies to the exact running CLI version rather than a caret range.
+- Do not add a dedicated `upgrade` command. Describe upgrades as ordinary package updates.
+- Use the root `package.json.version` as the source of truth for CLI display, generated dependencies, npm versions, Git tags, GitHub Releases, and the changelog.
 
-### 4. 文書を正式版向けに書き直す
+### 4. Rewrite Documentation for the Official Release
 
-正式版へ移す文書は英語で作る。v3文書を継ぎ足さず、v4を正本として全面的に書き直したうえで、v3文書の項目に漏れがないかを照合する。
+Write transferred documentation in English. Rewrite it around V4 as the source of truth rather than extending V3 documents, then compare its coverage against the V3 documentation.
 
-正式版の基本構成は次とする。個別ファイル名と粒度は、移行対象の棚卸し後に詳細化する。
+Use the following base structure. Determine individual filenames and granularity after inventorying the material to transfer.
 
 ```text
 README.md
@@ -149,140 +149,140 @@ CONTRIBUTING.md
 CHANGELOG.md
 ```
 
-`docs/for-developers/` はTogoStanzaを使ってstanzaを作成するdeveloper向けの公開文書を扱う。Getting Started、ガイド、外部リファレンス、v3からv4へのmigration guideを含める。
+`docs/for-developers/` contains public documentation for developers creating stanzas with TogoStanza: Getting Started, guides, external references, and a V3-to-V4 migration guide.
 
-`docs/for-maintainers/` はTogoStanza本体を保守するための文書を扱う。内部仕様、アーキテクチャ、v4 update policy、Decision Record、品質方針、リリース手順を含める。
+`docs/for-maintainers/` covers maintenance of TogoStanza itself: internal specifications, architecture, the V4 update policy, Decision Records, quality policy, and release procedures.
 
-外部から観測できる契約は `docs/for-developers/` を正本にする。内部の不変条件は `docs/for-maintainers/` に置き、外部仕様を重複記載せずリンクする。
+Make `docs/for-developers/` authoritative for externally observable contracts. Put internal invariants in `docs/for-maintainers/` and link to external specifications instead of duplicating them.
 
-重要な判断は、仕様へ理由を混ぜず、Decision Recordとして分ける。Decision Recordは少なくとも `Status`、`Context`、`Decision`、`Consequences` を持つ。必要な場合は、本リポジトリの固定refを `Evidence` として参照する。
+Separate important decisions into Decision Records rather than mixing their rationale into specifications. Each Decision Record has at least `Status`, `Context`, `Decision`, and `Consequences`. When needed, reference a fixed ref in this repository as `Evidence`.
 
-stanza作成者向けの `docs/for-developers/migration/v3-to-v4.md` と、保守者向けの `docs/for-maintainers/v4-update-policy.md` は分ける。正式版では `Remake` を主要な呼称にしない。
+Separate `docs/for-developers/migration/v3-to-v4.md` for stanza authors from `docs/for-maintainers/v4-update-policy.md` for maintainers. Do not use `Remake` as the primary name in the official release.
 
-現行版の `doc/` は削除し、転送用stubは残さない。専用ドキュメントサイトとドキュメント専用CIは導入しない。
+Delete the existing V3 `doc/` without leaving redirect stubs. Do not introduce a dedicated documentation site or documentation-only CI.
 
-`CHANGELOG.md` は `4.0.0-alpha.0` から開始し、破壊的変更、既知の問題、migration guideへのリンクを記録する。
+Start `CHANGELOG.md` at `4.0.0-alpha.0`, recording breaking changes, known issues, and links to the migration guide.
 
-### 5. alpha tagを検証する
+### 5. Verify Alpha Tags
 
-各alpha tagについて、少なくとも次を確認する。
+For each Alpha tag, verify at least:
 
-- npmとpnpmの両方でGit tagからCLIを起動できる。
-- `init` が同じGit tagを `devDependencies.togostanza` に生成する。
-- lockfileが解決commitを固定する。
-- 生成後にインストール、ビルド、ローカル配信が成立する。
-- package tarballに開発資料、テスト、fixtureが混入しない。
-- 通常の品質確認が通る。
+- The CLI can start from the Git tag with both npm and pnpm.
+- `init` writes the same Git tag to `devDependencies.togostanza`.
+- The lockfile pins the resolved commit.
+- Installation, building, and local serving work after generation.
+- The package tarball excludes development materials, tests, and fixtures.
+- Standard quality checks pass.
 
-## 実プロジェクト確認
+## Real-Project Acceptance
 
-alpha完了の中心条件は、`metastanza` とTogoMedium Stanzaの各オーナーによる確認である。
+Confirmation by the owners of `metastanza` and TogoMedium Stanza is central to Alpha completion.
 
-本リポジトリ内でも検証を行うが、その成功はalpha完了条件に含めない。各オーナーへ固定したalpha tagの確認を依頼し、Issue、PRコメント、GitHub Discussionなど、後から追跡できる形で結果を受け取る。
+Run checks in this repository too, but do not count their success as Alpha completion. Ask each owner to verify a fixed Alpha tag and provide traceable results through an Issue, PR comment, GitHub Discussion, or similar record.
 
-確認記録には、少なくとも次を含める。
+Each record includes at least:
 
-- 確認した `v4.0.0-alpha.*`。
-- 対象プロジェクトのcommit。
-- buildと主要表示の成否。
-- 必要になった移行修正。
-- beta移行を妨げる問題の有無。
+- The verified `v4.0.0-alpha.*` version.
+- The target project's commit.
+- Whether the build and primary displays work.
+- Required migration changes.
+- Whether any issues block the transition to Beta.
 
-実プロジェクト側の変更は、beta前に必ずmergeされている必要はない。固定したalpha tagに対し、必要な修正で移行可能であり、betaを妨げる問題がないことを各オーナーが確認できればよい。
+Changes in the real projects do not have to be merged before Beta. It is sufficient for each owner to confirm that migration to the fixed Alpha tag is possible with the required changes and that no issues block Beta.
 
-## alpha完了条件
+## Alpha Completion Conditions
 
-- v4外部仕様と自己完結テストが揃っている。
-- 公開用 `docs/for-developers/` と `docs/for-maintainers/` の初版が揃っている。
-- npmとpnpmの両方でalpha tagから `init`、インストール、ビルドが成立する。
-- `metastanza` とTogoMedium Stanzaの各オーナー確認が記録されている。
-- 実プロジェクト確認で見つかった統合阻害事項が解消されている。
-- v3からv4へのmigration guideとv4 update policyがレビュー可能である。
-- package内容と正式版release workflowを事前確認できている。
-- export元commitを固定できる。
+- V4 external specifications and self-contained tests are ready.
+- Initial public `docs/for-developers/` and `docs/for-maintainers/` are ready.
+- `init`, installation, and builds work from Alpha tags with both npm and pnpm.
+- Acceptance by the owners of `metastanza` and TogoMedium Stanza is recorded.
+- Integration blockers discovered through real-project checks are resolved.
+- The V3-to-V4 migration guide and V4 update policy are ready for review.
+- Package contents and the official release workflow can be checked in advance.
+- The export source commit can be fixed.
 
-alphaの回数と期限は固定しない。
+Do not set a fixed number of Alpha releases or a fixed deadline.
 
-## 正式版PR
+## Official Integration PR
 
-### 準備
+### Preparation
 
-alpha完了時のexport元commitに不変tagを付ける。正式版リポジトリの書き込み可能なcheckoutを用意し、取り込み元SHAを記録してから作業を始める。
+Apply an immutable tag to the export source commit when Alpha is complete. Prepare a writable checkout of the official repository and record the source SHA before starting.
 
-正式版PRは1つにまとめ、レビューしやすい論理commitへ分ける。リメイク版の履歴全体はmergeしない。
+Use a single official PR with logical commits that are easy to review. Do not merge the remake's entire history.
 
-commitの具体的な分け方は正式版の既存構成を確認して決めるが、次の単位を基本にする。
+Determine the exact commit breakdown after inspecting the official repository's existing structure. Use these units as a starting point:
 
-1. v4 packageとソース。
-2. v4仕様と自己完結テスト。
-3. 利用者向け文書とmigration guide。
-4. 保守者向け文書とDecision Record。
-5. package metadata、CI、release workflow。
-6. v3固有ファイルと不要な互換資産の整理。
+1. V4 package and source.
+2. V4 specifications and self-contained tests.
+3. Developer documentation and migration guide.
+4. Maintainer documentation and Decision Records.
+5. Package metadata, CI, and release workflow.
+6. Removal of V3-specific files and unnecessary compatibility assets.
 
-### v3資産の扱い
+### V3 Assets
 
-v3テストはファイル単位で移植しない。重要な振る舞いにv4テストの不足が見つかった場合だけ、v4仕様を先に定義してから新しいテストを書く。
+Do not port V3 tests file by file. If important behavior lacks V4 coverage, define the V4 contract first, then write new tests.
 
-v3文書は項目の網羅確認に使い、本文はv4向けに書き直す。v3固有の詳細は残さず、利用者に必要な差分だけをmigration guideへ置く。
+Use V3 documents to check topic coverage and rewrite the content for V4. Omit V3-specific details and place only differences needed by developers in the migration guide.
 
-## beta公開
+## Beta Publication
 
-正式版の公開処理は、`main` へのpushでは自動実行しない。PRのマージとnpm公開を分離し、GitHub Actionsの手動workflowから公開する。
+Do not automatically publish official releases on pushes to `main`. Separate PR merging from npm publication and publish through a manually triggered GitHub Actions workflow.
 
-公開手順は次とする。
+Use this publication sequence:
 
-1. `main` 上でversion、dist-tag、package内容を検証する。
-2. buildとテストを実行する。
-3. npmの `beta` dist-tagで公開する。
-4. npm公開に成功した後、同じcommitへGit tagを作成する。
-5. `CHANGELOG.md` の該当項目を使ってGitHub Releaseを作成する。
+1. Validate the version, dist-tag, and package contents on `main`.
+2. Run the build and tests.
+3. Publish with npm's `beta` dist-tag.
+4. After npm publication succeeds, create a Git tag on the same commit.
+5. Create a GitHub Release using the corresponding `CHANGELOG.md` entry.
 
-dist-tagは手入力せず、`package.json.version` から決定する。
+Derive the dist-tag from `package.json.version` rather than entering it manually.
 
-- `4.0.0-beta.*` は `beta`。
-- prereleaseなしの `4.0.0` は `latest`。
-- 許可していないversion形式では公開を中止する。
+- `4.0.0-beta.*` uses `beta`.
+- `4.0.0` without a prerelease suffix uses `latest`.
+- Stop publication for version formats that have not been allowed.
 
-同じworkflowを再実行した場合は、npmに同じversionが存在すれば再公開せず、tagまたはGitHub Releaseの不足だけを補えるようにする。
+On a repeated workflow run, do not republish a version already on npm. Allow the run to create only a missing tag or GitHub Release.
 
-認証にはnpm Trusted PublishingによるOIDCを推奨する。正式版オーナーがnpm側の信頼設定を行い、GitHub Actionsでは長期のpublish tokenを持たない。OIDCを採用できるかは、正式版オーナーへの確認事項として残す。
+Prefer OIDC through npm Trusted Publishing for authentication. The official owner configures trust on npm, and GitHub Actions does not hold a long-lived publish token. Whether OIDC can be adopted remains a question for the official owner.
 
-通常リリースのversion規則、changelog、workflow、OIDC、失敗時の復旧、betaからstableへの昇格条件は、正式版の `docs/for-maintainers/` に記録する。
+Document normal-release version rules, changelog handling, workflows, OIDC, failure recovery, and promotion from Beta to Stable in the official `docs/for-maintainers/`.
 
-## 公開後確認とArchive
+## Post-Publication Checks and Archiving
 
-正式版PRのマージだけでは、本リポジトリをArchiveしない。beta公開と最低限の導入確認を完了してからArchiveする。
+Do not archive this repository merely because the official PR has merged. Complete Beta publication and minimal installation verification first.
 
-1. 正式版PRをマージする。
-2. `4.0.0-beta.0` をnpmへ公開する。
-3. `npx togostanza@beta init` とpnpmの対応経路を確認する。
-4. 生成依存が `4.0.0-beta.0` へ完全固定されることを確認する。
-5. npmとpnpmでインストール、ビルド、代表的な生成物を確認する。
-6. 本リポジトリのREADMEを、正式版リポジトリとnpm packageへ案内する内容に更新する。
-7. 本リポジトリへ最終archive tagを付ける。
-8. 本リポジトリのオーナーがGitHubのArchive設定を有効にする。
+1. Merge the official PR.
+2. Publish `4.0.0-beta.0` to npm.
+3. Verify `npx togostanza@beta init` and the corresponding pnpm path.
+4. Confirm that generated dependencies are pinned exactly to `4.0.0-beta.0`.
+5. Check installation, builds, and representative outputs with npm and pnpm.
+6. Update this repository's README to direct readers to the official repository and npm package.
+7. Create a final archive tag in this repository.
+8. Have this repository's owner enable GitHub's Archive setting.
 
-Archive後の本リポジトリは、正式版のDecision Recordから参照できる読み取り専用の調査・実装履歴として維持する。
+After archiving, retain this repository as a read-only investigation and implementation record that official Decision Records can reference.
 
-## オーナー確認事項
+## Questions for the Official Owner
 
-- npm Trusted PublishingによるOIDCを正式版で採用できるか。
-- alpha、beta、stableの昇格条件を正式版の運用基準として採用できるか。
-- 正式版PRのマージと `4.0.0-beta.0` 公開を誰が実行するか。
+- Can npm Trusted Publishing with OIDC be adopted?
+- Can the Alpha, Beta, and Stable promotion criteria be adopted as official operating standards?
+- Who will merge the official PR and publish `4.0.0-beta.0`?
 
-## 次の作業
+## Next Work
 
-### Beta移行に向けた残タスク
+### Remaining Work for the Beta Transition
 
-- [ ] `init` 時にJavaScript / TypeScriptを選べる機能を検討・実装する。JavaScriptを既定、TypeScriptを任意とする方向で進め、生成内容や選択の保持方法などは[検討事項](../../v4-migration/investigation/follow-ups.md#init時のjavascript--typescript選択)で整理する。
+- [ ] Consider and implement JavaScript / TypeScript selection during `init`, with JavaScript as the default and TypeScript optional. Track generated content, persistence of the selection, and other details in the [follow-up](../../v4-migration/investigation/follow-ups.md#init時のjavascript--typescript選択).
 
-この項目は、ユーザー指定のBeta移行に向けた後続タスクとして扱う。`alpha.1` の実装対象には含めず、今回の機能固定対象と分けて管理する。詳細仕様と着手時期は未決定で、現在のAlpha完了条件には追加しない。
+This is a user-requested follow-up for the Beta transition. It is excluded from `alpha.1` implementation and tracked separately from the current feature-freeze scope. Detailed behavior and timing remain undecided; it is not added to the current Alpha completion conditions.
 
-### 統合準備
+### Integration Preparation
 
-1. v4仕様を、正式版向けの外部契約として再構成する。
-2. v4仕様を根拠に、正式版へ移す自己完結テストを再構成する。
-3. alpha向けdependency生成と利用手順を整える。
-4. 正式版向け文書の詳細な構成と移行元を棚卸しする。
-5. `4.0.0-alpha.0` の品質確認とtag作成に進む。
+1. Restructure the V4 specification as external contracts for the official release.
+2. Restructure self-contained tests for transfer, using V4 contracts as their basis.
+3. Prepare Alpha dependency generation and usage instructions.
+4. Inventory the detailed official documentation structure and its source materials.
+5. Proceed to quality checks and tag creation for `4.0.0-alpha.0`.

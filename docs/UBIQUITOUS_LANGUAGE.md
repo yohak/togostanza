@@ -1,153 +1,49 @@
-# ユビキタス言語
+# Ubiquitous Language for Ongoing Development
 
-この文書では、TogoStanza Remakeの計画・調査・仕様整理で使う用語を揃える。
-用語集として、曖昧さを可視化し、後続の確認会話を進めやすくする。
+This glossary supports TogoStanza V4 documentation for developers and maintainers. English terms are paired with their Japanese equivalents. Definitions marked as unresolved remain unresolved; creating this glossary does not finalize them.
 
-## プロジェクトとリポジトリ
+The [migration glossary](./v4-migration/UBIQUITOUS_LANGUAGE.md) retains the terminology used for V3 investigation, compatibility decisions, and comparative verification. In ongoing documentation, use V3, V4, or a specific release number instead of the migration-relative terms “current version” and “remake.”
 
-| 採用語 | 定義 | 避けるべき別名 | 実際の呼称 | 状態 |
-| ------ | ---- | -------------- | ---------- | ---- |
-| **本リポジトリ** | **現行版**を参考に、**リメイク版**の調査、計画、実装、検証と、現行版リポジトリへの正式統合準備を進めるリポジトリ | 公式後継、正式リメイク、移植済みツール | TogoStanza Remake、このリポジトリ | 確認済み |
-| **現行版** | 現在利用されている既存の `togostanza` 実装 | 旧版、旧 `togostanza`、既存版 | 現行の `togostanza` | 確認済み |
-| **現行版リポジトリ** | **現行版**の実装、ドキュメント、テストを含む `togostanza/togostanza` リポジトリ | 旧上流リポジトリ、旧リポジトリ、元リポジトリ | `references/togostanza` | 確認済み |
-| **リメイク版** | **現行版**の既存挙動を調査したうえで、本リポジトリに実装している新しいTogoStanza | 新ソース、新実装、新仕様側 | remake、リニューアル後 | 確認済み |
-| **実プロジェクト** | **現行版**を実際の用途で利用しているプロジェクト | 実利用リポジトリ、利用例、サンプル | `metastanza`、`togomedium-web` | 確認済み |
-| **実プロジェクト群** | リメイク判断の根拠にする複数の実プロジェクト | 互換性コーパス、参考例、サンプル集 | `metastanza` と `togomedium-web` | 確認済み |
-| **metastanza** | 複数のstanzaを含む実プロジェクト | 標準ケース、サンプル集 | `references/metastanza` | 確認済み |
-| **TogoMedium Stanza** | TogoMedium Webの中でstanzaを扱う実プロジェクト領域 | 統合ケース、モノレポケース | `references/togomedium-web`、`@packages/stanza` | 確認済み |
+## Roles
 
-## 調査と仕様
+| Preferred term | Definition | Avoid | Existing names and Japanese equivalents | Status |
+| --- | --- | --- | --- | --- |
+| **maintainer** | A party responsible for upstream provision of TogoStanza itself, templates, or distributed stanzas. | Confusing this role with developer or user | 提供者, Stanza提供者, 提供側 | English mapping confirmed; upstream scope unresolved |
+| **developer** | A person who creates stanzas with TogoStanza and handles their embedding, configuration, and data integration. | End user, viewer | 開発者, Stanza開発者, 埋め込み管理者 | Confirmed |
+| **user** | An end user who uses an embedded stanza in a web browser. | Developer, embedding administrator | 利用者, Stanza利用者, 閲覧者 | Confirmed |
 
-| 採用語 | 定義 | 避けるべき別名 | 実際の呼称 | 状態 |
-| ------ | ---- | -------------- | ---------- | ---- |
-| **既存挙動調査** | **現行版**と実プロジェクトの観測可能な挙動を把握する調査フェーズ | 仕様策定、設計、実装計画 | investigation、既存仕様調査 | 確認済み |
-| **既存仕様メモ** | 観測された現行版の挙動を記録する調査成果物 | 旧仕様、新仕様、正式仕様 | `docs/v4-migration/investigation/spec/` | 確認済み |
-| **リメイク方針** | 現行版調査をもとに、リメイク版で維持、再設計、破棄する対象を判断して記録する文書 | リメイク版仕様、採用仕様、方針メモ | `docs/v4-migration/spec/remake-policy.md` | 確認済み |
-| **リメイク版仕様** | 現行版との比較から切り離して、リメイク版そのものの外部契約を記録する仕様 | 新ソース仕様、新仕様、方針メモ | `docs/v4-migration/spec/index.md` | 確認済み |
-| **採用判断** | **現行版**の挙動をリメイク版に持ち込むかどうかを決める判断 | 機能分類、必須分類、互換判定 | 必須/再設計/破棄 | 確認済み |
-| **未解決事項** | 人間の確認、追加調査、後続の仕様判断が必要な項目 | TODO、課題、疑問点 | open questions | 確認済み |
-| **判断基準** | 判断時に参照する文書、方針、または観測結果 | メモ、参考資料、実装メモ | 基準、参照情報 | 確認済み |
-| **根拠タグ** | 観測結果がどの情報源に基づくかを示すタグ | 証拠分類、情報源種別 | `docs`、`tests`、`code`、`consumer`、`cli` | 確認済み |
+`docs/for-developers/` addresses developers. `docs/for-maintainers/` addresses maintainers of TogoStanza itself. This narrower documentation audience does not redefine the full scope of the maintainer role.
 
-## セットアップと検証領域
+## Authoring and Distribution
 
-| 採用語 | 定義 | 避けるべき別名 | 実際の呼称 | 状態 |
-| ------ | ---- | -------------- | ---------- | ---- |
-| **リファレンス** | 調査・比較に使うリポジトリを複数置くGit管理外領域 | 参照元、比較対象、検証用コピー | `references/` | 確認済み |
-| **サンドボックス** | 仕様確認のために一時的なStanza群プロジェクトを作り、試行錯誤するGit管理外領域 | 一時検証領域、検証領域、作業場 | `sandbox/` | 確認済み |
-| **検証領域** | CLI挙動確認と、現行版/リメイク版比較に使う領域 | ワークベンチ、一時検証領域、実験場 | `workbench/` | 確認済み |
-| **検証環境** | 検証ケースごとに置く、現行版またはリメイク版のCLIを実行するための環境ディレクトリ | 検証プロジェクト、検証ケースパッケージ | `workbench/cases/<case>/current/`、`workbench/cases/<case>/remake/`、`current-npm/`、`current-pnpm/` | 確認済み |
-| **生成リポジトリ** | `togostanza init` などのCLI実行によって検証環境内に生成されるStanzaリポジトリ | 生成先、生成結果、generated repo | `generated-repo/` | 確認済み |
-| **検証ケース** | 同じ確認を現行版とリメイク版の検証環境で行うための手順、入力、観測定義をまとめた単位 | ケース、テスト、検証シナリオ | `workbench/cases/<case>/README.md` | 確認済み |
-| **ケース入力** | **検証ケース**で現行版またはリメイク版に与える最小のStanzaソース、メタデータ、style、設定、package定義などの入力一式 | fixture、検証ケース、サンプルプロジェクト | case input、`generated-repo/` 内のstanza source | 確認済み |
-| **fixture** | **検証ケース**の観測を補助する、Stanza利用側のHTML、local data、CSS、画像、操作用UIなど | case input、検証ケース、観測契約 | `fixtures/*.html`、local fixture data | 確認済み |
-| **観測契約** | **検証ケース**で確認したい、互換性判断対象の観測可能な振る舞い | fixture、テスト内容、実装要件 | observed contract、observation requirement | 確認済み |
-| **生成物** | CLI実行や `build` によって作られる比較・確認用のファイルやディレクトリ | 生成出力、成果物、アーティファクト | output、generated output | 確認済み |
-| **リファレンスリポジトリ** | `references/` 配下に置くリポジトリ | 参照リポジトリ、クローン、外部リポジトリ、ローカルコピー | `references/<name>` | 確認済み |
-| **Git管理外領域** | リポジトリ内に存在しても、内容をGit管理しない領域 | ローカル専用領域、除外フォルダ、作業場 | local-only | 確認済み |
+| Preferred term | Definition | Avoid | Existing names and Japanese equivalents | Status |
+| --- | --- | --- | --- | --- |
+| **stanza** | An individual Web Component unit handled by TogoStanza. | Component or widget without context | Stanza, スタンザ | English spelling adopted; definition boundary unresolved |
+| **stanza repository** | A repository or package containing one or more stanzas and their associated configuration. | Confusion with the TogoStanza source repository | stanza repo, stanza collection, stanzaリポジトリ, stanza集 | Definition and equivalence with “collection” unresolved |
 
-## パッケージ配置
+Input layout, outputs, and API behavior are defined by the [current V4 specification](./v4-migration/spec/index.md). This glossary does not redefine those contracts.
 
-| 採用語 | 定義 | 避けるべき別名 | 実際の呼称 | 状態 |
-| ------ | ---- | -------------- | ---------- | ---- |
-| **リメイク版パッケージ** | リポジトリルートに置く、リメイク版の単一Nodeパッケージ | 公開パッケージ、アプリ本体 | ルートの `package.json`、`src/`、`bin/` | 確認済み |
-| **ルートpackage.json** | **リメイク版パッケージ**の正本となるルートの `package.json` | 管理用パッケージ、別パッケージ | ルートの `package.json` | 確認済み |
-| **pnpm設定ファイル** | ルートpackageのpnpm設定を置くための `pnpm-workspace.yaml`。現時点ではdependency build承認などに使い、複数packageを列挙しない | ワークスペース化、workspace package定義 | `pnpm-workspace.yaml` | 確認済み |
-| **ワークスペース化** | 複数パッケージが必要になった時点で、本リポジトリをNodeワークスペースとして扱う変更 | 最初からのワークスペース化、ワークスペース対象化、pnpm設定ファイル | `packages/*`、`pnpm-workspace.yaml` の `packages` 定義 | 要確認 |
+## Relationships
 
-## TogoStanzaの利用単位
+- A **maintainer** provides infrastructure or distributions used by a **developer**.
+- A **developer** creates a **stanza** and handles embedding it in a web page.
+- A **user** interacts with a **stanza** embedded in a web page.
+- A **stanza repository** is distinct from the TogoStanza source repository.
 
-| 採用語 | 定義 | 避けるべき別名 | 実際の呼称 | 状態 |
-| ------ | ---- | -------------- | ---------- | ---- |
-| **stanza** | TogoStanzaが扱う個別のWeb Component単位で、読みは「スタンザ」 | コンポーネント、部品 | stanza、Stanza、スタンザ | 要確認 |
-| **stanzaリポジトリ** | 1つ以上のstanzaと関連設定を含むリポジトリまたはパッケージ | stanza repository、stanza集、stanza collection | stanza repo | 要確認 |
-| **CLI挙動** | `togostanza` コマンドの実行によってStanza開発者から観測できる挙動 | CLI仕様、コマンド仕様 | `init`、`build`、`serve`、`generate` | 要確認 |
-| **観測可能な挙動** | Stanza開発者がCLI、設定、入力、生成物、サーバ、ログから、またはStanza利用者がランタイム上の表示や操作から確認できる挙動 | 機能、仕様、実装単位 | observable behavior | 確認済み |
+## Usage Examples
 
-## 立ち位置と契約
+> **Writer:** “Are installation instructions for users?”
+> **Reviewer:** “Instructions for creating stanzas are for developers.”
+>
+> **Writer:** “Are TogoStanza release instructions also for developers?”
+> **Reviewer:** “They are for maintainers of TogoStanza itself.”
+>
+> **Writer:** “Do we call the person embedding a stanza a user?”
+> **Reviewer:** “Embedding is a developer task. The user interacts with the embedded stanza in the browser.”
 
-役割の英語表記は、提供者に `maintainer`、開発者に `developer`、利用者に `user` を採用する。文書の読者を示すときも、この対応を使う。
+## Ambiguities and Open Questions
 
-| 採用語 | 定義 | 避けるべき別名 | 実際の呼称 | 状態 |
-| ------ | ---- | -------------- | ---------- | ---- |
-| **Stanza提供者** / **maintainer** | TogoStanza本体、テンプレート、配布されるStanzaなど、Stanzaに関する上流の提供責任を持つ立場 | TogoStanza作者、上流、ライブラリ作者 | TogoStanzaリポジトリの作者、提供側 | 英語表記は確認済み。定義の範囲は要確認 |
-| **Stanza開発者** / **developer** | TogoStanzaを使ってStanzaを作成し、Webサイト側への埋め込み、設定、データ連携も扱う立場 | 利用者、エンドユーザー、閲覧者 | Stanzaを作成する作者、埋め込み管理者 | 確認済み |
-| **Stanza利用者** / **user** | Webサイトに埋め込まれたStanzaをブラウザ上で利用するエンドユーザー | 埋め込み管理者、Stanza開発者、TogoStanza利用者 | Webサイト側の利用者、エンドユーザー | 確認済み |
-| **利用契約** | Stanza利用者やWebサイト上の利用体験に関わる、HTML埋め込み、表示、操作、データ表示の互換性契約 | 利用者優先度、ランタイム互換、閲覧者互換 | HTML埋め込み契約、runtime側の契約 | 確認済み |
-| **開発契約** | Stanza開発者が既存Stanzaコード、CLI、build、設定、埋め込み作業で依存する互換性契約 | 開発者優先度、CLI互換、作成側互換 | Stanza作成側の契約、build側の契約 | 確認済み |
-
-### 文書の読者と配置方針
-
-| 配置先 | 読者・対象 |
-| ------ | ---------- |
-| `docs/for-developers/` | TogoStanzaを使ってstanzaを作成する**developer**向けの文書。埋め込み、設定、データ連携も含む。 |
-| `docs/for-maintainers/` | TogoStanza本体を開発・保守する**maintainer**向けの文書。 |
-| `docs/v4-migration/` | V3からV4への移行を成立させるための調査、判断、実装、検証の文書。役割名による分類ではなく、移行作業を対象とする。 |
-
-**user**はWebページ上でstanzaを使うエンドユーザーを指す。TogoStanzaを使ってstanzaを作る人向けの文書は、**developer**向けとして扱う。
-
-`for-maintainers` では文書の対象をTogoStanza本体の開発・保守に絞る。**Stanza提供者**全体の定義を本体の保守担当だけへ狭めるものではなく、上流のどこまでを含めるかは引き続き要確認とする。
-
-## 関係
-
-- **本リポジトリ**は**現行版**を参考にする。
-- **現行版リポジトリ**は**現行版**の実装、ドキュメント、テストを含む。
-- **本リポジトリ**では、**既存挙動調査**、**リメイク方針**、**リメイク版仕様**を分けて管理する。
-- **既存挙動調査**では、先に**現行版リポジトリ**を調べ、その後**実プロジェクト群**と照合する。
-- **実プロジェクト群**は、現時点で**metastanza**と**TogoMedium Stanza**を含む。
-- **既存仕様メモ**では、**採用判断**を最終決定しない。
-- **採用判断**は**リメイク方針**側で扱う。
-- **リメイク版仕様**は、現行版との比較から切り離した外部契約として整理する。
-- **リファレンス**は、**リファレンスリポジトリ**を置く**Git管理外領域**である。
-- **サンドボックス**は、仕様確認の試行錯誤に使う**Git管理外領域**である。
-- **検証領域**は、**検証環境**と**検証ケース**を持つ。
-- **サンドボックス**で確認した内容は、再現可能な形に整理してから**検証領域**に移す。
-- **検証環境**は、各**検証ケース**の `current/` と `remake/` を基本形とし、必要に応じて `current-npm/` や `current-pnpm/` のように分かれる。
-- **生成リポジトリ**は、`init` 自体を確認する**検証ケース**で**検証環境**の内側に作られる。
-- **検証ケース**では、同じケース内の両方の**検証環境**に対して同じ**CLI挙動**やランタイム挙動を確認する。
-- **ケース入力**は**観測契約**を確認するために現行版やリメイク版へ与える入力であり、**fixture**はその入力をブラウザやCLIから観測するための補助である。
-- **fixture**はStanza利用側コードや補助データを指し、Stanzaソースそのものや**観測契約**そのものを指さない。
-- **リメイク版パッケージ**はリポジトリルートに置く。
-- **ルートpackage.json**は、**リメイク版パッケージ**の正本として扱う。
-- **pnpm設定ファイル**はルートpackageの設定として置くが、複数packageを含む**ワークスペース化**を意味しない。
-- **ワークスペース化**は、複数パッケージが必要になった時点で検討する。
-- **Stanza提供者**は、**Stanza開発者**が利用する基盤や配布物を提供する。
-- **Stanza開発者**は、Stanzaを作成し、Webサイトに埋め込む。
-- **Stanza利用者**は、Webサイト上で埋め込まれたStanzaを利用する。
-- **Stanza提供者**、**Stanza開発者**、**Stanza利用者**の立ち位置自体に優先順位は置かない。
-- 互換性判断では、誰が上位かではなく、対象が**利用契約**か**開発契約**かを明示する。
-
-## 会話例
-
-> **開発者:** 「**既存仕様メモ**に `build` の挙動を書いたら、その時点でリメイク版でも必須ですか？」
-> **ドメインエキスパート:** 「いいえ。そこは観測事実です。必須かどうかは**リメイク方針**の**採用判断**で決めます。」
-> **開発者:** 「では**実プロジェクト群**で使われている挙動はどう扱いますか？」
-> **ドメインエキスパート:** 「強い根拠として扱いますが、保守負荷も見たうえで人間が最終判断します。」
-> **開発者:** 「互換性は**Stanza利用者**、**Stanza開発者**、**Stanza提供者**のどの順で優先しますか？」
-> **ドメインエキスパート:** 「立ち位置自体に優先順位は置きません。**利用契約**と**開発契約**のどちらの話かを分けて判断します。」
-> **開発者:** 「CLIの確認は**リファレンス**の中で実行しますか？」
-> **ドメインエキスパート:** 「いいえ。リファレンスリポジトリを汚さないように**検証領域**の**検証ケース**として実行します。」
-
-## 指摘された曖昧さ
-
-- 「仕様」は**既存仕様メモ**と**リメイク版仕様**の両方を指す可能性があるため、**現行版**の観測結果には**既存仕様メモ**、リメイク版の採用判断には**リメイク方針**、リメイク版そのものの外部契約には**リメイク版仕様**を使う。
-- 「sandbox」は試行錯誤用の**サンドボックス**を指すため、比較資産として保持する領域には**検証領域**を使う。
-- 「分類」は調査結果そのものではなく新実装への**採用判断**に近いため、**既存挙動調査**では最終判断として扱わない。
-- 「package」は管理用パッケージとリメイク版パッケージを混同しやすいため、本リポジトリでは**ルートpackage.json**を**リメイク版パッケージ**の正本として扱う。
-- **実プロジェクト**は参考例ではなく互換性判断の重要な根拠であり、複数をまとめて扱うときは**実プロジェクト群**と呼ぶ。
-- 「利用者」は埋め込み管理者ではなく、Webサイト上でStanzaを利用する**Stanza利用者**を指す。
-- 埋め込み管理者は、**Stanza利用者**ではなく**Stanza開発者**に含める。
-- 英語の**developer**はstanzaの作成者を指す。TogoStanza本体を開発・保守する人向けの文書には**maintainer**を使い、**user**向けと混同しない。
-- 「互換性優先度」は立ち位置の優先順位ではなく、対象が**利用契約**か**開発契約**かで扱う。
-- 「契約」は法的な契約ではなく、互換性判断で守る観測可能な振る舞いの境界を指す。
-- **stanza**は英字表記を採用語にするが、人間の指示ではカタカナの「スタンザ」が混じることがある。
-- 「fixture」は広く使うと**検証ケース**、**ケース入力**、**観測契約**を混同しやすいため、本リポジトリでは観測補助に限定する。実プロジェクトから小さく切り出す対象は**fixture化**ではなく**ケース入力への抽出**と呼ぶ。
-
-## 要確認
-
-- **stanza**の定義をWeb Component単位として固定してよいか。
-- **stanzaリポジトリ**と**stanza collection**を同義として扱ってよいか。
-- **検証ケース**を、将来より具体的に「CLI検証ケース」「ランタイム検証ケース」などへ分けるべきか。
-- **生成物**と `dist` をどこまで同義として扱うか。
-- **metastanza**と**TogoMedium Stanza**以外の実プロジェクトを追加する予定があるか。
-- **Stanza提供者**を上流全般の広い立場として扱い続けるか、**TogoStanza提供者**などへ分割するか。
+- “Developer” can also mean a contributor to TogoStanza itself. In documentation audience labels, use developer for stanza authors and maintainer for those developing and maintaining TogoStanza itself.
+- “User documentation” can mean either developer instructions or end-user guidance. Name the intended role explicitly.
+- The scope of maintainer, the definition of stanza, and the relationship between stanza repository and stanza collection are inherited questions. Confirm them with the project owner before finalizing public definitions.
+- Preserve the distinction between fixture, case input, and observed contract in the [migration glossary](./v4-migration/UBIQUITOUS_LANGUAGE.md). Terminology for the formal release's self-contained tests will be addressed during test restructuring.

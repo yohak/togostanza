@@ -65,7 +65,7 @@ Phase 12へ入る前の再確認として、次が完了している。
 - `package/` 直下にあった実パッケージのroot移行。
 - `src/` 配下への実装、test、scripts集約。
 - root実行の品質確認手順。
-- `docs/v4-migration/setup/package-layout.md`、`docs/v4-migration/setup/quality.md`、`docs/UBIQUITOUS_LANGUAGE.md`、`AGENTS.md` の方針更新。
+- `docs/v4-migration/setup/package-layout.md`、`docs/v4-migration/setup/quality.md`、`docs/v4-migration/UBIQUITOUS_LANGUAGE.md`、`AGENTS.md` の方針更新。
 - GitHub dependency install smoke。
 - release branch / tag運用の文書化。
 - 生成repoの `dependencies.togostanza` spec方針の更新。

@@ -1,12 +1,12 @@
-# v4 alpha公開チェックリスト
+# V4 Alpha Release Checklist
 
-この文書では、`yohak/togostanza` からv4 alphaを内部プレビューへ出す前後の確認を扱う。
+This checklist covers checks before and after releasing a V4 Alpha from `yohak/togostanza` for internal preview.
 
-alphaはnpm registryへ公開しない。source、build済み `dist/`、package version、Git tagを同じcommitへ揃え、不変tagから配布する。
+Alpha releases are not published to the npm registry. Align source, built `dist/`, package version, and Git tag on the same commit, and distribute through an immutable tag.
 
-## 公開単位
+## Release Unit
 
-最初のalphaは次を使う。
+The first Alpha uses:
 
 ```text
 package version: 4.0.0-alpha.0
@@ -14,36 +14,36 @@ Git tag: v4.0.0-alpha.0
 dependency spec: github:yohak/togostanza#v4.0.0-alpha.0
 ```
 
-公開済みversionとtagは再利用しない。修正時は `4.0.0-alpha.1` のようにversionを上げる。
+Do not reuse published versions or tags. For fixes, increment the version, for example to `4.0.0-alpha.1`.
 
-## 公開前
+## Before Publication
 
-- [ ] 機能固定後の変更だけが含まれている。
-- [ ] `package.json.version` と公開予定tagが一致している。
-- [ ] `package.json.private` が `true` のままであり、npm公開を有効にしていない。
-- [ ] `CHANGELOG.md` の対象versionが更新されている。
-- [ ] [Alpha版の導入手順](../../../README.md#alpha版を試す)のversionとコマンドが一致している。
-- [ ] `init` は具体dependency specなしのインストールを拒否する。
-- [ ] `TOGOSTANZA_DEPENDENCY_SPEC` で、生成repoの `devDependencies.togostanza` に同じalpha tagを固定できる。
-- [ ] 生成repoに `packageManager` fieldを追加していない。
-- [ ] Node.js要件が `>=24.0.0` である。
+- [ ] Only changes permitted after the feature freeze are included.
+- [ ] `package.json.version` matches the planned release tag.
+- [ ] `package.json.private` remains `true`; npm publication has not been enabled.
+- [ ] The entry for the target version in `CHANGELOG.md` is updated.
+- [ ] The version and commands in the [Alpha installation instructions](../../../README.md#try-the-alpha) are consistent.
+- [ ] `init` rejects installation without a concrete dependency spec.
+- [ ] `TOGOSTANZA_DEPENDENCY_SPEC` can pin the generated repository's `devDependencies.togostanza` to the same Alpha tag.
+- [ ] No `packageManager` field is added to the generated repository.
+- [ ] The Node.js requirement is `>=24.0.0`.
 
-通常の確認を実行する。
+Run the standard checks:
 
 ```sh
 mise exec -- pnpm run check:alpha
 git diff --check
 ```
 
-本リポジトリ内の実プロジェクト確認も行う。ただし、その成功だけではalpha完了条件にしない。
+Also run the real-project checks in this repository. Passing these checks alone does not satisfy Alpha completion conditions.
 
 ```sh
 mise exec -- pnpm run test:compat:local
 ```
 
-## release commit
+## Release Commit
 
-alpha tagにはbuild済み `dist/` が必要である。sourceと同じworktreeでbuildし、release commitへ含める。
+The Alpha tag must include built `dist/`. Build in the same worktree as the source and include the output in the release commit.
 
 ```sh
 mise exec -- pnpm run build
@@ -53,9 +53,9 @@ git status --short
 git diff --cached --check
 ```
 
-stage対象は実際の差分を確認して調整する。既存の未コミット変更を無条件にまとめない。
+Review the actual changes and adjust the staging targets. Do not include existing uncommitted changes indiscriminately.
 
-release commit後に、tagとcommitの内容を確認する。
+After creating the release commit, check the tag and commit contents:
 
 ```sh
 ALPHA_VERSION=4.0.0-alpha.0
@@ -68,35 +68,35 @@ git tag --list ${ALPHA_TAG}
 git ls-remote --tags yohak-github ${ALPHA_TAG}
 ```
 
-worktreeがcleanであること、`bin/`、`dist/`、`package.json` がrelease commitに含まれること、同名tagがlocalとremoteのどちらにも存在しないことを確認する。
+Confirm that the worktree is clean, `bin/`, `dist/`, and `package.json` are included in the release commit, and the tag does not already exist locally or remotely.
 
-## tag作成と公開
+## Create and Publish the Tag
 
-tag作成とpushは、release commitを人間が確認した後に行う。
+Create and push the tag after a human has reviewed the release commit.
 
 ```sh
 git tag -a ${ALPHA_TAG} -m "TogoStanza ${ALPHA_VERSION}"
 git push yohak-github ${ALPHA_TAG}
 ```
 
-公開branchも更新する場合は、tagとは別に対象branchとpush内容を確認する。tag公開だけで内部プレビューを開始できるため、default branchの更新をalpha配布の前提にしない。
+If also updating a publication branch, review the target branch and push contents separately. The tag alone can start the internal preview; updating the default branch is not a prerequisite for Alpha distribution.
 
-## 公開後
+## After Publication
 
-npmとpnpmの両方で、公開tagから新しいStanzaリポジトリを生成する。[新規プロジェクトの導入手順](../../../README.md#新規プロジェクトで試す)のコマンドをそのまま使う。
+Generate a new stanza repository from the published tag with both npm and pnpm. Use the commands in the [new-project installation instructions](../../../README.md#try-in-a-new-project) unchanged.
 
-次を確認する。
+Check the following:
 
-- [ ] `togostanza --version` が対象alphaを表示する。
-- [ ] 生成repoの `devDependencies.togostanza` が対象tagへ固定されている。
-- [ ] lockfileが公開tagのcommitを固定している。
-- [ ] `generate stanza`、`build`、`serve` の代表経路が動く。
-- [ ] npmとpnpmの両方でGitHub Pages用workflowを生成できる。
+- [ ] `togostanza --version` displays the target Alpha version.
+- [ ] The generated repository's `devDependencies.togostanza` is pinned to the target tag.
+- [ ] The lockfile pins the published tag's commit.
+- [ ] Representative `generate stanza`, `build`, and `serve` workflows work.
+- [ ] GitHub Pages workflows can be generated for both npm and pnpm.
 
-確認結果には、tag、commit SHA、Node.jsとpackage managerのversion、確認コマンド、結果を記録する。
+Record the tag, commit SHA, Node.js and package manager versions, commands, and results.
 
-## alpha完了との違い
+## Difference from Alpha Completion
 
-このチェックリストの完了は、alphaを内部プレビューへ出せることを示す。alphaフェーズ全体の完了には、`metastanza` とTogoMedium Stanzaの各オーナーによる確認が別途必要である。
+Completing this checklist means an Alpha can be provided for internal preview. Completing the entire Alpha phase also requires confirmation from the owners of `metastanza` and TogoMedium Stanza.
 
-alpha完了条件と正式版betaへの移行は、[正式版統合計画](./official-integration-plan.md)に従う。
+Follow the [Official Integration Plan](./official-integration-plan.md) for Alpha completion conditions and the transition to the official Beta.
