@@ -631,6 +631,160 @@ test("maps runtime parameters in built Stanza custom elements", async ({ page })
   }
 });
 
+for (const version of ["V4", "V3"] as const) {
+  test(`reads parameter snapshots lazily through the ${version} lifecycle${version === "V3" ? " @compat-local" : ""}`, async ({
+    page,
+  }) => {
+    test.skip(
+      version === "V3" && process.env.TOGOSTANZA_RUN_LOCAL_COMPAT !== "1",
+      "Requires the rebuilt case 004 V3 input",
+    );
+    const cwd =
+      version === "V4"
+        ? makeTemporaryDirectory()
+        : resolve(
+            repositoryRoot,
+            "workbench/cases/004-runtime-parameters/current-pnpm/generated-repo",
+          );
+    if (version === "V4") {
+      await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
+      writeParameterProbe(cwd);
+      await runCli(["build", "--output-path", "public"], cwd);
+    }
+    const server = await startStaticServer(cwd, []);
+    const diagnostics = collectBrowserDiagnostics(page);
+    try {
+      await page.route("**/parameter-edges.html", (route) =>
+        route.fulfill({
+          contentType: "text/html",
+          body: `<!doctype html><script type="module" src="./${version === "V4" ? "public" : "dist"}/parameter-probe.js"></script>
+          <togostanza-parameter-probe id="upgrade" label="initial" count="3" payload='{"ok":true}'></togostanza-parameter-probe>
+          <togostanza-parameter-probe id="invalid" skip-params payload="{invalid}"></togostanza-parameter-probe>`,
+        }),
+      );
+      await page.goto(`http://127.0.0.1:${addressPort(server)}/parameter-edges.html`);
+      await page.waitForFunction(() => customElements.get("togostanza-parameter-probe"));
+      await expect(page.locator("#invalid main")).toHaveText("skipped params");
+      const observations = await page.evaluate(() => {
+        type Probe = HTMLElement & {
+          stanzaInstance: {
+            params: Record<string, unknown>;
+            constructorParams: { count: string; ownCount: boolean; label: string } | string;
+          };
+        };
+        const upgraded = document.querySelector<Probe>("#upgrade")!;
+        const fresh = document.createElement("togostanza-parameter-probe") as Probe;
+        const stanza = fresh.stanzaInstance;
+        const missing = stanza.params;
+        const { count = 20 } = missing;
+        fresh.setAttribute("label", "");
+        fresh.setAttribute("count", "");
+        fresh.setAttribute("payload", "");
+        fresh.setAttribute("day", "");
+        fresh.setAttribute("moment", "");
+        fresh.setAttribute("undeclared", "ignored");
+        const empty = stanza.params;
+        fresh.setAttribute("count", "7");
+        fresh.setAttribute("payload", '{"nested":{"value":1}}');
+        const first = stanza.params;
+        const second = stanza.params;
+        first.count = 99;
+        (first.payload as { nested: { value: number } }).nested.value = 99;
+        const directMutation = stanza.params;
+        fresh.removeAttribute("count");
+        const removed = stanza.params;
+        fresh.setAttribute("skip-params", "");
+        fresh.setAttribute("payload", "{invalid}");
+        let error = "none";
+        try {
+          void stanza.params;
+        } catch (caught) {
+          error = (caught as Error).name;
+        }
+        document.body.append(fresh);
+        fresh.setAttribute("payload", "{still-invalid}");
+        return {
+          upgraded: upgraded.stanzaInstance.constructorParams,
+          fresh: stanza.constructorParams,
+          missing: {
+            converted: ["count", "payload", "day", "moment"].every(
+              (key) => Object.hasOwn(missing, key) && missing[key] === undefined,
+            ),
+            own: Object.hasOwn(missing, "count"),
+            undefined: missing.count === undefined,
+            fallback: count,
+            flag: missing.flag,
+          },
+          empty: {
+            count: empty.count === undefined,
+            payload: empty.payload === undefined,
+            day: empty.day === undefined,
+            moment: empty.moment === undefined,
+            label: empty.label,
+            undeclared: Object.hasOwn(empty, "undeclared"),
+          },
+          sameObject: first === second,
+          sameJson: first.payload === second.payload,
+          directMutation: {
+            count: directMutation.count,
+            nested: (directMutation.payload as { nested: { value: number } }).nested.value,
+          },
+          removed: { own: Object.hasOwn(removed, "count"), undefined: removed.count === undefined },
+          invalid: document.querySelector<Probe>("#invalid")!.stanzaInstance.constructorParams,
+          error,
+        };
+      });
+      expect(observations).toEqual({
+        upgraded: { count: "3", ownCount: true, label: "initial" },
+        fresh: { count: "undefined", ownCount: true, label: "undefined" },
+        missing: { converted: true, own: true, undefined: true, fallback: 20, flag: false },
+        empty: {
+          count: true,
+          payload: true,
+          day: true,
+          moment: true,
+          label: "",
+          undeclared: false,
+        },
+        sameObject: false,
+        sameJson: false,
+        directMutation: { count: 7, nested: 1 },
+        removed: { own: true, undefined: true },
+        invalid: "SyntaxError",
+        error: "SyntaxError",
+      });
+      await expect(page.locator("togostanza-parameter-probe[skip-params] main")).toHaveText([
+        "skipped params",
+        "skipped params",
+      ]);
+      await page.locator("#upgrade").evaluate((element) => element.setAttribute("count", "8"));
+      await expect(page.locator("#upgrade main")).toContainText("8");
+      expect(diagnostics.pageErrors).toEqual([]);
+      expect(diagnostics.consoleErrors).toEqual([]);
+      if (version === "V4") {
+        await page
+          .locator("#upgrade")
+          .evaluate((element) => element.setAttribute("payload", "{invalid}"));
+        await expect
+          .poll(() =>
+            diagnostics.consoleErrors.some((message) =>
+              message.includes("togostanza render failed for parameter-probe:"),
+            ),
+          )
+          .toBe(true);
+        expect(diagnostics.pageErrors).toEqual([]);
+        await page
+          .locator("#upgrade")
+          .evaluate((element) => element.setAttribute("payload", '{"recovered":true}'));
+        await expect(page.locator("#upgrade main")).toContainText("recovered");
+      }
+    } finally {
+      diagnostics.dispose();
+      await closeServer(server);
+    }
+  });
+}
+
 test("provides the same rich help preview after build and through serve", async ({ page }) => {
   const cwd = makeTemporaryDirectory();
   await runCli(["init", ".", "--skip-install", "--skip-git"], cwd);
@@ -2280,6 +2434,8 @@ function writeParameterProbe(cwd: string): void {
           { "stanza:key": "payload", "stanza:type": "json" },
           { "stanza:key": "mode", "stanza:type": "single-choice" },
           { "stanza:key": "note", "stanza:type": "text" },
+          { "stanza:key": "day", "stanza:type": "date" },
+          { "stanza:key": "moment", "stanza:type": "datetime" },
         ],
         "stanza:menu-placement": "none",
         "stanza:style": [
@@ -2303,8 +2459,22 @@ export default class ParameterProbe extends Stanza {
   renderCount = 0;
   lastAttributeChange = { name: "", oldValue: "", newValue: "" };
 
+  constructor(...args) {
+    super(...args);
+    try {
+      const params = this.params;
+      this.constructorParams = { count: String(params.count), ownCount: Object.hasOwn(params, "count"), label: String(params.label) };
+    } catch (error) {
+      this.constructorParams = error.name;
+    }
+  }
+
   render() {
     this.renderCount += 1;
+    if (this.element.hasAttribute("skip-params")) {
+      this.root.querySelector("main").textContent = "skipped params";
+      return;
+    }
     this.renderTemplate({
       template: "stanza.html.hbs",
       parameters: {
@@ -2411,7 +2581,7 @@ async function assertRichHelpPreview(page: Page, url: string): Promise<void> {
   await expect(preview).not.toHaveAttribute("width");
   await expect(preview).toHaveAttribute("empty-text", "");
   await expect.poll(() => readHelpPreviewProbeValue(page, "label")).toBe("default-label");
-  await expect.poll(() => readHelpPreviewProbeValue(page, "width")).toBe("null");
+  await expect.poll(() => readHelpPreviewProbeValue(page, "width")).toBe("undefined");
   await expect(snippet).not.toContainText("\n  width=");
   await expect(snippet).toContainText('empty-text=""');
   await expect(snippet).not.toContainText("--help-preview-accent");

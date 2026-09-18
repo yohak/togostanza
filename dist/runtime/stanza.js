@@ -5,7 +5,6 @@ const initializeRuntime = Symbol("togostanza.initializeRuntime");
 export default class Stanza {
     element;
     metadata = {};
-    params = {};
     root;
     #assetBaseUrl;
     #renderDebounceTimer;
@@ -15,6 +14,9 @@ export default class Stanza {
         if (pendingRuntimeContext) {
             this[initializeRuntime](pendingRuntimeContext);
         }
+    }
+    get params() {
+        return createStanzaParams(this.element, this.metadata);
     }
     [initializeRuntime](context) {
         this.#assetBaseUrl = context.assetBaseUrl;
@@ -128,7 +130,6 @@ export function registerStanza(registration) {
         }
         connectedCallback() {
             this.#hasConnected = true;
-            this.#refreshParams();
             this.#updateMenu();
             this.#scheduleRender();
         }
@@ -136,14 +137,10 @@ export function registerStanza(registration) {
             if (oldValue === newValue) {
                 return;
             }
-            this.#refreshParams();
             this.#updateMenu();
             if (this.#hasConnected && parameterKeys.includes(name)) {
                 this.stanzaInstance.handleAttributeChange(name, oldValue, newValue);
             }
-        }
-        #refreshParams() {
-            this.stanzaInstance.params = createStanzaParams(this, registration.metadata);
         }
         #scheduleRender() {
             void this.#renderStanzaWithReport();
@@ -387,7 +384,7 @@ export function createStanzaParams(element, metadata) {
         }
         const attributeValue = element.getAttribute(parameter.key);
         if (attributeValue === null) {
-            params[parameter.key] = null;
+            params[parameter.key] = undefined;
             continue;
         }
         params[parameter.key] = parseParameterValue(attributeValue, parameter.type);
@@ -399,12 +396,12 @@ function parseParameterValue(value, type) {
         case "boolean":
             return value !== "";
         case "number":
-            return Number(value);
+            return value ? Number(value) : undefined;
         case "json":
-            return JSON.parse(value);
+            return value ? JSON.parse(value) : undefined;
         case "date":
         case "datetime":
-            return new Date(value);
+            return value ? new Date(value) : undefined;
         default:
             return value;
     }

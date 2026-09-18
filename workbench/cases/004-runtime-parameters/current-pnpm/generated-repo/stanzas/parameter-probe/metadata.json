@@ -11,6 +11,8 @@
   "stanza:created": "2026-06-21",
   "stanza:updated": "2026-06-21",
   "stanza:parameter": [
+    { "stanza:key": "day", "stanza:type": "date", "stanza:required": false },
+    { "stanza:key": "moment", "stanza:type": "datetime", "stanza:required": false },
     {
       "stanza:key": "label",
       "stanza:type": "string",

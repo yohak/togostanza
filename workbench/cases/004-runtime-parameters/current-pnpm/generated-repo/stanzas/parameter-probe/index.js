@@ -32,8 +32,22 @@ function formatValue(value) {
 }
 
 export default class ParameterProbe extends Stanza {
+  constructor(...args) {
+    super(...args);
+    try {
+      const params = this.params;
+      this.constructorParams = { count: String(params.count), ownCount: Object.hasOwn(params, 'count'), label: String(params.label) };
+    } catch (error) {
+      this.constructorParams = error.name;
+    }
+  }
+
   async render() {
     this.renderCount = (this.renderCount || 0) + 1;
+    if (this.element.hasAttribute('skip-params')) {
+      this.root.querySelector('main').textContent = 'skipped params';
+      return;
+    }
 
     this.renderTemplate({
       template: 'stanza.html.hbs',

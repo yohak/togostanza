@@ -24,7 +24,7 @@ describe("createStanzaParams", () => {
       enabled: true,
       fallback: "fallback value",
       label: "plain label",
-      missing: null,
+      missing: undefined,
       mode: "compact",
       payload: { ok: true },
       published: new Date("2026-06-30"),
@@ -40,6 +40,50 @@ describe("createStanzaParams", () => {
     ).toEqual({
       enabled: false,
     });
+  });
+
+  it.each(["string", "text", "single-choice", "unknown", "number", "json", "date", "datetime"])(
+    "retains an own key with undefined for a missing %s parameter",
+    (type) => {
+      const params = createStanzaParams(attributeSource(new Map([["undeclared", "ignored"]])), {
+        "stanza:parameter": [{ "stanza:key": "value", "stanza:type": type }],
+      });
+      expect(Object.keys(params)).toEqual(["value"]);
+      expect(params.value).toBeUndefined();
+      const { value = "default" } = params;
+      expect(value).toBe("default");
+    },
+  );
+
+  it.each(["number", "json", "date", "datetime"])("maps empty %s to undefined", (type) => {
+    expect(
+      createStanzaParams(attributeSource(new Map([["value", ""]])), {
+        "stanza:parameter": [{ "stanza:key": "value", "stanza:type": type }],
+      }),
+    ).toEqual({ value: undefined });
+  });
+
+  it.each(["string", "text", "single-choice", "unknown"])("preserves empty %s", (type) => {
+    expect(
+      createStanzaParams(attributeSource(new Map([["value", ""]])), {
+        "stanza:parameter": [{ "stanza:key": "value", "stanza:type": type }],
+      }),
+    ).toEqual({ value: "" });
+  });
+
+  it("does not normalize whitespace or nonempty invalid input", () => {
+    const read = (type: string, value: string) =>
+      createStanzaParams(attributeSource(new Map([["value", value]])), {
+        "stanza:parameter": [{ "stanza:key": "value", "stanza:type": type }],
+      }).value;
+    expect(read("number", " ")).toBe(0);
+    expect(read("string", " ")).toBe(" ");
+    expect(read("number", "invalid")).toBeNaN();
+    for (const type of ["date", "datetime"]) {
+      expect((read(type, "invalid") as Date).getTime()).toBeNaN();
+      expect((read(type, " ") as Date).getTime()).toBeNaN();
+    }
+    expect(() => read("json", " ")).toThrow(SyntaxError);
   });
 
   it("throws invalid JSON parameter values like the current runtime", () => {

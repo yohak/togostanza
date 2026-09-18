@@ -37,9 +37,9 @@ export default class Stanza {
     #private;
     element: HTMLElement;
     metadata: Record<string, unknown>;
-    params: Record<string, unknown>;
     root: ShadowRoot;
     constructor();
+    get params(): Record<string, unknown>;
     [initializeRuntime](context: StanzaRuntimeContext): void;
     render(): unknown;
     handleAttributeChange(_name: string, _oldValue: string | null, _newValue: string | null): void;
