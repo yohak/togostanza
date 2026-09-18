@@ -2,6 +2,24 @@
 
 All notable changes to TogoStanza v4 will be documented in this file.
 
+## [4.0.0-alpha.2]
+
+### Fixed
+
+- Restored V3-compatible parameter reads: missing nonboolean attributes retain their keys with `undefined`, and empty number, JSON, date, and datetime attributes produce `undefined`.
+- Restored `this.params` as a getter that reads attributes on each access and returns a new object. Direct mutations do not persist across reads, and nonempty invalid JSON throws when parameters are accessed rather than during an eager refresh.
+- Preserved V4 render-error reporting and recovery after invalid JSON is corrected.
+
+### Documentation
+
+- Expanded the [V3-to-V4 migration guide](./docs/for-developers/guides/v3-to-v4.md) with parameter compatibility and TypeScript narrowing and validation examples. The public parameter type remains `Record<string, unknown>` intentionally.
+- Corrected the earlier investigation record that incorrectly described V3 missing parameters as `null`, and added V3/V4 browser comparisons covering construction, attribute changes, empty values, and exception timing.
+
+### Notes
+
+- The distribution target is the immutable `v4.0.0-alpha.2` Git tag; this Alpha is not published to the npm registry. Installation commands require the tag to be available on GitHub.
+- Project-owner acceptance and the remaining official-integration conditions remain separate from this release.
+
 ## [4.0.0-alpha.1]
 
 ### Added

@@ -14,7 +14,7 @@ The work applies to configuration and source files in your own stanza project. I
 
 Follow [Try in an Existing Project](../../../README.md#try-in-an-existing-project) in the README to install V4 Alpha. Preserve the pre-migration state on a working branch, install the V4 dependency, and then review the configuration below.
 
-This guide targets `4.0.0-alpha.1`; use the README's installation commands once its Git tag is available. The earlier `v4.0.0-alpha.0` supports only the configuration filename `togostanza.config.ts`. If you remain on `alpha.0`, keep the examples' contents but use the `.ts` filename; switch to a JavaScript configuration filename only after upgrading.
+This guide targets `4.0.0-alpha.2`; use the README's installation commands once its Git tag is available. The earlier `v4.0.0-alpha.0` supports only the configuration filename `togostanza.config.ts`. If you remain on `alpha.0`, keep the examples' contents but use the `.ts` filename; switch to a JavaScript configuration filename only after upgrading.
 
 ## Identify Required Changes
 
@@ -49,7 +49,7 @@ Write the configuration with JavaScript `import` / `export`. Loading it does not
 
 JavaScript configuration uses ES modules. CommonJS `module.exports` is not supported.
 
-`alpha.1` supports three configuration formats. Keep only one in the project root.
+`alpha.1` and later support three configuration formats. Keep only one in the project root.
 
 | Filename | Purpose |
 | --- | --- |
@@ -176,7 +176,7 @@ Directory names and nesting vary by project; do not assume this example's layout
 
 V4 supports stanza sources in `index.ts` / `index.tsx` as well as `index.js`. Review this section if you use existing TypeScript source or type-check a TypeScript configuration file. These settings are unnecessary for simply creating and building JavaScript stanzas.
 
-In `alpha.1`, `init` does not generate `tsconfig.json` automatically. Add it for your source only if you use TypeScript. Existing TypeScript configuration can remain in use. The earlier `alpha.0` generates the file automatically, but that does not require writing stanzas in TypeScript.
+In `alpha.1` and later, `init` does not generate `tsconfig.json` automatically. Add it for your source only if you use TypeScript. Existing TypeScript configuration can remain in use. The earlier `alpha.0` generates the file automatically, but that does not require writing stanzas in TypeScript.
 
 ### Resolve TogoStanza Types
 
@@ -245,9 +245,9 @@ A type assertion is appropriate only when another boundary already validates the
 
 ## Runtime Parameter Compatibility
 
-The following fixes are prepared in this repository after `4.0.0-alpha.1` and are not included in that published tag. Use a release that includes them when available; updating a lockfile while keeping the same immutable alpha tag will not obtain these fixes. The `unknown` public type described above already applies to `alpha.1` and remains in place.
+The following fixes are included in `4.0.0-alpha.2` and are not included in `4.0.0-alpha.1`. Upgrade to the `v4.0.0-alpha.2` tag once it is available; updating a lockfile while keeping the same immutable alpha tag will not obtain these fixes. The `unknown` public type described above already applies to `alpha.1` and remains in place.
 
-| Input or operation | V3 and the prepared V4 fix | V4 `alpha.1` |
+| Input or operation | V3 and V4 `alpha.2` | V4 `alpha.1` |
 | --- | --- | --- |
 | Missing nonboolean attribute | Own key with `undefined`; destructuring defaults apply | `null`; destructuring defaults do not apply |
 | Empty number / JSON / date / datetime attribute | `undefined` | `0` / JSON exception / invalid date / invalid date |

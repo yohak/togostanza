@@ -6,7 +6,7 @@ TogoStanza is a tool for creating stanzas, such as data visualizations, and dist
 
 V4 is Yohak's redesign of the CLI, build environment, and runtime based on the [original TogoStanza](https://github.com/togostanza/togostanza). It updates the toolchain to Node.js 24 and Vite 8 while preserving existing stanza source and embedding methods where possible. Existing projects may need some configuration or source changes.
 
-The project is currently releasing Alpha versions and checking builds, display, interaction, and migration procedures in real projects ahead of the official release. These instructions target `v4.0.0-alpha.1` and can be used once that tag is available on GitHub. Install Alpha from Git tags in `yohak/togostanza`, not from the npm registry.
+The project is currently releasing Alpha versions and checking builds, display, interaction, and migration procedures in real projects ahead of the official release. These instructions target `v4.0.0-alpha.2` and can be used once that tag is available on GitHub. Install Alpha from Git tags in `yohak/togostanza`, not from the npm registry.
 
 After Alpha verification, the planned steps are integration into the official repository, a Beta release on npm, and the stable `4.0.0` release. See the [release roadmap](./docs/for-maintainers/release/official-integration-plan.md) for the conditions at each stage.
 
@@ -52,7 +52,7 @@ Change `devDependencies.togostanza` in `package.json` to the following Git tag. 
 ```json
 {
   "devDependencies": {
-    "togostanza": "github:yohak/togostanza#v4.0.0-alpha.1"
+    "togostanza": "github:yohak/togostanza#v4.0.0-alpha.2"
   }
 }
 ```
@@ -73,7 +73,7 @@ pnpm install
 pnpm exec togostanza --version
 ```
 
-Confirm that the displayed version is `4.0.0-alpha.1`.
+Confirm that the displayed version is `4.0.0-alpha.2`.
 
 **2. Review Existing Configuration**
 
@@ -117,8 +117,8 @@ Generated stanzas use JavaScript. `init` does not generate `tsconfig.json`; add 
 With npm:
 
 ```sh
-TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.1 \
-npm exec --yes --package github:yohak/togostanza#v4.0.0-alpha.1 -- \
+TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.2 \
+npm exec --yes --package github:yohak/togostanza#v4.0.0-alpha.2 -- \
   togostanza init --name my-stanza-repository --package-manager npm
 
 cd my-stanza-repository
@@ -131,8 +131,8 @@ npm run serve
 With pnpm:
 
 ```sh
-TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.1 \
-pnpm --package github:yohak/togostanza#v4.0.0-alpha.1 dlx togostanza \
+TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.2 \
+pnpm --package github:yohak/togostanza#v4.0.0-alpha.2 dlx togostanza \
   init --name my-stanza-repository --package-manager pnpm
 
 cd my-stanza-repository

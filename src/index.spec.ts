@@ -64,7 +64,7 @@ describe("package identity", () => {
       description: "CLI and runtime for building TogoStanza repositories.",
       license: "MIT",
       private: true,
-      version: "4.0.0-alpha.1",
+      version: "4.0.0-alpha.2",
     });
     expect(packageJson.keywords).toContain("togostanza");
     expect(packageJson.keywords).toContain("stanza");

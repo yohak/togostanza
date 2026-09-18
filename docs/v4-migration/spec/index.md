@@ -38,8 +38,8 @@ Stanza開発者側で公式サポートするパッケージマネージャー�
 v4 alphaは、`yohak/togostanza` の不変Git tagからCLIを直接起動する。`TOGOSTANZA_DEPENDENCY_SPEC` に同じtagを指定し、生成されるStanzaリポジトリの依存も固定する。
 
 ```sh
-TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.0 npm exec --package github:yohak/togostanza#v4.0.0-alpha.0 -- togostanza init --name <dir>
-TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.0 pnpm --package github:yohak/togostanza#v4.0.0-alpha.0 dlx togostanza init --name <dir>
+TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.2 npm exec --package github:yohak/togostanza#v4.0.0-alpha.2 -- togostanza init --name <dir>
+TOGOSTANZA_DEPENDENCY_SPEC=github:yohak/togostanza#v4.0.0-alpha.2 pnpm --package github:yohak/togostanza#v4.0.0-alpha.2 dlx togostanza init --name <dir>
 ```
 
 正式版リポジトリへ統合した後は、v4 betaをnpm registryの `beta` dist-tagから配布する。beta版では `npm exec togostanza@beta init --name <dir>`、`pnpm dlx togostanza@beta init --name <dir>` のregistry経路を使う。

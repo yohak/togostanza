@@ -9,12 +9,14 @@ Alpha releases are not published to the npm registry. Align source, built `dist/
 The target release uses:
 
 ```text
-package version: 4.0.0-alpha.1
-Git tag: v4.0.0-alpha.1
-dependency spec: github:yohak/togostanza#v4.0.0-alpha.1
+package version: 4.0.0-alpha.2
+Git tag: v4.0.0-alpha.2
+dependency spec: github:yohak/togostanza#v4.0.0-alpha.2
 ```
 
-Do not reuse published versions or tags. For subsequent fixes, increment the version, for example to `4.0.0-alpha.2`.
+Do not reuse published versions or tags. For subsequent fixes, increment the version, for example to `4.0.0-alpha.3`.
+
+See the [Alpha.2 verification record](./v4-alpha.2-verification.md) for this release's checks and post-publication verification procedure.
 
 ## Before Publication
 
@@ -58,7 +60,7 @@ Review the actual changes and adjust the staging targets. Do not include existin
 After creating the release commit, check the tag and commit contents:
 
 ```sh
-ALPHA_VERSION=4.0.0-alpha.1
+ALPHA_VERSION=4.0.0-alpha.2
 ALPHA_TAG=v${ALPHA_VERSION}
 
 git status --short

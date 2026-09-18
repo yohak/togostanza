@@ -62,7 +62,7 @@ Stanza repositories using Alpha place TogoStanza in `devDependencies`, pinned to
 ```json
 {
   "devDependencies": {
-    "togostanza": "github:yohak/togostanza#v4.0.0-alpha.0"
+    "togostanza": "github:yohak/togostanza#v4.0.0-alpha.2"
   }
 }
 ```
@@ -285,4 +285,4 @@ This is a user-requested follow-up for the Beta transition. It is excluded from 
 2. Restructure self-contained tests for transfer, using V4 contracts as their basis.
 3. Prepare Alpha dependency generation and usage instructions.
 4. Inventory the detailed official documentation structure and its source materials.
-5. Prepare `4.0.0-alpha.1` for stakeholder trials through quality checks and release-tag preparation. Publication and stakeholder verification remain separate steps; preparing this release does not establish completion of the Alpha phase.
+5. Prepare `4.0.0-alpha.2` for stakeholder trials through quality checks and release-tag preparation. Publication and stakeholder verification remain separate steps; preparing this release does not establish completion of the Alpha phase.
