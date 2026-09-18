@@ -4,7 +4,7 @@
 
 ### Projects Covered
 
-This guide explains how to build and display an existing TogoStanza V3 project with V4 when its stanzas are written in JavaScript. It focuses on build configuration and import path resolution.
+This guide explains how to build and display an existing TogoStanza V3 project with V4. It covers build configuration, import path resolution, runtime parameters, and TypeScript parameter checks, starting with JavaScript stanzas.
 
 Stanzas with `index.js` can remain in JavaScript. Migration does not require rewriting them in TypeScript or creating a `tsconfig.json`. Type resolution for TypeScript projects is covered in the [supplement](#supplement-using-typescript).
 
@@ -200,6 +200,65 @@ Check `compilerOptions` in the `tsconfig.json` applying to your stanza source or
 Do not replace the whole file with this example. Preserve existing `include`, `exclude`, `paths`, and other settings. Keep JSX settings appropriate to your project if you use JSX. JavaScript-only stanzas do not need JSX settings solely for migration.
 
 If the repository also contains applications or tools run directly by Node.js, do not apply the same changes indiscriminately to their configuration. Start with the configuration that applies to stanza source and configuration files.
+
+### Narrow Parameter Types Before Use
+
+V4 exposes `this.params` as `Record<string, unknown>`, whereas V3 used `Record<string, any>`. This is an intentional development-time safety improvement. It does not change the converted runtime values. Metadata does not generate a TypeScript type for each stanza, so a value must be checked before passing it to a typed function or React prop.
+
+Read a local snapshot and narrow its values:
+
+```ts
+const { label, count } = this.params;
+if (typeof label !== "string") {
+  throw new Error("label must be a string");
+}
+if (typeof count !== "number" || !Number.isFinite(count)) {
+  throw new Error("count must be a finite number");
+}
+
+// Both values are now suitable for typed functions or component props.
+const title: string = label;
+const limit: number = count;
+```
+
+For optional values, choose a default deliberately, then validate the result. For example, `const { count = 20 } = this.params` supplies a default for `undefined`; it does not turn an invalid number into `20`. Do not silence migration errors by casting the entire parameter object to `any`.
+
+JSON parsing checks syntax, not the application's data shape. Validate the fields you use:
+
+```ts
+function isPayload(value: unknown): value is { ids: string[] } {
+  return typeof value === "object"
+    && value !== null
+    && "ids" in value
+    && Array.isArray(value.ids)
+    && value.ids.every((id: unknown) => typeof id === "string");
+}
+
+const { payload } = this.params;
+if (!isPayload(payload)) {
+  throw new Error("payload must contain a string array named ids");
+}
+payload.ids.map((id) => id.toUpperCase());
+```
+
+A type assertion is appropriate only when another boundary already validates the value; it performs no runtime validation. This section applies to TypeScript projects. JavaScript stanzas do not need TypeScript syntax or configuration, though application-specific input validation remains useful.
+
+## Runtime Parameter Compatibility
+
+The following fixes are prepared in this repository after `4.0.0-alpha.1` and are not included in that published tag. Use a release that includes them when available; updating a lockfile while keeping the same immutable alpha tag will not obtain these fixes. The `unknown` public type described above already applies to `alpha.1` and remains in place.
+
+| Input or operation | V3 and the prepared V4 fix | V4 `alpha.1` |
+| --- | --- | --- |
+| Missing nonboolean attribute | Own key with `undefined`; destructuring defaults apply | `null`; destructuring defaults do not apply |
+| Empty number / JSON / date / datetime attribute | `undefined` | `0` / JSON exception / invalid date / invalid date |
+| `this.params` access | Getter reads attributes and returns a new object each time | Field refreshed on connection and attribute changes |
+| Nonempty invalid JSON | Throws when the getter is accessed | Throws during parameter refresh |
+
+Only attributes declared in `stanza:parameter` appear in `this.params` in both V3 and V4. Fix mismatches between metadata keys and source references in your stanza; adding an HTML attribute alone does not declare a parameter. Boolean attributes continue to use presence: even `flag="false"` means `true`. String empty values remain empty, and whitespace is not trimmed before conversion.
+
+With the getter, use `const params = this.params` when several operations need one snapshot. Mutating `params` or a nested JSON value does not update attributes or future snapshots. To update a parameter, call `this.element.setAttribute()` or `removeAttribute()`; normal attribute handling then requests rendering. Keep application state in separate fields.
+
+Constructor reads reflect attributes already present on the element: upgrading existing markup exposes those attributes, while `document.createElement()` starts without them. A nonempty invalid JSON value throws at any getter access, including a constructor or `menu()` access. Errors thrown during `render()` continue through V4's existing render-error reporting; other callers must handle their own errors as appropriate.
 
 ## Verify the Migration
 

@@ -56,7 +56,7 @@ current-pnpm/
   - styleメタデータ: `--parameter-probe-gap="..."`、`--parameter-probe-caption="..."`
   - 属性変更: `window.parameterProbeObserver` から `flag`、`count`、`payload` を変更する
 - in-appブラウザから変更を再現できるように、`fixtures/runtime-parameters.html` には変更用の操作ボタンも置く。
-- `date`、`datetime`、`url` は追加候補として残す。現時点の観測補助HTMLには入れず、主要4種の現行観測を優先する。
+- 初回観測では `date`、`datetime`、`url` を含めず、主要4種を優先した。2026-09-18のPlaywright比較では `date` / `datetime` も追加した。`url` は追加候補として残す。
 
 ## 実行コマンド
 
@@ -220,15 +220,48 @@ Phase 2-3では、date/datetimeの変換はunit testで確認した。004のbrow
 Phase 11-4では、`references/togostanza` commit `2e5982d` の `stanza.ts` を読み、`this.params` のedge semanticsを再確認した。
 
 - booleanは、引き続き属性の有無で判定する。
-- boolean以外の未指定parameterは、現行版では `this.params` にkeyが入り、値は `null` になる。リメイク版もPhase 11-4でこの挙動へ寄せた。
-- `number` は `Number(value)` で変換する。invalid値は `NaN` になる。
-- `date` / `datetime` は `new Date(value)` で変換する。invalid値はInvalid Dateになる。
-- `json` は `JSON.parse(value)` で変換する。invalid JSONは例外になる。リメイク版もPhase 11-4でこの挙動へ寄せた。
+- boolean以外の未指定parameterは、現行版では `this.params` にkeyが入り、値は `undefined` になる。Phase 11-4の `null` という記録と実装変更は読み違いだったため、2026-09-18に訂正した。
+- `number` は空文字なら `undefined`、それ以外は `Number(value)` で変換する。invalid値は `NaN` になる。
+- `date` / `datetime` は空文字なら `undefined`、それ以外は `new Date(value)` で変換する。invalid値はInvalid Dateになる。
+- `json` は空文字なら `undefined`、それ以外は `JSON.parse(value)` で変換する。不正JSONはgetter参照時に例外になる。空文字と参照時点は2026-09-18にリメイク版を修正した。
 - `single-choice`、`text`、未知の `stanza:type` はstringとして扱う。
 
-invalid値の細かいfallbackや警告条件は、引き続きリメイク版仕様の外部契約としては固定しない。集約結果は `docs/v4-migration/implementation/phase-11/runtime-edge-semantics.md` に記録した。
+非空の不正JSONの例外は2026-09-18に外部契約へ含めた。その他のinvalid値の細かいfallbackや警告条件は、引き続き固定しない。集約結果は `docs/v4-migration/implementation/phase-11/runtime-edge-semantics.md` に記録した。
 
 ## 合格条件
+
+### 2026-09-18 パラメーター互換性の再確認
+
+V3 `3.0.0-beta.57` と修正後V4に対して、同一のPlaywright観測を実行した。V3のケース入力にコンストラクタ観測、参照を省略する描画、date/datetimeメタデータを追加した。V4は通常browser testの自己完結した入力を使う。
+
+V3依存がインストール済みの場合の再現手順:
+
+```sh
+cd workbench/cases/004-runtime-parameters/current-pnpm/generated-repo
+mise exec -- node node_modules/togostanza/bin/togostanza.mjs build --output-path dist
+cd ../../../../..
+mise exec -- pnpm run build
+TOGOSTANZA_RUN_LOCAL_COMPAT=1 mise exec -- pnpm exec playwright test --config playwright.config.ts --grep 'reads parameter snapshots'
+```
+
+ルートへ移動した後のNode.js / pnpmはルートの `mise.toml` に従う。V3のビルドは既存のNode 18とインストール済みV3依存を使う。旧 `pnpm exec togostanza` は親の `pnpm-workspace.yaml` を参照して `packages field missing or empty` で停止したため、現在の比較手順では同じV3パッケージのCLI入口を直接起動する。キャッシュ、依存、workspace設定、環境変数の一時差し替えは行わない。ビルド時の既存Sass非推奨警告は残る。
+
+結果: V3/V4とも成功（2 tests passed）。通常 `check-all` にはV4観測のみを含め、V3観測は `@compat-local` としてケース入力の再ビルド後に実行する。
+
+| 観測 | V3 / 修正後V4の結果 |
+| --- | --- |
+| 既存DOMのアップグレード時のコンストラクタ | 既存属性の `count=3`、`label=initial` を参照できる |
+| `createElement()` 時のコンストラクタ | `count` はown keyとして存在し、値は `undefined` |
+| number/json/date/datetimeの未指定と空文字 | 未指定はown keyを残して `undefined`、空文字も `undefined` |
+| 空文字string、未宣言属性、未指定boolean | `""`、keyなし、`false` |
+| 連続参照と直接変更 | 外側objectとJSON objectは別参照。直接変更した値は次の参照へ残らない |
+| 非接続中の属性変更・削除 | 直後のgetter参照に反映される |
+| 不正JSON | コンストラクタ・明示getter参照で `SyntaxError`。参照しない描画は接続・属性変更後も継続 |
+| 接続後の属性変更 | 再描画へ反映される |
+
+V4のみ、描画内の不正JSONが既存の `togostanza render failed` 診断へ届き、修正後の属性で描画が復帰することも確認した。全getter例外を描画エラーとして扱うという意味ではない。静的根拠とPhase 11訂正の詳細は[調査記録](../../../docs/v4-migration/investigation/parameter-compatibility-2026-09-18.md)を参照する。
+
+### 判定項目
 
 - booleanパラメーターの属性有無による判定が一致する。
 - 主要な `stanza:type` の変換結果が、現行版観測と矛盾しない。

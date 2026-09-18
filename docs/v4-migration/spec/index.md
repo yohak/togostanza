@@ -234,7 +234,9 @@ runtimeは、StanzaのShadow DOM内で `<main>` と同じ相対配置コンテ�
 
 ## パラメーター
 
-`this.params` は、`metadata.json` の `stanza:parameter` に基づいてHTML属性をStanzaソースから扱う値へ変換したobjectである。
+`this.params` は、`metadata.json` の `stanza:parameter` に基づいて、参照時のHTML属性を変換した新しいobjectを返すgetterである。宣言されていないHTML属性は含めない。返されたobjectやJSON値を直接変更しても、次の参照には残らない。属性を更新する場合は `this.element.setAttribute()` / `removeAttribute()` を使う。
+
+公開TypeScript型は `Record<string, unknown>` とする。開発者は利用先に渡す前に値を絞り込み、必要な入力検証を行う。
 
 `stanza:parameter` のkeyは変換せず、HTML属性名と `this.params` のプロパティ名としてそのまま使う。`gm_id`、`data-url` などのkeyをkebab-caseやcamelCaseへ正規化しない。
 
@@ -258,7 +260,9 @@ booleanパラメーターはHTML boolean属性として扱う。
 | `text` | stringとして扱う。 |
 | その他 | stringとして扱う。 |
 
-属性が存在しないboolean以外のパラメーターは、未指定値として扱う。詳細なvalidation、fallback、警告条件はこの文書では固定しない。
+属性が存在しないboolean以外のパラメーターは、keyを残し、値を `undefined` にする。`number` / `json` / `date` / `datetime` の空文字も `undefined` にする。文字列型の空文字はそのまま返し、空白を除去する前処理は行わない。
+
+非空の不正JSONは、getter参照時に例外を投げる。接続や属性変更だけを理由に先行変換は行わない。`render()` 内で発生した例外は既存の描画エラー報告経路で扱う。コンストラクタや `menu()` など描画以外からgetterを参照した場合も、その参照時点で例外が発生する。その他の詳細なvalidation、fallback、警告条件はこの文書では固定しない。
 
 `metadata["stanza:style"]` はCSS custom propertyの既定値を定義するために使う。`stanza:style` の項目は `this.params` には入れない。
 

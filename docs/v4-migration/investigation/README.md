@@ -28,6 +28,7 @@
 ## 成果物
 
 - [既存仕様メモ](./spec/index.md): 観測された既存挙動。
+- [パラメーター互換性の再確認](./parameter-compatibility-2026-09-18.md): 2026-09-18のV3/V4比較とPhase 11記録の訂正。
 - [togostanzaメモ](./repositories/togostanza.md): 現行版リポジトリの詳細。
 - [metastanzaメモ](./repositories/metastanza.md): **metastanza**の詳細。
 - [togomedium-webメモ](./repositories/togomedium-web.md): **TogoMedium Stanza**の詳細。

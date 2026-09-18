@@ -18,10 +18,11 @@
 | item | 現行版で読めた挙動 | リメイク版の扱い | 分類 |
 | ---- | ---- | ---- | ---- |
 | boolean parameter | 属性の有無で `true` / `false` になる。`flag="false"` も `true`。 | 維持済み。 | 仕様固定済み |
-| boolean以外の未指定parameter | `this.params` にkeyが入り、値は `null`。 | Phase 11-4で `null` に寄せた。 | 互換修正 |
-| number parameter | `Number(value)`。invalid値は `NaN`。 | 維持済み。 | 仕様固定候補 |
-| date / datetime parameter | `new Date(value)`。invalid値はInvalid Date。 | 維持済み。 | 仕様固定候補 |
-| json parameter | `JSON.parse(value)`。invalid JSONは例外。 | Phase 11-4で例外に寄せた。 | 互換修正 |
+| boolean以外の未指定parameter | `this.params` にkeyが入り、値は `undefined`。 | Phase 11-4の `null` への変更は読み違いに基づく回帰。2026-09-18に訂正。 | 互換修正 |
+| number parameter | 空文字は `undefined`。非空値は `Number(value)`、invalid値は `NaN`。 | 空文字を2026-09-18に修正。 | 空文字は仕様固定済み |
+| date / datetime parameter | 空文字は `undefined`。非空値は `new Date(value)`、invalid値はInvalid Date。 | 空文字を2026-09-18に修正。 | 空文字は仕様固定済み |
+| json parameter | 空文字は `undefined`。非空値は `JSON.parse(value)`、不正JSONはgetter参照時に例外。 | 空文字と参照時点を2026-09-18に修正。 | 仕様固定済み |
+| `this.params` の生成 | 参照ごとに属性から新しいobjectを返すgetter。 | 2026-09-18に保持フィールドからgetterへ戻した。公開型は `unknown` を維持。 | 実行時互換、型は意図的差分 |
 | `renderTemplate()` | 対象要素の `innerHTML` を置換する。対象がない場合は何もしない。template欠落は例外。 | 置換は維持済み。対象なしはリメイク版では例外。 | 部分差分あり |
 | `handleAttributeChange()` | 既定では50ms debounce後に `render()` を呼ぶ。 | Phase 11-4で50ms debounceへ寄せた。 | 互換修正 |
 | async `render()` 再入制御 | 明示的な再入制御はない。 | 明示的な再入制御はない。 | 固定しない |
@@ -39,6 +40,8 @@
 | `stanza:style` 非配列 | 現行版は `.map` を呼ぶため失敗する。 | リメイク版はstyle defaultなしで通る。 | 意図的差分 |
 
 ## 仕様へ戻すもの
+
+未指定値、空文字、getterについては、[2026-09-18の再確認](../../investigation/parameter-compatibility-2026-09-18.md)でPhase 11の記録を訂正した。過去の `null` 採用を互換修正とした判断は撤回している。
 
 すでに `docs/v4-migration/spec/index.md` に入っているもの:
 

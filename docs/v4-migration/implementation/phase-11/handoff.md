@@ -27,7 +27,7 @@ Phase 11では、Phase 9で作ったlocal compatibility baselineを、全Stanza 
 
 ## 修正した互換差分
 
-- boolean以外の未指定parameterは `this.params` にkeyを持ち、値を `null` にする。
+- boolean以外の未指定parameterは `this.params` にkeyを持ち、値を `undefined` にする。Phase 11の `null` という記録と変更は読み違いであり、[2026-09-18の再確認](../../investigation/parameter-compatibility-2026-09-18.md)で訂正した。
 - invalid JSON parameterは `JSON.parse()` 由来の例外に寄せる。
 - `handleAttributeChange()` の既定動作は50ms debounce後に `render()` を呼ぶ。
 - `importWebFontCSS()` はShadow DOMだけでなく `document.head` にもlinkを追加する。

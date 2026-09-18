@@ -109,6 +109,16 @@ booleanパラメーターはHTML boolean属性として扱い、属性の有無�
 
 boolean以外の `stanza:type` の詳細な変換規則は、この文書では細かく固定しない。現行版の観測結果をもとに、同等の動作を実装する。
 
+2026-09-18のTogoMedium導入報告を受け、次を採用する。
+
+- 未指定の非boolean属性はkeyを残して `undefined` にする。Phase 11の `null` という観測記録は読み違いであり訂正する。
+- `number` / `json` / `date` / `datetime` の空文字は `undefined` にする。文字列型の空文字、空白、非空の不正値は今回変更しない。
+- `this.params` は現行版同様のgetterとし、参照ごとにHTML属性を読み、新しいobjectを返す。非空の不正JSONは参照時に例外を投げる。リメイク版の描画エラー報告は維持する。
+- 公開TypeScript型は `Record<string, unknown>` を維持する。現行版の `any` との差分は開発時の型安全性向上として扱い、[移行ガイド](../../for-developers/guides/v3-to-v4.md#narrow-parameter-types-before-use)で型の絞り込みと検証を案内する。
+- 未宣言属性を除外する挙動は現行版と共通であり変更しない。
+
+観測根拠は[パラメーター互換性の再確認](../investigation/parameter-compatibility-2026-09-18.md)、実行手順は[検証ケース004](../../../workbench/cases/004-runtime-parameters/README.md)に記録する。
+
 ### `this.query()`
 
 method未指定の `this.query()` は `POST` を既定methodとする。
